@@ -2,6 +2,8 @@
 
 A static gymnastics tracker connected to the shared Google Sheet. It includes the SWL design, animated podium, instant skill cycling, gymnast creation, undo, backups, and recovery of unsaved edits.
 
+The opening screen animates while scores load, then reveals the league. Completing all three skills at Perfect in a Rolls or Acro base, upgraded, or pro upgraded complex starts a short whole-app celebration and victory sound. Scoring and background saving stay available throughout. The Motion and Sound controls let each device choose its preferred experience.
+
 ## Publish with GitHub Pages
 
 1. Set `appsScriptUrl` in `config.js` to the public Google Apps Script web-app `/exec` URL.

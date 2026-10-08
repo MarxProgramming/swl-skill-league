@@ -1531,6 +1531,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 }
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
+<link rel="stylesheet" href="./startup.css">
+<link rel="stylesheet" href="./celebration.css">
 </head>
 
 <body>
@@ -1760,6 +1762,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
+<script src="./startup.js"></script>
+<script src="./celebration.js"></script>
 <script>
 (() => {
   'use strict';
@@ -3311,6 +3315,28 @@ html:has(body.no-motion){scroll-behavior:auto}
       `${delta > 0 ? '+' : '−'}${Math.abs(delta)} pts`,
       true
     );
+
+    // Only a new, locally completed three-skill complex earns the full celebration.
+    // Loading, refreshing, importing and undoing scores never replay it.
+    if (after === 2 && skill.category !== 'leaps') {
+      const complex = SKILLS.filter(item =>
+        item.category === skill.category && item.tier === skill.tier
+      );
+      if (complex.length === 3 && complex.every(item => mark(gymnastId, item.id) === 2)) {
+        const category = CATEGORIES.find(item => item.id === skill.category);
+        const gymnast = GYMNASTS.find(item => item.id === gymnastId);
+        try {
+          window.SWLCelebration?.play({
+            gymnastName: gymnast.name,
+            categoryName: category.name,
+            tierName: { base: 'Base complex', upgrade: 'Upgraded complex', pro: 'Pro upgraded complex' }[skill.tier],
+            tier: skill.tier
+          });
+        } catch {
+          // Decorative effects must never interrupt scoring or the save queue.
+        }
+      }
+    }
   }
 
   function undo() {
@@ -3631,7 +3657,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   updateMotion();
   renderAll();
   $('dashboard').classList.add('enter');
-  readScores();
+  readScores().finally(() => window.SWLStartup?.finish({ error: !hasLoaded }));
 })();
 </script>
 </body>
