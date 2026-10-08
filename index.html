@@ -7,6 +7,7 @@
 <title>SWL · Skill League</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./config.js"></script>
+<link rel="stylesheet" href="./lock.css">
 
 <style>
 :root{
@@ -1560,6 +1561,12 @@ html:has(body.no-motion){scroll-behavior:auto}
   .hero .hero-copy h1{font-size:clamp(40px,10.5vw,58px);margin:7px 0}
   .hero .hero-copy h1 span{display:block}
 }
+.scoring-lock-button{white-space:nowrap;border-color:#d5fa7040}
+.scoring-lock-button[data-locked=true]{color:var(--mint);background:#d5fa700a}
+.scoring-lock-status{font-size:11px;color:#9e9daa;margin:14px 0 4px;letter-spacing:.02em}
+.scoring-locked button[data-skill]:disabled,.scoring-locked button[data-link-complex]:disabled{opacity:1;cursor:default}
+@media(max-width:1100px){.header-inner{gap:12px}.nav button{width:120px}}
+@media(max-width:600px){.brand>div:last-child{display:none}.brand{flex:0;margin-right:auto}.scoring-lock-button{padding:10px 9px}.scoring-lock-button>span[aria-hidden]{display:none}.scoring-lock-status{font-size:10px}}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
@@ -1590,6 +1597,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     </nav>
 
     <div class="utilities">
+      <button class="quiet scoring-lock-button" id="lockButton" type="button" disabled aria-describedby="lockStatus"><span aria-hidden="true">◇</span> <span id="lockButtonLabel">Checking lock…</span></button>
       <button class="quiet" id="motionButton" aria-pressed="true">
         Motion on
       </button>
@@ -1618,6 +1626,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 </header>
 
 <main class="wrap" id="main" tabindex="-1">
+  <div class="scoring-lock-status" id="lockStatus" role="status">Checking scoring access…</div>
   <div
     id="storageWarning"
     class="warning"
@@ -1800,6 +1809,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./startup.js"></script>
 <script src="./celebration.js"></script>
 <script src="./placement.js"></script>
+<script src="./lock.js"></script>
 <script>
 (() => {
   'use strict';
@@ -2057,6 +2067,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   let recoveryWarning = '';
   let flushTimer;
   let maxFlushTimer;
+  let scoringLock = { locked: true, version: -1 };
+  let lockKnown = false;
+  let lockChanging = false;
+  let checkingLock = false;
 
   let selectedId = null;
   let currentView = 'dashboard';
@@ -2167,7 +2181,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   const hasPending = () => Boolean(inFlight || queuedOps.length);
-  const canEdit = () => hasLoaded && damagedRecovery === null;
+  const canEdit = () => hasLoaded && damagedRecovery === null && lockKnown && !scoringLock.locked && !lockChanging;
   const cloneState = value => JSON.parse(JSON.stringify(value));
   const normalizeName = value => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB');
 
@@ -2284,7 +2298,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function scheduleFlush() {
-    if (!hasPending() || retryNeeded || !sessionReadDone || importing || sending) return;
+    if (!hasPending() || retryNeeded || !sessionReadDone || importing || sending || !canEdit()) return;
     clearTimeout(flushTimer);
     flushTimer = setTimeout(() => flushQueue(), 500);
     if (!maxFlushTimer) maxFlushTimer = setTimeout(() => flushQueue(), 1000);
@@ -2310,12 +2324,13 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function renderSaveStatus() {
+    renderLockStatus();
     const unsaved = hasPending();
     const warning = [saveError, readError, recoveryWarning].filter(Boolean).join(' ');
     $('storageWarning').hidden = !warning;
     $('storageMessage').textContent = warning;
     $('retryButton').hidden = !retryNeeded || !unsaved;
-    $('retryButton').disabled = sending || importing;
+    $('retryButton').disabled = sending || importing || !canEdit();
     $('discardPendingButton').hidden = !(retryNeeded && unsaved) && damagedRecovery === null;
     $('discardPendingButton').disabled = sending || importing;
 
@@ -2325,7 +2340,8 @@ html:has(body.no-motion){scroll-behavior:auto}
         })
       : null;
     $('saveStatus').textContent = unsaved
-      ? (retryNeeded ? 'Unsaved changes · retry needed'
+      ? (lockKnown && scoringLock.locked ? 'Unsaved changes kept on this device · scoring locked'
+        : retryNeeded ? 'Unsaved changes · retry needed'
         : sending ? 'Saving changes to Google Sheets…'
           : recoveredPending ? 'Recovered unsaved changes · connecting…'
             : 'Changes queued · saving shortly…')
@@ -2338,7 +2354,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('refreshButton').disabled = reading;
     $('refreshButton').textContent = reading ? '↻ Refreshing…' : '↻ Refresh scores';
-    $('importButton').disabled = !hasLoaded || importing || unsaved || damagedRecovery !== null;
+    $('importButton').disabled = !canEdit() || importing || unsaved;
     $('exportButton').disabled = !hasLoaded && damagedRecovery === null;
     $('exportButton').textContent = damagedRecovery !== null ? '↓ Export recovery data' : '↓ Export backup';
     $('addGymnastButton').disabled = !canEdit();
@@ -2350,6 +2366,9 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   const API_MESSAGES = {
+    locked: 'Scoring is locked for everyone. Unlock scoring before retrying your saved edits.',
+    invalid_pin: 'That code is not correct. Try again.',
+    pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
     conflict: 'The Google Sheet has changed. Reload its latest scores before saving.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
@@ -2391,12 +2410,15 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (!response.ok || !payload.ok) {
         const error = new Error(API_MESSAGES[payload.code] || payload.message || 'Google Sheets could not be reached.');
         error.code = payload.code || 'REQUEST_FAILED';
+        if (payload.lock) acceptLock(payload.lock);
         throw error;
       }
+      const lock = parseLock(payload.lock);
+      if (body.action === 'status') return { lock };
       if (typeof payload.revision !== 'string' || !payload.revision) {
         throw new Error('The scores service did not return a valid revision.');
       }
-      return { state: parseState(JSON.stringify(payload.state)), revision: payload.revision };
+      return { state: parseState(JSON.stringify(payload.state)), revision: payload.revision, lock };
     } catch (error) {
       if (error.name === 'AbortError') throw new Error('The connection timed out.');
       throw error;
@@ -2404,6 +2426,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function acceptConfirmed(result, startedEpoch) {
+    acceptLock(result.lock);
     const counter = revision => /^\d+:/.test(revision || '') ? Number(revision.split(':')[0]) : -1;
     const current = counter(remoteRevision);
     const incoming = counter(result.revision);
@@ -2457,6 +2480,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       return true;
     } catch (error) {
       connected = false;
+      lockKnown = false;
       const message = error.code === 'setup_required'
         ? 'The Google Sheets connection is not ready yet.' : error.message;
       readError = hasLoaded
@@ -2475,7 +2499,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   async function flushQueue(force = false) {
-    if (sending || importing || !hasLoaded || damagedRecovery !== null ||
+    if (sending || importing || !hasLoaded || damagedRecovery !== null || !lockKnown || scoringLock.locked ||
         (!sessionReadDone && !force) || (retryNeeded && !force) || !hasPending()) return false;
     cancelFlushTimers();
     if (!inFlight) {
@@ -2517,7 +2541,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   async function saveReplacement(nextState) {
-    if (!hasLoaded || hasPending() || importing || !remoteRevision) return false;
+    if (!canEdit() || hasPending() || importing || !remoteRevision) return false;
     importing = true;
     saveError = '';
     const startedEpoch = baseEpoch;
@@ -2539,6 +2563,104 @@ html:has(body.no-motion){scroll-behavior:auto}
     } finally {
       importing = false;
       if (conflict) await readScores();
+      refreshScoreViews();
+      scheduleFlush();
+    }
+  }
+
+  function parseLock(value) {
+    if (!isObject(value) || typeof value.locked !== 'boolean' ||
+        !Number.isSafeInteger(value.version) || value.version < 0) {
+      lockKnown = false;
+      throw Error('Scoring access could not be verified. Refresh to reconnect.');
+    }
+    return { locked: value.locked, version: value.version };
+  }
+
+  function acceptLock(value) {
+    const incoming = parseLock(value);
+    if (incoming.version < scoringLock.version) return false;
+    scoringLock = incoming;
+    lockKnown = true;
+    if (incoming.locked) {
+      cancelFlushTimers();
+      if (hasPending() && !sending) {
+        retryNeeded = true;
+        saveError = 'Your unsaved edits are kept on this device. Unlock scoring, then use Retry save.';
+        persistRecovery();
+      }
+    }
+    return true;
+  }
+
+  function renderLockStatus() {
+    const button = $('lockButton');
+    button.disabled = lockChanging || !lockKnown;
+    $('lockButtonLabel').textContent = lockChanging ? 'Updating…'
+      : !lockKnown ? 'Checking lock…' : scoringLock.locked ? 'Unlock scoring' : 'Lock scoring';
+    button.setAttribute('aria-label', !lockKnown ? 'Checking scoring access'
+      : scoringLock.locked ? 'Unlock scoring for everyone' : 'Lock scoring for everyone');
+    button.dataset.locked = String(scoringLock.locked);
+    $('lockStatus').textContent = lockChanging ? 'Updating scoring access for everyone…'
+      : !lockKnown ? 'Scoring paused · checking access. You can still browse.'
+        : scoringLock.locked ? 'Scoring locked · leaderboards and profiles are open to view.'
+          : 'Scoring unlocked for everyone · lock when you finish.';
+    document.body.classList.toggle('scoring-locked', !lockKnown || scoringLock.locked || lockChanging);
+  }
+
+  async function checkScoringLock() {
+    if (document.hidden || checkingLock || lockChanging || reading) return;
+    checkingLock = true;
+    try {
+      const previous = scoringLock.version;
+      const result = await scoresRequest({ action: 'status' });
+      acceptLock(result.lock);
+      if (result.lock.version > previous && hasLoaded) await readScores();
+      else renderSaveStatus();
+      scheduleFlush();
+    } catch {
+      lockKnown = false;
+      renderSaveStatus();
+    } finally { checkingLock = false; }
+  }
+
+  async function changeScoringLock(action, pin) {
+    if (lockChanging) return { ok: false, message: 'Scoring access is already updating.' };
+    lockChanging = true;
+    cancelFlushTimers();
+    renderSaveStatus();
+    try {
+      if (action === 'lock') {
+        // Finish a save already in progress, then drain queued edits before locking.
+        while (sending || importing) await new Promise(resolve => setTimeout(resolve, 80));
+        while (hasPending() && lockKnown && !scoringLock.locked && !retryNeeded) {
+          if (!await flushQueue()) break;
+        }
+      }
+      const startedEpoch = baseEpoch;
+      const result = await scoresRequest({ action, requestId: crypto.randomUUID(), ...(pin ? { pin } : {}) });
+      acceptConfirmed(result, startedEpoch);
+      connected = true;
+      sessionReadDone = true;
+      rebuildState();
+      persistRecovery();
+      if (action === 'unlock' && scoringLock.locked) {
+        return { ok: false, message: 'Scoring was locked again. Enter the code to unlock it.' };
+      }
+      if (action === 'lock' && !scoringLock.locked) {
+        toast('Scoring was unlocked again on another device.');
+        return { ok: false, message: 'Scoring was unlocked again on another device.' };
+      }
+      toast(scoringLock.locked ? 'Scoring is locked for everyone.' : 'Scoring is unlocked for everyone.');
+      return { ok: true };
+    } catch (error) {
+      // A lost response can still have reached the Sheet. Refresh, but never replay a PIN automatically.
+      await readScores();
+      if (action === 'lock') toast('Could not confirm the lock. ' + error.message);
+      return { ok: false, message: error.message };
+    } finally {
+      pin = null;
+      lockChanging = false;
       refreshScoreViews();
       scheduleFlush();
     }
@@ -3722,13 +3844,14 @@ html:has(body.no-motion){scroll-behavior:auto}
   });
 
   $('importButton').addEventListener('click', () => {
+    if (!canEdit()) return;
     $('importFile').click();
     $('backups').open = false;
   });
 
   $('importFile').addEventListener('change', async event => {
     const file = event.target.files[0];
-    if (!file || !hasLoaded || importing || hasPending() || damagedRecovery !== null) {
+    if (!file || !canEdit() || importing || hasPending()) {
       event.target.value = '';
       return;
     }
@@ -3824,11 +3947,17 @@ html:has(body.no-motion){scroll-behavior:auto}
     refreshScoreViews();
     await readScores();
   });
+  $('lockButton').addEventListener('click', () => {
+    if (!lockKnown || lockChanging) return;
+    if (scoringLock.locked) {
+      window.SWLLock.open({ onSubmit: pin => changeScoringLock('unlock', pin) });
+    } else changeScoringLock('lock');
+  });
+  setInterval(checkScoringLock, 10000);
   $('refreshButton').addEventListener('click', () => readScores());
   window.addEventListener('focus', () => readScores());
   window.addEventListener('online', () => {
-    if (hasPending()) flushQueue(true);
-    else readScores();
+    readScores();
   });
   window.addEventListener('beforeunload', event => {
     if (hasPending() || importing || damagedRecovery !== null) {
@@ -3840,6 +3969,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   window.addEventListener('pagehide', persistRecovery);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && hasPending() && !retryNeeded) flushQueue();
+    if (!document.hidden) checkScoringLock();
   });
 
   const syncHeader = () => {

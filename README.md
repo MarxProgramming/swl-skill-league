@@ -25,9 +25,13 @@ No build step, package installation, or Actions workflow is required. `.nojekyll
 
 ## Google Sheets connection
 
-The Apps Script deployment must accept the public `swl-pages-v1` protocol and have access to the league’s Google Sheet. The browser sends ordinary text requests to that deployment and reads its JSON response. `config.js` contains only the public endpoint URL; the website does not require a login or credentials.
+The Apps Script deployment must accept the public `swl-pages-v1` protocol and have access to the league’s Google Sheet. The browser sends ordinary text requests to that deployment and reads its JSON response. `config.js` contains only the public endpoint URL; visitors do not need a Google or website-owner login.
 
-Anyone with the website link can edit scores. Changes appear immediately and save in the background. If saving fails, the page retains the edits and displays **Retry save**. Wait for **All changes saved to Google Sheets** before closing, or export a backup.
+The scoring lock is shared by everyone. Locking takes effect at the server immediately and blocks new scoring changes for all visitors. A four-digit keypad sends an unlock request to Google Apps Script, which checks the code on the server. A successful unlock opens editing for everyone until someone locks it again. The shared lock state is stored in the Google Sheet’s Meta tab. Leaderboards and gymnast profiles remain browsable while locked.
+
+Keep the Google Sheet publicly viewable, with public access set to **Viewer**, so direct Sheet edits cannot bypass the scoring lock. The owner and Apps Script retain edit access. The unlock code is not published in this README or the website’s public files.
+
+While unlocked, anyone with the website link can edit scores. Changes appear immediately and save in the background. If saving fails, the page retains the edits and displays **Retry save**. Wait for **All changes saved to Google Sheets** before closing, or export a backup.
 
 For local checking, serve this folder using any static HTTP server. The website has no hosting-specific runtime dependency; Google Apps Script provides the shared data connection.
 

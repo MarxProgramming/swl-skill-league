@@ -1,0 +1,65 @@
+.swl-lock,.swl-lock *{box-sizing:border-box}
+.swl-lock{
+  width:min(440px,calc(100vw - 28px));max-width:none;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);
+  margin:auto;padding:26px;border:1px solid #d5fa7047;border-radius:28px;overflow:auto;overscroll-behavior:contain;
+  color:#f6f8ef;background:radial-gradient(ellipse at 25% 0,#d5fa7013,transparent 52%),#11150f;
+  box-shadow:0 36px 110px #000a,0 0 0 6px #d5fa7008,inset 0 1px 0 #f1ffd51a;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  scrollbar-width:thin;scrollbar-color:#69784c transparent;
+}
+.swl-lock::backdrop{background:#070a09b8;backdrop-filter:blur(7px)}
+.swl-lock[open]{animation:swl-lock-enter .28s cubic-bezier(.16,1,.3,1) both}
+.swl-lock-heading{display:flex;align-items:center;gap:14px}
+.swl-lock-icon{
+  display:grid;place-items:center;flex:0 0 48px;height:48px;border:1px solid #d5fa7040;border-radius:15px;
+  color:#d5fa70;background:linear-gradient(145deg,#d5fa7020,#d5fa7007);box-shadow:inset 0 1px 0 #edffc51a;
+}
+.swl-lock-icon svg{width:25px;height:25px;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.swl-lock-title{margin:0;font-size:29px;font-weight:850;letter-spacing:-.05em;line-height:1.1}
+.swl-lock-description{margin:15px 0 0;color:#acb7a3;font-size:14px;line-height:1.55;max-width:330px}
+.swl-lock-dots{display:flex;justify-content:center;gap:18px;padding:25px 0 13px}
+.swl-lock-dot{
+  display:block;width:18px;height:18px;border:1px solid #91a27855;border-radius:50%;background:#20261b;
+  transition:background .16s,border-color .16s,box-shadow .16s,transform .18s;
+}
+.swl-lock-dot.is-filled{background:#d5fa70;border-color:#ebffb8;box-shadow:0 0 19px #d5fa7026;transform:scale(1.04)}
+.swl-lock-status{min-height:36px;margin:4px 0 16px;color:#d5fa70;font-size:12px;line-height:1.5;text-align:center;overflow-wrap:anywhere}
+.swl-lock-status.is-error{color:#ffc4ae}
+.swl-lock-keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.swl-lock .swl-lock-key{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;min-height:74px;
+  padding:8px;border:1px solid #d8f8ad20;border-radius:16px;color:#eff9e4;background:linear-gradient(150deg,#25301d,#1a2116);
+  box-shadow:inset 0 1px 0 #edffd60b,0 3px 0 #0508054d;font:750 31px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-variant-numeric:tabular-nums;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  transition:background .16s,border-color .16s,transform .16s,color .16s;
+}
+.swl-lock .swl-lock-key:hover:not(:disabled){border-color:#d5fa7090;background:#344526;color:#e8ffa8}
+.swl-lock .swl-lock-key:active:not(:disabled){transform:scale(.965);background:#d5fa70;color:#1a240c;border-color:#ecffb6}
+.swl-lock .swl-lock-key:focus-visible{outline:3px solid #d5fa70;outline-offset:3px}
+.swl-lock .swl-lock-key:disabled{opacity:.37;cursor:not-allowed;transform:none}
+.swl-lock .swl-lock-key--action{background:#161c13;border-color:#d8f8ad12;color:#a9b89b}
+.swl-lock-key-glyph{font-size:28px;line-height:1}
+.swl-lock-key-label{font-size:10px;line-height:1.3;font-weight:650;letter-spacing:.02em}
+.swl-lock.is-busy .swl-lock-dot{background:#d5fa70;opacity:.65}
+.swl-lock-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@keyframes swl-lock-enter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:430px){
+  .swl-lock{padding:22px;border-radius:24px}
+  .swl-lock-title{font-size:27px}
+  .swl-lock-heading{gap:12px}
+  .swl-lock .swl-lock-key{min-height:72px}
+}
+@media(max-height:700px){
+  .swl-lock{padding:18px 22px}
+  .swl-lock-icon{flex-basis:38px;height:38px;border-radius:12px}
+  .swl-lock-icon svg{width:22px;height:22px}
+  .swl-lock-title{font-size:25px}
+  .swl-lock-description{font-size:13px;margin-top:10px;line-height:1.4}
+  .swl-lock-dots{padding:17px 0 9px}
+  .swl-lock-status{min-height:32px;margin:3px 0 10px}
+  .swl-lock-keypad{gap:9px}
+  .swl-lock .swl-lock-key{min-height:60px;font-size:28px;border-radius:13px}
+}
+@media(prefers-reduced-motion:reduce){.swl-lock[open]{animation:none}.swl-lock *{transition:none!important}}
+body.no-motion .swl-lock[open]{animation:none}
+body.no-motion .swl-lock *{transition:none!important}
