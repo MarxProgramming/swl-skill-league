@@ -143,7 +143,7 @@
     } catch (_) { return null; }
   }
 
-  function bell(context, frequency, start, duration, volume, full = false) {
+  function bell(context, frequency, start, duration, volume, full = false, harmony = [5, 9]) {
     while (voices.size >= MAX_BELLS) retireVoice(voices.values().next().value);
     const gain = context.createGain();
     gain.gain.value = volume;
@@ -152,11 +152,11 @@
     const voice = { gain, start, oscillators: [], partials: [], released: false,
       retiring: false, cleanupTimer: null, ended: 0 };
     voices.add(voice);
-    // Inharmonic metal modes and a very quiet detuned partner produce a rounded
-    // struck bell rather than a pure electronic beep. High modes decay first.
+    // A high crystal bell: no lower-octave body. Quiet chord tones sit above
+    // the strike, while the very highest metal modes fade quickly and softly.
     const modes = full
-      ? [[0.5,.16,.5],[1,.72,1],[1.0018,.17,.85],[2.005,.17,.5],[2.756,.10,.31],[4.04,.035,.18],[5.38,.012,.12]]
-      : [[0.5,.12,.45],[1,.72,1],[1.0022,.14,.8],[2.01,.15,.46],[2.756,.075,.28],[4.06,.025,.17]];
+      ? [[1,.70,1],[1.0018,.10,.82],[2 ** (harmony[0] / 12),.11,.68],[2 ** (harmony[1] / 12),.075,.58],[2.005,.055,.32],[2.756,.013,.19],[3.99,.004,.12]]
+      : [[1,.72,1],[1.0022,.10,.8],[2 ** (7 / 12),.065,.56],[2.005,.06,.3],[2.756,.012,.18],[3.99,.004,.12]];
     try {
       modes.forEach(([ratio, level, decay], index) => {
         const oscillator = context.createOscillator(), partial = context.createGain();
@@ -208,17 +208,19 @@
   function ding(details = {}) {
     // Synchronous fire-and-forget: sounds never gate a score or a network save.
     withAudio((context, start) => bell(context,
-      details.perfect ? 1174.66 : 987.77, start,
+      details.perfect ? 3135.96 : 2637.02, start,
       details.perfect ? 1.7 : 1.35, details.perfect ? .27 : .24,
       Boolean(details.perfect)));
   }
 
   function flourish(token) {
     withAudio((context, start) => {
-      // A clear G–B–D ascent, with an unhurried final bell and a short room tail.
-      [783.99, 987.77, 1174.66].forEach((frequency, index) => {
+      // High C7–E7–G7, 17 semitones above the original chime. Each strike adds
+      // soft upper C-major tones, so the lingering bells form one harmony.
+      [2093.00, 2637.02, 3135.96].forEach((frequency, index) => {
         bell(context, frequency, start + [0, .30, .65][index],
-          [1.5, 1.7, 2.05][index], [.245, .26, .285][index], true);
+          [1.5, 1.7, 2.05][index], [.245, .26, .285][index], true,
+          [[4, 7], [3, 8], [5, 9]][index]);
       });
     }, token);
   }

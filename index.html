@@ -727,8 +727,6 @@ main{padding:28px 0 40px}
   flex-wrap:wrap;
   margin:18px 0 12px
 }
-.cycle-help{font-size:11px;color:var(--muted);margin:0 0 18px}
-.cycle-help b{color:var(--mint)}
 
 /* Skill collections */
 .complex{
@@ -849,8 +847,9 @@ main{padding:28px 0 40px}
 }
 .scoring summary{cursor:pointer;font-weight:750;color:#ded5e9}
 .scoring p{margin-top:10px}
-.marking-guide{margin:0 0 22px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.025);padding:14px 18px;color:var(--muted);font-size:12px;line-height:1.7}
-.marking-guide summary{cursor:pointer;color:var(--text);font-weight:750}
+.marking-guide{margin:0 0 22px;border:1px solid rgba(255,255,255,.065);border-radius:12px;background:transparent;padding:11px 14px;color:#aaa9b3;font-size:12px;line-height:1.7}
+.marking-guide summary{cursor:pointer;color:#95949f;font-weight:500;font-size:11px;transition:color .2s}
+.marking-guide summary:hover,.marking-guide summary:focus-visible{color:var(--text)}
 .marking-guide p{margin:12px 0 0;max-width:78ch}
 .marking-guide strong{color:var(--text)}
 .linking-panel{margin-top:13px;padding:15px 17px;background:rgba(189,155,255,.045);border:1px solid rgba(189,155,255,.13);border-radius:14px}
@@ -1126,7 +1125,6 @@ html:has(body.no-motion){scroll-behavior:auto}
   .tracker-controls .chips{flex:1 1 100%;flex-wrap:nowrap;gap:5px}
   .tracker-controls .chip{font-size:11px;padding:9px 12px;flex:1}
   .tracker-controls>.quiet{margin-left:auto}
-  .cycle-help{font-size:10px}
   .skill-grid{grid-template-columns:1fr;gap:8px}
   .skill{
     min-height:85px;
@@ -1300,10 +1298,6 @@ html:has(body.no-motion){scroll-behavior:auto}
   outline-offset:3px
 }
 .result-filter>span{font-size:10px;color:var(--muted)}
-.cycle-help{font-size:12px;line-height:1.6;margin:0 0 18px}
-.cycle-help .key{display:inline-block;color:var(--text)}
-.cycle-help b{color:var(--purple)}
-.cycle-help b:last-child{color:var(--mint)}
 
 /* One tap advances a skill; the entire card is the control. */
 .skill{
@@ -1465,7 +1459,6 @@ html:has(body.no-motion){scroll-behavior:auto}
     font-size:11px;
     max-width:185px
   }
-  .cycle-help{font-size:11px;margin-bottom:15px}
   .skill-grid{grid-template-columns:1fr;gap:9px}
   .skill{
     display:grid;
@@ -1545,6 +1538,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 .add-gymnast input{min-width:0;width:100%;padding:11px 12px;background:#0d0e13;border:1px solid #ffffff25;border-radius:9px;color:var(--text);font:inherit;font-size:13px}
 .add-gymnast .primary{font-size:12px;padding:12px 14px;margin-top:4px;justify-content:space-between}
 .form-error{color:#ffd4bb;font-size:12px;line-height:1.5}
+.reveal-placement{display:inline-flex;align-items:center;gap:18px;margin-top:17px;padding:11px 15px;border:1px solid rgba(189,155,255,.3);border-radius:11px;background:rgba(189,155,255,.09);color:#e0d2fc;font:inherit;font-size:12px;font-weight:650;cursor:pointer;transition:background .25s,border-color .25s,transform .25s}
+.reveal-placement:hover{background:rgba(189,155,255,.17);border-color:rgba(189,155,255,.65);transform:translateY(-1px)}
+.reveal-placement:active{transform:translateY(0)}
+#placementTitle:focus{outline:none}
 .coach-chips{flex-wrap:wrap}
 .hero .hero-copy h1{font-size:clamp(42px,4.5vw,64px);white-space:normal;letter-spacing:-.065em;line-height:1;max-width:none}
 @media(max-width:600px){
@@ -1555,6 +1552,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
 <link rel="stylesheet" href="./celebration.css">
+<link rel="stylesheet" href="./placement.css">
 </head>
 
 <body>
@@ -1751,16 +1749,22 @@ html:has(body.no-motion){scroll-behavior:auto}
             Strong basics earn the most; advanced skills add smaller gains.
             Skills score independently.
             Upgrades do not tick earlier skills,
-            and a perfect complex celebrates without adding extra skill points.
+            and each completed three-skill group earns a bonus:
+            +5 when all three are Achieved or better, rising to +10 when all three are Perfect.
+            The +10 replaces the +5; they do not stack. This includes the three leaps.
             Linking and presentation earn a separate bonus in each Rolls and Acro complex:
             Good +1, Excellent +2, Perfect +3. Choose one rating; these bonuses do not double.
-            Leaps are scored individually, with a celebration when all three are perfect.
+            Bonuses follow the current marks, so resetting a skill can remove a completion bonus.
+            All three perfect skills also unlock a celebration.
             The ring shows your share of the available points.
             Achieved totals include perfect skills.
           </p>
         </details>
       </div>
     </div>
+  </section>
+  <section id="placementProfile" aria-labelledby="placementTitle" hidden>
+    <div id="placementContent"></div>
   </section>
 </main>
 
@@ -1790,6 +1794,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
 <script src="./startup.js"></script>
 <script src="./celebration.js"></script>
+<script src="./placement.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1929,6 +1934,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     category.tiers.map(([tier, label]) => ({ id: `${category.id}-${tier}`, category: category.id, tier, label }))
   );
   const COMPLEX_IDS = new Set(COMPLEXES.map(complex => complex.id));
+  const SKILL_GROUPS = CATEGORIES.flatMap(category => category.tiers.map(([tier]) => ({ category: category.id, tier })));
   const LINK_STATUS = ['Not rated', 'Good', 'Excellent', 'Perfect'];
 
   const STATUS = ['Not yet', 'Achieved', 'Perfect'];
@@ -2048,6 +2054,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let maxFlushTimer;
 
   let selectedId = null;
+  let currentView = 'dashboard';
   let coachFilter = 'all';
   let categoryFilter = 'all';
   let statusFilter = 'all';
@@ -2104,6 +2111,13 @@ html:has(body.no-motion){scroll-behavior:auto}
     state.marks[id]?.[skill] ?? 0;
   const linkRating = (id, complex) => state.linking?.[id]?.[complex] ?? 0;
 
+  function completionBonus(id, category, tier) {
+    const skills = SKILLS.filter(skill => skill.category === category && skill.tier === tier);
+    if (skills.length !== 3) return 0;
+    if (skills.every(skill => mark(id, skill.id) === 2)) return 10;
+    return skills.every(skill => mark(id, skill.id) > 0) ? 5 : 0;
+  }
+
   function summary(id, category = 'overall') {
     const total = SKILLS
       .filter(skill =>
@@ -2128,6 +2142,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     total.linking = complexes.reduce((points, complex) => points + linkRating(id, complex.id), 0);
     total.points += total.linking;
     total.max += complexes.length * 3;
+    const groups = SKILL_GROUPS.filter(group => category === 'overall' || group.category === category);
+    total.completion = groups.reduce((points, group) => points + completionBonus(id, group.category, group.tier), 0);
+    total.points += total.completion;
+    total.max += groups.length * 10;
     return total;
   }
 
@@ -2555,6 +2573,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function renderBoards() {
+    if (currentView === 'placement') renderPlacementProfile();
     const all = GYMNASTS.map(g => summary(g.id));
 
     if (!hasLoaded) {
@@ -2754,7 +2773,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function skillHTML(skill, index) {
     return `
       <button type="button" class="skill" data-skill-card="${skill.id}"
-        data-skill="${skill.id}" aria-describedby="cycleHelp"
+        data-skill="${skill.id}"
         aria-label="${escapeHTML(skill.name)}: Not yet. Click to mark achieved.">
         <span class="skill-top">
           <span class="skill-index">
@@ -2839,6 +2858,9 @@ html:has(body.no-motion){scroll-behavior:auto}
               <b id="athletePerfect">0</b> perfect
             </span>
           </div>
+          <button class="reveal-placement" type="button" data-reveal-placement aria-label="Reveal placement for ${escapeHTML(gymnast.name)}">
+            Reveal placement <span aria-hidden="true">↗</span>
+          </button>
         </div>
 
         <div class="ring" id="progressRing" role="img">
@@ -2926,11 +2948,6 @@ html:has(body.no-motion){scroll-behavior:auto}
 
         <span id="visibleCount"></span>
       </div>
-
-      <p class="cycle-help" id="cycleHelp">
-        Tap a skill: <b>once ✓ achieved</b> · <b>twice ✓✓ perfect</b> ·
-        a third tap resets it. Perfect earns double.
-      </p>
 
       <details class="marking-guide">
         <summary>ⓘ What counts as achieved or perfect?</summary>
@@ -3098,9 +3115,9 @@ html:has(body.no-motion){scroll-behavior:auto}
         $('athletePanel').querySelector(
           `[data-tier-status="${category.id}-${tier}"]`
         ).textContent = perfect
-          ? '✦ All perfect'
+          ? '✦ All perfect · +10 bonus'
           : done === skills.length
-            ? '✓ All achieved'
+            ? '✓ All achieved · +5 bonus'
             : `${done}/${skills.length} achieved`;
       }
     }
@@ -3197,20 +3214,23 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
+    currentView = view;
     const tracker = view === 'tracker';
+    const placement = view === 'placement';
 
-    $('dashboard').hidden = tracker;
+    $('dashboard').hidden = view !== 'dashboard';
     $('tracker').hidden = !tracker;
-    $('nav').classList.toggle('tracking', tracker);
+    $('placementProfile').hidden = !placement;
+    $('nav').classList.toggle('tracking', tracker || placement);
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
         'aria-pressed',
-        String(button.dataset.view === view)
+        String(button.dataset.view === (placement ? 'tracker' : view))
       );
     });
 
-    $('dashboard').classList.toggle('enter', !tracker);
+    $('dashboard').classList.toggle('enter', view === 'dashboard');
 
     if (scroll) {
       window.scrollTo({
@@ -3220,6 +3240,37 @@ html:has(body.no-motion){scroll-behavior:auto}
 
       $('main').focus({ preventScroll: true });
     }
+  }
+
+  function renderPlacementProfile(animate = false) {
+    if (!selectedId || !hasLoaded || !window.SWLPlacement) return;
+    const focus = document.activeElement;
+    const hadBackFocus = Boolean(focus?.hasAttribute?.('data-back-to-skills'));
+    const hadTitleFocus = focus?.id === 'placementTitle';
+    const gymnast = GYMNASTS.find(item => item.id === selectedId);
+    if (!gymnast) return;
+    window.SWLPlacement.render({
+      gymnast,
+      boards: [{id:'overall',name:'Overall league',icon:'ϟ',color:'#f3ce86'}, ...CATEGORIES]
+        .map(board => ({...board, rows:standings(board.id)})),
+      motionOff: reducedMotion() || !animate
+    });
+    if (hadBackFocus) $('placementContent').querySelector('[data-back-to-skills]')?.focus({preventScroll:true});
+    else if (hadTitleFocus) $('placementTitle')?.focus({preventScroll:true});
+  }
+
+  function revealPlacement() {
+    if (!selectedId || !hasLoaded) return;
+    renderPlacementProfile(true);
+    setView('placement', false);
+    window.scrollTo({top:0,behavior:'instant'});
+    $('placementTitle')?.focus({preventScroll:true});
+  }
+
+  function returnToSkills() {
+    setView('tracker', false);
+    $('athleteSummary')?.scrollIntoView({behavior:'instant',block:'start'});
+    $('athletePanel').querySelector('[data-reveal-placement]')?.focus({preventScroll:true});
   }
 
   function openGymnast(id) {
@@ -3381,7 +3432,9 @@ html:has(body.no-motion){scroll-behavior:auto}
       after === before
     ) return;
 
+    const bonusBefore = completionBonus(gymnastId, skill.category, skill.tier);
     enqueueOperation({ type: 'set_mark', gymnastId, skillId, value: after });
+    const bonusAfter = completionBonus(gymnastId, skill.category, skill.tier);
 
     history.push({
       gymnast: gymnastId,
@@ -3398,7 +3451,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderSaveStatus();
     restoreControlFocus(button);
 
-    const delta = (after - before) * skill.points;
+    const delta = (after - before) * skill.points + bonusAfter - bonusBefore;
 
     if (button.isConnected) effects(
       button.closest('.skill') || button,
@@ -3408,7 +3461,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     toast(
       `${SYMBOL[after]} ${STATUS[after]} · ` +
-      `${delta > 0 ? '+' : '−'}${Math.abs(delta)} pts`,
+      `${delta > 0 ? '+' : '−'}${Math.abs(delta)} pts` +
+      (bonusAfter > bonusBefore ? ` · group bonus now ${bonusAfter} pts` : ''),
       true
     );
 
@@ -3498,6 +3552,12 @@ html:has(body.no-motion){scroll-behavior:auto}
 
       } else if (button.dataset.gymnast) {
         openGymnast(button.dataset.gymnast);
+
+      } else if (button.hasAttribute('data-reveal-placement')) {
+        revealPlacement();
+
+      } else if (button.hasAttribute('data-back-to-skills')) {
+        returnToSkills();
 
       } else if (button.dataset.skill) {
         changeSkill(

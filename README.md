@@ -2,9 +2,15 @@
 
 A static gymnastics tracker connected to the shared Google Sheet. It includes the SWL design, animated podium, instant skill cycling, gymnast creation, undo, backups, and recovery of unsaved edits.
 
-The opening screen animates while scores load, then reveals the league. Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a short whole-app celebration and victory sound. Scoring and background saving stay available throughout. Every new Achieved or Perfect mark has a satisfying bell sound. The Motion and Sound controls let each device choose its preferred experience.
+The opening screen animates while scores load, then reveals the league. Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a short whole-app celebration and victory sound. Scoring and background saving stay available throughout. Every new Achieved or Perfect mark has a bright, high bell sound; full completion uses a high chime with soft complementary harmonies. The Motion and Sound controls let each device choose its preferred experience.
 
-Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six non-leap complexes. The maximum is 288 points (270 for skills plus 18 for linking); a perfect base complex earns 60, an upgraded complex 30, and a pro complex 15.
+Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each skill value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six non-leap complexes. Linking bonuses are not doubled.
+
+Each three-skill Rolls or Acro complex, and the three-leap collection, also earns an automatic completion bonus: 5 points when all three skills are at least Achieved, or 10 when all three are Perfect. The 10-point bonus replaces the 5-point bonus. A mix of Achieved and Perfect earns 5; lowering or clearing a mark recalculates the bonus immediately. Completion bonuses are derived from the existing marks and require no separate saved field.
+
+The maximum is 358 points: 270 for skills, 18 for linking, and 70 for completing all seven groups at Perfect. Category maxima are Rolls 144, Acro 144, and Leaps 70.
+
+Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending, then names alphabetically to resolve equal scores.
 
 ## Publish with GitHub Pages
 
@@ -23,4 +29,4 @@ Anyone with the website link can edit scores. Changes appear immediately and sav
 
 For local checking, serve this folder using any static HTTP server. The website has no hosting-specific runtime dependency; Google Apps Script provides the shared data connection.
 
-SWL marking guide: Achieved means the intended skill would count without downgrade and has at most 0.5 deductions. Perfect allows at most 0.2 deductions. Linking ratings assess transitions, balance and presentation independently of skill marks. Ratings save to the separate Linking tab in the same Sheet and are included in backups, recovery and undo. Older backups preserve existing linking ratings.
+SWL marking guide: Achieved means the intended skill would count without downgrade and has at most 0.5 deductions. Perfect allows at most 0.2 deductions and requires the correct skill shape. Linking ratings assess transitions, balance and presentation independently of skill marks. Ratings save to the separate Linking tab in the same Sheet and are included in backups, recovery and undo. Older backups preserve existing linking ratings.
