@@ -16,6 +16,7 @@
   let status = null;
   let enter = null;
   let previousFocus = null;
+  let keyboardNavigation = false;
   let previousOverflow = null;
   let motionQuery = null;
   let motionPaused = false;
@@ -46,6 +47,7 @@
     clearTimeout(safetyTimer);
     clearTimeout(removalTimer);
     document.removeEventListener('keydown', onKeyDown, true);
+    document.removeEventListener('pointerdown', onPointerDown, true);
     document.removeEventListener('DOMContentLoaded', start);
     window.removeEventListener('storage', onStorage);
     try { motionQuery?.removeEventListener('change', updateMotion); } catch {}
@@ -66,11 +68,12 @@
     try { overlay?.remove(); } catch {}
     overlay = null;
 
-    // Restore a real control if one had focus; otherwise reveal the main landmark.
+    // Keep a previous control's focus. Only keyboard navigation needs a new
+    // landmark focus; automatic/pointer reveals must not outline the whole page.
     if (focusWasInOverlay) {
       const target = previousFocus?.isConnected && previousFocus !== document.body &&
         !previousFocus.closest('[inert]') && !previousFocus.disabled
-        ? previousFocus : document.getElementById('main');
+        ? previousFocus : keyboardNavigation ? document.getElementById('main') : null;
       try { target?.focus({ preventScroll: true }); } catch {}
     }
   }
@@ -100,8 +103,15 @@
     minimumTimer = setTimeout(leave, remaining);
   }
 
+  function onPointerDown() {
+    if (!finished) keyboardNavigation = false;
+  }
+
   function onKeyDown(event) {
     if (finished || !overlay) return;
+    if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(event.key)) {
+      keyboardNavigation = true;
+    }
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
@@ -157,10 +167,15 @@
         </div>`;
       status = overlay.querySelector('#swlStartupStatus');
       enter = overlay.querySelector('.swl-startup__enter');
-      enter.addEventListener('click', leave);
+      enter.addEventListener('click', event => {
+        // Keyboard and assistive-technology activation has no pointer clicks.
+        if (event?.detail === 0) keyboardNavigation = true;
+        leave();
+      });
       document.body.append(overlay);
       updateMotion();
       document.addEventListener('keydown', onKeyDown, true);
+      document.addEventListener('pointerdown', onPointerDown, true);
       window.addEventListener('storage', onStorage);
       try { motionQuery?.addEventListener('change', updateMotion); } catch {}
       try { overlay.focus({ preventScroll: true }); } catch {}

@@ -2,9 +2,10 @@
   'use strict';
   if (window.SWLCelebration?.version === 1) return;
   const SOUND_KEY = 'swl-celebration-sound';
+  const CELEBRATION_MS = 5800;
   const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const animations = new Set(), voices = new Set();
-  let overlay = null, cleanupTimer = null, generation = 0;
+  let overlay = null, cleanupTimer = null, generation = 0, fadeStartsAt = 0;
   let audioContext = null, masterGain = null, soundButton = null, motionObserver = null;
   let soundEnabled = true;
   try { soundEnabled = localStorage.getItem(SOUND_KEY) !== 'off'; } catch (_) {}
@@ -29,9 +30,12 @@
   function clearVisuals() {
     clearTimeout(cleanupTimer);
     cleanupTimer = null;
-    cancelAnimations();
+    // Detach first, so cancelling retained final frames cannot reveal the
+    // banner's underlying styles for even a single painted frame.
     overlay?.remove();
     overlay = null;
+    fadeStartsAt = 0;
+    cancelAnimations();
     document.body?.classList.remove('swl-celebrating');
   }
 
@@ -54,9 +58,11 @@
   function animate(element, frames, options = {}) {
     if (!element?.animate || motionOff()) return;
     try {
-      const animation = element.animate(frames, { duration: 3400, easing: 'cubic-bezier(.22,.75,.24,1)', ...options });
+      const animation = element.animate(frames, { duration: 5600, easing: 'ease-in-out', fill: 'both', ...options });
       animations.add(animation);
-      animation.finished.then(() => animations.delete(animation), () => animations.delete(animation));
+      // Completed animations retain their final frames. Keep those handles so
+      // stop/restart and reduced motion can release every retained effect.
+      animation.finished.catch(() => animations.delete(animation));
     } catch (_) {}
   }
 
@@ -76,15 +82,15 @@
     } catch (_) { return null; }
   }
 
-  function tone(context, frequency, start, duration, volume, type = 'triangle') {
+  function tone(context, frequency, start, duration, volume) {
     const oscillator = context.createOscillator(), gain = context.createGain();
     const voice = { oscillator, gain };
     voices.add(voice);
-    oscillator.type = type;
+    oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(frequency, start);
     gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(volume, start + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    gain.gain.linearRampToValueAtTime(volume, start + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     oscillator.connect(gain); gain.connect(masterGain);
     oscillator.onended = () => {
       voices.delete(voice);
@@ -100,11 +106,13 @@
       if (token !== generation || !soundEnabled || context.state !== 'running') return;
       try {
         const now = context.currentTime + 0.015;
-        // An original, short ascending figure, followed by a warm major chord.
-        [523.25,659.25,783.99,1046.5,1318.51].forEach((frequency, index) =>
-          tone(context, frequency, now + index * 0.115, index === 4 ? 0.48 : 0.22, 0.26));
-        [261.63,523.25,659.25,783.99].forEach(frequency =>
-          tone(context, frequency, now + 0.61, 0.68, 0.16, 'sine'));
+        // Three distinct, ascending bell strikes. A quiet, short inharmonic
+        // partial adds a bright ding without a low chord or external samples.
+        [1046.5,1318.51,1567.98].forEach((frequency, index) => {
+          const onset = now + index * 0.33;
+          tone(context, frequency, onset, index === 2 ? 0.95 : 0.72, index === 2 ? 0.30 : 0.27);
+          tone(context, frequency * 2.756, onset, 0.19, 0.055);
+        });
       } catch (_) { silence(); }
     };
     if (context.state === 'running') start();
@@ -128,11 +136,13 @@
 
   function settleMotion() {
     if (!overlay || !motionOff() || overlay.classList.contains('is-static')) return;
+    // A late motion toggle must not re-show a banner that is already fading.
+    if (Date.now() >= fadeStartsAt) { clearVisuals(); return; }
     cancelAnimations();
     overlay.classList.add('is-static');
     document.body.classList.remove('swl-celebrating');
     // Keep the original cleanup deadline: a late motion toggle must not extend
-    // the celebration beyond its 3.65-second maximum.
+    // the celebration beyond its 5.8-second maximum.
   }
 
   function play(details = {}) {
@@ -142,7 +152,8 @@
     // user activation. Audio availability never controls the scoring action.
     flourish(token);
     if (!document.body) return;
-    const quiet = motionOff();
+    const quiet = motionOff() || typeof document.body.animate !== 'function';
+    fadeStartsAt = quiet ? Infinity : Date.now() + 4560;
     overlay = make(`swl-celebration${quiet ? ' is-static' : ''}`);
     const veil = make('swl-celebration-veil'), halo = make('swl-celebration-halo');
     const ring = make('swl-celebration-ring'), limeRing = make('swl-celebration-ring swl-celebration-ring--lime');
@@ -188,24 +199,24 @@
         animate(panel,[{transform:'translate3d(0,0,0) rotate(0)'},
           {transform:`translate3d(0,-9px,0) rotate(${direction*1.8}deg)`},
           {transform:`translate3d(0,4px,0) rotate(${-direction*.9}deg)`},
-          {transform:'translate3d(0,0,0) rotate(0)'}],{duration:2450,delay:100+index*65});
+          {transform:'translate3d(0,0,0) rotate(0)'}],{duration:4100,delay:160+index*90});
       });
-      animate(banner,[{opacity:0,transform:'translate3d(0,36px,0) scale(.77) rotate(-4deg)',offset:0},
-        {opacity:1,transform:'translate3d(0,-4px,0) scale(1.025) rotate(1deg)',offset:.16},
-        {opacity:1,transform:'translate3d(0,0,0) scale(1) rotate(0)',offset:.3},
+      animate(banner,[{opacity:0,transform:'translate3d(0,30px,0) scale(.84) rotate(-3deg)',offset:0,easing:'cubic-bezier(.22,.75,.24,1)'},
+        {opacity:1,transform:'translate3d(0,-3px,0) scale(1.015) rotate(.5deg)',offset:.14,easing:'ease-in-out'},
+        {opacity:1,transform:'translate3d(0,0,0) scale(1) rotate(0)',offset:.26},
         {opacity:1,transform:'translate3d(0,0,0) scale(1) rotate(0)',offset:.8},
-        {opacity:0,transform:'translate3d(0,-25px,0) scale(.96) rotate(-1deg)',offset:1}],{duration:3500});
-      animate(veil,[{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.78},{opacity:0}],{duration:3550});
+        {opacity:0,transform:'translate3d(0,-18px,0) scale(.975) rotate(-.5deg)',offset:1}],{duration:5700,easing:'linear'});
+      animate(veil,[{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],{duration:5700,easing:'linear'});
       animate(halo,[{opacity:0,transform:'translate(-50%,-50%) scale(.5)'},{opacity:1,offset:.3,transform:'translate(-50%,-50%) scale(1)'},{opacity:0,transform:'translate(-50%,-50%) scale(1.25)'}]);
       animate(ring,[{opacity:0,transform:'translate(-50%,-50%) rotate(-48deg) scale(.7)'},{opacity:1,offset:.25},{opacity:0,transform:'translate(-50%,-50%) rotate(42deg) scale(1.2)'}]);
       animate(limeRing,[{opacity:0,transform:'translate(-50%,-50%) rotate(52deg) scale(.72)'},{opacity:1,offset:.3},{opacity:0,transform:'translate(-50%,-50%) rotate(-38deg) scale(1.25)'}]);
       animate(orbit,[{opacity:0,transform:'translate(-50%,-50%) rotate(-18deg) scale(.8)'},{opacity:1,offset:.2},{opacity:1,offset:.7},{opacity:0,transform:'translate(-50%,-50%) rotate(102deg) scale(1.13)'}]);
       animate(ribbon,[{opacity:0,transform:'translate3d(-40%,30px,0) rotate(-24deg)'},{opacity:.8,offset:.25},{opacity:0,transform:'translate3d(35%,-20px,0) rotate(-13deg)'}]);
       animate(limeRibbon,[{opacity:0,transform:'translate3d(40%,-20px,0) rotate(23deg)'},{opacity:.8,offset:.28},{opacity:0,transform:'translate3d(-35%,20px,0) rotate(12deg)'}]);
-      animate(sweep,[{transform:'translateX(-70%) rotate(-22deg)'},{transform:'translateX(70%) rotate(-22deg)'}],{duration:2200,delay:420});
-      Array.from(medals.children).forEach((medal,index) => animate(medal,[{transform:'scale(.3) rotate(-45deg)',opacity:0},{transform:'scale(1.15) rotate(10deg)',opacity:1,offset:.65},{transform:'scale(1) rotate(0)',opacity:1}],{duration:600,delay:190+index*90,fill:'backwards'}));
+      animate(sweep,[{transform:'translateX(-70%) rotate(-22deg)'},{transform:'translateX(70%) rotate(-22deg)'}],{duration:3400,delay:650});
+      Array.from(medals.children).forEach((medal,index) => animate(medal,[{transform:'scale(.3) rotate(-45deg)',opacity:0},{transform:'scale(1.1) rotate(7deg)',opacity:1,offset:.65},{transform:'scale(1) rotate(0)',opacity:1}],{duration:850,delay:240+index*120}));
     }
-    cleanupTimer = setTimeout(clearVisuals, quiet ? 2200 : 3650);
+    cleanupTimer = setTimeout(clearVisuals, quiet ? 3200 : CELEBRATION_MS);
   }
 
   function initialize() {

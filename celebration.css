@@ -7,6 +7,14 @@ body.swl-celebrating{overflow-x:clip}
   position:fixed;inset:0;z-index:90;overflow:hidden;display:grid;place-items:center;
   isolation:isolate;contain:layout style;--celebration-lime:#d5fa70;--celebration-purple:#bd9bff;
 }
+/* Faded effects stay hidden even if an animation is cancelled or completes.
+   Static reduced-motion celebrations intentionally use their normal opacity. */
+.swl-celebration:not(.is-static) .swl-celebration-banner,
+.swl-celebration:not(.is-static) .swl-celebration-veil,
+.swl-celebration:not(.is-static) .swl-celebration-halo,
+.swl-celebration:not(.is-static) .swl-celebration-ring,
+.swl-celebration:not(.is-static) .swl-celebration-orbit,
+.swl-celebration:not(.is-static) .swl-celebration-ribbon{opacity:0}
 .swl-celebration-veil{
   position:absolute;inset:0;z-index:-2;
   background:radial-gradient(ellipse at 50% 48%,#302341a8 0,#1713228c 37%,#0d0e1326 73%);

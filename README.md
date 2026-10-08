@@ -4,6 +4,8 @@ A static gymnastics tracker connected to the shared Google Sheet. It includes th
 
 The opening screen animates while scores load, then reveals the league. Completing all three skills at Perfect in a Rolls or Acro base, upgraded, or pro upgraded complex starts a short whole-app celebration and victory sound. Scoring and background saving stay available throughout. The Motion and Sound controls let each device choose its preferred experience.
 
+Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each value. Existing marks are retained and totals use these values, including fractional points. The maximum is 270 points; a perfect base complex earns 60, an upgraded complex 30, and a pro complex 15.
+
 ## Publish with GitHub Pages
 
 1. Set `appsScriptUrl` in `config.js` to the public Google Apps Script web-app `/exec` URL.

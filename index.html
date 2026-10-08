@@ -44,6 +44,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{
   outline:3px solid var(--mint);
   outline-offset:4px
 }
+/* These are reading/navigation targets, not interactive controls. */
+#main[tabindex="-1"]:focus,#athleteTitle[tabindex="-1"]:focus{outline:none}
 button:active:not(:disabled){transform:scale(.98)}
 h1,h2,h3,h4,p{margin:0}
 [hidden]{display:none!important}
@@ -1722,14 +1724,15 @@ html:has(body.no-motion){scroll-behavior:auto}
           <summary>How scoring works</summary>
           <p>
             Base skills and leaps: 10 points.
-            Upgrades: 20. Pro upgrades: 30.
+            Upgrades: 5. Pro upgrades: 2.5.
             A perfect mark earns double, replacing the achieved score.
           </p>
           <p>
+            Strong basics earn the most; advanced skills add smaller gains.
             Skills score independently.
             Upgrades do not tick earlier skills,
             and completed complexes add no bonus.
-            The ring shows points out of 780.
+            The ring shows your share of the available points.
             Achieved totals include perfect skills.
           </p>
         </details>
@@ -1883,7 +1886,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
   ];
 
-  const POINTS = { base: 10, upgrade: 20, pro: 30 };
+  const POINTS = { base: 10, upgrade: 5, pro: 2.5 };
 
   const SKILLS = CATEGORIES.flatMap(category =>
     category.tiers.flatMap(([tier, label, names]) =>
@@ -2480,9 +2483,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     const step = now => {
       const progress = Math.min((now - start) / 420, 1);
 
-      element.textContent = Math.round(
-        from + (to - from) * (1 - Math.pow(1 - progress, 3))
-      ).toLocaleString('en-GB');
+      const increment = Number.isInteger(from) && Number.isInteger(to) ? 1 : .5;
+      const interpolated = from + (to - from) * (1 - Math.pow(1 - progress, 3));
+      const displayed = progress === 1 ? to : Math.round(interpolated / increment) * increment;
+      element.textContent = displayed.toLocaleString('en-GB');
 
       if (progress < 1 && element.isConnected) {
         element._frame = requestAnimationFrame(step);
@@ -2779,7 +2783,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
           <div aria-hidden="true">
             <strong id="athletePoints">0</strong>
-            <small>of 780 pts</small>
+            <small>of ${summary(selectedId).max} pts</small>
           </div>
         </div>
       </section>
