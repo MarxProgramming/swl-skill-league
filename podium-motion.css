@@ -4,18 +4,21 @@
   --podium-bright: 255 241 195;
   --podium-phase: -4s;
   --podium-speed: 19s;
+  --podium-sheen-phase: 0s;
 }
 .ranking .rank-row.medal.silver {
   --podium-rgb: 191 211 239;
   --podium-bright: 241 248 255;
   --podium-phase: -11s;
   --podium-speed: 23s;
+  --podium-sheen-phase: -12s;
 }
 .ranking .rank-row.medal.bronze {
   --podium-rgb: 225 153 116;
   --podium-bright: 255 219 187;
   --podium-phase: -17s;
   --podium-speed: 21s;
+  --podium-sheen-phase: -6s;
 }
 
 /* The moving surfaces sit behind names and scores, inside each isolated card. */
@@ -86,8 +89,8 @@
     rgb(var(--podium-rgb) / .1) 56%,
     transparent 76%);
   transform: translate3d(0, 0, 0) skewX(-13deg);
-  animation: swl-podium-sheen 13s cubic-bezier(.35, 0, .65, 1) infinite;
-  animation-delay: var(--podium-phase);
+  animation: swl-podium-sheen 18s cubic-bezier(.35, 0, .65, 1) infinite;
+  animation-delay: var(--podium-sheen-phase);
 }
 
 /* The rank remains decorative; every readable name and score stays unanimated. */
@@ -158,8 +161,8 @@
   height: 220%;
   opacity: 0;
   background: linear-gradient(100deg, transparent 30%, rgb(var(--podium-bright) / .12) 50%, transparent 70%);
-  animation: swl-podium-sheen 24s cubic-bezier(.35, 0, .65, 1) infinite;
-  animation-delay: var(--podium-phase);
+  animation: swl-podium-sheen 18s cubic-bezier(.35, 0, .65, 1) infinite;
+  animation-delay: var(--podium-sheen-phase);
 }
 .board:not(.overall) .rank-row.medal .place {
   text-shadow: 0 0 13px rgb(var(--podium-rgb) / .15);
@@ -171,11 +174,14 @@
   100% { transform: translate3d(-1%, 7%, 0) rotate(28deg) scale(1.04); }
 }
 @keyframes swl-podium-sheen {
+  /* A five-second sweep, then darkness until the next 18-second cycle.
+     Independent sheen phases start gold / silver / bronze at 0 / 6 / 12s;
+     the one-second gaps prevent any two bright sweeps from overlapping. */
   0% { transform: translate3d(0, 0, 0) skewX(-13deg); opacity: 0; }
-  16% { opacity: .12; }
-  48% { opacity: .75; }
-  76% { opacity: .18; }
-  100% { transform: translate3d(470%, 0, 0) skewX(-13deg); opacity: 0; }
+  6% { opacity: .12; }
+  14% { opacity: .75; }
+  22% { opacity: .18; }
+  28%, 100% { transform: translate3d(470%, 0, 0) skewX(-13deg); opacity: 0; }
 }
 @keyframes swl-podium-rank {
   from { opacity: .38; }

@@ -1538,6 +1538,18 @@ html:has(body.no-motion){scroll-behavior:auto}
 .add-gymnast input{min-width:0;width:100%;padding:11px 12px;background:#0d0e13;border:1px solid #ffffff25;border-radius:9px;color:var(--text);font:inherit;font-size:13px}
 .add-gymnast .primary{font-size:12px;padding:12px 14px;margin-top:4px;justify-content:space-between}
 .form-error{color:#ffd4bb;font-size:12px;line-height:1.5}
+.scoring-guide-button{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;min-height:36px;border:1px solid #ffffff14;border-radius:9px;background:#ffffff03;color:#b5b0c1;font:inherit;font-size:11px;white-space:nowrap;cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.scoring-guide-button:hover{color:var(--text);border-color:#bd9bff55;background:#bd9bff0a}
+.score-guide{position:fixed;inset:0;margin:auto;width:min(600px,calc(100vw - 30px));max-height:calc(100dvh - 44px);overflow:auto;padding:0;border:1px solid #bd9bff40;border-radius:22px;background:#181820;color:var(--text);box-shadow:0 30px 100px #0009}
+.score-guide::backdrop{background:#090a10b8;backdrop-filter:blur(7px)}
+.score-guide-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:23px 25px 17px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#181820;z-index:1}
+.score-guide-head h2{font-size:23px;letter-spacing:-.045em;font-weight:850}
+.score-guide-close{display:grid;place-items:center;flex-shrink:0;width:34px;height:34px;border:1px solid #ffffff1a;border-radius:10px;background:#ffffff06;color:var(--muted);font-size:20px;cursor:pointer}
+.score-guide ul{margin:0;padding:21px 27px 24px 44px;display:grid;gap:17px;font-size:13px;line-height:1.65;color:#b7b3c2}
+.score-guide li::marker{color:var(--mint)}
+.score-guide strong{color:#f1eef7;font-weight:750}
+.score-guide .guide-why{display:block;margin-top:5px;color:#a8a3b4;font-size:12px}
+@media(max-width:600px){.score-guide-head{padding:20px 19px 15px}.score-guide ul{padding:19px 22px 23px 37px;font-size:12px;gap:15px}.score-guide-head h2{font-size:21px}}
 .reveal-placement{display:inline-flex;align-items:center;gap:18px;margin-top:17px;padding:11px 15px;border:1px solid rgba(189,155,255,.3);border-radius:11px;background:rgba(189,155,255,.09);color:#e0d2fc;font:inherit;font-size:12px;font-weight:650;cursor:pointer;transition:background .25s,border-color .25s,transform .25s}
 .reveal-placement:hover{background:rgba(189,155,255,.17);border-color:rgba(189,155,255,.65);transform:translateY(-1px)}
 .reveal-placement:active{transform:translateY(0)}
@@ -1620,29 +1632,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </div>
 
   <section id="dashboard" aria-label="Leaderboards">
-    <div class="hero">
-      <div class="hero-copy">
-        <h1>SWL <span>SKILL LEAGUE</span></h1>
-      </div>
-
-      <div class="hero-side">
-        <div class="league-stamp">
-          <div>
-            <b id="gymnastCount">—</b>
-            <small>Gymnasts</small>
-          </div>
-          <div>
-            <b>21</b>
-            <small>Skills</small>
-          </div>
-        </div>
-
-        <button class="primary" data-view="tracker">
-          Record skills
-          <span aria-hidden="true">↗</span>
-        </button>
-      </div>
-    </div>
+    <h1 class="sr">Leaderboards</h1>
 
     <div class="stats">
       <div class="stat">
@@ -1672,7 +1662,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     <div class="section-head">
       <h2>The standings</h2>
-      <span class="live">Your squad. In motion.</span>
+      <button class="scoring-guide-button" id="scoringGuideButton" type="button" aria-haspopup="dialog" aria-controls="scoringGuide"><span aria-hidden="true">ⓘ</span> Scoring guide</button>
     </div>
 
     <p class="note empty-note" id="emptyNote">
@@ -1775,6 +1765,21 @@ html:has(body.no-motion){scroll-behavior:auto}
     <button class="quiet" id="refreshButton">↻ Refresh scores</button>
   </div>
 </footer>
+
+<dialog class="score-guide" id="scoringGuide" aria-labelledby="scoringGuideTitle">
+  <div class="score-guide-head">
+    <h2 id="scoringGuideTitle">How the league works</h2>
+    <button class="score-guide-close" type="button" data-close-guide aria-label="Close scoring guide" autofocus>×</button>
+  </div>
+  <ul>
+    <li><strong>The top five are on show.</strong> Each board has a blurred glimpse of sixth place. Press a visible name to open their skills.</li>
+    <li><strong>Good foundations earn more.</strong> Base skills and leaps earn <strong>10 points</strong>, upgrades <strong>5</strong>, and pro upgrades <strong>2.5</strong>.<span class="guide-why">Harder skills add smaller gains. This rewards strong basics and gives gymnasts building their foundations a chance to keep up with more advanced gymnasts.</span></li>
+    <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
+    <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+5</strong>. All three Perfect earn <strong>+10 instead</strong>. This includes leaps. The bonus follows the current marks.</li>
+    <li><strong>Controlled linking and presentation earn extra.</strong> In each Rolls or Acro complex, choose Good <strong>+1</strong>, Excellent <strong>+2</strong>, or Perfect <strong>+3</strong>. Judge smooth transitions, balance and presentation. Leaps have no linking rating.</li>
+    <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically.</li>
+  </ul>
+</dialog>
 
 <div id="toast" class="toast">
   <p
@@ -2713,7 +2718,6 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     const coaches = [...new Set(GYMNASTS.map(gymnast => gymnast.coach))];
     if (coachFilter !== 'all' && !coaches.includes(coachFilter.slice(6))) coachFilter = 'all';
-    $('gymnastCount').textContent = hasLoaded ? String(GYMNASTS.length) : '—';
     $('coachChips').innerHTML = [['all', 'All'], ...coaches.map(coach => ['group:' + coach, coach])]
       .map(([value, label]) => `<button class="chip" data-coach="${escapeHTML(value)}" aria-pressed="${coachFilter === value}">${escapeHTML(label)}</button>`).join('');
     $('coachOptions').innerHTML = [...new Set(['Marx', 'Dan', ...coaches])]
@@ -3550,6 +3554,12 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (button.dataset.view) {
         setView(button.dataset.view);
 
+      } else if (button.id === 'scoringGuideButton') {
+        $('scoringGuide').showModal();
+
+      } else if (button.hasAttribute('data-close-guide')) {
+        $('scoringGuide').close();
+
       } else if (button.dataset.gymnast) {
         openGymnast(button.dataset.gymnast);
 
@@ -3658,6 +3668,14 @@ html:has(body.no-motion){scroll-behavior:auto}
   });
 
   $('search').addEventListener('input', renderRoster);
+
+  $('scoringGuide').addEventListener('click', event => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (event.target === event.currentTarget &&
+        (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) {
+      event.currentTarget.close();
+    }
+  });
 
   document.addEventListener('change', event => {
     if (event.target.id === 'statusFilter') {

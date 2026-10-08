@@ -1,71 +1,42 @@
 .swl-sound-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
 .swl-sound-toggle .swl-sound-icon{font-size:17px;line-height:1;color:var(--mint,#d5fa70)}
 .swl-sound-toggle[aria-pressed="false"] .swl-sound-icon{color:var(--muted,#a9a8ba)}
-body.swl-celebrating{overflow-x:clip}
 .swl-celebration,.swl-celebration *{pointer-events:none!important;user-select:none}
 .swl-celebration{
   position:fixed;inset:0;z-index:90;overflow:hidden;display:grid;place-items:center;
-  isolation:isolate;contain:layout style;--celebration-lime:#d5fa70;--celebration-purple:#bd9bff;
+  isolation:isolate;contain:layout style;--celebration-lime:#d5fa70;--celebration-gold:#ffdc79;
 }
-/* Faded effects stay hidden even if an animation is cancelled or completes.
-   Static reduced-motion celebrations intentionally use their normal opacity. */
+/* Final frames cannot flash back when an effect finishes or is cancelled.
+   Static reduced-motion celebrations deliberately use their normal opacity. */
 .swl-celebration:not(.is-static) .swl-celebration-banner,
 .swl-celebration:not(.is-static) .swl-celebration-veil,
-.swl-celebration:not(.is-static) .swl-celebration-halo,
-.swl-celebration:not(.is-static) .swl-celebration-ring,
-.swl-celebration:not(.is-static) .swl-celebration-orbit,
-.swl-celebration:not(.is-static) .swl-celebration-ribbon{opacity:0}
+.swl-confetti{opacity:0}
 .swl-celebration-veil{
-  position:absolute;inset:0;z-index:-2;
-  background:radial-gradient(ellipse at 50% 48%,#302341a8 0,#1713228c 37%,#0d0e1326 73%);
+  position:absolute;inset:0;z-index:0;
+  background:radial-gradient(ellipse at 50% 45%,#182213b8 0,#11171175 38%,#0d0e131a 77%);
 }
-.swl-celebration-halo{
-  position:absolute;left:50%;top:48%;width:min(94vw,890px);aspect-ratio:1;
-  transform:translate(-50%,-50%);border-radius:50%;z-index:-1;
-  background:radial-gradient(circle,#bd9bff15 0,#bd9bff0c 35%,transparent 66%);
+.swl-celebration-confetti{position:absolute;inset:0;overflow:hidden;z-index:3;perspective:1000px}
+.swl-confetti{
+  display:block;position:absolute;top:0;border-radius:1px;transform-origin:center;
+  box-shadow:0 0 5px #d8ff6b20;
 }
-.swl-celebration-ring{
-  position:absolute;left:50%;top:48%;width:min(110vw,1050px);height:min(44vw,390px);
-  transform:translate(-50%,-50%) rotate(-28deg);border:2px solid #bd9bff70;border-radius:50%;
-  box-shadow:inset 0 0 28px #bd9bff13,0 0 28px #bd9bff13;z-index:-1;
+.swl-confetti--gold{
+  background:linear-gradient(115deg,#fff6bd 0%,#ffdb64 22%,#d79826 49%,#fff0a2 68%,#f8c44c 100%);
+  box-shadow:0 0 5px #ffd46728;
 }
-.swl-celebration-ring--lime{
-  width:min(96vw,870px);height:min(53vw,460px);border-color:#d5fa706b;
-  transform:translate(-50%,-50%) rotate(28deg);box-shadow:inset 0 0 24px #d5fa7012,0 0 24px #d5fa7012;
-}
-.swl-celebration-orbit{
-  position:absolute;left:50%;top:48%;width:min(86vw,750px);aspect-ratio:1;
-  transform:translate(-50%,-50%);z-index:1;
-}
-.swl-celebration-star{
-  position:absolute;color:var(--celebration-lime);font-size:clamp(20px,4.3vw,47px);
-  line-height:1;text-shadow:0 0 26px #d5fa7028;
-}
-.swl-celebration-star:nth-child(1){left:48%;top:0}
-.swl-celebration-star:nth-child(2){left:94%;top:30%;color:var(--celebration-purple);font-size:23px}
-.swl-celebration-star:nth-child(3){left:83%;top:83%;font-size:30px}
-.swl-celebration-star:nth-child(4){left:22%;top:95%;color:var(--celebration-purple);font-size:24px}
-.swl-celebration-star:nth-child(5){left:0;top:48%;font-size:34px}
-.swl-celebration-star:nth-child(6){left:14%;top:12%;color:#efe6ff;font-size:18px}
-.swl-celebration-ribbon{
-  position:absolute;left:-25%;top:30%;width:150%;height:7px;border-radius:100%;z-index:-1;
-  background:linear-gradient(90deg,transparent 5%,#bd9bff20 20%,#cdb7fabe 46%,#f5edffba 51%,#bd9bff25 72%,transparent 95%);
-  transform:rotate(-19deg);box-shadow:0 9px 0 #bd9bff0b;
-}
-.swl-celebration-ribbon--lime{top:69%;height:4px;transform:rotate(16deg);background:linear-gradient(90deg,transparent,#d5fa7094 45%,#eef9cdaa 52%,transparent)}
+.swl-confetti--green{background:linear-gradient(115deg,#f2ffd4 0%,#cfff54 25%,#69df3b 49%,#e9ffad 69%,#a7f14c 100%)}
+.swl-confetti--diamond{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border-radius:0}
+.swl-confetti--foil{border-radius:1px 2px 1px 2px}
+.swl-confetti--tile{border-radius:2px}
 .swl-celebration-banner{
-  position:relative;width:min(650px,calc(100vw - 40px));text-align:center;padding:28px 24px 30px;
-  border:1px solid #d6c2ff63;border-radius:30px;
-  background:linear-gradient(140deg,#383041ed,#17141feF 42%,#232129f2 77%,#443b52eb);
-  box-shadow:0 35px 120px #0009,0 0 0 7px #bd9bff08,inset 0 1px 0 #fff3;
+  position:relative;width:min(580px,calc(100vw - 56px));text-align:center;padding:28px 24px 30px;
+  border:1px solid #e3dc9a68;border-radius:30px;
+  background:linear-gradient(140deg,#34382ced,#171b19f2 43%,#242827f2 78%,#39342aeb);
+  box-shadow:0 28px 100px #0008,0 0 0 6px #c4f57507,inset 0 1px 0 #fff3;
   overflow:hidden;z-index:2;
 }
 .swl-celebration-banner:before{
-  content:"";position:absolute;inset:7px;border:1px solid #dcd0eb16;border-radius:23px;
-}
-.swl-celebration-sweep{
-  position:absolute;inset:-80% -40%;transform:translateX(-120%) rotate(-22deg);
-  background:linear-gradient(90deg,transparent 40%,#eadfff13 47%,#fff1 50%,#e5dded0a 53%,transparent 60%);
+  content:"";position:absolute;inset:7px;border:1px solid #e8e7c316;border-radius:23px;
 }
 .swl-celebration-medals{display:flex;justify-content:center;gap:9px;margin-bottom:17px}
 .swl-celebration-medal{
@@ -78,17 +49,13 @@ body.swl-celebrating{overflow-x:clip}
 .swl-celebration-title span{display:block}
 .swl-celebration-title span:first-child{color:var(--celebration-lime)}
 .swl-celebration-title span:last-child{
-  color:#eee3ff;background:linear-gradient(130deg,#fff8ff 4%,#bd9bff 28%,#f9f1ff 51%,#918396 77%,#e4d6f8 98%);
+  color:#ffe9a6;background:linear-gradient(130deg,#fff4cc 4%,#f2cf71 29%,#fff6d8 51%,#c29e47 77%,#ffedb0 98%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
-.swl-celebration-name{font-size:clamp(16px,3vw,23px);font-weight:800;line-height:1.25;margin:22px 0 7px;color:#fbf8ff;overflow-wrap:anywhere}
-.swl-celebration-detail{font-size:12px;letter-spacing:.06em;color:#c6bad6;line-height:1.5;overflow-wrap:anywhere}
+.swl-celebration-name{font-size:clamp(16px,3vw,23px);font-weight:800;line-height:1.25;margin:22px 0 7px;color:#fffdf5;overflow-wrap:anywhere}
+.swl-celebration-detail{font-size:12px;letter-spacing:.06em;color:#c5ccbe;line-height:1.5;overflow-wrap:anywhere}
 .swl-celebration-caption{font-size:10px;font-weight:850;letter-spacing:.19em;text-transform:uppercase;color:var(--celebration-lime);margin-top:16px}
-.swl-celebration.is-static .swl-celebration-ring,
-.swl-celebration.is-static .swl-celebration-orbit,
-.swl-celebration.is-static .swl-celebration-ribbon,
-.swl-celebration.is-static .swl-celebration-halo,
-.swl-celebration.is-static .swl-celebration-sweep{display:none}
+.swl-celebration.is-static .swl-celebration-confetti{display:none}
 .swl-celebration.is-static .swl-celebration-veil{background:transparent}
 .swl-celebration.is-static{align-items:start;padding-top:max(105px,20vh)}
 .swl-celebration.is-static .swl-celebration-banner{width:min(440px,calc(100vw - 32px));padding:19px 24px 21px;border-radius:22px}
@@ -102,7 +69,7 @@ body.swl-celebrating{overflow-x:clip}
   .swl-sound-toggle{width:38px;min-height:40px;padding:0}
   .swl-sound-toggle .swl-sound-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
   .swl-celebration-banner{padding:23px 17px 25px;border-radius:25px}
-  .swl-celebration-ring{height:60vw}
-  .swl-celebration-ring--lime{height:80vw}
   .swl-celebration-caption{letter-spacing:.13em}
 }
+@media(prefers-reduced-motion:reduce){.swl-celebration-confetti{display:none}}
+body.no-motion .swl-celebration-confetti{display:none}

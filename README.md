@@ -1,8 +1,10 @@
 # SWL Skill League
 
-A static gymnastics tracker connected to the shared Google Sheet. It includes the SWL design, animated podium, instant skill cycling, gymnast creation, undo, backups, and recovery of unsaved edits.
+A static gymnastics tracker connected to the shared Google Sheet. It includes the SWL design, instant skill cycling, gymnast creation, undo, backups, and recovery of unsaved edits.
 
-The opening screen animates while scores load, then reveals the league. Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a short whole-app celebration and victory sound. Scoring and background saving stay available throughout. Every new Achieved or Perfect mark has a bright, high bell sound; full completion uses a high chime with soft complementary harmonies. The Motion and Sound controls let each device choose its preferred experience.
+After the opening screen, the main page goes directly to the leaderboards, with a small Scoring guide button. Each board shows the top five and a softly blurred sixth-place preview; selecting a gymnast opens their skills. The podium medals gleam in a staggered gold, silver, then bronze sequence.
+
+Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a green-and-gold confetti overlay, a result card, and a victory sound. The page stays still and interactive while the overlay animates, and background saving continues. New Achieved and Perfect marks use very high bell tones, while completion adds soft complementary high harmonies. Reduced motion shows a static result card without confetti. The Motion and Sound controls let each device choose its preferred experience.
 
 Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each skill value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six non-leap complexes. Linking bonuses are not doubled.
 
