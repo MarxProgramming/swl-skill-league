@@ -3,10 +3,12 @@
   if (window.SWLCelebration?.version === 1) return;
   const SOUND_KEY = 'swl-celebration-sound';
   const CELEBRATION_MS = 5800;
+  const MAX_BELLS = 6, MASTER_LEVEL = 0.23;
   const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const animations = new Set(), voices = new Set();
+  const animations = new Set(), voices = new Set(), retiringVoices = new Set();
   let overlay = null, cleanupTimer = null, generation = 0, fadeStartsAt = 0;
-  let audioContext = null, masterGain = null, soundButton = null, motionObserver = null;
+  let audioContext = null, masterGain = null, roomInput = null, soundButton = null, motionObserver = null;
+  let audioGeneration = 0;
   let soundEnabled = true;
   try { soundEnabled = localStorage.getItem(SOUND_KEY) !== 'off'; } catch (_) {}
 
@@ -39,18 +41,47 @@
     document.body?.classList.remove('swl-celebrating');
   }
 
-  function silence() {
-    const now = audioContext?.currentTime || 0;
-    for (const voice of voices) {
-      try {
-        voice.gain.gain.cancelScheduledValues(now);
-        voice.gain.gain.setTargetAtTime(0, now, 0.012);
-        voice.oscillator.stop(now + 0.045);
-      } catch (_) {
-        try { voice.oscillator.disconnect(); voice.gain.disconnect(); } catch (_) {}
-        voices.delete(voice);
-      }
+  function releaseVoice(voice) {
+    if (voice.released) return;
+    voice.released = true;
+    clearTimeout(voice.cleanupTimer);
+    voices.delete(voice);
+    retiringVoices.delete(voice);
+    for (const node of [...voice.oscillators, ...voice.partials, voice.gain]) {
+      try { node.disconnect(); } catch (_) {}
     }
+  }
+
+  function retireVoice(voice) {
+    if (voice.released || voice.retiring) return;
+    voice.retiring = true;
+    voices.delete(voice);
+    const now = audioContext?.currentTime || 0;
+    // A scheduled strike that has not sounded can be cancelled silently.
+    if (voice.start >= now) {
+      for (const oscillator of voice.oscillators) { try { oscillator.stop(now); } catch (_) {} }
+      releaseVoice(voice);
+      return;
+    }
+    retiringVoices.add(voice);
+    try {
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setTargetAtTime(0, now, 0.01);
+    } catch (_) {}
+    for (const oscillator of voice.oscillators) { try { oscillator.stop(now + 0.06); } catch (_) {} }
+    clearTimeout(voice.cleanupTimer);
+    voice.cleanupTimer = setTimeout(() => releaseVoice(voice), 80);
+  }
+
+  function silence() {
+    audioGeneration++;
+    const now = audioContext?.currentTime || 0;
+    // Fade the final mix as well, so muting also silences delayed reflections.
+    try {
+      masterGain?.gain.cancelScheduledValues(now);
+      masterGain?.gain.setTargetAtTime(0, now, 0.008);
+    } catch (_) {}
+    for (const voice of [...voices, ...retiringVoices]) retireVoice(voice);
   }
 
   function stop() { generation++; clearVisuals(); silence(); }
@@ -60,8 +91,7 @@
     try {
       const animation = element.animate(frames, { duration: 5600, easing: 'ease-in-out', fill: 'both', ...options });
       animations.add(animation);
-      // Completed animations retain their final frames. Keep those handles so
-      // stop/restart and reduced motion can release every retained effect.
+      // Keep final frames until the overlay has been detached, avoiding a flash.
       animation.finished.catch(() => animations.delete(animation));
     } catch (_) {}
   }
@@ -74,55 +104,129 @@
       if (!audioContext || audioContext.state === 'closed') {
         audioContext = new AudioContextClass();
         masterGain = audioContext.createGain();
-        masterGain.gain.value = 0.16;
-        masterGain.connect(audioContext.destination);
+        masterGain.gain.value = MASTER_LEVEL;
+        // A gentle safety limiter is normally idle; it catches rapid overlapping
+        // strikes without flattening their bright initial attack.
+        if (audioContext.createDynamicsCompressor) {
+          const limiter = audioContext.createDynamicsCompressor();
+          limiter.threshold.value = -12;
+          limiter.knee.value = 12;
+          limiter.ratio.value = 5;
+          limiter.attack.value = 0.003;
+          limiter.release.value = 0.16;
+          masterGain.connect(limiter);
+          limiter.connect(audioContext.destination);
+        } else masterGain.connect(audioContext.destination);
+
+        roomInput = null;
+        if (audioContext.createBiquadFilter && audioContext.createDelay) {
+          // Three quiet, filtered reflections give the bell a small real room.
+          // There is no feedback loop, convolution asset, or unbounded tail.
+          roomInput = audioContext.createBiquadFilter();
+          roomInput.type = 'lowpass';
+          roomInput.frequency.value = 5800;
+          roomInput.Q.value = 0.25;
+          [[0.043, 0.12], [0.097, 0.065], [0.173, 0.03]].forEach(([time, level]) => {
+            const delay = audioContext.createDelay(0.25), reflection = audioContext.createGain();
+            delay.delayTime.value = time;
+            reflection.gain.value = level;
+            roomInput.connect(delay);
+            delay.connect(reflection);
+            reflection.connect(masterGain);
+          });
+        }
       }
+      masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+      masterGain.gain.setTargetAtTime(MASTER_LEVEL, audioContext.currentTime, 0.012);
       if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
       return audioContext;
     } catch (_) { return null; }
   }
 
-  function tone(context, frequency, start, duration, volume) {
-    const oscillator = context.createOscillator(), gain = context.createGain();
-    const voice = { oscillator, gain };
+  function bell(context, frequency, start, duration, volume, full = false) {
+    while (voices.size >= MAX_BELLS) retireVoice(voices.values().next().value);
+    const gain = context.createGain();
+    gain.gain.value = volume;
+    gain.connect(masterGain);
+    if (roomInput) gain.connect(roomInput);
+    const voice = { gain, start, oscillators: [], partials: [], released: false,
+      retiring: false, cleanupTimer: null, ended: 0 };
     voices.add(voice);
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(frequency, start);
-    gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(volume, start + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    oscillator.connect(gain); gain.connect(masterGain);
-    oscillator.onended = () => {
-      voices.delete(voice);
-      try { oscillator.disconnect(); gain.disconnect(); } catch (_) {}
-    };
-    oscillator.start(start); oscillator.stop(start + duration + 0.03);
+    // Inharmonic metal modes and a very quiet detuned partner produce a rounded
+    // struck bell rather than a pure electronic beep. High modes decay first.
+    const modes = full
+      ? [[0.5,.16,.5],[1,.72,1],[1.0018,.17,.85],[2.005,.17,.5],[2.756,.10,.31],[4.04,.035,.18],[5.38,.012,.12]]
+      : [[0.5,.12,.45],[1,.72,1],[1.0022,.14,.8],[2.01,.15,.46],[2.756,.075,.28],[4.06,.025,.17]];
+    try {
+      modes.forEach(([ratio, level, decay], index) => {
+        const oscillator = context.createOscillator(), partial = context.createGain();
+        voice.oscillators.push(oscillator);
+        voice.partials.push(partial);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency * ratio, start);
+        const length = Math.max(0.12, duration * decay);
+        const attack = index < 3 ? 0.006 : 0.003;
+        partial.gain.setValueAtTime(0, start);
+        partial.gain.linearRampToValueAtTime(level, start + attack);
+        partial.gain.exponentialRampToValueAtTime(Math.max(0.0002, level * .32), start + Math.min(.13, length * .25));
+        partial.gain.exponentialRampToValueAtTime(0.00004, start + length);
+        partial.gain.setTargetAtTime(0, start + length, 0.012);
+        oscillator.connect(partial);
+        partial.connect(gain);
+        oscillator.onended = () => {
+          voice.ended++;
+          try { oscillator.disconnect(); partial.disconnect(); } catch (_) {}
+          if (voice.ended === voice.oscillators.length) releaseVoice(voice);
+        };
+        oscillator.start(start);
+        oscillator.stop(start + length + 0.08);
+      });
+      // Also release nodes if the browser suspends the context before onended.
+      voice.cleanupTimer = setTimeout(() => {
+        for (const oscillator of voice.oscillators) { try { oscillator.stop(); } catch (_) {} }
+        releaseVoice(voice);
+      }, Math.max(0, start - context.currentTime + duration + 0.25) * 1000);
+    } catch (_) {
+      for (const oscillator of voice.oscillators) { try { oscillator.stop(); } catch (_) {} }
+      releaseVoice(voice);
+    }
   }
 
-  function flourish(token) {
+  function withAudio(callback, visualToken = null) {
     const context = unlockAudio();
     if (!context) return;
+    const soundToken = audioGeneration;
     const start = () => {
-      if (token !== generation || !soundEnabled || context.state !== 'running') return;
-      try {
-        const now = context.currentTime + 0.015;
-        // Three distinct, ascending bell strikes. A quiet, short inharmonic
-        // partial adds a bright ding without a low chord or external samples.
-        [1046.5,1318.51,1567.98].forEach((frequency, index) => {
-          const onset = now + index * 0.33;
-          tone(context, frequency, onset, index === 2 ? 0.95 : 0.72, index === 2 ? 0.30 : 0.27);
-          tone(context, frequency * 2.756, onset, 0.19, 0.055);
-        });
-      } catch (_) { silence(); }
+      if (!soundEnabled || soundToken !== audioGeneration || context.state !== 'running' ||
+          (visualToken !== null && visualToken !== generation)) return;
+      try { callback(context, context.currentTime + 0.012); } catch (_) { silence(); }
     };
     if (context.state === 'running') start();
     else { try { context.resume().then(start).catch(() => {}); } catch (_) {} }
   }
 
+  function ding(details = {}) {
+    // Synchronous fire-and-forget: sounds never gate a score or a network save.
+    withAudio((context, start) => bell(context,
+      details.perfect ? 1174.66 : 987.77, start,
+      details.perfect ? 1.7 : 1.35, details.perfect ? .27 : .24,
+      Boolean(details.perfect)));
+  }
+
+  function flourish(token) {
+    withAudio((context, start) => {
+      // A clear G–B–D ascent, with an unhurried final bell and a short room tail.
+      [783.99, 987.77, 1174.66].forEach((frequency, index) => {
+        bell(context, frequency, start + [0, .30, .65][index],
+          [1.5, 1.7, 2.05][index], [.245, .26, .285][index], true);
+      });
+    }, token);
+  }
+
   function updateSoundButton() {
     if (!soundButton) return;
     soundButton.setAttribute('aria-pressed', String(soundEnabled));
-    soundButton.title = soundEnabled ? 'Turn celebration sounds off' : 'Turn celebration sounds on';
+    soundButton.title = soundEnabled ? 'Turn sound effects off' : 'Turn sound effects on';
     soundButton.querySelector('.swl-sound-icon').textContent = soundEnabled ? '♫' : '♩';
     soundButton.querySelector('.swl-sound-label').textContent = soundEnabled ? 'Sound on' : 'Sound off';
   }
@@ -167,9 +271,10 @@
     const medals = make('swl-celebration-medals'); medals.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 3; i++) medals.append(make('swl-celebration-medal', '✓', 'span'));
     const title = make('swl-celebration-title', undefined, 'p');
-    title.append(make('', 'PERFECT', 'span'), make('', 'COMPLEX', 'span'));
+    const isLeaps = details.kind === 'leaps';
+    title.append(make('', 'PERFECT', 'span'), make('', isLeaps ? 'LEAPS' : 'COMPLEX', 'span'));
     const gymnastName = String(details.gymnastName || 'What a performance!').slice(0, 120);
-    const tierName = details.tierName || ({base:'Base complex',upgrade:'Upgrades',pro:'Pro upgrades'}[details.tier]) || '';
+    const tierName = isLeaps ? '' : details.tierName || ({base:'Base complex',upgrade:'Upgrades',pro:'Pro upgrades'}[details.tier]) || '';
     const detail = [details.categoryName, tierName].filter(Boolean).map(value => String(value).slice(0,100)).join(' · ');
     banner.append(sweep, medals, title, make('swl-celebration-name', gymnastName, 'p'),
       make('swl-celebration-detail', detail, 'p'), make('swl-celebration-caption', 'Three skills. All perfect.', 'p'));
@@ -224,7 +329,7 @@
     if (utilities && !document.getElementById('swlSoundButton')) {
       soundButton = make('quiet swl-sound-toggle',undefined,'button');
       soundButton.id = 'swlSoundButton'; soundButton.type = 'button';
-      soundButton.setAttribute('aria-label','Celebration sound');
+      soundButton.setAttribute('aria-label','Sound effects');
       const icon = make('swl-sound-icon','♫','span'); icon.setAttribute('aria-hidden','true');
       soundButton.append(icon,make('swl-sound-label','','span'));
       soundButton.addEventListener('click',()=>setSoundEnabled(!soundEnabled));
@@ -245,7 +350,7 @@
     window.addEventListener('pagehide',stop);
   }
 
-  window.SWLCelebration = Object.freeze({version:1,play,stop,unlockAudio,setSoundEnabled,
+  window.SWLCelebration = Object.freeze({version:1,play,ding,stop,unlockAudio,setSoundEnabled,
     get soundEnabled(){return soundEnabled;},get active(){return Boolean(overlay);}});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',initialize,{once:true});
   else initialize();

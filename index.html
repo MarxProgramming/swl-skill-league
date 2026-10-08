@@ -849,6 +849,26 @@ main{padding:28px 0 40px}
 }
 .scoring summary{cursor:pointer;font-weight:750;color:#ded5e9}
 .scoring p{margin-top:10px}
+.marking-guide{margin:0 0 22px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.025);padding:14px 18px;color:var(--muted);font-size:12px;line-height:1.7}
+.marking-guide summary{cursor:pointer;color:var(--text);font-weight:750}
+.marking-guide p{margin:12px 0 0;max-width:78ch}
+.marking-guide strong{color:var(--text)}
+.linking-panel{margin-top:13px;padding:15px 17px;background:rgba(189,155,255,.045);border:1px solid rgba(189,155,255,.13);border-radius:14px}
+.linking-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}
+.linking-heading strong{font-size:12px;letter-spacing:.015em}
+.linking-result{font-size:11px;color:var(--muted);white-space:nowrap}
+.linking-options{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.linking-options button{min-height:43px;padding:9px 10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.025);color:var(--muted);font:inherit;font-size:12px;cursor:pointer;transition:background .25s,border-color .25s,color .25s,transform .25s}
+.linking-options button small{margin-left:5px;opacity:.7;font-size:10px}
+.linking-options button:hover{border-color:rgba(189,155,255,.5);color:var(--text)}
+.linking-options button:active{transform:scale(.97)}
+.linking-options button[aria-pressed="true"]{color:var(--mint);background:rgba(213,250,112,.08);border-color:rgba(213,250,112,.4);box-shadow:0 0 20px rgba(213,250,112,.035)}
+.linking-info{font-size:11px;color:var(--muted);line-height:1.65;margin-top:10px}
+.linking-info summary{cursor:pointer;list-style:none;display:inline-block;color:#c6b3e0}
+.linking-info summary::-webkit-details-marker{display:none}
+.linking-info p{margin:8px 0 0;max-width:75ch}
+.linking-info strong{color:var(--text)}
+@media(max-width:500px){.linking-panel{padding:12px}.linking-options button{font-size:11px;padding:8px 4px}.linking-options button small{display:block;margin:3px 0 0}}
 .footer{
   padding:20px 0 28px;
   border-top:1px solid var(--line);
@@ -1731,7 +1751,10 @@ html:has(body.no-motion){scroll-behavior:auto}
             Strong basics earn the most; advanced skills add smaller gains.
             Skills score independently.
             Upgrades do not tick earlier skills,
-            and completed complexes add no bonus.
+            and a perfect complex celebrates without adding extra skill points.
+            Linking and presentation earn a separate bonus in each Rolls and Acro complex:
+            Good +1, Excellent +2, Perfect +3. Choose one rating; these bonuses do not double.
+            Leaps are scored individually, with a celebration when all three are perfect.
             The ring shows your share of the available points.
             Achieved totals include perfect skills.
           </p>
@@ -1902,6 +1925,11 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   let GYMNAST_IDS = new Set(GYMNASTS.map(g => g.id));
   const SKILL_IDS = new Set(SKILLS.map(s => s.id));
+  const COMPLEXES = CATEGORIES.filter(category => category.id !== 'leaps').flatMap(category =>
+    category.tiers.map(([tier, label]) => ({ id: `${category.id}-${tier}`, category: category.id, tier, label }))
+  );
+  const COMPLEX_IDS = new Set(COMPLEXES.map(complex => complex.id));
+  const LINK_STATUS = ['Not rated', 'Good', 'Excellent', 'Perfect'];
 
   const STATUS = ['Not yet', 'Achieved', 'Perfect'];
   const SYMBOL = ['○', '✓', '✓✓'];
@@ -1927,7 +1955,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     version: 1,
     updatedAt: null,
     gymnasts: SEED_GYMNASTS.map(gymnast => ({ ...gymnast })),
-    marks: {}
+    marks: {},
+    linking: {}
   });
 
   const isObject = value =>
@@ -1978,6 +2007,19 @@ html:has(body.no-motion){scroll-behavior:auto}
           throw Error('Invalid skill or mark in these scores.');
         }
         clean.marks[id][skill] = value;
+      }
+    }
+    if (data.linking !== undefined) {
+      if (!isObject(data.linking)) throw Error('The linking ratings could not be read.');
+      for (const [id, ratings] of Object.entries(data.linking)) {
+        if (!ids.has(id) || !isObject(ratings)) throw Error('Unrecognised gymnast in these linking ratings.');
+        clean.linking[id] = {};
+        for (const [complex, value] of Object.entries(ratings)) {
+          if (!COMPLEX_IDS.has(complex) || !Number.isInteger(value) || value < 0 || value > 3) {
+            throw Error('Invalid complex or linking rating.');
+          }
+          clean.linking[id][complex] = value;
+        }
       }
     }
     return clean;
@@ -2060,9 +2102,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   const mark = (id, skill) =>
     state.marks[id]?.[skill] ?? 0;
+  const linkRating = (id, complex) => state.linking?.[id]?.[complex] ?? 0;
 
   function summary(id, category = 'overall') {
-    return SKILLS
+    const total = SKILLS
       .filter(skill =>
         category === 'overall' || skill.category === category
       )
@@ -2081,6 +2124,11 @@ html:has(body.no-motion){scroll-behavior:auto}
         perfect: 0,
         max: 0
       });
+    const complexes = COMPLEXES.filter(complex => category === 'overall' || complex.category === category);
+    total.linking = complexes.reduce((points, complex) => points + linkRating(id, complex.id), 0);
+    total.points += total.linking;
+    total.max += complexes.length * 3;
+    return total;
   }
 
   function standings(category) {
@@ -2111,11 +2159,16 @@ html:has(body.no-motion){scroll-behavior:auto}
         value.value >= 0 && value.value <= 2) {
       return { type: 'set_mark', gymnastId: value.gymnastId, skillId: value.skillId, value: value.value };
     }
+    if (value.type === 'set_link' && validGymnastId(value.gymnastId) &&
+        COMPLEX_IDS.has(value.complexId) && Number.isInteger(value.value) && value.value >= 0 && value.value <= 3) {
+      return { type: 'set_link', gymnastId: value.gymnastId, complexId: value.complexId, value: value.value };
+    }
     throw Error('A saved change contains an invalid gymnast, skill or result.');
   }
 
   function applyOperations(base, operations) {
     const next = cloneState(base);
+    next.linking ??= {};
     const ids = new Set(next.gymnasts.map(g => g.id));
     for (const operation of operations) {
       if (operation.type === 'add_gymnast') {
@@ -2123,6 +2176,9 @@ html:has(body.no-motion){scroll-behavior:auto}
           next.gymnasts.push({ id: operation.id, name: operation.name, coach: operation.coach });
           ids.add(operation.id);
         }
+      } else if (operation.type === 'set_link' && ids.has(operation.gymnastId)) {
+        next.linking[operation.gymnastId] ??= {};
+        next.linking[operation.gymnastId][operation.complexId] = operation.value;
       } else if (ids.has(operation.gymnastId)) {
         next.marks[operation.gymnastId] ??= {};
         next.marks[operation.gymnastId][operation.skillId] = operation.value;
@@ -2213,11 +2269,13 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function enqueueOperation(value) {
     const operation = validateOperation(value);
-    if (operation.type === 'set_mark') {
-      queuedOps = queuedOps.filter(item => !(item.type === 'set_mark' &&
-        item.gymnastId === operation.gymnastId && item.skillId === operation.skillId));
+    if (operation.type === 'set_mark' || operation.type === 'set_link') {
+      const key = operation.type === 'set_link' ? 'complexId' : 'skillId';
+      const field = operation.type === 'set_link' ? 'linking' : 'marks';
+      queuedOps = queuedOps.filter(item => !(item.type === operation.type &&
+        item.gymnastId === operation.gymnastId && item[key] === operation[key]));
       const pendingBase = applyOperations(confirmedState, inFlight?.operations || []);
-      const baseValue = pendingBase.marks[operation.gymnastId]?.[operation.skillId] ?? 0;
+      const baseValue = pendingBase[field]?.[operation.gymnastId]?.[operation[key]] ?? 0;
       if (baseValue !== operation.value) queuedOps.push(operation);
     } else {
       queuedOps.push(operation);
@@ -2262,7 +2320,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('exportButton').textContent = damagedRecovery !== null ? '↓ Export recovery data' : '↓ Export backup';
     $('addGymnastButton').disabled = !canEdit();
     $('toastUndo').disabled = !canEdit() || !history.length;
-    document.querySelectorAll('button[data-skill]').forEach(button => {
+    document.querySelectorAll('button[data-skill], button[data-link-complex]').forEach(button => {
       button.disabled = !canEdit();
     });
     if ($('undoButton')) $('undoButton').disabled = !canEdit() || !history.length;
@@ -2276,7 +2334,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     duplicate_gymnast: 'A gymnast with that name already exists. Refresh the roster before adding them again.',
     roster_full: 'The roster has reached its limit of 500 gymnasts.',
     busy: 'The Google Sheet is busy. Please try again shortly.',
-    sheet_invalid: 'The Google Sheet structure or a score needs attention. Check the Scores and Meta tabs.',
+    sheet_invalid: 'The Google Sheet structure or a score needs attention. Check the Scores, Linking and Meta tabs.',
     unauthorized: 'The Google Sheets connection needs attention. Its public web app may need updating.',
     setup_required: 'The Google Sheets connection has not been configured yet.',
     provider_error: 'The Google Sheet could not be reached. Your changes have not been confirmed.'
@@ -2720,6 +2778,20 @@ html:has(body.no-motion){scroll-behavior:auto}
     `;
   }
 
+  function linkingHTML(id, categoryName, tierName) {
+    return `<div class="linking-panel" data-link-panel="${id}">
+      <div class="linking-heading"><strong>Linking &amp; presentation</strong><span class="linking-result">Not rated</span></div>
+      <div class="linking-options" role="group" aria-label="${escapeHTML(categoryName)} · ${escapeHTML(tierName)} linking and presentation">
+        ${[1, 2, 3].map(value => `<button type="button" data-link-complex="${id}" data-link-value="${value}" aria-pressed="false">${LINK_STATUS[value]} <small>+${value} ${value === 1 ? 'pt' : 'pts'}</small></button>`).join('')}
+      </div>
+      <details class="linking-info"><summary>ⓘ How to rate the links</summary>
+        <p>Judge how the three skills flow together: balance between skills, controlled starts and finishes, posture and confident presentation. Watch for wobbles, extra steps or pauses during transitions.</p>
+        <p><strong>Good:</strong> recognisable links and clear presentation, with some wobbles or pauses.<br><strong>Excellent:</strong> smooth, controlled links and confident presentation, with only small interruptions.<br><strong>Perfect:</strong> seamless links, steady balance and polished presentation throughout, with no visible wobbles or unnecessary pauses.</p>
+        <p>Choose one rating. Tap the selected rating again to clear it. This bonus is separate from the skill marks.</p>
+      </details>
+    </div>`;
+  }
+
   function renderAthlete() {
     $('athletePanel').dataset.gymnastInfo = selectedId
       ? JSON.stringify(GYMNASTS.find(g => g.id === selectedId)) : '';
@@ -2860,6 +2932,14 @@ html:has(body.no-motion){scroll-behavior:auto}
         a third tap resets it. Perfect earns double.
       </p>
 
+      <details class="marking-guide">
+        <summary>ⓘ What counts as achieved or perfect?</summary>
+        <p><strong>Achieved ✓</strong> — the intended skill would count in competition without being downgraded, with no more than <strong>0.5 total deductions</strong>.</p>
+        <p><strong>Perfect ✓✓</strong> — the same correctly recognised skill, with no more than <strong>0.2 total deductions</strong>.</p>
+        <p>Look at the whole skill, including pointed toes, straight legs and the correct arm shape. Add the errors together. If an error changes the skill or would downgrade it — for example, bent arms that stop a backward roll to handstand meeting its requirements — leave that skill as <strong>Not yet</strong>.</p>
+        <p>These are the SWL Skill League’s marking guidelines. Linking and presentation are rated separately beneath each complex.</p>
+      </details>
+
       <div class="filter-empty" id="filterEmpty" hidden>
         <span aria-hidden="true">⌕</span>
         <h3>No skills in this view</h3>
@@ -2931,6 +3011,7 @@ html:has(body.no-motion){scroll-behavior:auto}
                   .map(skillHTML)
                   .join('')}
               </div>
+              ${category.id !== 'leaps' ? linkingHTML(`${category.id}-${tier}`, category.name, label) : ''}
             </div>
           `).join('')}
         </section>
@@ -3024,6 +3105,17 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
     }
 
+    for (const complex of COMPLEXES) {
+      const value = linkRating(selectedId, complex.id);
+      const panel = $('athletePanel').querySelector(`[data-link-panel="${complex.id}"]`);
+      panel.querySelector('.linking-result').textContent = value ? `${LINK_STATUS[value]} · +${value} ${value === 1 ? 'pt' : 'pts'}` : 'Not rated';
+      panel.querySelectorAll('button[data-link-value]').forEach(button => {
+        const selected = Number(button.dataset.linkValue) === value;
+        button.setAttribute('aria-pressed', String(selected));
+        button.disabled = !canEdit();
+        button.title = selected ? 'Tap again to clear this rating' : `Set linking and presentation to ${LINK_STATUS[Number(button.dataset.linkValue)]}`;
+      });
+    }
     applyFilters();
   }
 
@@ -3079,7 +3171,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('filterEmpty').hidden = visible > 0;
 
-    if (focused?.closest('[data-skill-card]')?.hidden) {
+    if (focused?.closest('[data-skill-card]')?.hidden || focused?.closest('[data-tier]')?.hidden) {
       $('statusFilter').focus({ preventScroll: true });
     }
   }
@@ -3322,24 +3414,45 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     // Only a new, locally completed three-skill complex earns the full celebration.
     // Loading, refreshing, importing and undoing scores never replay it.
-    if (after === 2 && skill.category !== 'leaps') {
-      const complex = SKILLS.filter(item =>
-        item.category === skill.category && item.tier === skill.tier
-      );
-      if (complex.length === 3 && complex.every(item => mark(gymnastId, item.id) === 2)) {
+    const complex = SKILLS.filter(item => item.category === skill.category && item.tier === skill.tier);
+    const completed = after === 2 && complex.length === 3 && complex.every(item => mark(gymnastId, item.id) === 2);
+    try {
+      if (completed) {
         const category = CATEGORIES.find(item => item.id === skill.category);
         const gymnast = GYMNASTS.find(item => item.id === gymnastId);
-        try {
-          window.SWLCelebration?.play({
-            gymnastName: gymnast.name,
-            categoryName: category.name,
-            tierName: { base: 'Base complex', upgrade: 'Upgraded complex', pro: 'Pro upgraded complex' }[skill.tier],
-            tier: skill.tier
-          });
-        } catch {
-          // Decorative effects must never interrupt scoring or the save queue.
-        }
+        window.SWLCelebration?.play({
+          gymnastName: gymnast.name,
+          categoryName: category.name,
+          tierName: skill.category === 'leaps' ? 'All three leaps' : { base: 'Base complex', upgrade: 'Upgraded complex', pro: 'Pro upgraded complex' }[skill.tier],
+          tier: skill.tier,
+          kind: skill.category === 'leaps' ? 'leaps' : 'complex'
+        });
+      } else if (after > before) {
+        window.SWLCelebration?.ding({ perfect: after === 2 });
       }
+    } catch {
+      // Decorative effects must never interrupt scoring or the save queue.
+    }
+  }
+
+  function changeLink(complexId, button, chosen) {
+    if (!canEdit() || !selectedId || !COMPLEX_IDS.has(complexId)) return;
+    const before = linkRating(selectedId, complexId);
+    const value = Number(chosen);
+    if (!Number.isInteger(value) || value < 1 || value > 3) return;
+    const after = before === value ? 0 : value;
+    enqueueOperation({ type: 'set_link', gymnastId: selectedId, complexId, value: after });
+    history.push({ type: 'set_link', gymnast: selectedId, complex: complexId, before, after });
+    if (history.length > 50) history.shift();
+    updateAthlete();
+    renderRoster();
+    renderBoards();
+    renderSaveStatus();
+    restoreControlFocus(button);
+    const delta = after - before;
+    toast(`Linking & presentation · ${LINK_STATUS[after]} · ${delta > 0 ? '+' : '−'}${Math.abs(delta)} pts`, true);
+    if (after > before) {
+      try { window.SWLCelebration?.ding({ perfect: after === 3 }); } catch {}
     }
   }
 
@@ -3348,7 +3461,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     const source = document.activeElement;
     const last = history[history.length - 1];
-    enqueueOperation({ type: 'set_mark', gymnastId: last.gymnast, skillId: last.skill, value: last.before });
+    enqueueOperation(last.type === 'set_link'
+      ? { type: 'set_link', gymnastId: last.gymnast, complexId: last.complex, value: last.before }
+      : { type: 'set_mark', gymnastId: last.gymnast, skillId: last.skill, value: last.before });
     history.pop();
     renderBoards();
     renderRoster();
@@ -3389,6 +3504,9 @@ html:has(body.no-motion){scroll-behavior:auto}
           button.dataset.skill,
           button
         );
+
+      } else if (button.dataset.linkComplex) {
+        changeLink(button.dataset.linkComplex, button, button.dataset.linkValue);
 
       } else if (button.hasAttribute('data-choose')) {
         chooseGymnast();
@@ -3542,7 +3660,12 @@ html:has(body.no-motion){scroll-behavior:auto}
         throw Error('This file is too large for a league backup.');
       }
 
-      const imported = parseState(await file.text());
+      const backupText = await file.text();
+      const imported = parseState(backupText);
+      // Backups made before linking existed must not clear newer ratings.
+      if (!Object.prototype.hasOwnProperty.call(JSON.parse(backupText), 'linking')) {
+        imported.linking = cloneState(confirmedState.linking || {});
+      }
 
       const confirmed = confirm(
         'Replace ALL shared scores in Google Sheets with this backup? ' +
