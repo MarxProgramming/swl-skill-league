@@ -336,7 +336,7 @@
       const icon = make('swl-sound-icon','♫','span'); icon.setAttribute('aria-hidden','true');
       soundButton.append(icon,make('swl-sound-label','','span'));
       soundButton.addEventListener('click',()=>setSoundEnabled(!soundEnabled));
-      utilities.insertBefore(soundButton,document.getElementById('backups'));
+      utilities.append(soundButton);
       updateSoundButton();
     }
     if (window.MutationObserver && document.body) {

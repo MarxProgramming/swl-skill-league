@@ -97,8 +97,8 @@
     if (!started) { queuedFinish = options; return; }
     finishRequested = true;
     if (status) status.textContent = options.error
-      ? 'Opening your league. You can retry the connection there.'
-      : 'Your league is ready.';
+      ? 'Opening squad training. You can retry the connection there.'
+      : 'Your squad dashboard is ready.';
     const remaining = Math.max(0, MINIMUM_MS - (performance.now() - startedAt));
     minimumTimer = setTimeout(leave, remaining);
   }
@@ -156,11 +156,11 @@
             <span class="swl-startup__satellite"></span>
             <img class="swl-startup__logo" src="./swl-logo.png" alt="" width="2000" height="1125" style="max-width:158px;height:auto;filter:invert(1)">
           </div>
-          <h2 class="swl-startup__title" id="swlStartupTitle">SWL SKILL <span>LEAGUE</span></h2>
-          <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Connecting your league to Google Sheets…</p>
+          <h2 class="swl-startup__title" id="swlStartupTitle">SWL SQUAD <span>TRAINING</span></h2>
+          <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Getting your squad ready…</p>
           <div class="swl-startup__progress" aria-hidden="true"></div>
           <div class="swl-startup__escape">
-            <button class="swl-startup__enter" type="button" hidden>Enter league ↗</button>
+            <button class="swl-startup__enter" type="button" hidden>Enter training ↗</button>
             <p class="swl-startup__hint" hidden>You can enter while your scores finish loading.</p>
           </div>
           <p class="swl-startup__signature">SWL · TRAIN WITH PURPOSE</p>
@@ -195,7 +195,7 @@
         if (!overlay || finished || leaving) return;
         enter.hidden = false;
         overlay.querySelector('.swl-startup__hint').hidden = false;
-        if (!finishRequested) status.textContent = 'Your scores are taking a little longer. The league is ready to open.';
+        if (!finishRequested) status.textContent = 'Your scores are taking a little longer. Squad training is ready to open.';
       }, EXIT_MS);
       if (queuedFinish !== null) finish(queuedFinish);
     } catch {

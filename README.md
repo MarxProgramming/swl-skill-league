@@ -1,10 +1,10 @@
-# SWL Skill League
+# SWL Squad Training
 
-A static gymnastics tracker connected to the shared Google Sheet. It includes the SWL design, instant skill cycling, gymnast creation, undo, backups, and recovery of unsaved edits.
+A static gymnastics training app with three views: Leaderboards, Skills, and Games. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The three games run independently on the current device.
 
 After the opening screen, the main page goes directly to the leaderboards, with a small Scoring guide button. Each board shows the top five and a softly blurred sixth-place preview; selecting a gymnast opens their skills. The podium medals gleam in a staggered gold, silver, then bronze sequence.
 
-Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a green-and-gold confetti overlay, a result card, and a victory sound. The page stays still and interactive while the overlay animates, and background saving continues. New Achieved and Perfect marks use very high bell tones, while completion adds soft complementary high harmonies. Reduced motion shows a static result card without confetti. The Motion and Sound controls let each device choose its preferred experience.
+Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a green-and-gold confetti overlay, a result card, and a victory sound. The page stays still and interactive while the overlay animates, and background saving continues. New Achieved and Perfect marks use very high bell tones, while completion adds soft complementary high harmonies. The app respects the device’s reduced-motion setting; reduced motion shows a static result card without confetti. The Sound control remains available for each device. The former Data and Motion controls are no longer in the interface.
 
 Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each skill value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six non-leap complexes. Linking bonuses are not doubled.
 
@@ -13,6 +13,16 @@ Each three-skill Rolls or Acro complex, and the three-leap collection, also earn
 The maximum is 358 points: 270 for skills, 18 for linking, and 70 for completing all seven groups at Perfect. Category maxima are Rolls 144, Acro 144, and Leaps 70.
 
 Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending, then names alphabetically to resolve equal scores.
+
+## Squad games
+
+Games remain available while league scoring is locked. Game points and optional team names stay in the current page session; they are not saved to Google Sheets and never change Skill League marks or totals. Returning to another app view preserves the session, while reloading the page starts fresh.
+
+- **Conditioning wheel:** spin for a conditioning challenge or coach turn. “Coach joins next spin” carries forward to the next completed exercise result; another coach slot cannot consume it. Leaving the game cancels an unfinished spin.
+- **Spot the Switch:** play five rounds. Remember six symbols, then choose the one that changed. Each correct answer earns one session point, for a maximum of five. Leaving an active round pauses it; Resume restarts that round before play continues.
+- **Squad Showdown:** choose two to four teams with optional names, then rotate through five turns per team. Each turn draws a team challenge, with an optional 15-, 20-, or 30-second timer. The coach awards one, two, or three stars for control, timing, and encouragement, then advances to the next team. The timer never awards points. Each team can earn up to 15 stars; ties share the top spot. An award can be undone before advancing. Leaving a timed round pauses it until Resume, and starting a new game during play asks before clearing the session.
+
+All three games follow the Sound control and the device’s reduced-motion preference.
 
 ## Publish with GitHub Pages
 
@@ -31,8 +41,8 @@ The scoring lock is shared by everyone. Locking takes effect at the server immed
 
 Keep the Google Sheet publicly viewable, with public access set to **Viewer**, so direct Sheet edits cannot bypass the scoring lock. The owner and Apps Script retain edit access. The unlock code is not published in this README or the website’s public files.
 
-While unlocked, anyone with the website link can edit scores. Changes appear immediately and save in the background. If saving fails, the page retains the edits and displays **Retry save**. Wait for **All changes saved to Google Sheets** before closing, or export a backup.
+While unlocked, anyone with the website link can edit scores. Changes appear immediately and save in the background. If saving fails, the page retains the edits and displays **Retry save**. Wait for **All changes saved to Google Sheets** before closing.
 
 For local checking, serve this folder using any static HTTP server. The website has no hosting-specific runtime dependency; Google Apps Script provides the shared data connection.
 
-SWL marking guide: Achieved means the intended skill would count without downgrade and has at most 0.5 deductions. Perfect allows at most 0.2 deductions and requires the correct skill shape. Linking ratings assess transitions, balance and presentation independently of skill marks. Ratings save to the separate Linking tab in the same Sheet and are included in backups, recovery and undo. Older backups preserve existing linking ratings.
+SWL marking guide: Achieved means the intended skill would count without downgrade and has at most 0.5 deductions. Perfect allows at most 0.2 deductions and requires the correct skill shape. Linking ratings assess transitions, balance and presentation independently of skill marks. Ratings save to the separate Linking tab in the same Sheet and are included in unsaved-edit recovery and undo.

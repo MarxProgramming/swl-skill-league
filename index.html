@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Skill League</title>
+<title>SWL · Squad Training</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
@@ -1572,6 +1572,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./startup.css">
 <link rel="stylesheet" href="./celebration.css">
 <link rel="stylesheet" href="./placement.css">
+<link rel="stylesheet" href="./games.css">
+<link rel="stylesheet" href="./games-wheel.css">
+<link rel="stylesheet" href="./games-memory.css">
+<link rel="stylesheet" href="./games-team.css">
 </head>
 
 <body>
@@ -1583,7 +1587,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>THE SKILL LEAGUE</small>
+        <small>SQUAD TRAINING</small>
       </div>
     </div>
 
@@ -1592,36 +1596,17 @@ html:has(body.no-motion){scroll-behavior:auto}
         Leaderboards
       </button>
       <button data-view="tracker" aria-pressed="false">
-        Skill tracker
+        Skills
+      </button>
+      <button data-view="games" aria-pressed="false">
+        Games
       </button>
     </nav>
 
     <div class="utilities">
       <button class="quiet scoring-lock-button" id="lockButton" type="button" disabled aria-describedby="lockStatus"><span aria-hidden="true">◇</span> <span id="lockButtonLabel">Checking lock…</span></button>
-      <button class="quiet" id="motionButton" aria-pressed="true">
-        Motion on
-      </button>
-
-      <details class="backups" id="backups">
-        <summary class="quiet">Data ↗</summary>
-        <div class="menu">
-          <button id="exportButton">↓ Export backup</button>
-          <button id="importButton">↑ Import backup</button>
-          <a href="https://docs.google.com/spreadsheets/d/1lHdtX-d1UwXKQpu--lz1oFJC18umI5CP_XZL_S-JO1c/edit" target="_blank" rel="noopener noreferrer">↗ Open Google Sheet</a>
-          <p>
-            Scores are stored in your Google Sheet.
-            Keep a backup whenever you need a separate copy.
-          </p>
-        </div>
-      </details>
     </div>
 
-    <input
-      type="file"
-      id="importFile"
-      accept=".json,application/json"
-      hidden
-    >
   </div>
 </header>
 
@@ -1635,6 +1620,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   >
     <p id="storageMessage"></p>
     <div class="sync-actions">
+      <button class="quiet" id="exportButton" hidden>Download unsaved backup</button>
       <button class="quiet" id="retryButton" hidden>↻ Retry save</button>
       <button class="quiet" id="discardPendingButton" hidden>Discard unsaved edits</button>
     </div>
@@ -1762,6 +1748,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       </div>
     </div>
   </section>
+  <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
   </section>
@@ -1810,6 +1797,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./celebration.js"></script>
 <script src="./placement.js"></script>
 <script src="./lock.js"></script>
+<script src="./games-wheel.js"></script>
+<script src="./games-memory.js"></script>
+<script src="./games-team.js"></script>
+<script src="./games.js"></script>
 <script>
 (() => {
   'use strict';
@@ -2096,33 +2087,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function updateMotion() {
     document.body.classList.toggle('no-motion', reducedMotion());
-
-    $('motionButton').textContent =
-      reducedMotion() ? 'Motion off' : 'Motion on';
-
-    $('motionButton').setAttribute(
-      'aria-pressed',
-      String(!reducedMotion())
-    );
-
-    $('motionButton').disabled = motionQuery.matches;
-
-    $('motionButton').title = motionQuery.matches
-      ? 'Following your device’s reduced-motion setting'
-      : 'Toggle decorative animation';
   }
-
-  $('motionButton').addEventListener('click', () => {
-    motionPaused = !motionPaused;
-    updateMotion();
-
-    try {
-      localStorage.setItem(
-        'swl-motion-paused',
-        String(motionPaused)
-      );
-    } catch {}
-  });
 
   motionQuery.addEventListener('change', updateMotion);
 
@@ -2284,7 +2249,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     } catch {
       if (raw !== null) {
         damagedRecovery = raw;
-        recoveryWarning = 'Saved local changes could not be read. Export recovery data from Data, ' +
+        recoveryWarning = 'Saved local changes could not be read. Download recovery data below, ' +
           'then use Discard unsaved edits to start again.';
       }
     }
@@ -2354,9 +2319,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('refreshButton').disabled = reading;
     $('refreshButton').textContent = reading ? '↻ Refreshing…' : '↻ Refresh scores';
-    $('importButton').disabled = !canEdit() || importing || unsaved;
+    $('exportButton').hidden = !(retryNeeded && unsaved) && damagedRecovery === null;
     $('exportButton').disabled = !hasLoaded && damagedRecovery === null;
-    $('exportButton').textContent = damagedRecovery !== null ? '↓ Export recovery data' : '↓ Export backup';
+    $('exportButton').textContent = damagedRecovery !== null ? 'Download recovery data' : 'Download unsaved backup';
     $('addGymnastButton').disabled = !canEdit();
     $('toastUndo').disabled = !canEdit() || !history.length;
     document.querySelectorAll('button[data-skill], button[data-link-complex]').forEach(button => {
@@ -3340,6 +3305,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
+    if (!['dashboard', 'tracker', 'placement', 'games'].includes(view)) return;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
@@ -3347,7 +3313,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('dashboard').hidden = view !== 'dashboard';
     $('tracker').hidden = !tracker;
     $('placementProfile').hidden = !placement;
-    $('nav').classList.toggle('tracking', tracker || placement);
+    $('games').hidden = view !== 'games';
+    $('nav').style.setProperty('--nav-index', view === 'games' ? '2' : tracker || placement ? '1' : '0');
+    window.SWLGames?.setActive(view === 'games');
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
@@ -3770,15 +3738,11 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
     }
 
-    if (!$('backups').contains(event.target)) {
-      $('backups').open = false;
-    }
   });
 
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
 
-    $('backups').open = false;
 
     if ($('toast').contains(document.activeElement)) {
       ($('undoButton') || $('main')).focus({
@@ -3839,66 +3803,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-    $('backups').open = false;
     toast(hasPending() ? 'Backup includes the unsaved changes shown here.' : 'Backup download requested.');
-  });
-
-  $('importButton').addEventListener('click', () => {
-    if (!canEdit()) return;
-    $('importFile').click();
-    $('backups').open = false;
-  });
-
-  $('importFile').addEventListener('change', async event => {
-    const file = event.target.files[0];
-    if (!file || !canEdit() || importing || hasPending()) {
-      event.target.value = '';
-      return;
-    }
-
-    try {
-      if (file.size > 1000000) {
-        throw Error('This file is too large for a league backup.');
-      }
-
-      const backupText = await file.text();
-      const imported = parseState(backupText);
-      // Backups made before linking existed must not clear newer ratings.
-      if (!Object.prototype.hasOwnProperty.call(JSON.parse(backupText), 'linking')) {
-        imported.linking = cloneState(confirmedState.linking || {});
-      }
-
-      const confirmed = confirm(
-        'Replace ALL shared scores in Google Sheets with this backup? ' +
-        'This affects everyone using the league. Export the current scores first ' +
-        'if you want to keep them.'
-      );
-
-      if (!confirmed) return;
-
-      const currentById = new Map(confirmedState.gymnasts.map(g => [g.id, g]));
-      for (const gymnast of imported.gymnasts) {
-        const current = currentById.get(gymnast.id);
-        if (!current || current.name !== gymnast.name || current.coach !== gymnast.coach) {
-          throw Error('This backup contains a different roster. Add any missing gymnasts to the Sheet before restoring these scores.');
-        }
-      }
-      imported.gymnasts = cloneState(confirmedState.gymnasts);
-      imported.updatedAt = new Date().toISOString();
-      history = [];
-      if (!await saveReplacement(imported)) return;
-      refreshScoreViews();
-      toast('Backup restored to Google Sheets.');
-
-    } catch (error) {
-      alert(
-        'Import failed. Current scores were not changed.\n\n' +
-        error.message
-      );
-
-    } finally {
-      event.target.value = '';
-    }
   });
 
   $('addGymnastForm').addEventListener('submit', event => {
@@ -3987,6 +3892,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     window.addEventListener('resize', syncHeader);
   }
 
+  window.SWLGames?.mount($('gamesRoot'), {
+    motionOff: reducedMotion,
+    playSound: type => window.SWLCelebration?.ding({ perfect: Boolean(type?.perfect) || ['complete', 'correct', 'winner'].includes(type) })
+  });
   restoreRecovery();
   syncHeader();
   updateMotion();
