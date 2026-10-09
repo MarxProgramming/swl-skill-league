@@ -10,10 +10,9 @@ html{scroll-padding-bottom:100px}
 .games-kicker{margin:0 0 10px;color:#bd9bff;font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
 .games-heading h1{margin:0;font-size:clamp(38px,5.2vw,62px);line-height:1.02;letter-spacing:-.065em;font-weight:850}
 .games-intro{max-width:400px;font-size:13px;color:#aaa5b8;line-height:1.6;margin:0 0 3px}
-.games-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.games-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
 .game-card{--game-color:#d5fa70;position:relative;display:flex;flex-direction:column;min-width:0;padding:22px;border:1px solid #ffffff16;border-radius:25px;background:linear-gradient(155deg,#ffffff08,transparent 70%),#15161d;overflow:hidden;transition:transform .35s var(--ease),border-color .35s}
 .game-card:hover{transform:translateY(-5px);border-color:var(--game-color)}
-.game-card--memory{--game-color:#bd9bff}
 .game-card--team{--game-color:#f5c87d}
 .game-card-top{display:flex;align-items:center;justify-content:space-between;color:#8a8697;font-size:10px;letter-spacing:.12em;font-weight:800}
 .game-card-tag{color:var(--game-color);background:#ffffff05;border:1px solid #ffffff12;border-radius:100px;padding:5px 9px;font-size:9px;letter-spacing:.04em}

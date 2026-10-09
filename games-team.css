@@ -15,10 +15,8 @@
 .swl-team-choice[aria-pressed=true]{color:#e8ffd0;border-color:#d5fa7070;background:#d5fa7011}
 .swl-team-names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
 .swl-team-name{display:grid;gap:7px;font-size:11px;color:var(--team-color);font-weight:750}
-.swl-team-name input,.swl-team-timer-choice select{width:100%;max-width:100%;min-height:48px;border:1px solid #ffffff23;border-radius:11px;padding:11px 12px;background:#0d0e1366;color:var(--text,#f6f4f8);font-size:16px;outline-offset:3px}
+.swl-team-name input{width:100%;max-width:100%;min-height:48px;border:1px solid #ffffff23;border-radius:11px;padding:11px 12px;background:#0d0e1366;color:var(--text,#f6f4f8);font-size:16px;outline-offset:3px}
 .swl-team-name input{border-left:3px solid var(--team-color)}
-.swl-team-timer-choice{display:flex;align-items:center;gap:15px;justify-content:space-between;margin-top:22px;font-size:12px;color:var(--muted,#a9a8ba)}
-.swl-team-timer-choice select{width:150px;font-size:14px;flex-shrink:0}
 .swl-team-error{color:#ffc2b7;line-height:1.5;font-size:12px;margin:12px 0;min-height:0}.swl-team-error:empty{display:none}
 .swl-team-button{border:1px solid #ffffff22;border-radius:13px;padding:14px 20px;min-height:48px;font-weight:850;font-size:14px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;max-width:100%}
 .swl-team-primary{background:var(--mint,#d5fa70);color:#1f2914;box-shadow:0 4px 24px #d5fa7009}
@@ -36,20 +34,23 @@
 .swl-team-progress{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--muted,#a9a8ba);margin-bottom:10px}
 .swl-team-track{height:3px;background:#ffffff0e;border-radius:4px;overflow:hidden;margin-bottom:20px}
 .swl-team-track span{display:block;height:100%;background:var(--mint,#d5fa70);border-radius:4px;transition:width .3s ease}
-.swl-team-stage{border:1px solid #ffffff19;border-radius:26px;padding:clamp(20px,3.5vw,40px);background:radial-gradient(ellipse at top right,#bd9bff0b,transparent 70%),#171820}
+.swl-team-stage{border:1px solid #ffffff19;border-radius:26px;padding:clamp(20px,3.5vw,40px);background:radial-gradient(ellipse at top right,#bd9bff14,transparent 70%),#171820;box-shadow:0 24px 80px #0002;scroll-margin-top:calc(var(--header-height,76px) + 16px)}
 .swl-team-stage-top{display:flex;align-items:center;justify-content:space-between;gap:15px}
 .swl-team-turn-name{color:var(--team-color);font-size:clamp(15px,2.3vw,23px);font-weight:850;overflow-wrap:anywhere}
 .swl-team-card-symbol{font-size:33px;line-height:1;color:var(--team-color)}
-.swl-team-challenge{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:25px;align-items:center;margin:20px 0 24px}
-.swl-team-challenge h3{font-size:clamp(25px,4.5vw,53px);max-width:18ch;margin:0 0 10px}
-.swl-team-task{font-size:clamp(17px,2.8vw,25px);font-weight:750;margin-bottom:8px}
-.swl-team-metric{text-align:center;color:var(--team-color);min-width:110px}
-.swl-team-metric b{display:block;font-size:clamp(60px,9vw,105px);font-weight:850;line-height:1;letter-spacing:-.065em}
-.swl-team-metric span{font-size:10px;font-weight:850;letter-spacing:.17em;text-transform:uppercase}
+.swl-team-challenge{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.42fr);gap:35px;align-items:center;margin:25px 0 28px}
+.swl-team-card-step{font-size:9px;letter-spacing:.15em;font-weight:850;color:var(--team-color);line-height:1.6;margin-bottom:15px}
+.swl-team-challenge h3{font-size:clamp(29px,4.5vw,55px);max-width:18ch;margin:0 0 17px}
+.swl-team-task{font-size:clamp(18px,2.2vw,27px);line-height:1.42;font-weight:750;margin-bottom:15px;overflow-wrap:anywhere}
+.swl-team-coach-hint{font-size:12px;line-height:1.6;max-width:58ch}
 .swl-team-turn-controls{min-height:58px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-top:4px}
-.swl-team-clock{display:flex;align-items:center;gap:10px;min-width:118px}
-.swl-team-clock b{font-size:43px;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.06em;line-height:1}
-.swl-team-clock span{font-size:10px;color:var(--muted,#a9a8ba);line-height:1.35;max-width:110px}
+.swl-team-clock{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;aspect-ratio:1;width:100%;max-width:265px;justify-self:center;border:2px solid #d5fa7040;border-radius:50%;background:radial-gradient(circle,#d5fa700a,transparent 70%);color:var(--mint,#d5fa70);box-shadow:0 0 0 10px #d5fa7003,inset 0 0 35px #d5fa7003}
+.swl-team-clock b{font-size:clamp(90px,11vw,158px);font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.075em;line-height:.9;padding-right:.07em}
+.swl-team-clock span{font-size:10px;color:var(--muted,#a9a8ba);line-height:1.35;text-align:center;padding:0 8px}
+.swl-team-clock[data-final=true]{border-color:#ffd782b0;color:#ffd782;background:#ffd78208;box-shadow:0 0 0 10px #ffd78204}
+.swl-team-clock[data-paused=true]{border-color:#bd9bff70;color:#bd9bff}
+.swl-team-go{min-width:240px;font-size:18px;min-height:59px}
+.swl-team-review-note{color:#ffd782;font-weight:750;font-size:16px;line-height:1.5}
 .swl-team-awards-label{font-size:9px;letter-spacing:.12em;font-weight:750;color:var(--muted,#a9a8ba);padding-top:26px;margin:24px 0 10px;border-top:1px solid #ffffff0e;line-height:1.7}
 .swl-team-awards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .swl-team-award{min-height:116px;background:#ffffff04;border:1px solid #ffffff1c;border-radius:15px;padding:16px 10px;color:var(--text,#f6f4f8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
@@ -58,7 +59,7 @@
 .swl-team-award:hover:not(:disabled){border-color:#ffd78277;background:#ffd78209}
 .swl-team-award:disabled{opacity:.37;cursor:default}.swl-team-award-result{color:#ffd782;font-size:22px;font-weight:850;letter-spacing:-.02em}
 .swl-team-live{font-size:12px;text-align:center;color:var(--muted,#a9a8ba);margin:17px 0 0;min-height:20px;overflow-wrap:anywhere}
-.swl-team-finish{text-align:center;padding:clamp(32px,6vw,65px) 20px;border:1px solid #ffd78233;border-radius:26px;background:radial-gradient(ellipse at top,#ffd7820e,transparent 65%),#171820}
+.swl-team-finish{text-align:center;padding:clamp(32px,6vw,65px) 20px;border:1px solid #ffd78233;border-radius:26px;background:radial-gradient(ellipse at top,#ffd7820e,transparent 65%),#171820;scroll-margin-top:calc(var(--header-height,76px) + 16px)}
 .swl-team-trophy{font-size:70px;color:#ffd782;line-height:1;margin-bottom:20px}
 .swl-team-finish h3{font-size:clamp(30px,6vw,67px);margin:12px auto;max-width:24ch;color:#fff5d7}
 .swl-team-winner-points{font-size:29px;font-weight:850;color:#ffd782;margin-bottom:13px}
@@ -68,6 +69,7 @@
 .swl-team [tabindex="-1"]:focus{outline:none}
 .swl-team[data-static=true] *,body.no-motion .swl-team *{animation:none!important;transition:none!important}
 @media(min-width:1500px){.swl-team{max-width:1380px}.swl-team-challenge h3{font-size:62px}.swl-team-task{font-size:29px}.swl-team-muted{font-size:16px}.swl-team-award{min-height:135px}.swl-team-award b{font-size:18px}.swl-team-award small{font-size:13px}.swl-team-score-name{font-size:19px}.swl-team-button{font-size:17px}}
-@media(max-width:700px){.swl-team-setup-grid{grid-template-columns:1fr}.swl-team-rules{padding:24px}.swl-team-rules .swl-team-rule-icon{font-size:35px}.swl-team-board{grid-template-columns:repeat(2,minmax(0,1fr))!important}.swl-team-score{padding:13px 15px}.swl-team-heading{gap:10px}.swl-team-challenge{gap:15px}.swl-team-metric{min-width:70px}.swl-team-metric b{font-size:64px}}
-@media(max-width:400px){.swl-team-heading h2{font-size:27px}.swl-team-heading .swl-team-text-button{font-size:10px;flex-shrink:0}.swl-team-names{grid-template-columns:1fr}.swl-team-timer-choice{align-items:flex-start;flex-direction:column;gap:7px}.swl-team-timer-choice select{width:100%}.swl-team-challenge{grid-template-columns:1fr}.swl-team-metric{display:none}.swl-team-stage{padding:18px}.swl-team-awards{gap:6px}.swl-team-award{padding:12px 4px;min-height:105px}.swl-team-award>span{font-size:14px;letter-spacing:1px}.swl-team-award b{font-size:12px}.swl-team-award small{font-size:9px}.swl-team-turn-controls>.swl-team-primary{width:100%}.swl-team-score-name{font-size:12px}.swl-team-score{padding:13px 12px}.swl-team-reset-prompt{padding:17px}.swl-team-reset-prompt>.swl-team-button{width:100%}}
+@media(max-width:700px){.swl-team-setup-grid{grid-template-columns:1fr}.swl-team-rules{padding:24px}.swl-team-rules .swl-team-rule-icon{font-size:45px}.swl-team-board{grid-template-columns:repeat(2,minmax(0,1fr))!important}.swl-team-score{padding:13px 15px}.swl-team-heading{gap:10px}.swl-team-challenge{grid-template-columns:1fr;gap:26px;margin:20px 0 22px}.swl-team-challenge h3{font-size:34px;max-width:none}.swl-team-clock{width:175px}.swl-team-clock b{font-size:104px}.swl-team-go{width:100%;min-width:0}.swl-team-turn-controls{justify-content:center}.swl-team-task{font-size:20px}}
+@media(max-width:400px){.swl-team-heading h2{font-size:27px}.swl-team-heading .swl-team-text-button{font-size:10px;flex-shrink:0}.swl-team-names{grid-template-columns:1fr}.swl-team-stage{padding:18px}.swl-team-challenge h3{font-size:30px}.swl-team-task{font-size:18px}.swl-team-coach-hint{font-size:11px}.swl-team-clock{width:156px}.swl-team-clock b{font-size:93px}.swl-team-awards{gap:6px}.swl-team-award{padding:12px 4px;min-height:105px}.swl-team-award>span{font-size:14px;letter-spacing:1px}.swl-team-award b{font-size:12px}.swl-team-award small{font-size:9px}.swl-team-turn-controls>.swl-team-primary{width:100%}.swl-team-score-name{font-size:12px}.swl-team-score{padding:13px 12px}.swl-team-reset-prompt{padding:17px}.swl-team-reset-prompt>.swl-team-button{width:100%}}
 @media(prefers-reduced-motion:reduce){.swl-team *{animation:none!important;transition:none!important}}
+@media(max-width:600px){.swl-team-reset-prompt{bottom:calc(86px + env(safe-area-inset-bottom))}}

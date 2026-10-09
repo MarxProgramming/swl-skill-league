@@ -1,6 +1,6 @@
 # SWL Squad Training
 
-A static gymnastics training app with three views: Leaderboards, Skills, and Games. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The three games run independently on the current device.
+A static gymnastics training app with three views: Leaderboards, Skills, and Games. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The two games run independently on the current device.
 
 After the opening screen, the main page goes directly to the leaderboards, with a small Scoring guide button. Each board shows the top five and a softly blurred sixth-place preview; selecting a gymnast opens their skills. The podium medals gleam in a staggered gold, silver, then bronze sequence.
 
@@ -18,11 +18,10 @@ Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, wi
 
 Games remain available while league scoring is locked. Game points and optional team names stay in the current page session; they are not saved to Google Sheets and never change Skill League marks or totals. Returning to another app view preserves the session, while reloading the page starts fresh.
 
-- **Conditioning wheel:** spin for a conditioning challenge or coach turn. “Coach joins next spin” carries forward to the next completed exercise result; another coach slot cannot consume it. Leaving the game cancels an unfinished spin.
-- **Spot the Switch:** play five rounds. Remember six symbols, then choose the one that changed. Each correct answer earns one session point, for a maximum of five. Leaving an active round pauses it; Resume restarts that round before play continues.
-- **Squad Showdown:** choose two to four teams with optional names, then rotate through five turns per team. Each turn draws a team challenge, with an optional 15-, 20-, or 30-second timer. The coach awards one, two, or three stars for control, timing, and encouragement, then advances to the next team. The timer never awards points. Each team can earn up to 15 stars; ties share the top spot. An award can be undone before advancing. Leaving a timed round pauses it until Resume, and starting a new game during play asks before clearing the session.
+- **Conditioning wheel:** spin for a conditioning challenge or coach turn, with pointer clicks that slow down with the wheel. The two coach segments sit opposite each other. “Coach joins next spin” carries forward to the next completed exercise result; another coach slot cannot consume it. Leaving the game cancels an unfinished spin.
+- **Team Challenge:** choose two to four teams with optional names, then rotate through five turns per team. Each turn draws one of 22 floor-only challenges. Read the card, then press Go for ten seconds: the first seven seconds are silent, the last three have tones, and the finish has a short chime. The coach awards one, two, or three stars; the timer never awards points. Each team can earn up to 15 stars, and tied leaders share the win. Awards can be undone before advancing. Leaving a timed round pauses it until Resume. New game asks before clearing the session.
 
-All three games follow the Sound control and the device’s reduced-motion preference.
+Both games follow the Sound control and the device’s reduced-motion preference.
 
 ## Publish with GitHub Pages
 

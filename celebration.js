@@ -212,6 +212,53 @@
       Boolean(details.perfect)));
   }
 
+  function gameTone(context, start, frequency, endFrequency, duration, volume, type = 'sine') {
+    while (voices.size >= MAX_BELLS) retireVoice(voices.values().next().value);
+    const gain = context.createGain(), oscillator = context.createOscillator();
+    const voice = { gain, start, oscillators: [oscillator], partials: [], released: false,
+      retiring: false, cleanupTimer: null, ended: 0 };
+    voices.add(voice);
+    try {
+      // Dry, short effects stay distinct even during a fast wheel spin.
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, start);
+      oscillator.frequency.exponentialRampToValueAtTime(endFrequency, start + duration);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(volume, start + .003);
+      gain.gain.exponentialRampToValueAtTime(.00004, start + duration);
+      oscillator.connect(gain); gain.connect(masterGain);
+      oscillator.onended = () => releaseVoice(voice);
+      oscillator.start(start); oscillator.stop(start + duration + .025);
+      voice.cleanupTimer = setTimeout(() => {
+        try { oscillator.stop(); } catch (_) {}
+        releaseVoice(voice);
+      }, (start - context.currentTime + duration + .12) * 1000);
+    } catch (_) {
+      try { oscillator.stop(); } catch (_) {}
+      releaseVoice(voice);
+    }
+  }
+
+  function gameSound(details = {}) {
+    if (document.hidden || !soundEnabled) return;
+    const kind = typeof details === 'string' ? details : details.kind;
+    if (kind === 'wheel-start') { unlockAudio(); return; }
+    const context = unlockAudio();
+    // Never queue ticks or timer cues behind a suspended audio context.
+    if (!context || context.state !== 'running') return;
+    const start = context.currentTime + .008;
+    if (kind === 'wheel-tick') gameTone(context, start, 2600, 1100, .032, .18, 'triangle');
+    else if (kind === 'countdown' && [3, 2, 1].includes(details.remaining)) {
+      const frequency = {3:1567.98, 2:1760, 1:1975.53}[details.remaining];
+      gameTone(context, start, frequency, frequency, .15, .26);
+    } else if (kind === 'timer-end') {
+      gameTone(context, start, 1174.66, 783.99, .3, .32);
+      gameTone(context, start + .015, 2349.32, 1567.98, .22, .07);
+    } else if (['wheel-finish', 'award', 'finish'].includes(kind)) {
+      ding({perfect: kind !== 'award' || Boolean(details.perfect)});
+    }
+  }
+
   function flourish(token) {
     withAudio((context, start) => {
       // G7–B7–D8: another seven semitones higher, with a softer attack and mix.
@@ -353,7 +400,7 @@
     window.addEventListener('pagehide',stop);
   }
 
-  window.SWLCelebration = Object.freeze({version:1,play,ding,stop,unlockAudio,setSoundEnabled,
+  window.SWLCelebration = Object.freeze({version:1,play,ding,gameSound,stop,unlockAudio,setSoundEnabled,
     get soundEnabled(){return soundEnabled;},get active(){return Boolean(overlay);}});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',initialize,{once:true});
   else initialize();

@@ -1574,7 +1574,6 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./placement.css">
 <link rel="stylesheet" href="./games.css">
 <link rel="stylesheet" href="./games-wheel.css">
-<link rel="stylesheet" href="./games-memory.css">
 <link rel="stylesheet" href="./games-team.css">
 </head>
 
@@ -1798,7 +1797,6 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./placement.js"></script>
 <script src="./lock.js"></script>
 <script src="./games-wheel.js"></script>
-<script src="./games-memory.js"></script>
 <script src="./games-team.js"></script>
 <script src="./games.js"></script>
 <script>
@@ -3894,7 +3892,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   window.SWLGames?.mount($('gamesRoot'), {
     motionOff: reducedMotion,
-    playSound: type => window.SWLCelebration?.ding({ perfect: Boolean(type?.perfect) || ['complete', 'correct', 'winner'].includes(type) })
+    playSound: details => window.SWLCelebration?.gameSound(details)
   });
   restoreRecovery();
   syncHeader();
