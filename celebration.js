@@ -242,20 +242,24 @@
   function gameSound(details = {}) {
     if (document.hidden || !soundEnabled) return;
     const kind = typeof details === 'string' ? details : details.kind;
-    if (kind === 'wheel-start') { unlockAudio(); return; }
     const context = unlockAudio();
     // Never queue ticks or timer cues behind a suspended audio context.
     if (!context || context.state !== 'running') return;
     const start = context.currentTime + .008;
-    if (kind === 'wheel-tick') gameTone(context, start, 2600, 1100, .032, .18, 'triangle');
+    // Game cues need to carry across the floor; skill-check bells keep their softer mix.
+    if (kind === 'wheel-start') gameTone(context, start, 900, 2400, .2, .7, 'triangle');
+    else if (kind === 'wheel-tick') gameTone(context, start, 2900, 1250, .042, .78, 'triangle');
     else if (kind === 'countdown' && [3, 2, 1].includes(details.remaining)) {
       const frequency = {3:1567.98, 2:1760, 1:1975.53}[details.remaining];
-      gameTone(context, start, frequency, frequency, .15, .26);
+      gameTone(context, start, frequency, frequency, .32, .95, 'triangle');
+      gameTone(context, start, frequency * 1.5, frequency * 1.5, .26, .25);
     } else if (kind === 'timer-end') {
-      gameTone(context, start, 1174.66, 783.99, .3, .32);
-      gameTone(context, start + .015, 2349.32, 1567.98, .22, .07);
+      gameTone(context, start, 1567.98, 1567.98, .22, .95, 'triangle');
+      gameTone(context, start + .26, 2349.32, 2349.32, .38, .95, 'triangle');
+      gameTone(context, start + .26, 3135.96, 3135.96, .34, .25);
     } else if (['wheel-finish', 'award', 'finish'].includes(kind)) {
-      ding({perfect: kind !== 'award' || Boolean(details.perfect)});
+      const notes = kind === 'award' && !details.perfect ? [2637.02,3135.96] : [2637.02,3135.96,3951.07];
+      notes.forEach((frequency,index) => gameTone(context,start + index * .12,frequency,frequency,.4,.72,'triangle'));
     }
   }
 

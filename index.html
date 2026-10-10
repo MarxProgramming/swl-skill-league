@@ -1575,6 +1575,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games.css">
 <link rel="stylesheet" href="./games-wheel.css">
 <link rel="stylesheet" href="./games-team.css">
+<link rel="stylesheet" href="./games-skill.css">
+<link rel="stylesheet" href="./games-training.css">
 <link rel="stylesheet" href="./v2.css">
 <link rel="stylesheet" href="./welcome.css">
 </head>
@@ -1808,6 +1810,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./lock.js"></script>
 <script src="./games-wheel.js"></script>
 <script src="./games-team.js"></script>
+<script src="./games-skill.js"></script>
+<script src="./games-training.js"></script>
 <script src="./games.js"></script>
 <script src="./v2.js"></script>
 <script src="./welcome.js"></script>
@@ -2184,9 +2188,12 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderV2() {
     v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,groupLabel,shortGroupLabel,fireBadge,hasLoaded});
   }
+  function inLeaderboardGroup(gymnast, group) {
+    return group === 'all' || (group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : gymnast.coach === group);
+  }
   function standings(category, group = 'all') {
     return GYMNASTS
-      .filter(gymnast => group === 'all' || gymnast.coach === group)
+      .filter(gymnast => inLeaderboardGroup(gymnast, group))
       .map(gymnast => ({
         gymnast,
         ...summary(gymnast.id, category)
@@ -2739,10 +2746,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderV2();
     if (currentView === 'placement') renderPlacementProfile();
     const groups = [...new Set(GYMNASTS.map(g => g.coach))];
-    if (leaderboardGroup !== 'all' && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
-    if ($('leaderboardFilters')) $('leaderboardFilters').innerHTML = [['all','Overall · all squads'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<button type="button" class="chip" data-board-group="${escapeHTML(id)}" aria-pressed="${leaderboardGroup===id}">${escapeHTML(label)}</button>`).join('');
-    if ($('leaderboardScope')) $('leaderboardScope').textContent = leaderboardGroup === 'all' ? 'All squads · overall leaderboards' : groupLabel(leaderboardGroup) + ' · group leaderboards';
-    const all = GYMNASTS.filter(g=>leaderboardGroup === 'all' || g.coach === leaderboardGroup).map(g => summary(g.id));
+    if (!['all','senior'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
+    if ($('leaderboardFilters')) $('leaderboardFilters').innerHTML = [['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<button type="button" class="chip" data-board-group="${escapeHTML(id)}" aria-pressed="${leaderboardGroup===id}">${escapeHTML(label)}</button>`).join('');
+    if ($('leaderboardScope')) $('leaderboardScope').textContent = leaderboardGroup === 'all' ? 'All squads · overall leaderboards' : leaderboardGroup === 'senior' ? 'All senior squad · Marx and Dan’s groups' : groupLabel(leaderboardGroup) + ' · group leaderboards';
+    const all = GYMNASTS.filter(g=>inLeaderboardGroup(g,leaderboardGroup)).map(g => summary(g.id));
 
     if (!hasLoaded) {
       ['squadPoints', 'achievedCount', 'perfectCount'].forEach(id => {
@@ -4010,6 +4017,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   window.SWLGames?.mount($('gamesRoot'), {
+    skills: SKILLS.map(skill => ({id:skill.id,label:skill.name,category:skill.category,tier:skill.tier})),
     motionOff: reducedMotion,
     playSound: details => window.SWLCelebration?.gameSound(details)
   });

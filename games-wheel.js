@@ -44,7 +44,7 @@
     exercise('tuck-jumps','tuck jumps',12,'reps',['TUCK','JUMPS'],8),
     exercise('silly-statue','silly statue',10,'seconds',['SILLY','STATUE'],7,'Choose a funny gymnast statue and hold it for the time shown.'),
     exercise('mountain-climbers','mountain climbers',20,'reps',['MOUNTAIN','CLIMBERS'],8),
-    exercise('flamingo','funny flamingo balance',20,'seconds',['FLAMINGO','BALANCE'],6,'Make a funny flamingo pose for the time shown. Swap legs halfway, with a toe touch whenever needed.'),
+    exercise('one-leg-balance','one-leg balance',20,'seconds',['ONE-LEG','BALANCE'],6,'Stand tall on one leg with your arms held steady and your eyes on a fixed point. Swap legs halfway through the time. Use a light toe touch if needed.'),
     exercise('star-jumps','star jumps',5,'reps',['STAR','JUMPS'],7),
     {id:'free-time',name:'free time',amount:300,unit:'seconds',words:['FREE','TIME'],kind:'free-time',weight:5,detail:'Supervised free time in the designated area, for the time shown.'}
   ];
