@@ -1,0 +1,28 @@
+.swl-welcome{width:min(620px,calc(100% - 28px));max-height:calc(100dvh - 28px);padding:0;margin:auto;border:1px solid #bd9bff38;border-radius:25px;background:radial-gradient(ellipse at 0 0,#bd9bff0f,transparent 55%),#191821;color:#f6f4f8;box-shadow:0 35px 120px #0009;overflow:auto;overscroll-behavior:contain;scrollbar-color:#6c617d #191821;animation:swl-welcome-arrive .3s ease both;z-index:11001}
+.swl-welcome[hidden],.swl-welcome-backdrop[hidden]{display:none!important}
+.swl-welcome::backdrop{background:#090a10c9;backdrop-filter:blur(8px)}
+.swl-welcome *{box-sizing:border-box;min-width:0}
+.swl-welcome-top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:21px 25px 0}
+.swl-welcome-brand{display:flex;align-items:center;gap:12px;color:#9d93b0;font:750 8px/1.4 system-ui,sans-serif;letter-spacing:.13em}
+.swl-welcome-logo{display:block;width:69px;height:auto;filter:invert(1);opacity:.92}
+.swl-welcome-close{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;padding:0;border:1px solid #ffffff14;border-radius:12px;background:#ffffff03;color:#b8aec9;font:400 25px/1 system-ui,sans-serif;cursor:pointer}
+.swl-welcome-close:hover{background:#ffffff09;color:#fff}
+.swl-welcome-content{padding:16px 35px 10px}
+.swl-welcome-eyebrow{margin:0 0 12px;color:#bd9bff;font:800 9px/1.6 system-ui,sans-serif;letter-spacing:.16em}
+.swl-welcome h2{max-width:12ch;margin:0 0 22px;font:850 clamp(34px,5vw,47px)/1.04 system-ui,sans-serif;letter-spacing:-.06em;color:#f7f3ff;outline:none}
+.swl-welcome-content>p:not(.swl-welcome-eyebrow):not(.swl-welcome-signoff){margin:0 0 16px;color:#bdb3cb;font:400 13px/1.75 system-ui,sans-serif}
+.swl-welcome-content>.swl-welcome-intro{color:#dfd7ea!important}
+.swl-welcome-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:25px 0 21px;padding:18px 0;border-top:1px solid #ffffff0e;border-bottom:1px solid #ffffff0e}
+.swl-welcome-highlights>span{display:flex;align-items:center;gap:8px}
+.swl-welcome-highlights i{color:#d5fa70;font:400 22px/1 system-ui,sans-serif;font-style:normal;flex:0 0 auto}
+.swl-welcome-highlights b{color:#d3c8e1;font:650 10px/1.45 system-ui,sans-serif}
+.swl-welcome-signoff{margin:0;color:#d3c2eb;font:500 italic 14px/1.5 Georgia,serif}
+.swl-welcome-footer{padding:15px 35px 30px}
+.swl-welcome-enter{display:flex;align-items:center;justify-content:space-between;gap:15px;width:100%;min-height:51px;padding:14px 18px;border:1px solid #e8ffb255;border-radius:13px;background:#d5fa70;color:#202b13;font:800 13px/1.5 system-ui,sans-serif;cursor:pointer}
+.swl-welcome-enter:hover{background:#e1ff98}.swl-welcome-enter>span:last-child{font-size:20px;line-height:1}
+.swl-welcome button:focus-visible{outline:3px solid #d5fa70;outline-offset:4px}
+@keyframes swl-welcome-arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:420px){.swl-welcome{width:calc(100% - 24px);max-height:calc(100dvh - 24px);border-radius:20px}.swl-welcome-top{padding:15px 17px 0}.swl-welcome-brand{gap:8px;font-size:7px}.swl-welcome-logo{width:60px}.swl-welcome-content{padding:17px 22px 8px}.swl-welcome h2{font-size:37px;margin-bottom:19px}.swl-welcome-eyebrow{font-size:8px}.swl-welcome-content>p:not(.swl-welcome-eyebrow):not(.swl-welcome-signoff){font-size:12px;line-height:1.7;margin-bottom:14px}.swl-welcome-highlights{gap:8px;margin:21px 0 18px;padding:15px 0}.swl-welcome-highlights>span{align-items:flex-start;flex-direction:column;gap:7px}.swl-welcome-highlights b{font-size:9px}.swl-welcome-footer{padding:13px 22px 23px}.swl-welcome-signoff{font-size:13px}}
+@media(max-height:560px){.swl-welcome-top{padding-top:12px}.swl-welcome-content{padding-top:10px}.swl-welcome h2{font-size:33px;max-width:none;margin-bottom:15px}.swl-welcome-highlights{margin:16px 0}.swl-welcome-footer{padding-top:10px;padding-bottom:20px}}
+@media(prefers-reduced-motion:reduce){.swl-welcome{animation:none;scroll-behavior:auto}.swl-welcome button{transition:none}}
+body.no-motion .swl-welcome{animation:none;scroll-behavior:auto}body.no-motion .swl-welcome button{transition:none}

@@ -76,6 +76,7 @@
         ? previousFocus : keyboardNavigation ? document.getElementById('main') : null;
       try { target?.focus({ preventScroll: true }); } catch {}
     }
+    try { window.dispatchEvent(new Event('swl:startup-finished')); } catch {}
   }
 
   function leave() {

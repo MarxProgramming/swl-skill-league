@@ -3,7 +3,7 @@
   let root, options, current = null, active = false, lobby, arena, stage, title;
   const mounted = new Map();
   const descriptions = [
-    {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Let the wheel choose your next challenge. Classic conditioning or a faster Crazy Wheel, with surprise coach turns and rare rewards.',module:'SWLWheel',art:'wheel'},
+    {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
     {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'66 floor challenges. Ten seconds. Balance, synchronise and create something brilliant together.',module:'SWLTeam',art:'team'}
   ];
   function node(tag, className, text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
@@ -33,7 +33,7 @@
     if(root===container)return;root=container;options=config;root.classList.add('games-shell');
     lobby=node('div','games-lobby');const head=node('div','games-heading'),heading=node('div');
     heading.append(node('p','games-kicker','SWL Squad Training'),node('h1','','Squad games'));
-    head.append(heading,node('p','games-intro','Gather the squad. Spin for conditioning or take on a ten-second team challenge, led by your coach.'));
+    head.append(heading,node('p','games-intro','Gather the squad. Clear the conditioning wheel or take on a ten-second team challenge, led by your coach.'));
     const cards=node('div','games-grid');
     descriptions.forEach((info,index)=>{
       const card=node('article','game-card game-card--'+info.id),top=node('div','game-card-top');

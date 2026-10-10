@@ -33,3 +33,7 @@
 @media(max-width:360px){.mastery-layout{gap:13px}.mastery-donut{width:122px;height:122px;flex-basis:122px}.mastery-donut strong{font-size:35px}.chart-key li{font-size:9px}.analytics-panel{padding:20px 16px}.analytics-stat-grid strong small{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.fire-badge,.fire-badge>span{animation:none}.directory-card{transition:none}.directory-card:hover{transform:none}}body.no-motion .fire-badge,body.no-motion .fire-badge>span{animation:none}
 .skill-cell[hidden],.skill-renewal[hidden]{display:none!important}
+
+/* Give tablet navigation room for every label. */
+@media(min-width:601px) and (max-width:1000px){.header-inner{flex-wrap:wrap}.nav{order:3;flex:1 0 100%;width:100%}}
+.analytics-scope,.revisit-grid strong{min-width:0;overflow-wrap:anywhere}

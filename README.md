@@ -14,6 +14,12 @@ The maximum is 358 points: 270 for skills, 18 for linking, and 70 for completing
 
 Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending, then names alphabetically to resolve equal scores.
 
+## First visit
+
+A personal welcome note from Marx explains the app as a small experiment alongside normal squad training: tracking foundational floor skills, celebrating progress and adding friendly competition within each squad. It appears after the startup screen on the first visit in a browser. Dismissing it is remembered on that device/browser; About this app in the footer opens it again. It stores no personal information.
+
+The leaderboard’s Analytics button always opens All squads and All gymnasts. Personal Progress insights still opens the selected gymnast.
+
 ## Skill renewal and insights
 
 Each achieved or perfect skill lasts 30 days at its current level. At expiry it drops one level; after another 30 days without renewal, Achieved becomes unticked. Automatic expiry still applies while scoring is locked. Existing marks begin a fresh 30-day period at migration, preserving all launch scores. Renew keeps the current level and resets the timer; it requires unlocked scoring. Undo restores the previous mark as a manual reassessment: any retained level gets a fresh 30-day timer, and the undone gain does not count toward On fire. Skills with seven days or less remaining turn red and appear in the Unticked + due for renewal list.
@@ -26,7 +32,7 @@ The searchable Gymnasts directory groups every gymnast by squad. Analytics shows
 
 Games remain available while league scoring is locked. Game points and optional team names stay in the current page session; they are not saved to Google Sheets and never change Skill League marks or totals. Returning to another app view preserves the session, while reloading the page starts fresh.
 
-- **Conditioning wheel:** spin for a conditioning challenge or coach turn, with pointer clicks that slow down with the wheel. The two coach segments sit opposite each other. “Coach joins next spin” carries forward to the next completed exercise result; another coach slot cannot consume it. Leaving the game cancels an unfinished spin. Crazy Wheel adds a faster spin and 14 weighted options, including a rare 2% coach splits slot and 5% supervised free-time slot. Each mode keeps its own result and coach-next-spin promise.
+- **Conditioning wheel:** start a game in Conditioning or Crazy mode, then spin and complete the task. The coach chooses Good to remove the landed exercise, Okay to halve its remaining reps or time (rounded up, minimum one), or Needs work to add another conditioning exercise. Special turns have a Done button. At one remaining option the game is complete. Each mode keeps its own progress until a new game or reload. Leaving mid-spin cancels the spin without grading it. Tap any segment or its full-name list button to see the instructions. Short labels keep the wheel readable as its segment count changes. Crazy mode spins faster, with harder conditioning, a funniest-pose spinner choice, a rare all-coaches splits challenge, and five minutes of supervised free time. The old coach dance and victory-pose tasks are removed. New game asks before clearing an active game.
 - **Team Challenge:** choose two to four teams with optional names, then rotate through five turns per team. Each turn draws one of 66 floor-only challenges across six categories. Used cards are remembered on the device across sessions, with no repeats until the deck is exhausted. Consecutive categories are varied where possible. Read the card, then press Go for ten seconds: the first seven seconds are silent, the last three have tones, and the finish has a short chime. The coach awards one, two, or three stars; the timer never awards points. Each team can earn up to 15 stars, and tied leaders share the win. Awards can be undone before advancing. Leaving a timed round pauses it until Resume. New game asks before clearing the session.
 
 Both games follow the Sound control and the device’s reduced-motion preference.

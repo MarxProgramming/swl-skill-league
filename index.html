@@ -1576,6 +1576,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-wheel.css">
 <link rel="stylesheet" href="./games-team.css">
 <link rel="stylesheet" href="./v2.css">
+<link rel="stylesheet" href="./welcome.css">
 </head>
 
 <body>
@@ -1764,6 +1765,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   <strong>SWL · TRAIN WITH PURPOSE</strong>
   <div class="footer-sync">
     <span id="saveStatus" role="status">Connecting to Google Sheets…</span>
+    <button class="quiet" type="button" data-open-welcome>About this app</button>
     <button class="quiet" id="refreshButton">↻ Refresh scores</button>
   </div>
 </footer>
@@ -1808,6 +1810,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-team.js"></script>
 <script src="./games.js"></script>
 <script src="./v2.js"></script>
+<script src="./welcome.js"></script>
 <script>
 (() => {
   'use strict';
@@ -3746,6 +3749,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     if (button && !button.disabled) {
       if (button.dataset.view) {
+        if (button.dataset.view === 'analytics') v2Api()?.resetAnalytics();
         setView(button.dataset.view);
 
       } else if (button.hasAttribute('data-board-group')) {
