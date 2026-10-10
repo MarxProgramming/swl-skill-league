@@ -3,8 +3,8 @@
   let root, options, current = null, active = false, lobby, arena, stage, title;
   const mounted = new Map();
   const descriptions = [
-    {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Let the wheel choose your next challenge. Quick conditioning, surprise coach turns, and one more spin.',module:'SWLWheel',art:'wheel'},
-    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'One team. One floor challenge. Ten seconds to create something brilliant together.',module:'SWLTeam',art:'team'}
+    {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Let the wheel choose your next challenge. Classic conditioning or a faster Crazy Wheel, with surprise coach turns and rare rewards.',module:'SWLWheel',art:'wheel'},
+    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'66 floor challenges. Ten seconds. Balance, synchronise and create something brilliant together.',module:'SWLTeam',art:'team'}
   ];
   function node(tag, className, text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
   function art(type) {

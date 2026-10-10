@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Squad Training</title>
+<title>SWL · Squad Training 2.0</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
@@ -1575,6 +1575,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games.css">
 <link rel="stylesheet" href="./games-wheel.css">
 <link rel="stylesheet" href="./games-team.css">
+<link rel="stylesheet" href="./v2.css">
 </head>
 
 <body>
@@ -1586,7 +1587,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>SQUAD TRAINING</small>
+        <small>SQUAD TRAINING <span class="version-tag">2.0</span></small>
       </div>
     </div>
 
@@ -1597,6 +1598,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <button data-view="tracker" aria-pressed="false">
         Skills
       </button>
+      <button data-view="directory" aria-pressed="false">Gymnasts</button>
       <button data-view="games" aria-pressed="false">
         Games
       </button>
@@ -1628,6 +1630,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   <section id="dashboard" aria-label="Leaderboards">
     <h1 class="sr">Leaderboards</h1>
 
+    <div class="board-filters" id="leaderboardFilters" role="group" aria-label="Leaderboard squad"></div>
+    <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
     <div class="stats">
       <div class="stat">
         <span class="stat-icon" aria-hidden="true">↗</span>
@@ -1656,6 +1660,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     <div class="section-head">
       <h2>The standings</h2>
+      <button class="insights-button" data-view="analytics" type="button">◈ Analytics <span aria-hidden="true">↗</span></button>
       <button class="scoring-guide-button" id="scoringGuideButton" type="button" aria-haspopup="dialog" aria-controls="scoringGuide"><span aria-hidden="true">ⓘ</span> Scoring guide</button>
     </div>
 
@@ -1678,7 +1683,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div>
         <p class="eyebrow">Room to grow</p>
         <h1>Skill tracker</h1>
-        <p>Choose a gymnast, then set each skill’s result. Anyone with this website can edit.</p>
+        <p>Choose a gymnast to review skills, results and renewals.</p>
       </div>
     </div>
 
@@ -1747,6 +1752,8 @@ html:has(body.no-motion){scroll-behavior:auto}
       </div>
     </div>
   </section>
+  <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
+  <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
@@ -1772,6 +1779,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+5</strong>. All three Perfect earn <strong>+10 instead</strong>. This includes leaps. The bonus follows the current marks.</li>
     <li><strong>Controlled linking and presentation earn extra.</strong> In each Rolls or Acro complex, choose Good <strong>+1</strong>, Excellent <strong>+2</strong>, or Perfect <strong>+3</strong>. Judge smooth transitions, balance and presentation. Leaps have no linking rating.</li>
+    <li><strong>Keep skills fresh.</strong> Each level lasts 30 days. Renew after practising to keep it. With 7 days left, the skill turns red and joins the unticked list. Expiry drops one level; renewals do not add points. Three different skill gains in seven days earn an On fire badge.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically.</li>
   </ul>
 </dialog>
@@ -1799,6 +1807,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-wheel.js"></script>
 <script src="./games-team.js"></script>
 <script src="./games.js"></script>
+<script src="./v2.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1966,7 +1975,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     updatedAt: null,
     gymnasts: SEED_GYMNASTS.map(gymnast => ({ ...gymnast })),
     marks: {},
-    linking: {}
+    linking: {},
+    skillDates: {},
+    expiryDays: 30,
+    expiryStartedAt: null
   });
 
   const isObject = value =>
@@ -2032,8 +2044,26 @@ html:has(body.no-motion){scroll-behavior:auto}
         }
       }
     }
+    if (data.skillDates !== undefined) {
+      if (!isObject(data.skillDates)) throw Error('Skill renewal dates could not be read.');
+      for (const [id, dates] of Object.entries(data.skillDates)) {
+        if (!ids.has(id) || !isObject(dates)) throw Error('Invalid gymnast renewal dates.');
+        clean.skillDates[id] = {};
+        for (const [skill, detail] of Object.entries(dates)) {
+          if (!SKILL_IDS.has(skill) || !isObject(detail)) throw Error('Invalid skill renewal dates.');
+          const validDate = value => value == null || value === '' || (typeof value === 'string' && Number.isFinite(Date.parse(value)));
+          if (!validDate(detail.renewedAt) || !validDate(detail.earnedAt)) throw Error('Invalid renewal timestamp.');
+          clean.skillDates[id][skill] = {renewedAt:detail.renewedAt || null,earnedAt:detail.earnedAt || null};
+        }
+      }
+    }
+    clean.expiryStartedAt = typeof data.expiryStartedAt === 'string' && Number.isFinite(Date.parse(data.expiryStartedAt)) ? data.expiryStartedAt : null;
     return clean;
   }
+
+  const groupLabel = coach => coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach;
+  const shortGroupLabel = coach => /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
+  const v2Api = () => typeof window === 'undefined' ? null : window.SWLV2;
 
   const RECOVERY_KEY = 'swl-skill-league-pending-v2';
   let confirmedState = freshState();
@@ -2064,6 +2094,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   let selectedId = null;
   let currentView = 'dashboard';
   let coachFilter = 'all';
+  let leaderboardGroup = 'all';
+  let placementGroup = 'own';
   let categoryFilter = 'all';
   let statusFilter = 'all';
 
@@ -2131,8 +2163,27 @@ html:has(body.no-motion){scroll-behavior:auto}
     return total;
   }
 
-  function standings(category) {
+  function skillFreshness(id, skill, at = Date.now()) {
+    const level = mark(id, skill), renewedAt = state.skillDates?.[id]?.[skill]?.renewedAt;
+    const expiry = renewedAt ? Date.parse(renewedAt) + 30 * 86400000 : null;
+    const remaining = expiry === null ? null : expiry - at;
+    return {level, expiry, days: remaining === null ? null : Math.max(0, Math.ceil(remaining / 86400000)), due:level > 0 && remaining !== null && remaining <= 7 * 86400000};
+  }
+  function fireCount(id, at = Date.now()) {
+    return SKILLS.filter(skill => {
+      const earned = Date.parse(state.skillDates?.[id]?.[skill.id]?.earnedAt || '');
+      return mark(id,skill.id) > 0 && Number.isFinite(earned) && earned <= at && earned > at - 7 * 86400000;
+    }).length;
+  }
+  function fireBadge(id) {
+    return fireCount(id) >= 3 ? '<span class="fire-badge" title="Three or more different skill gains in the past seven days"><span aria-hidden="true">🔥</span> On fire</span>' : '';
+  }
+  function renderV2() {
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,groupLabel,shortGroupLabel,fireBadge,hasLoaded});
+  }
+  function standings(category, group = 'all') {
     return GYMNASTS
+      .filter(gymnast => group === 'all' || gymnast.coach === group)
       .map(gymnast => ({
         gymnast,
         ...summary(gymnast.id, category)
@@ -2157,7 +2208,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (value.type === 'set_mark' && validGymnastId(value.gymnastId) &&
         SKILL_IDS.has(value.skillId) && Number.isInteger(value.value) &&
         value.value >= 0 && value.value <= 2) {
-      return { type: 'set_mark', gymnastId: value.gymnastId, skillId: value.skillId, value: value.value };
+      return { type: 'set_mark', gymnastId: value.gymnastId, skillId: value.skillId, value: value.value, clientAt: typeof value.clientAt === 'string' && Number.isFinite(Date.parse(value.clientAt)) ? value.clientAt : new Date().toISOString() };
+    }
+    if (value.type === 'renew_mark' && validGymnastId(value.gymnastId) && SKILL_IDS.has(value.skillId)) {
+      return {type:'renew_mark',gymnastId:value.gymnastId,skillId:value.skillId,clientAt:typeof value.clientAt === 'string' && Number.isFinite(Date.parse(value.clientAt)) ? value.clientAt : new Date().toISOString()};
     }
     if (value.type === 'set_link' && validGymnastId(value.gymnastId) &&
         COMPLEX_IDS.has(value.complexId) && Number.isInteger(value.value) && value.value >= 0 && value.value <= 3) {
@@ -2169,6 +2223,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function applyOperations(base, operations) {
     const next = cloneState(base);
     next.linking ??= {};
+    next.skillDates ??= {};
     const ids = new Set(next.gymnasts.map(g => g.id));
     for (const operation of operations) {
       if (operation.type === 'add_gymnast') {
@@ -2180,8 +2235,20 @@ html:has(body.no-motion){scroll-behavior:auto}
         next.linking[operation.gymnastId] ??= {};
         next.linking[operation.gymnastId][operation.complexId] = operation.value;
       } else if (ids.has(operation.gymnastId)) {
-        next.marks[operation.gymnastId] ??= {};
-        next.marks[operation.gymnastId][operation.skillId] = operation.value;
+        const id=operation.gymnastId, skill=operation.skillId, before=next.marks[id]?.[skill] ?? 0;
+        next.skillDates[id] ??= {};
+        next.skillDates[id][skill] ??= {renewedAt:null,earnedAt:null};
+        const dates=next.skillDates[id][skill];
+        if (operation.type === 'renew_mark') {
+          if (before > 0) dates.renewedAt = operation.clientAt;
+        } else {
+          next.marks[id] ??= {};
+          next.marks[id][skill] = operation.value;
+          if (operation.value !== before) {
+            dates.renewedAt = operation.value > 0 ? operation.clientAt : null;
+            dates.earnedAt = operation.value > before ? operation.clientAt : null;
+          }
+        }
       }
     }
     return next;
@@ -2269,7 +2336,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function enqueueOperation(value) {
     const operation = validateOperation(value);
-    if (operation.type === 'set_mark' || operation.type === 'set_link') {
+    if (operation.type === 'renew_mark') {
+      queuedOps = queuedOps.filter(item => !(item.type === 'renew_mark' && item.gymnastId === operation.gymnastId && item.skillId === operation.skillId));
+      queuedOps.push(operation);
+    } else if (operation.type === 'set_mark' || operation.type === 'set_link') {
       const key = operation.type === 'set_link' ? 'complexId' : 'skillId';
       const field = operation.type === 'set_link' ? 'linking' : 'marks';
       queuedOps = queuedOps.filter(item => !(item.type === operation.type &&
@@ -2663,8 +2733,13 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function renderBoards() {
+    renderV2();
     if (currentView === 'placement') renderPlacementProfile();
-    const all = GYMNASTS.map(g => summary(g.id));
+    const groups = [...new Set(GYMNASTS.map(g => g.coach))];
+    if (leaderboardGroup !== 'all' && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
+    if ($('leaderboardFilters')) $('leaderboardFilters').innerHTML = [['all','Overall · all squads'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<button type="button" class="chip" data-board-group="${escapeHTML(id)}" aria-pressed="${leaderboardGroup===id}">${escapeHTML(label)}</button>`).join('');
+    if ($('leaderboardScope')) $('leaderboardScope').textContent = leaderboardGroup === 'all' ? 'All squads · overall leaderboards' : groupLabel(leaderboardGroup) + ' · group leaderboards';
+    const all = GYMNASTS.filter(g=>leaderboardGroup === 'all' || g.coach === leaderboardGroup).map(g => summary(g.id));
 
     if (!hasLoaded) {
       ['squadPoints', 'achievedCount', 'perfectCount'].forEach(id => {
@@ -2728,7 +2803,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         </div>
 
         <ol class="ranking">
-          ${standings(board.id).slice(0, 6).map((entry, index) => {
+          ${standings(board.id, leaderboardGroup).slice(0, 6).map((entry, index) => {
             const gymnast = entry.gymnast;
 
             const person = `
@@ -2737,8 +2812,8 @@ html:has(body.no-motion){scroll-behavior:auto}
               </span>
 
               <span class="person">
-                <strong>${escapeHTML(gymnast.name)}</strong>
-                <small>${escapeHTML(gymnast.coach)}’s group</small>
+                <strong>${escapeHTML(gymnast.name)} ${fireBadge(gymnast.id)}</strong>
+                <small>${escapeHTML(groupLabel(gymnast.coach))}</small>
               </span>
 
               <span class="score">
@@ -2820,7 +2895,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         const group = filtered.filter(g => g.coach === coach);
 
         return group.length ? `
-          <h2 class="group-label">${escapeHTML(coach)}’s group</h2>
+          <h2 class="group-label">${escapeHTML(groupLabel(coach))}</h2>
 
           ${group.map(gymnast => `
             <button
@@ -2833,7 +2908,7 @@ html:has(body.no-motion){scroll-behavior:auto}
               </span>
 
               <span class="gymnast-name">
-                ${escapeHTML(gymnast.name)}
+                ${escapeHTML(gymnast.name)} ${fireBadge(gymnast.id)}
               </span>
 
               <span class="gymnast-score">
@@ -2861,7 +2936,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function skillHTML(skill, index) {
     return `
-      <button type="button" class="skill" data-skill-card="${skill.id}"
+      <div class="skill-cell" data-skill-cell="${skill.id}"><button type="button" class="skill" data-skill-card="${skill.id}"
         data-skill="${skill.id}"
         aria-label="${escapeHTML(skill.name)}: Not yet. Click to mark achieved.">
         <span class="skill-top">
@@ -2883,6 +2958,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           <span class="skill-status">○</span>
         </span>
       </button>
+      <div class="skill-renewal" data-renewal="${skill.id}" hidden><span class="renewal-date"></span><button type="button" data-renew-skill="${skill.id}">↻ Renew</button></div></div>
     `;
   }
 
@@ -2933,11 +3009,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('athletePanel').innerHTML = `
       <section class="athlete-summary" id="athleteSummary">
         <div class="athlete-info">
-          <p class="eyebrow">${escapeHTML(gymnast.coach)}’s group</p>
+          <p class="eyebrow">${escapeHTML(groupLabel(gymnast.coach))}</p>
 
           <h2 id="athleteTitle" tabindex="-1">
             ${escapeHTML(gymnast.name)}
-          </h2>
+          </h2><div id="athleteFire">${fireBadge(gymnast.id)}</div>
 
           <div class="mini-stats">
             <span>
@@ -2947,6 +3023,7 @@ html:has(body.no-motion){scroll-behavior:auto}
               <b id="athletePerfect">0</b> perfect
             </span>
           </div>
+          <button class="insights-button profile-insights" type="button" data-analytics-gymnast="${gymnast.id}">◈ Progress insights</button>
           <button class="reveal-placement" type="button" data-reveal-placement aria-label="Reveal placement for ${escapeHTML(gymnast.name)}">
             Reveal placement <span aria-hidden="true">↗</span>
           </button>
@@ -2985,7 +3062,7 @@ html:has(body.no-motion){scroll-behavior:auto}
             <small>
               Gymnast ${gymnastIndex + 1} / ${GYMNASTS.length}
             </small>
-            <strong>${escapeHTML(gymnast.name)}</strong>
+            <strong>${escapeHTML(gymnast.name)} <span id="chooserFire">${fireBadge(gymnast.id)}</span></strong>
           </span>
 
           <span aria-hidden="true">⌄</span>
@@ -3029,7 +3106,8 @@ html:has(body.no-motion){scroll-behavior:auto}
           Show
           <select id="statusFilter">
             <option value="all">All results</option>
-            <option value="0">Not yet</option>
+            <option value="0">Unticked + due for renewal</option>
+            <option value="due">Due in the next 7 days</option>
             <option value="1">Achieved ✓</option>
             <option value="2">Perfect ✓✓</option>
           </select>
@@ -3038,6 +3116,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         <span id="visibleCount"></span>
       </div>
 
+      <p class="renewal-guide">Skills last 30 days per level. Renew after practising to keep the level. Red means 7 days or less remain; expiry drops Perfect to Achieved, then Achieved to unticked after another 30 days.</p>
       <details class="marking-guide">
         <summary>ⓘ What counts as achieved or perfect?</summary>
         <p><strong>Achieved ✓</strong> — the intended skill would count in competition without being downgraded, with no more than <strong>0.5 total deductions</strong>.</p>
@@ -3142,6 +3221,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('athleteAchieved').textContent = total.achieved;
     $('athletePerfect').textContent = total.perfect;
+    if ($('athleteFire')) $('athleteFire').innerHTML = fireBadge(selectedId);
+    if ($('chooserFire')) $('chooserFire').innerHTML = fireBadge(selectedId);
 
     $('ringFill').style.strokeDashoffset =
       276.46 * (1 - total.points / total.max);
@@ -3171,6 +3252,16 @@ html:has(body.no-motion){scroll-behavior:auto}
       const value = mark(selectedId, skill.id);
 
       card.dataset.status = value;
+      const fresh = skillFreshness(selectedId,skill.id), cell=card.closest('.skill-cell');
+      if (cell) {
+        cell.dataset.due = String(fresh.due);
+        const renewal=cell.querySelector('.skill-renewal');
+        renewal.hidden=value===0;
+        renewal.querySelector('.renewal-date').textContent=fresh.days===null ? 'Renewal starts with v2' : fresh.days===0 ? 'Renewal due now' : `${fresh.days} ${fresh.days===1?'day':'days'} left`;
+        renewal.querySelector('.renewal-date').title=fresh.expiry ? 'Renews by '+new Date(fresh.expiry).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+        const renew=renewal.querySelector('button');
+        renew.disabled=!canEdit(); renew.setAttribute('aria-label','Renew '+skill.name+' for 30 days');
+      }
 
       card.querySelector('.skill-status').textContent = SYMBOL[value];
 
@@ -3257,10 +3348,13 @@ html:has(body.no-motion){scroll-behavior:auto}
             (categoryFilter === 'all' || categoryFilter === category.id) &&
             (
               statusFilter === 'all' ||
+              (statusFilter === 'due' && skillFreshness(selectedId,skill.id).due) ||
+              (statusFilter === '0' && skillFreshness(selectedId,skill.id).due) ||
               mark(selectedId, skill.id) === Number(statusFilter)
             );
 
           card.hidden = !show;
+          if (card.closest('.skill-cell')) card.closest('.skill-cell').hidden = !show;
           tierVisible += Number(show);
         }
 
@@ -3277,7 +3371,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('filterEmpty').hidden = visible > 0;
 
-    if (focused?.closest('[data-skill-card]')?.hidden || focused?.closest('[data-tier]')?.hidden) {
+    if (focused?.closest('[data-skill-card]')?.hidden || focused?.closest('.skill-cell')?.hidden || focused?.closest('[data-tier]')?.hidden) {
       $('statusFilter').focus({ preventScroll: true });
     }
   }
@@ -3303,7 +3397,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
-    if (!['dashboard', 'tracker', 'placement', 'games'].includes(view)) return;
+    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics'].includes(view)) return;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
@@ -3312,13 +3406,16 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('tracker').hidden = !tracker;
     $('placementProfile').hidden = !placement;
     $('games').hidden = view !== 'games';
-    $('nav').style.setProperty('--nav-index', view === 'games' ? '2' : tracker || placement ? '1' : '0');
+    if ($('directory')) $('directory').hidden = view !== 'directory';
+    if ($('analytics')) $('analytics').hidden = view !== 'analytics';
+    $('nav').style.setProperty('--nav-index', view === 'games' ? '3' : view === 'directory' ? '2' : tracker || placement ? '1' : '0');
+    renderV2();
     window.SWLGames?.setActive(view === 'games');
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
         'aria-pressed',
-        String(button.dataset.view === (placement ? 'tracker' : view))
+        String(button.dataset.view === (placement ? 'tracker' : view === 'analytics' ? 'dashboard' : view))
       );
     });
 
@@ -3343,8 +3440,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!gymnast) return;
     window.SWLPlacement.render({
       gymnast,
+      fireBadge, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : 'All squads', ownGroup:placementGroup === 'own',
       boards: [{id:'overall',name:'Overall league',icon:'ϟ',color:'#f3ce86'}, ...CATEGORIES]
-        .map(board => ({...board, rows:standings(board.id)})),
+        .map(board => ({...board, rows:standings(board.id, placementGroup === 'own' ? gymnast.coach : 'all')})),
       motionOff: reducedMotion() || !animate
     });
     if (hadBackFocus) $('placementContent').querySelector('[data-back-to-skills]')?.focus({preventScroll:true});
@@ -3581,6 +3679,14 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
   }
 
+  function renewSkill(skillId, button) {
+    if (!canEdit() || !selectedId || !SKILL_IDS.has(skillId) || mark(selectedId,skillId) === 0) return;
+    enqueueOperation({type:'renew_mark',gymnastId:selectedId,skillId});
+    updateAthlete(false); renderBoards(); renderRoster(); renderSaveStatus();
+    restoreControlFocus(button);
+    toast('Renewed for 30 days · level and points kept.');
+  }
+
   function changeLink(complexId, button, chosen) {
     if (!canEdit() || !selectedId || !COMPLEX_IDS.has(complexId)) return;
     const before = linkRating(selectedId, complexId);
@@ -3642,6 +3748,14 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (button.dataset.view) {
         setView(button.dataset.view);
 
+      } else if (button.hasAttribute('data-board-group')) {
+        leaderboardGroup=button.dataset.boardGroup; renderBoards();
+      } else if (button.hasAttribute('data-renew-skill')) {
+        renewSkill(button.dataset.renewSkill,button);
+      } else if (button.hasAttribute('data-placement-scope')) {
+        placementGroup=button.dataset.placementScope;renderPlacementProfile();
+      } else if (button.hasAttribute('data-analytics-gymnast')) {
+        v2Api()?.selectGymnast(button.dataset.analyticsGymnast);setView('analytics');
       } else if (button.id === 'scoringGuideButton') {
         $('scoringGuide').showModal();
 
@@ -3857,6 +3971,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     } else changeScoringLock('lock');
   });
   setInterval(checkScoringLock, 10000);
+  setInterval(() => { if (!document.hidden && !hasPending() && !sending) readScores(); }, 60000);
   $('refreshButton').addEventListener('click', () => readScores());
   window.addEventListener('focus', () => readScores());
   window.addEventListener('online', () => {
@@ -3872,7 +3987,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   window.addEventListener('pagehide', persistRecovery);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && hasPending() && !retryNeeded) flushQueue();
-    if (!document.hidden) checkScoringLock();
+    if (!document.hidden) readScores();
   });
 
   const syncHeader = () => {
@@ -3894,6 +4009,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     motionOff: reducedMotion,
     playSound: details => window.SWLCelebration?.gameSound(details)
   });
+  v2Api()?.mount({directory:$('directoryRoot'),analytics:$('analyticsRoot'),openGymnast,setView});
   restoreRecovery();
   syncHeader();
   updateMotion();

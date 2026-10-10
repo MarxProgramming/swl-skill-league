@@ -39,7 +39,10 @@
 .swl-team-turn-name{color:var(--team-color);font-size:clamp(15px,2.3vw,23px);font-weight:850;overflow-wrap:anywhere}
 .swl-team-card-symbol{font-size:33px;line-height:1;color:var(--team-color)}
 .swl-team-challenge{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.42fr);gap:35px;align-items:center;margin:25px 0 28px}
-.swl-team-card-step{font-size:9px;letter-spacing:.15em;font-weight:850;color:var(--team-color);line-height:1.6;margin-bottom:15px}
+.swl-team-card-meta{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-bottom:15px}
+.swl-team-category{font-size:10px;line-height:1.4;font-weight:800;letter-spacing:.025em;color:#d5fa70;border:1px solid currentColor;border-radius:100px;padding:5px 10px;background:#ffffff03;white-space:nowrap}
+.swl-team-category[data-category=synchronise]{color:#ffd782}.swl-team-category[data-category=build]{color:#bd9bff}.swl-team-category[data-category=create]{color:#ffb6db}.swl-team-category[data-category=sequence]{color:#9cdde8}.swl-team-category[data-category=cooperate]{color:#ffbfa0}
+.swl-team-card-step{font-size:9px;letter-spacing:.15em;font-weight:850;color:var(--team-color);line-height:1.6}
 .swl-team-challenge h3{font-size:clamp(29px,4.5vw,55px);max-width:18ch;margin:0 0 17px}
 .swl-team-task{font-size:clamp(18px,2.2vw,27px);line-height:1.42;font-weight:750;margin-bottom:15px;overflow-wrap:anywhere}
 .swl-team-coach-hint{font-size:12px;line-height:1.6;max-width:58ch}

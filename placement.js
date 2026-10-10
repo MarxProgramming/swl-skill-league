@@ -26,15 +26,15 @@
     };
   }
 
-  function rowHTML(entry, selectedName) {
+  function rowHTML(entry, selectedName, options) {
     const { row, position, distance } = entry;
     const selected = distance === 0;
     const peek = Math.abs(distance) === 3;
     const gymnast = row.gymnast || {};
     const details = `<span class="swlp-row-position"><span class="sr">Position </span>${position}</span>
       <span class="swlp-row-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-      <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)}</strong>
-        <small>${selected ? 'Your selected gymnast' : escapeHTML(gymnast.coach || '')}</small></span>
+      <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)}</strong>${options.fireBadge(gymnast.id)}
+        <small>${selected ? 'Your selected gymnast' : escapeHTML(options.groupLabel(gymnast.coach || ''))}</small></span>
       <span class="swlp-row-score"><strong>${displayNumber(row.points)}</strong><small>pts</small></span>`;
     if (peek) {
       return `<li class="swlp-row swlp-peek" data-placement-position="${position}" data-placement-peek="${distance < 0 ? 'above' : 'below'}" aria-hidden="true">
@@ -43,7 +43,7 @@
     return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
   }
 
-  function boardHTML(board, gymnast) {
+  function boardHTML(board, gymnast, options) {
     const rows = Array.isArray(board.rows) ? board.rows : [];
     const window = placementWindow(rows, gymnast.id);
     const safeId = String(board.id || '').replace(/[^a-z0-9_-]/gi, '');
@@ -51,14 +51,15 @@
       <header class="swlp-board-head"><span class="swlp-board-icon" aria-hidden="true">${escapeHTML(board.icon || '✦')}</span>
         <div><h3 id="placement-board-${safeId}">${escapeHTML(board.name)}</h3><p>${window.position ? 'The positions around you' : 'Waiting for scores'}</p></div>
         ${window.position ? `<span class="swlp-board-position"><span class="sr">Position </span><strong>${window.position}</strong><small>of ${window.total}</small></span>` : ''}</header>
-      ${window.position ? `<ol class="swlp-rows" aria-label="Nearby ${escapeHTML(board.name)} positions">${window.entries.map(entry => rowHTML(entry, gymnast.name)).join('')}</ol>`
+      ${window.position ? `<ol class="swlp-rows" aria-label="Nearby ${escapeHTML(board.name)} positions">${window.entries.map(entry => rowHTML(entry, gymnast.name, options)).join('')}</ol>`
         : '<p class="swlp-empty">This placement will appear when the scores are ready.</p>'}
     </article>`;
   }
 
-  function render({ gymnast, boards, motionOff = false } = {}) {
+  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', groupLabel = value => value, scope = 'All squads', ownGroup = false } = {}) {
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
+    const options = { fireBadge, groupLabel };
     const overall = boards.find(board => board.id === 'overall');
     const overallRows = Array.isArray(overall?.rows) ? overall.rows : [];
     const overallWindow = placementWindow(overallRows, gymnast.id);
@@ -68,9 +69,9 @@
       <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to skills</button>
       <header class="swlp-hero">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-          <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)}</h2>
-            <p class="swlp-coach">${escapeHTML(gymnast.coach || 'Your league')}<span aria-hidden="true"> · </span>SWL Skill League</p></div></div>
-        <div class="swlp-overall"><p>Overall position</p><strong>${overallWindow.position ? `<span aria-hidden="true">#</span>${overallWindow.position}` : '—'}</strong>
+          <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)}</h2>${fireBadge(gymnast.id)}
+            <p class="swlp-coach">${escapeHTML(groupLabel(gymnast.coach || 'Your league'))}</p></div></div>
+        <div class="swlp-overall"><p>${escapeHTML(scope)} position</p><strong>${overallWindow.position ? `<span aria-hidden="true">#</span>${overallWindow.position}` : '—'}</strong>
           <small>${overallWindow.position ? `of ${overallWindow.total} gymnasts` : 'Scores are loading'}</small></div>
         <div class="swlp-facts" aria-label="Gymnast score summary">
           <span><strong>${displayNumber(selected.points)}</strong><small>total points</small></span>
@@ -78,9 +79,14 @@
           <span><strong>${displayNumber(selected.perfect)}</strong><small>skills perfect</small></span>
         </div>
       </header>
+      <div class="swlp-scope" role="group" aria-label="Placement comparison">
+        <button type="button" class="filter-chip${ownGroup ? ' active' : ''}" data-placement-scope="own" aria-pressed="${ownGroup}">Own squad</button>
+        <button type="button" class="filter-chip${!ownGroup ? ' active' : ''}" data-placement-scope="all" aria-pressed="${!ownGroup}">All squads</button>
+        <span>${escapeHTML(scope)}</span>
+      </div>
       <div class="swlp-section-head"><div><p class="swlp-eyebrow">Your place in the league</p><h3>A closer look at every board</h3></div>
         <p>Two places above and below.<br> The next place is a little glimpse.</p></div>
-      <div class="swlp-grid">${boards.map(board => boardHTML(board, gymnast)).join('')}</div>
+      <div class="swlp-grid">${boards.map(board => boardHTML(board, gymnast, options)).join('')}</div>
       <p class="swlp-order-note">Equal points are listed alphabetically by name; the position follows that order. At the top or bottom of a board, fewer neighbours are shown.</p>
     </div>`;
     return document.getElementById('placementTitle');

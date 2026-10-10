@@ -4,6 +4,14 @@
 .swlw-eyebrow{margin:0 0 8px;color:var(--purple,#bd9bff);font-size:10px;letter-spacing:.17em;font-weight:850}
 .swlw-title{margin:0;font-size:clamp(29px,3.5vw,45px);font-weight:900;letter-spacing:-.055em;line-height:1.08}
 .swlw-intro{margin:10px 0 0;color:var(--muted,#a9a8ba);font-size:13px;line-height:1.6}
+.swlw-heading-tools{display:flex;flex-direction:column;align-items:flex-end;gap:13px;flex:0 0 auto}
+.swlw-modes{display:flex;gap:4px;padding:4px;border:1px solid #bd9bff2d;border-radius:13px;background:#0f131a;box-shadow:inset 0 1px 0 #ffffff05}
+.swlw-game .swlw-mode{appearance:none;min-height:38px;margin:0;padding:9px 15px;border:1px solid transparent;border-radius:9px;background:transparent;color:#bcb3ca;font:750 12px/1.2 system-ui,sans-serif;cursor:pointer;white-space:nowrap;touch-action:manipulation;transition:background .2s,color .2s,border-color .2s}
+.swlw-game .swlw-mode[aria-pressed="true"]{color:#e9fbc7;background:#32412a;border-color:#d5fa7038;box-shadow:inset 0 1px 0 #f1ffce0c}
+.swlw-game .swlw-mode[data-mode="crazy"][aria-pressed="true"]{color:#f2e1ff;background:#5b3477;border-color:#e0a7ff61}
+.swlw-game .swlw-mode:hover:not(:disabled){color:#f5f3f9;background:#bd9bff16}
+.swlw-game .swlw-mode:focus-visible{outline:3px solid #d5fa70;outline-offset:3px}
+.swlw-game .swlw-mode:disabled{cursor:wait;opacity:.5}
 .swlw-round-count{flex:0 0 auto;border:1px solid #bd9bff2b;border-radius:100px;padding:9px 13px;color:#c9b4eb;background:#bd9bff08;font-size:10px;font-weight:750;letter-spacing:.035em}
 .swlw-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.8fr);gap:clamp(24px,4vw,65px);align-items:center}
 .swlw-stage{position:relative;min-width:0;width:100%;max-width:650px;margin:auto;padding:18px 9px 9px;isolation:isolate}
@@ -48,13 +56,21 @@
 .swlw-options-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 15px;list-style:none;padding:0;margin:15px 0 0;color:#b3b5ac;font-size:11px;line-height:1.5}
 .swlw-options-list li{position:relative;padding-left:10px}
 .swlw-options-list li:before{content:"";position:absolute;top:.6em;left:0;width:3px;height:3px;border-radius:50%;background:#bba3df}
+.swlw-game.is-crazy .swlw-title{color:#eddbff;text-shadow:0 0 25px #cf7bff27}
+.swlw-game.is-crazy .swlw-stage:before{background:radial-gradient(ellipse at 22% 23%,#d375ff63,transparent 62%),radial-gradient(ellipse at 75% 75%,#73ffc44a,transparent 64%)}
+.swlw-game.is-crazy .swlw-shell{box-shadow:0 23px 65px #0008,0 0 0 4px #d075ff25,0 0 0 7px #bafbd321,0 0 38px #af5fff1f,inset 0 0 0 1px #e4d4ff20}
+.swlw-game.is-crazy .swlw-hub{background:linear-gradient(135deg,#efffd4,#a8ffc6 45%,#8acd9f);border-color:#19271e}
+.swlw-game.is-crazy .swlw-result{background:radial-gradient(ellipse at 0 0,#cb70ff24,transparent 70%),linear-gradient(135deg,#27202f,#181820);border-color:#d89aff47}
+.swlw-game.is-crazy .swlw-spin{background:linear-gradient(115deg,#b3ffd5,#e3beff);border-color:#edddff88;box-shadow:0 9px 28px #b86aeb15,inset 0 1px 0 #ffffff6b}
+.swlw-game.is-crazy .swlw-result.has-result{background:radial-gradient(ellipse at 0 0,#9bffc022,transparent 70%),linear-gradient(135deg,#20382b,#211b2b);border-color:#aaffc669}
+.swlw-result.is-jackpot:after{content:"✦";position:absolute;right:17px;top:12px;color:#eafca7;font-size:21px}
 @keyframes swlw-halo-breathe{0%,100%{opacity:.65}50%{opacity:1}}
 @media(min-width:1450px){.swlw-layout{grid-template-columns:minmax(0,1.3fr) minmax(340px,.85fr)}.swlw-result{min-height:275px}.swlw-result-title{font-size:51px}.swlw-result-detail{font-size:15px}.swlw-game .swlw-spin{min-height:72px;font-size:19px}}
 @media(max-width:820px){.swlw-layout{grid-template-columns:minmax(0,1fr);gap:16px}.swlw-stage{max-width:540px}.swlw-controls{width:100%;max-width:540px;margin:auto}.swlw-result{min-height:0;padding:23px}.swlw-result-title{font-size:35px}.swlw-heading{max-width:600px;margin-left:auto;margin-right:auto}.swlw-options-list{font-size:12px}.swlw-options{margin-top:19px}}
-@media(max-width:480px){.swlw-heading{margin-bottom:12px}.swlw-title{font-size:30px}.swlw-round-count{display:none}.swlw-intro{font-size:12px;margin-top:8px}.swlw-eyebrow{font-size:9px}.swlw-stage{max-width:290px;padding:16px 1px 3px}.swlw-pointer{width:24px;height:31px;top:5px}.swlw-hub{border-width:3px}.swlw-layout{gap:12px}.swlw-result{padding:18px 19px;border-radius:18px}.swlw-result-title{font-size:28px;margin:12px 0 10px}.swlw-result-detail{font-size:12px}.swlw-result-label{font-size:9px}.swlw-game .swlw-spin{min-height:61px;padding:15px 19px;font-size:16px;margin-top:14px}.swlw-controls{padding:0;display:flex;flex-direction:column}.swlw-result{order:0}.swlw-game .swlw-spin{order:1}.swlw-coach-note{order:2}.swlw-freeplay{order:3}.swlw-options{order:4}.swlw-options-list{gap:10px 12px;font-size:11px}}
+@media(max-width:480px){.swlw-heading{display:block;margin-bottom:12px}.swlw-heading-tools{align-items:stretch;margin-top:10px}.swlw-modes{width:100%;padding:3px}.swlw-game .swlw-mode{flex:1;min-height:35px;padding:8px 10px;font-size:11px}.swlw-heading .swlw-eyebrow,.swlw-heading .swlw-intro{display:none}.swlw-title{font-size:30px}.swlw-round-count{display:none}.swlw-intro{font-size:12px;margin-top:8px}.swlw-eyebrow{font-size:9px}.swlw-stage{max-width:290px;padding:16px 1px 3px}.swlw-pointer{width:24px;height:31px;top:5px}.swlw-hub{border-width:3px}.swlw-layout{gap:12px}.swlw-result{padding:18px 19px;border-radius:18px}.swlw-result-title{font-size:28px;margin:12px 0 10px}.swlw-result-detail{font-size:12px}.swlw-result-label{font-size:9px}.swlw-game .swlw-spin{min-height:61px;padding:15px 19px;font-size:16px;margin-top:14px}.swlw-controls{padding:0;display:flex;flex-direction:column}.swlw-result{order:0}.swlw-game .swlw-spin{order:1}.swlw-coach-note{order:2}.swlw-freeplay{order:3}.swlw-options{order:4}.swlw-options-list{gap:10px 12px;font-size:11px}}
 @media(max-width:480px) and (max-height:760px){
-  .swlw-heading{margin-bottom:6px}.swlw-title{font-size:27px}.swlw-intro{display:none}
-  .swlw-stage{max-width:228px;max-width:clamp(198px,calc(100svh - 492px),248px)}
+  .swlw-heading{margin-bottom:6px}.swlw-heading-tools{margin-top:7px}.swlw-game .swlw-mode{min-height:33px;padding:7px 9px}.swlw-title{font-size:27px}.swlw-intro{display:none}
+  .swlw-stage{max-width:204px;max-width:clamp(180px,calc(100svh - 516px),224px)}
   .swlw-layout{gap:10px}.swlw-result{padding:15px 17px}.swlw-result-title{font-size:25px;margin:10px 0 8px}
   .swlw-result-detail{font-size:11px;line-height:1.5}.swlw-game .swlw-spin{min-height:56px;margin-top:10px;padding:13px 17px}
   .swlw-freeplay{margin-top:8px;font-size:9px}
