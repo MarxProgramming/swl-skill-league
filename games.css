@@ -40,3 +40,10 @@ html{scroll-padding-bottom:100px}
 @media(max-width:360px){.brand>div:last-child{display:none}.game-card{grid-template-columns:minmax(0,1fr) 72px}.game-card-art svg{width:92px;height:92px}.game-card h2{font-size:24px}.game-card-art{height:115px}.nav button{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.nav::before,.game-card,.game-card-art svg,.game-card-play{transition:none}.game-card:hover,.game-card:hover .game-card-art svg{transform:none}}
 body.no-motion .nav::before,body.no-motion .game-card,body.no-motion .game-card-art svg{transition:none}
+
+/* Ratings sit in their own row so cards remain readable at narrow widths. */
+.game-card--handstand{--game-color:#9ce8cf}.game-card--addon,.game-card--timesense{--game-color:#bd9bff}.game-card--relayrace{--game-color:#f5c87d}
+.game-card-rating{grid-column:1/-1;font-size:11px;font-weight:750;color:var(--game-color);margin:0 0 14px;line-height:1.5}
+.games-rating-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:-10px 0 22px;color:#9690a7;font-size:11px}
+.games-pending-ratings{font-size:11px;color:#d5fa70;white-space:normal}.games-toolbar{flex-wrap:wrap}.games-session-label{margin-left:auto}
+@media(max-width:850px){.game-card-art{grid-row:2/4}.game-card-rating{grid-row:4}.game-card-play{grid-row:5;grid-column:1/-1;max-width:none}}

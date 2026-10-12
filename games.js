@@ -1,17 +1,24 @@
 (() => {
   'use strict';
-  let root, options, current = null, active = false, lobby, arena, stage, title;
+  let root, options, current = null, active = false, lobby, arena, stage, title, cards, ratingsApi, ratingsSummary = {}, pendingCount = 0;
+  const ratingButtons = [];
   const mounted = new Map();
   const descriptions = [
     {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
     {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'Floor shapes, synchronised jumps, conditioning and coaching impressions. A new challenge in ten seconds.',module:'SWLTeam',art:'team'},
     {id:'shuffle',name:'Skill Shuffle',tag:'2–3 teams · skill quality',description:'Set your team sizes so everyone gets a turn. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
     {id:'letters',name:'Letter Duel',tag:'2 teams · quick thinking',description:'One big letter. Find a gymnastics skill that starts with it and perform it to win a point.',module:'SWLLetterDuel',art:'letters'},
-    {id:'relay',name:'Routine Relay',tag:'2 teams · connected skills',description:'Three skills. One flowing routine. Both teams perform the same sequence and earn points for clean skills and smooth linking.',module:'SWLRoutineRelay',art:'relay'}
+    {id:'handstand',name:'Handstand League',tag:'2–3 teams · against the clock',description:'Every gymnast gets a turn. Start, stop and bank their seconds. Pro mode adds a neatness bonus — or wipes a fall.',module:'SWLHandstand',art:'handstand'},
+    {id:'addon',name:'Add-On',tag:'2–3 teams · build a routine',description:'Start with one skill. Shuffle three choices, pick the next addition and grow your team’s routine. Earn stars for how well it flows.',module:'SWLAddOn',art:'relay'},
+    {id:'relayrace',name:'Conditioning Relay',tag:'2–3 teams · pace & teamwork',description:'One team, one clock, everyone through the line. Tap each handover; the screen tracks every split and the team’s average time.',module:'SWLConditioningRelay',art:'relayrace'},
+    {id:'timesense',name:'Time Sense',tag:'2–3 teams · trust your timing',description:'Hold a balance and judge the target time with the clock hidden. Stop when you think you’ve hit it. Closest estimates win.',module:'SWLTimeSense',art:'timesense'}
   ];
   function node(tag, className, text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
   function art(type) {
     const marks={
+      handstand:'<circle cx="100" cy="105" r="73" stroke="#9ce8cf30" stroke-width="2"/><circle cx="100" cy="136" r="10" fill="#9ce8cf"/><path d="M100 121V80m0 0L88 32m12 48 12-48M99 113 81 164m20-51 18 51M72 165h17m22 0h17" stroke="#9ce8cf" stroke-width="8" stroke-linecap="round"/><path d="M161 33v25m-8-17 8-8 8 8" stroke="#f5c87d" stroke-width="3"/>',
+      relayrace:'<circle cx="100" cy="105" r="64" stroke="#f5c87d" stroke-width="5"/><path d="M100 105 129 80M85 23h30m-15 0v17m50 14 12-12" stroke="#f5c87d" stroke-width="7" stroke-linecap="round"/><circle cx="100" cy="105" r="7" fill="#f5c87d"/><path d="M26 161h41m-26 13h37" stroke="#bd9bff" stroke-width="4" stroke-linecap="round"/>',
+      timesense:'<circle cx="100" cy="100" r="71" fill="#bd9bff12" stroke="#bd9bff65" stroke-width="2" stroke-dasharray="2 12"/><path d="M100 40v11m0 98v11M40 100h11m98 0h11" stroke="#bd9bff" stroke-width="4"/><text x="100" y="120" text-anchor="middle" fill="#bd9bff" font-family="system-ui" font-size="58" font-weight="850">?</text><circle cx="154" cy="154" r="14" fill="#d5fa70"/><path d="m148 154 4 4 8-8" stroke="#15161d" stroke-width="3" stroke-linecap="round"/>',
       shuffle:'<rect x="29" y="37" width="105" height="131" rx="15" transform="rotate(-12 81 102)" fill="#bd9bff25" stroke="#bd9bff55"/><rect x="66" y="26" width="105" height="140" rx="15" transform="rotate(9 118 96)" fill="#272238" stroke="#bd9bff" stroke-width="2"/><path d="m117 58 10 22 24 3-17 17 4 24-21-11-21 11 4-24-17-17 24-3z" fill="#bd9bff"/><path d="M92 142h48" stroke="#f7f5fc" stroke-width="5" stroke-linecap="round"/>',
       letters:'<rect x="31" y="29" width="138" height="142" rx="24" fill="#21322e" stroke="#9ce8cf70" stroke-width="2"/><text x="100" y="135" text-anchor="middle" fill="#9ce8cf" font-size="104" font-family="system-ui" font-weight="850">A</text><path d="M160 14v20m-10-10h20" stroke="#f5c87d" stroke-width="3"/>',
       relay:'<rect x="13" y="65" width="47" height="70" rx="12" fill="#f5c87d22" stroke="#f5c87d"/><rect x="77" y="42" width="47" height="70" rx="12" fill="#bd9bff22" stroke="#bd9bff"/><rect x="140" y="65" width="47" height="70" rx="12" fill="#9ce8cf22" stroke="#9ce8cf"/><path d="m58 94 17-17m47 0 17 17" stroke="#f5f0e0" stroke-width="3" stroke-linecap="round"/><text x="37" y="111" text-anchor="middle" fill="#f5c87d" font-size="28" font-family="system-ui" font-weight="800">1</text><text x="100" y="88" text-anchor="middle" fill="#bd9bff" font-size="28" font-family="system-ui" font-weight="800">2</text><text x="164" y="111" text-anchor="middle" fill="#9ce8cf" font-size="28" font-family="system-ui" font-weight="800">3</text><path d="M43 160h114" stroke="#f5c87d60" stroke-width="3" stroke-linecap="round"/>'
@@ -23,7 +30,7 @@
   function moduleFor(id) { return window[descriptions.find(x=>x.id===id)?.module]; }
   function showLobby() {
     if(current)moduleFor(current)?.deactivate();
-    current=null;lobby.hidden=false;arena.hidden=true;
+    current=null;lobby.hidden=false;arena.hidden=true;renderCards();
     mounted.forEach(el=>{el.hidden=true;});
     root.querySelector('.game-card-play')?.focus({preventScroll:true});
   }
@@ -38,26 +45,35 @@
     arena.querySelector('.games-back').focus({preventScroll:true});
     root.scrollIntoView({behavior:options.motionOff?.()?'instant':'smooth',block:'start'});
   }
-  function mount(container, config={}) {
-    if(root===container)return;root=container;options=config;root.classList.add('games-shell');
-    lobby=node('div','games-lobby');const head=node('div','games-heading'),heading=node('div');
-    heading.append(node('p','games-kicker','SWL Squad Training'),node('h1','','Squad games'));
-    head.append(heading,node('p','games-intro','Five ways to train together. Clean skills, teamwork, conditioning and a little competition. You coach. The screen keeps score.'));
-    const cards=node('div','games-grid');
-    descriptions.forEach((info,index)=>{
+  function rankedGames(){return descriptions.slice().sort((a,b)=>{const x=ratingsSummary[a.id],y=ratingsSummary[b.id];return (y?.votes?y.sum/y.votes:-1)-(x?.votes?x.sum/x.votes:-1);});}
+  function ratingButton(){const button=node('button','quiet games-pending-ratings','Finish ratings');button.type='button';button.hidden=!pendingCount;button.addEventListener('click',()=>ratingsApi?.openPending());ratingButtons.push(button);return button;}
+  function renderCards(){if(!cards)return;const focused=document.activeElement?.closest?.('[data-game-id]')?.dataset.gameId;cards.replaceChildren();
+    rankedGames().forEach((info,index)=>{
       const card=node('article','game-card game-card--'+info.id),top=node('div','game-card-top');
       top.append(node('span','',String(index+1).padStart(2,'0')),node('span','game-card-tag',info.tag));
       const visual=node('div','game-card-art');visual.innerHTML=art(info.art);
       const play=node('button','game-card-play');play.type='button';play.setAttribute('aria-label','Play '+info.name);
       play.append(node('span','','Let’s play'),node('span','','↗'));play.addEventListener('click',()=>openGame(info.id));
-      card.append(top,visual,node('h2','',info.name),node('p','game-card-desc',info.description),play);cards.append(card);
+      const rating=ratingsSummary[info.id];
+      const badge=node('p','game-card-rating',rating?.votes ? `★ ${(rating.sum/rating.votes).toFixed(1)} / 10 · ${rating.votes} votes` : rating ? 'Be the first squad to rate it' : 'Squad ratings loading…');
+      card.dataset.gameId=info.id;card.append(top,visual,node('h2','',info.name),node('p','game-card-desc',info.description),badge,play);cards.append(card);
     });
+    if(focused)cards.querySelector(`[data-game-id="${focused}"] .game-card-play`)?.focus({preventScroll:true});
+  }
+  function mount(container, config={}) {
+    if(root===container)return;root=container;options={...config,onComplete:details=>ratingsApi?.complete(details)};root.classList.add('games-shell');
+    lobby=node('div','games-lobby');const head=node('div','games-heading'),heading=node('div');
+    heading.append(node('p','games-kicker','SWL Squad Training'),node('h1','','Squad games'));
+    head.append(heading,node('p','games-intro','Eight ways to train together. Clean skills, teamwork, conditioning and a little competition. You coach. The screen keeps score.'));
+    cards=node('div','games-grid');renderCards();
     const note=node('p','games-note');note.append(node('span','','✧'),node('span','','Game scores are just for this session. Your Skill League points stay the same.'));
-    lobby.append(head,cards,note);
-    arena=node('div','games-arena');arena.hidden=true;const bar=node('div','games-toolbar'),back=node('button','quiet games-back','← All games');back.type='button';back.addEventListener('click',showLobby);title=node('span','games-session-label');bar.append(back,title);stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
+    const ratingBar=node('div','games-rating-bar');ratingBar.append(node('span','','Squad favourites rise to the top.'),ratingButton());
+    lobby.append(head,ratingBar,cards,note);
+    arena=node('div','games-arena');arena.hidden=true;const bar=node('div','games-toolbar'),back=node('button','quiet games-back','← All games');back.type='button';back.addEventListener('click',showLobby);title=node('span','games-session-label');bar.append(back,title,ratingButton());stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
+    if(window.SWLGameRatings&&typeof config.requestRatings==='function')ratingsApi=window.SWLGameRatings.create({games:descriptions,request:config.requestRatings,onChange:(summary,pending)=>{ratingsSummary=summary;pendingCount=pending;ratingButtons.forEach(button=>{button.hidden=!pending;button.textContent=`Finish ratings${pending>1?' ('+pending+')':''}`;});if(!current)renderCards();}});
   }
   function setActive(value) {
-    active=Boolean(value);
+    active=Boolean(value);ratingsApi?.setActive(active);if(active)ratingsApi?.refresh();
     if(current) {
       if(active)moduleFor(current)?.mount(mounted.get(current),options);
       else moduleFor(current)?.deactivate();

@@ -537,6 +537,7 @@
   function createGame(container, initialOptions) {
     let options = initialOptions || {}, active = true, destroyed = false;
     let phase = 'setup', teamCount = 2, names = DEFAULTS.slice();
+    let sessionId = '', completionSent = false;
     let teams = [], turn = 0, card = null, awardedStars = 0;
     let remainingMs = 0, timer = null, lastTick = 0, observedSeconds = 10, timerGeneration = 0;
     let statusText = '', errorText = '', resetPrompt = false, wasPlayingBeforePrompt = false;
@@ -614,6 +615,7 @@
         }
         teams = chosen.map((name, index) => ({ name, color: COLORS[index], score: 0, turns: 0 }));
       } else teams = teams.map(team => ({ ...team, score: 0, turns: 0 }));
+      sessionId='team_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2).padEnd(16,'0');completionSent=false;
       turn = 0; resetPrompt = false; errorText = ''; prepareTurn(); render(true); showStage();
     }
     function startTurn() {
@@ -634,7 +636,7 @@
     }
     function nextTurn() {
       if (!active || phase !== 'awarded' || resetPrompt) return;
-      if (turn + 1 >= teams.length * ROUNDS) { phase = 'finished'; statusText = 'Five rounds complete. Celebrate the teamwork.'; render(true); showStage(); sound({ kind: 'finish', perfect: true }); return; }
+      if (turn + 1 >= teams.length * ROUNDS) { phase = 'finished'; statusText = 'Five rounds complete. Celebrate the teamwork.'; render(true); showStage(); sound({ kind: 'finish', perfect: true }); if(!completionSent){completionSent=true;options.onComplete?.({gameId:'team',sessionId});} return; }
       turn++; prepareTurn(); render(true); showStage();
     }
     function undoAward() {

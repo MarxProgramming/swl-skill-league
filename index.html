@@ -1570,13 +1570,15 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css">
+<link rel="stylesheet" href="./celebration.css?v=20261012b">
 <link rel="stylesheet" href="./placement.css">
-<link rel="stylesheet" href="./games.css?v=20261012">
-<link rel="stylesheet" href="./games-wheel.css">
-<link rel="stylesheet" href="./games-team.css">
-<link rel="stylesheet" href="./games-skill.css?v=20261012">
-<link rel="stylesheet" href="./games-relay.css?v=20261012">
+<link rel="stylesheet" href="./games.css?v=20261012b">
+<link rel="stylesheet" href="./games-wheel.css?v=20261012b">
+<link rel="stylesheet" href="./games-team.css?v=20261012b">
+<link rel="stylesheet" href="./games-skill.css?v=20261012b">
+<link rel="stylesheet" href="./games-timing.css?v=20261012b">
+<link rel="stylesheet" href="./games-addon.css?v=20261012b">
+<link rel="stylesheet" href="./games-ratings.css?v=20261012b">
 <link rel="stylesheet" href="./v2.css">
 <link rel="stylesheet" href="./welcome.css">
 </head>
@@ -1805,14 +1807,16 @@ html:has(body.no-motion){scroll-behavior:auto}
 </noscript>
 
 <script src="./startup.js"></script>
-<script src="./celebration.js"></script>
+<script src="./celebration.js?v=20261012b"></script>
 <script src="./placement.js"></script>
 <script src="./lock.js"></script>
-<script src="./games-wheel.js"></script>
-<script src="./games-team.js?v=20261012"></script>
-<script src="./games-skill.js?v=20261012"></script>
-<script src="./games-relay.js?v=20261012"></script>
-<script src="./games.js?v=20261012"></script>
+<script src="./games-wheel.js?v=20261012b"></script>
+<script src="./games-team.js?v=20261012b"></script>
+<script src="./games-skill.js?v=20261012b"></script>
+<script src="./games-timing.js?v=20261012b"></script>
+<script src="./games-addon.js?v=20261012b"></script>
+<script src="./games-ratings.js?v=20261012b"></script>
+<script src="./games.js?v=20261012b"></script>
 <script src="./v2.js"></script>
 <script src="./welcome.js"></script>
 <script>
@@ -2453,9 +2457,10 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (!response.ok || !payload.ok) {
         const error = new Error(API_MESSAGES[payload.code] || payload.message || 'Google Sheets could not be reached.');
         error.code = payload.code || 'REQUEST_FAILED';
-        if (payload.lock) acceptLock(payload.lock);
+        if (payload.lock && !['read_game_ratings','rate_game'].includes(body.action)) acceptLock(payload.lock);
         throw error;
       }
+      if (body.action === 'read_game_ratings' || body.action === 'rate_game') return payload;
       const lock = parseLock(payload.lock);
       if (body.action === 'status') return { lock };
       if (typeof payload.revision !== 'string' || !payload.revision) {
@@ -4018,6 +4023,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   window.SWLGames?.mount($('gamesRoot'), {
     skills: SKILLS.map(skill => ({id:skill.id,label:skill.name,category:skill.category,tier:skill.tier})),
+    requestRatings: body => scoresRequest(body),
     motionOff: reducedMotion,
     playSound: details => window.SWLCelebration?.gameSound(details)
   });

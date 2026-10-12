@@ -247,7 +247,19 @@
     if (!context || context.state !== 'running') return;
     const start = context.currentTime + .008;
     // Game cues need to carry across the floor; skill-check bells keep their softer mix.
-    if (kind === 'wheel-start') gameTone(context, start, 900, 2400, .2, .7, 'triangle');
+    if (kind === 'reel-start') {
+      gameTone(context,start,440,1760,.35,.52,'triangle');
+      gameTone(context,start+.09,880,3520,.3,.25);
+    } else if (kind === 'reel-tick') {
+      const progress=Math.max(0,Math.min(1,Number(details.progress)||0));
+      gameTone(context,start,2200+progress*800,1200+progress*300,.047,.72,'triangle');
+      gameTone(context,start,4400,3500,.024,.16);
+    } else if (kind === 'reel-reveal') {
+      [2093,2637.02,3135.96,4186].forEach((frequency,index)=>gameTone(context,start+index*.085,frequency,frequency,.5,.65,'triangle'));
+      gameTone(context,start+.26,3135.96,3135.96,.8,.2);
+    } else if (kind === 'choice') {
+      gameTone(context,start,2637.02,3135.96,.13,.48,'triangle');
+    } else if (kind === 'wheel-start') gameTone(context, start, 900, 2400, .2, .7, 'triangle');
     else if (kind === 'wheel-tick') gameTone(context, start, 2900, 1250, .042, .78, 'triangle');
     else if (kind === 'countdown' && [3, 2, 1].includes(details.remaining)) {
       const frequency = {3:1567.98, 2:1760, 1:1975.53}[details.remaining];

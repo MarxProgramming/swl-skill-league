@@ -58,10 +58,12 @@
   ];
   const MODES={normal:{title:'Conditioning wheel',entries:NORMAL},crazy:{title:'Crazy wheel',entries:CRAZY}};
   const normalize=angle=>((angle%360)+360)%360;
-  const freshProgress=key=>({phase:'idle',entries:MODES[key].entries.map(entry=>({...entry,id:`${key}-${entry.id}`})),rotation:0,lastResult:null,pendingId:null,coachNext:false,round:0,removed:0,serial:0});
+  const freshProgress=key=>({sessionId:'wheel_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2).padEnd(16,'0'),completionSent:false,phase:'idle',entries:MODES[key].entries.map(entry=>({...entry,id:`${key}-${entry.id}`})),rotation:0,lastResult:null,pendingId:null,coachNext:false,round:0,removed:0,serial:0});
   let progress={normal:freshProgress('normal'),crazy:freshProgress('crazy')},mode='normal';
   let host,root,rotor,pointer,button,result,resultLabel,resultTitle,resultDetail,coachNote,headingTitle,count,choices;
   let grades,goodButton,okayButton,needsButton,gradeHelp,newButton,confirmBox,keepButton,inspector,inspectorTitle,inspectorDetail,inspectorQuantity,inspectorFocus;
+  let enabled=false;
+  const canAct=()=>enabled&&!document.hidden;
   let modeButtons=[],callbacks={},currentSpin=null,confirming=false,finishTimer=null,tickFrame=null,transitionHandler=null,generation=0,observer=null;
   const media=window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const state=()=>progress[mode];
@@ -96,7 +98,7 @@
   function svg(tag,attributes,text){const element=document.createElementNS(SVG,tag);for(const [name,value]of Object.entries(attributes||{}))element.setAttribute(name,String(value));if(text!==undefined)element.textContent=text;return element;}
   function point(angle,radius){const radians=angle*Math.PI/180;return[300+Math.cos(radians)*radius,300+Math.sin(radians)*radius];}
   function explain(entryId,trigger){
-    if(currentSpin||confirming)return;
+    if(!canAct()||currentSpin||confirming)return;
     const entry=state().entries.find(item=>item.id===entryId);if(!entry)return;
     inspectorTitle.textContent=label(entry);inspectorDetail.textContent=entry.detail||'Complete the repetitions or time shown, then let the coach grade the round.';
     inspectorQuantity.textContent=entry.unit==='round'?'One round. Okay keeps this at the one-round minimum; Done removes it.':`Okay changes this to ${quantity({...entry,amount:Math.max(1,Math.ceil(entry.amount/2))})}${entry.unit==='reps'?' reps':''} next time. Good removes it.`;
@@ -156,12 +158,12 @@
     coachNote.hidden=!active.coachNext||complete;coachNote.textContent=`Coach joins the next ${mode==='crazy'?'Crazy Wheel':'conditioning'} exercise round.`;
     if(review){root.dataset.resultIndex=String(model().entries.findIndex(entry=>entry.id===active.pendingId));root.dataset.coachJoined=String(last.coachJoined);}else{delete root.dataset.resultIndex;delete root.dataset.coachJoined;}
   }
-  function startGame(){if(currentSpin||confirming)return;const active=state();if(active.phase==='complete')resetGame();else if(active.phase==='idle'){active.phase='playing';showReady();}else if(active.phase==='playing')spin();}
-  function resetGame(){progress[mode]=freshProgress(mode);state().phase='playing';confirming=false;confirmBox.hidden=true;renderWheel();showReady();button.focus?.({preventScroll:true});}
-  function requestNewGame(){if(currentSpin)return;if(state().phase==='idle'||state().phase==='complete'){resetGame();return;}confirming=true;confirmBox.hidden=false;showReady();keepButton.focus?.({preventScroll:true});}
+  function startGame(){if(!canAct()||currentSpin||confirming)return;const active=state();if(active.phase==='complete')resetGame();else if(active.phase==='idle'){active.phase='playing';showReady();}else if(active.phase==='playing')spin();}
+  function resetGame(){if(!canAct())return;progress[mode]=freshProgress(mode);state().phase='playing';confirming=false;confirmBox.hidden=true;renderWheel();showReady();button.focus?.({preventScroll:true});}
+  function requestNewGame(){if(!canAct()||currentSpin)return;if(state().phase==='idle'||state().phase==='complete'){resetGame();return;}confirming=true;confirmBox.hidden=false;showReady();keepButton.focus?.({preventScroll:true});}
   function keepGame(restore=true){confirming=false;confirmBox.hidden=true;showReady();if(restore)newButton.focus?.({preventScroll:true});}
   function grade(value){
-    const active=state();if(currentSpin||confirming||active.phase!=='grading')return;
+    const active=state();if(!canAct()||currentSpin||confirming||active.phase!=='grading')return;
     const entry=active.entries.find(item=>item.id===active.pendingId);if(!entry||!['good','okay','needs'].includes(value)||(value==='needs'&&active.entries.length>=MAX_OPTIONS))return;
     const wasJoined=active.lastResult.coachJoined;
     if(entry.kind==='coach-next')active.coachNext=true;else if(wasJoined)active.coachNext=false;
@@ -171,20 +173,21 @@
     else {const template=EXTRAS[active.serial%EXTRAS.length];active.serial++;const extra={...template,id:`${mode}-added-${active.serial}`,weight:mode==='normal'?1:template.weight};active.entries.push(extra);feedback=`Added ${label(extra)}. The landed option stays on the wheel.`;}
     active.lastResult={...active.lastResult,label:label(entry),detail:feedback};active.pendingId=null;active.phase=active.entries.length===1?'complete':'playing';if(active.phase==='complete')active.coachNext=false;
     if(value!=='okay')active.rotation=0;renderWheel();showReady();button.focus?.({preventScroll:true});
+    if(active.phase==='complete'&&!active.completionSent){active.completionSent=true;callbacks.onComplete?.({gameId:'wheel',sessionId:active.sessionId});}
   }
-  function changeMode(nextMode){if(currentSpin||confirming||!MODES[nextMode]||mode===nextMode)return;closeInspectorIfOpen();mode=nextMode;renderWheel();showReady();}
+  function changeMode(nextMode){if(!canAct()||currentSpin||confirming||!MODES[nextMode]||mode===nextMode)return;closeInspectorIfOpen();mode=nextMode;renderWheel();showReady();}
   function closeInspectorIfOpen(restore=true){if(inspector&&!inspector.hidden)closeInspector(restore);}
   function clearSpinListeners(){clearTimeout(finishTimer);finishTimer=null;if(tickFrame!==null)window.cancelAnimationFrame?.(tickFrame);tickFrame=null;if(pointer)pointer.style.transform='';if(transitionHandler&&rotor)rotor.removeEventListener('transitionend',transitionHandler);transitionHandler=null;}
   function trackSpin(token){
     if(typeof window.requestAnimationFrame!=='function')return;
-    const frame=()=>{const spin=currentSpin;if(!spin||spin.token!==token)return;tickFrame=null;if(!root?.isConnected||document.hidden){deactivate();return;}if(motionOff()){finishSpin(token);return;}
+    const frame=()=>{const spin=currentSpin;if(!spin||spin.token!==token)return;tickFrame=null;if(!root?.isConnected||document.hidden){cancelSpin();return;}if(motionOff()){finishSpin(token);return;}
       const now=performance.now(),fraction=Math.min(1,(now-spin.started)/spin.duration),angle=spin.from+(spin.target-spin.from)*easedProgress(fraction),sector=crossedDividers(angle,spin.wheel);
       if(sector!==spin.lastSector){spin.lastSector=sector;if(now-spin.lastTick>=40){spin.lastTick=now;sound('wheel-tick');}}
       const age=now-spin.lastTick,kick=age<120?-14*Math.sin(Math.PI*age/120)*Math.exp(-age/70):0;pointer.style.transform=`translateX(-50%) rotate(${kick}deg)`;
       if(fraction>=1){finishSpin(token);return;}tickFrame=window.requestAnimationFrame(frame);};tickFrame=window.requestAnimationFrame(frame);
   }
   function finishSpin(token){
-    if(!currentSpin||currentSpin.token!==token||!root)return;
+    if(!canAct()||!currentSpin||currentSpin.token!==token||!root)return;
     const spin=currentSpin,active=state();clearSpinListeners();currentSpin=null;active.rotation=normalize(spin.target);rotor.style.transition='none';rotor.style.transform=`rotate(${active.rotation}deg)`;
     const index=pointerIndex(active.rotation,spin.wheel),entry=spin.wheel.entries[index],joined=active.coachNext&&entry.kind==='exercise';
     active.round++;active.pendingId=entry.id;active.phase='grading';
@@ -192,7 +195,7 @@
     showReady();sound('wheel-finish');
   }
   function spin(){
-    if(!root||currentSpin||confirming||state().phase!=='playing'||!root.isConnected)return;
+    if(!canAct()||!root||currentSpin||confirming||state().phase!=='playing'||!root.isConnected)return;
     closeInspectorIfOpen();const active=state(),wheel=model(),crazy=mode==='crazy',chosen=chooseSegment(wheel,random(),active.coachNext),landing=normalize(-chosen.center+(random()-.5)*chosen.span*.4),quiet=motionOff();
     const duration=quiet?220:(crazy?4200:4050)+Math.floor(random()*(crazy?400:420)),target=active.rotation+360*((crazy?12:5)+Math.floor(random()*(crazy?4:2)))+normalize(landing-active.rotation),token=++generation;
     currentSpin={token,wheel,from:active.rotation,target,started:performance.now(),duration,lastSector:crossedDividers(active.rotation,wheel),lastTick:-Infinity};
@@ -205,12 +208,13 @@
     if(!quiet){transitionHandler=event=>{if(event.target===rotor&&event.propertyName==='transform'&&performance.now()-currentSpin?.started>=duration-80)finishSpin(token);};rotor.addEventListener('transitionend',transitionHandler);sound('wheel-start');trackSpin(token);}
     finishTimer=setTimeout(()=>finishSpin(token),quiet?duration:duration+160);
   }
-  function deactivate(){closeInspectorIfOpen(false);if(confirming)keepGame(false);if(!root||!currentSpin)return;generation++;currentSpin=null;clearSpinListeners();rotor.style.transition='none';rotor.style.transform=`rotate(${state().rotation}deg)`;showReady(true);}
+  function cancelSpin(){closeInspectorIfOpen(false);if(confirming)keepGame(false);if(!root||!currentSpin)return;generation++;currentSpin=null;clearSpinListeners();rotor.style.transition='none';rotor.style.transform=`rotate(${state().rotation}deg)`;showReady(true);}
+  function deactivate(){enabled=false;cancelSpin();}
   function motionChanged(){if(currentSpin&&motionOff())finishSpin(currentSpin.token);}
-  function visibilityChanged(){if(document.hidden)deactivate();}
+  function visibilityChanged(){if(document.hidden)cancelSpin();}
   function destroy(){deactivate();clearSpinListeners();observer?.disconnect();observer=null;media?.removeEventListener?.('change',motionChanged);document.removeEventListener('visibilitychange',visibilityChanged);root?.remove();host=root=rotor=pointer=button=result=null;modeButtons=[];callbacks={};progress={normal:freshProgress('normal'),crazy:freshProgress('crazy')};mode='normal';confirming=false;inspector=null;}
   function mount(container,options={}){
-    if(!container||typeof container.append!=='function')throw TypeError('SWLWheel.mount requires a container.');if(host===container&&root?.isConnected){callbacks=options;motionChanged();return;}destroy();host=container;callbacks=options;
+    if(!container||typeof container.append!=='function')throw TypeError('SWLWheel.mount requires a container.');if(host===container&&root?.isConnected){enabled=true;callbacks=options;motionChanged();return;}destroy();enabled=true;host=container;callbacks=options;
     root=make('section','swlw-game');const heading=make('header','swlw-heading'),headingCopy=make('div','swlw-heading-copy');headingTitle=make('h2','swlw-title');headingCopy.append(make('p','swlw-eyebrow','SWL GAMES · FREE PLAY'),headingTitle,make('p','swlw-intro','Tap a slice to explore it. Play until just one remains.'));
     const headingTools=make('div','swlw-heading-tools');count=make('span','swlw-round-count');const modeGroup=make('div','swlw-modes');modeGroup.setAttribute('role','group');modeGroup.setAttribute('aria-label','Wheel mode');
     modeButtons=Object.keys(MODES).map(key=>{const control=make('button','swlw-mode',key==='normal'?'Conditioning':'Crazy wheel');control.type='button';control.dataset.mode=key;control.setAttribute('aria-label',MODES[key].title);control.addEventListener('click',()=>changeMode(key));return control;});modeGroup.append(...modeButtons);headingTools.append(count,modeGroup);heading.append(headingCopy,headingTools);

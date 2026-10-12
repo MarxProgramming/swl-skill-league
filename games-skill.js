@@ -1,9 +1,15 @@
 (() => {
   'use strict';
-  if (window.SWLSkillShuffle?.version === 2 && window.SWLLetterDuel?.version === 2) return;
+  if (window.SWLSkillShuffle?.version === 3 && window.SWLLetterDuel?.version === 3) return;
   const COLORS = ['#d5fa70', '#bd9bff', '#ffd782'];
   const DEFAULTS = ['Mint', 'Purple', 'Gold'];
-  const DEFAULT_SIZE = 5, TARGET = 7, SHUFFLE_MS = 1250;
+  const DEFAULT_SIZE = 5, TARGET = 7, LETTER_MS = 1250, REEL_MS = 4000;
+  const REEL_START = 2, REEL_TARGET = 26, REEL_GAP = 12;
+  let sessionSequence = 0;
+  function newSessionId(gameId) {
+    try { if (window.crypto?.randomUUID) return `${gameId}-${window.crypto.randomUUID()}`; } catch (_) {}
+    return `${gameId}-${Date.now().toString(36)}-${++sessionSequence}-${randomBelow(0x100000000).toString(36)}`;
+  }
   const node = (tag, className = '', text = '') => {
     const element = document.createElement(tag);
     element.className = className; element.textContent = text;
@@ -55,12 +61,15 @@
   function createGame(container, supplied, mode) {
     let options = supplied || {}, skills = catalogue(options.skills);
     const duel = mode === 'letter', title = duel ? 'Letter Duel' : 'Skill Shuffle';
+    const duration = duel ? LETTER_MS : REEL_MS;
     let pool = duel ? letterPool(skills) : skills, bag = [], previous = '';
     let active = true, destroyed = false, phase = 'setup', names = DEFAULTS.slice(), teams = [];
     let teamCount = 2, sizes = DEFAULTS.map(() => String(DEFAULT_SIZE)), turnOrder = [];
     let turn = 0, selected = null, awardValue = 0, awardTeam = null, skipped = false, hints = false;
-    let timer = null, timerGeneration = 0, renderGeneration = 0, remainingMs = SHUFFLE_MS, lastTick = 0;
+    let timer = null, timerGeneration = 0, renderGeneration = 0, remainingMs = duration, lastTick = 0;
     let preview = null, previewNumber = 0, resetPrompt = false, errorText = '', statusText = '', stage = null;
+    let sessionId = null, completionSent = false, reelCards = [], reelViewport = null, reelTrack = null, reelBoundary = REEL_START;
+    let reelWidth = 360, reelCardWidth = 223.2, reelOffset = 0;
     const now = () => performance.now();
     const currentTeamIndex = () => duel ? 0 : turnOrder[turn] ?? 0;
     const currentGymnast = () => teams.length && !duel ? teams[currentTeamIndex()].turns + (['awarded', 'finished'].includes(phase) ? 0 : 1) : 0;
@@ -76,6 +85,11 @@
       catch (_) { return true; }
     };
     const sound = payload => { try { options.playSound?.(payload); } catch (_) {} };
+    function complete() {
+      if (completionSent || !sessionId || phase !== 'finished') return;
+      completionSent = true;
+      try { options.onComplete?.({ gameId: duel ? 'letters' : 'shuffle', sessionId, ...(!duel ? { participantCount: turnOrder.length } : {}) }); } catch (_) {}
+    }
     const showStage = () => stage?.scrollIntoView?.({ block: 'start', behavior: motionOff() ? 'instant' : 'smooth' });
     function cancelTimer() { timerGeneration++; clearTimeout(timer); timer = null; }
     function button(text, action, className = 'swl-skill-button swl-skill-secondary', disabled = false) {
@@ -93,9 +107,51 @@
       }
       const choice = bag.pop(); previous = choice?.id || ''; return choice;
     }
+    function reelPosition() {
+      const elapsed = Math.max(0, Math.min(1, 1 - remainingMs / REEL_MS));
+      return REEL_START + (REEL_TARGET - REEL_START) * (1 - Math.pow(1 - elapsed, 4));
+    }
+    function updateReel(tick = false) {
+      if (duel || !reelTrack || !reelViewport) return;
+      const measuredWidth = reelViewport.getBoundingClientRect?.().width;
+      const measured = measuredWidth ? measuredWidth - 2 : reelViewport.clientWidth;
+      if (measured > 0) reelWidth = measured;
+      reelCardWidth = Math.min(286, Math.max(174, reelWidth * .62));
+      reelViewport.style.setProperty('--reel-card-width', `${reelCardWidth}px`);
+      const position = reelPosition(), boundary = Math.floor(position + .5);
+      if (tick && boundary > reelBoundary) sound({ kind: 'reel-tick', progress: 1 - remainingMs / REEL_MS, remaining: remainingMs / 1000 });
+      reelBoundary = boundary;
+      reelOffset = reelWidth / 2 - reelCardWidth / 2 - position * (reelCardWidth + REEL_GAP);
+      reelTrack.style.transform = `translate3d(${reelOffset}px,0,0)`;
+      reelViewport.dataset.position = String(position);
+    }
+    function buildReel() {
+      reelCards = [];
+      for (let index = 0; index < 32; index++) {
+        const alternatives = pool.filter(skill => skill.id !== reelCards[index - 1]?.id && (index === REEL_TARGET - 1 || index === REEL_TARGET + 1 ? skill.id !== selected.id : true));
+        reelCards.push(index === REEL_TARGET ? selected : (alternatives.length ? alternatives : pool)[randomBelow(alternatives.length || pool.length)]);
+      }
+      reelBoundary = REEL_START;
+    }
+    function reelView(face) {
+      const frame = node('div', 'swl-skill-reel-frame'); frame.dataset.settled = String(['revealed', 'awarded'].includes(phase));
+      frame.append(node('div', 'swl-skill-reel-pointer'));
+      reelViewport = node('div', 'swl-skill-reel'); reelViewport.setAttribute('aria-hidden', 'true');
+      reelTrack = node('div', 'swl-skill-reel-track'); reelTrack.setAttribute('aria-hidden', 'true');
+      reelCards.forEach((skill, index) => {
+        const card = node('div', `swl-skill-reel-card${index === REEL_TARGET && remainingMs === 0 ? ' is-selected' : ''}`);
+        card.dataset.skillId = skill.id; card.dataset.tier = skill.tier;
+        card.append(node('span', 'swl-skill-reel-meta', metaText(skill)), node('b', '', skill.label), node('span', 'swl-skill-reel-symbol', skill.category === 'rolls' ? '↻' : skill.category === 'leaps' ? '✦' : '◇'));
+        reelTrack.append(card);
+      });
+      reelViewport.append(reelTrack); frame.append(reelViewport); face.append(frame);
+      if (phase === 'shuffling') face.append(node('p', 'swl-skill-reel-caption', 'Your skill lands under the marker…'));
+      else if (phase === 'paused') face.append(node('p', 'swl-skill-reel-caption', 'Paused. The same shuffle will continue.'));
+      else face.append(node('h3', 'swl-skill-chosen swl-skill-reel-result', selected.label), node('p', 'swl-skill-instruction', 'One attempt. Then cheer on your team.'));
+    }
     function prepareTurn() {
       cancelTimer(); phase = 'ready'; selected = null; preview = null; awardValue = 0; awardTeam = null; skipped = false; hints = false;
-      remainingMs = SHUFFLE_MS;
+      remainingMs = duration; reelCards = [];
       statusText = duel ? 'Both teams ready? Draw the next letter.' : `${teams[currentTeamIndex()].name}, gymnast ${currentGymnast()} of ${teams[currentTeamIndex()].size}. Ready to shuffle your skill?`;
     }
     function startGame(replay = false) {
@@ -109,12 +165,13 @@
       } else teams = teams.map(team => ({ ...team, score: 0, turns: 0 }));
       // One slot per gymnast, cycling through teams and skipping those already complete.
       turnOrder = duel ? [] : Array.from({ length: Math.max(...teams.map(team => team.size)) }, (_, gymnast) => teams.flatMap((team, index) => gymnast < team.size ? [index] : [])).flat();
+      sessionId = newSessionId(duel ? 'letters' : 'shuffle'); completionSent = false;
       turn = 0; errorText = ''; resetPrompt = false; prepareTurn(); render(true); showStage();
     }
     function reveal() {
       cancelTimer(); remainingMs = 0; phase = 'revealed'; preview = selected;
       statusText = duel ? `Letter ${selected.label}. Both teams, show a gymnastics skill beginning with ${selected.label}.` : `${teams[currentTeamIndex()].name}: ${selected.label}. Coach, rate the attempt.`;
-      render(true); sound({ kind: 'wheel-finish' });
+      render(true); sound({ kind: duel ? 'wheel-finish' : 'reel-reveal' });
     }
     function syncTime() {
       if (phase !== 'shuffling') return;
@@ -134,18 +191,20 @@
         if (document.hidden) { pause(); render(); return; }
         syncTime();
         if (remainingMs <= 0 || motionOff()) { reveal(); return; }
-        previewNumber++; preview = pool[previewNumber % pool.length];
-        // A delayed frame only plays this tick, never a burst of missed ticks.
-        sound({ kind: 'wheel-tick' }); render(); scheduleFrame();
-      }, Math.min(remainingMs, 140));
+        if (duel) { previewNumber++; preview = pool[previewNumber % pool.length]; sound({ kind: 'wheel-tick' }); render(); }
+        else updateReel(true);
+        // Frames only emit a tick at a crossed card boundary, never a catch-up burst.
+        scheduleFrame();
+      }, Math.min(remainingMs, duel ? 140 : 16));
     }
     function draw() {
       if (phase !== 'ready' || !pool.length) return;
       selected = nextChoice(); previewNumber = randomBelow(pool.length); preview = pool[previewNumber];
-      hints = false; phase = 'shuffling'; remainingMs = SHUFFLE_MS; lastTick = now();
+      hints = false; phase = 'shuffling'; remainingMs = duration; lastTick = now();
+      if (!duel) buildReel();
       if (motionOff()) { reveal(); showStage(); return; }
       statusText = duel ? 'Choosing your letter…' : 'Shuffling all Skill League skills…';
-      render(true); showStage(); sound({ kind: 'wheel-start' }); scheduleFrame();
+      render(true); showStage(); sound({ kind: duel ? 'wheel-start' : 'reel-start' }); scheduleFrame();
     }
     function resume() {
       if (phase !== 'paused') return;
@@ -162,7 +221,7 @@
       statusText = `${teams[index].name} earns ${value} ${duel ? 'point' : value === 1 ? 'star' : 'stars'}.`;
       if (phase === 'finished') statusText = `${teams[index].name} wins with ${TARGET} points.`;
       render(true); sound({ kind: 'award', ...(duel ? { points: 1, perfect: true } : { stars: value, perfect: value === 3 }) });
-      if (phase === 'finished') { showStage(); sound({ kind: 'wheel-finish', perfect: true }); }
+      if (phase === 'finished') { showStage(); sound({ kind: 'wheel-finish', perfect: true }); complete(); }
     }
     function undoAward() {
       if (!['awarded', 'finished'].includes(phase) || (!awardValue && !skipped)) return;
@@ -173,14 +232,14 @@
     function nextTurn() {
       if (phase !== 'awarded') return;
       if (!duel && turn + 1 >= turnOrder.length) {
-        phase = 'finished'; statusText = 'Everyone has had one turn. Results use average stars per gymnast.'; render(true); showStage(); sound({ kind: 'wheel-finish', perfect: true }); return;
+        phase = 'finished'; statusText = 'Everyone has had one turn. Results use average stars per gymnast.'; render(true); showStage(); sound({ kind: 'finish', perfect: true }); complete(); return;
       }
       turn++; prepareTurn(); render(true); showStage();
       if (duel) draw();
     }
     function reset() {
       cancelTimer(); phase = 'setup'; teams = []; turnOrder = []; turn = 0; selected = preview = null; awardValue = 0; awardTeam = null;
-      skipped = hints = resetPrompt = false; errorText = statusText = ''; remainingMs = SHUFFLE_MS; render(true);
+      skipped = hints = resetPrompt = false; errorText = statusText = ''; remainingMs = duration; reelCards = []; sessionId = null; completionSent = false; render(true);
     }
     function perform(action) {
       if (destroyed || !active || document.hidden) return;
@@ -276,8 +335,9 @@
       stage = node('section', 'swl-skill-stage'); stage.tabIndex = -1; stage.style.setProperty('--squad-color', duel ? COLORS[0] : teams[currentTeamIndex()].color);
       stage.append(node('p', 'swl-skill-turn', duel ? 'Think it. Show it.' : `${teams[currentTeamIndex()].name}’s turn`));
       if (!duel) stage.append(node('p', 'swl-skill-gymnast-number', `Gymnast ${currentGymnast()} of ${teams[currentTeamIndex()].size}`));
-      const face = node('div', `swl-skill-face${duel ? ' swl-skill-letter-face' : ''}`);
-      if (['ready', 'paused'].includes(phase)) {
+      const face = node('div', `swl-skill-face${duel ? ' swl-skill-letter-face' : selected ? ' swl-skill-reel-face' : ''}`);
+      if (!duel && selected && phase !== 'ready') reelView(face);
+      else if (['ready', 'paused'].includes(phase)) {
         face.append(node('span', 'swl-skill-placeholder', phase === 'paused' ? 'Ⅱ' : duel ? 'A–Z' : '↝'), node('h3', '', phase === 'paused' ? 'A little pause.' : duel ? 'What’s your letter?' : 'What’s your skill?'), node('p', 'swl-skill-muted', phase === 'paused' ? 'Your choice is saved. Resume the shuffle when everyone is ready.' : duel ? 'A fresh letter. One point up for grabs.' : 'Front gymnast ready? Let the shuffle choose.'));
       } else if (phase === 'shuffling') {
         const spinning = node('div', 'swl-skill-spinning'); spinning.setAttribute('aria-hidden', 'true');
@@ -325,7 +385,7 @@
     }
     function render(focus = false, focusAction = '') {
       if (destroyed) return;
-      renderGeneration++; stage = null;
+      renderGeneration++; stage = null; reelViewport = reelTrack = null;
       const root = node('div', `swl-skill-game swl-skill-${mode}-game`); root.dataset.static = String(motionOff()); root.dataset.phase = phase;
       const heading = node('div', 'swl-skill-heading'), titles = node('div'); titles.append(node('p', 'swl-skill-kicker', duel ? 'ONE LETTER · TWO TEAMS · FIRST TO SEVEN' : 'SHUFFLE · SHOW IT · SCORE'), node('h2', '', title)); heading.append(titles);
       if (phase !== 'setup') heading.append(button('New game', 'reset', 'swl-skill-text-button')); root.append(heading);
@@ -344,6 +404,7 @@
         }); root.append(prompt);
       }
       container.replaceChildren(root);
+      updateReel();
       if (focus || focusAction) {
         const target = resetPrompt ? root.querySelector('[data-skill-action="cancel-reset"]') : focusAction ? root.querySelector(`[data-skill-action="${focusAction}"]`) : phase === 'paused' ? root.querySelector('[data-skill-action="resume"]') : stage || root.querySelector('[data-skill-name="0"]');
         try { target?.focus({ preventScroll: true }); } catch (_) {}
@@ -351,7 +412,9 @@
     }
     function deactivate() { if (destroyed) return; pause(); active = false; cancelTimer(); render(); }
     function onVisibility() { if (document.hidden) { pause(); cancelTimer(); render(); } }
+    function onResize() { if (active && !destroyed && !document.hidden) updateReel(); }
     document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener?.('resize', onResize);
     const controller = {
       deactivate,
       activate() { if (!destroyed) { active = true; render(); } },
@@ -363,9 +426,9 @@
           if (JSON.stringify(incoming) !== JSON.stringify(skills)) { skills = incoming; pool = duel ? letterPool(skills) : skills; bag = []; previous = ''; }
         }
       },
-      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); document.removeEventListener('visibilitychange', onVisibility); container.replaceChildren(); },
+      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener?.('resize', onResize); container.replaceChildren(); },
       getState() {
-        return { mode, phase, active, turn, teamCount, round: teams.length ? duel ? Math.floor(turn / 2) + 1 : currentGymnast() : 0, currentTeam: !duel && teams.length ? currentTeamIndex() : null, currentGymnast: currentGymnast(), totalGymnasts: turnOrder.length, completedGymnasts: duel ? 0 : completedGymnasts(), teams: teams.map(team => ({ ...team, ...(!duel ? { average: team.turns ? team.score / team.turns : null } : {}) })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
+        return { mode, phase, active, sessionId, completionSent, turn, teamCount, round: teams.length ? duel ? Math.floor(turn / 2) + 1 : currentGymnast() : 0, currentTeam: !duel && teams.length ? currentTeamIndex() : null, currentGymnast: currentGymnast(), totalGymnasts: turnOrder.length, completedGymnasts: duel ? 0 : completedGymnasts(), teams: teams.map(team => ({ ...team, ...(!duel ? { average: team.turns ? team.score / team.turns : null } : {}) })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, reel: !duel && reelCards.length ? { position: reelPosition(), targetIndex: REEL_TARGET, targetId: reelCards[REEL_TARGET].id, width: reelWidth, cardWidth: reelCardWidth, gap: REEL_GAP, offset: reelOffset } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
       }
     };
     render(); return controller;
@@ -373,7 +436,7 @@
   function moduleFor(mode) {
     let instance = null, mountedContainer = null;
     return Object.freeze({
-      version: 2,
+      version: 3,
       mount(container, options = {}) {
         if (!container || typeof container.replaceChildren !== 'function') throw Error('A game container is required.');
         if (instance && !instance.destroyed && mountedContainer === container) { instance.updateOptions(options); instance.activate(); return instance; }
