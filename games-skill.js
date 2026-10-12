@@ -1,15 +1,20 @@
 (() => {
   'use strict';
-  if (window.SWLSkillShuffle?.version === 1 && window.SWLLetterDuel?.version === 1) return;
-  const COLORS = ['#d5fa70', '#bd9bff'];
-  const DEFAULTS = ['Mint', 'Purple'];
-  const ROUNDS = 5, TARGET = 7, SHUFFLE_MS = 1250;
+  if (window.SWLSkillShuffle?.version === 2 && window.SWLLetterDuel?.version === 2) return;
+  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782'];
+  const DEFAULTS = ['Mint', 'Purple', 'Gold'];
+  const DEFAULT_SIZE = 5, TARGET = 7, SHUFFLE_MS = 1250;
   const node = (tag, className = '', text = '') => {
     const element = document.createElement(tag);
     element.className = className; element.textContent = text;
     return element;
   };
   const cleanName = value => Array.from(String(value || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim()).slice(0, 24).join('');
+  function teamSize(value) {
+    const text = String(value).trim(), size = Number(text);
+    return text && Number.isInteger(size) && size >= 1 && size <= 20 ? size : null;
+  }
+  const averageText = team => team.turns ? String(Number((team.score / team.turns).toFixed(3))) : '—';
   function catalogue(value) {
     const ids = new Set();
     return (Array.isArray(value) ? value : []).filter(skill => {
@@ -52,10 +57,20 @@
     const duel = mode === 'letter', title = duel ? 'Letter Duel' : 'Skill Shuffle';
     let pool = duel ? letterPool(skills) : skills, bag = [], previous = '';
     let active = true, destroyed = false, phase = 'setup', names = DEFAULTS.slice(), teams = [];
+    let teamCount = 2, sizes = DEFAULTS.map(() => String(DEFAULT_SIZE)), turnOrder = [];
     let turn = 0, selected = null, awardValue = 0, awardTeam = null, skipped = false, hints = false;
     let timer = null, timerGeneration = 0, renderGeneration = 0, remainingMs = SHUFFLE_MS, lastTick = 0;
     let preview = null, previewNumber = 0, resetPrompt = false, errorText = '', statusText = '', stage = null;
     const now = () => performance.now();
+    const currentTeamIndex = () => duel ? 0 : turnOrder[turn] ?? 0;
+    const currentGymnast = () => teams.length && !duel ? teams[currentTeamIndex()].turns + (['awarded', 'finished'].includes(phase) ? 0 : 1) : 0;
+    const completedGymnasts = () => teams.reduce((count, team) => count + team.turns, 0);
+    function resultWinners() {
+      // Compare integer ratios, so rounded display values never decide a tie.
+      const compare = (a, b) => duel ? a.score - b.score : a.score * b.size - b.score * a.size;
+      const best = teams.reduce((leader, team) => compare(team, leader) > 0 ? team : leader, teams[0]);
+      return teams.filter(team => compare(team, best) === 0);
+    }
     const motionOff = () => {
       try { return !!(typeof options.motionOff === 'function' ? options.motionOff() : options.motionOff) || !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
       catch (_) { return true; }
@@ -81,20 +96,24 @@
     function prepareTurn() {
       cancelTimer(); phase = 'ready'; selected = null; preview = null; awardValue = 0; awardTeam = null; skipped = false; hints = false;
       remainingMs = SHUFFLE_MS;
-      statusText = duel ? 'Both teams ready? Draw the next letter.' : `${teams[turn % 2].name}, front gymnast ready? Shuffle your skill.`;
+      statusText = duel ? 'Both teams ready? Draw the next letter.' : `${teams[currentTeamIndex()].name}, gymnast ${currentGymnast()} of ${teams[currentTeamIndex()].size}. Ready to shuffle your skill?`;
     }
     function startGame(replay = false) {
       if (!pool.length || (phase !== 'setup' && !(replay && phase === 'finished'))) return;
       if (!replay) {
-        const chosen = names.map((name, index) => cleanName(name) || DEFAULTS[index]);
-        if (chosen[0].toLocaleLowerCase() === chosen[1].toLocaleLowerCase()) { errorText = 'Give each team a different name so the scores stay clear.'; render(); return; }
-        teams = chosen.map((name, index) => ({ name, color: COLORS[index], score: 0, turns: 0 }));
+        const chosen = names.slice(0, teamCount).map((name, index) => cleanName(name) || DEFAULTS[index]);
+        if (new Set(chosen.map(name => name.toLocaleLowerCase())).size !== chosen.length) { errorText = 'Give each team a different name so the scores stay clear.'; render(); return; }
+        const counts = sizes.slice(0, teamCount).map(teamSize);
+        if (!duel && counts.some(size => size === null)) { errorText = 'Enter a whole number from 1 to 20 gymnasts for each team.'; render(); return; }
+        teams = chosen.map((name, index) => ({ name, color: COLORS[index], score: 0, turns: 0, ...(!duel ? { size: counts[index] } : {}) }));
       } else teams = teams.map(team => ({ ...team, score: 0, turns: 0 }));
+      // One slot per gymnast, cycling through teams and skipping those already complete.
+      turnOrder = duel ? [] : Array.from({ length: Math.max(...teams.map(team => team.size)) }, (_, gymnast) => teams.flatMap((team, index) => gymnast < team.size ? [index] : [])).flat();
       turn = 0; errorText = ''; resetPrompt = false; prepareTurn(); render(true); showStage();
     }
     function reveal() {
       cancelTimer(); remainingMs = 0; phase = 'revealed'; preview = selected;
-      statusText = duel ? `Letter ${selected.label}. Both teams, show a gymnastics skill beginning with ${selected.label}.` : `${teams[turn % 2].name}: ${selected.label}. Coach, rate the attempt.`;
+      statusText = duel ? `Letter ${selected.label}. Both teams, show a gymnastics skill beginning with ${selected.label}.` : `${teams[currentTeamIndex()].name}: ${selected.label}. Coach, rate the attempt.`;
       render(true); sound({ kind: 'wheel-finish' });
     }
     function syncTime() {
@@ -137,7 +156,7 @@
     function award(value, teamIndex) {
       if (phase !== 'revealed') return;
       if (duel ? value !== 1 || ![0, 1].includes(teamIndex) : ![1, 2, 3].includes(value)) return;
-      const index = duel ? teamIndex : turn % 2;
+      const index = duel ? teamIndex : currentTeamIndex();
       teams[index].score += value; teams[index].turns++; awardTeam = index; awardValue = value; skipped = false;
       phase = duel && teams[index].score >= TARGET ? 'finished' : 'awarded';
       statusText = `${teams[index].name} earns ${value} ${duel ? 'point' : value === 1 ? 'star' : 'stars'}.`;
@@ -153,14 +172,14 @@
     }
     function nextTurn() {
       if (phase !== 'awarded') return;
-      if (!duel && turn + 1 >= ROUNDS * 2) {
-        phase = 'finished'; statusText = 'Five turns each complete. Here are the team totals.'; render(true); showStage(); sound({ kind: 'wheel-finish', perfect: true }); return;
+      if (!duel && turn + 1 >= turnOrder.length) {
+        phase = 'finished'; statusText = 'Everyone has had one turn. Results use average stars per gymnast.'; render(true); showStage(); sound({ kind: 'wheel-finish', perfect: true }); return;
       }
       turn++; prepareTurn(); render(true); showStage();
       if (duel) draw();
     }
     function reset() {
-      cancelTimer(); phase = 'setup'; teams = []; turn = 0; selected = preview = null; awardValue = 0; awardTeam = null;
+      cancelTimer(); phase = 'setup'; teams = []; turnOrder = []; turn = 0; selected = preview = null; awardValue = 0; awardTeam = null;
       skipped = hints = resetPrompt = false; errorText = statusText = ''; remainingMs = SHUFFLE_MS; render(true);
     }
     function perform(action) {
@@ -169,6 +188,15 @@
         if (action === 'confirm-reset') reset();
         else if (action === 'cancel-reset') { resetPrompt = false; render(true); }
         return;
+      }
+      if (!duel && phase === 'setup') {
+        if (action === 'teams-2' || action === 'teams-3') { teamCount = Number(action.slice(6)); errorText = ''; render(false, action); return; }
+        const change = action.match(/^size-(\d)-(less|more)$/);
+        if (change && Number(change[1]) < teamCount) {
+          const index = Number(change[1]), size = teamSize(sizes[index]);
+          sizes[index] = String(size === null ? DEFAULT_SIZE : Math.min(20, Math.max(1, size + (change[2] === 'more' ? 1 : -1))));
+          errorText = ''; render(false, action); return;
+        }
       }
       if (action === 'start-game') startGame();
       else if (action === 'draw') draw();
@@ -188,14 +216,28 @@
     }
     function setupView(root) {
       const panel = node('section', 'swl-skill-setup');
-      panel.append(node('p', 'swl-skill-kicker', duel ? `${pool.length} LETTERS · FIRST TO ${TARGET}` : `${skills.length} SKILLS · FIVE TURNS EACH`), node('h3', '', 'Two teams. Everyone in.'), node('p', 'swl-skill-muted', duel ? 'Draw a letter. Think of a gymnastics skill beginning with it, then show the coach.' : 'Take turns at the front of your team. Shuffle a skill, give it a go, then let the coach rate it.'));
+      panel.append(node('p', 'swl-skill-kicker', duel ? `${pool.length} LETTERS · FIRST TO ${TARGET}` : `${skills.length} SKILLS · ONE TURN PER GYMNAST`), node('h3', '', duel ? 'Two teams. Everyone in.' : 'Your teams. Everyone in.'), node('p', 'swl-skill-muted', duel ? 'Draw a letter. Think of a gymnastics skill beginning with it, then show the coach.' : 'Choose two or three teams and count the gymnasts in each. Everyone gets one turn.'));
+      if (!duel) {
+        const choices = node('div', 'swl-skill-team-count'); choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', 'Number of Skill Shuffle teams');
+        [2, 3].forEach(count => { const choice = button(`${count} teams`, `teams-${count}`, 'swl-skill-team-choice'); choice.setAttribute('aria-pressed', String(teamCount === count)); choices.append(choice); }); panel.append(choices);
+      }
       const fields = node('div', 'swl-skill-names');
-      names.forEach((name, index) => {
+      names.slice(0, teamCount).forEach((name, index) => {
         const label = node('label', 'swl-skill-name'); label.style.setProperty('--squad-color', COLORS[index]); label.append(node('span', '', `Team ${index + 1}`));
         const input = node('input'); input.type = 'text'; input.value = name; input.maxLength = 24; input.autocomplete = 'off'; input.dataset.skillName = String(index);
         input.setAttribute('aria-label', `${title} team ${index + 1} name`);
         input.addEventListener('input', () => { if (phase === 'setup' && active && !destroyed) names[index] = input.value; });
-        label.append(input); fields.append(label);
+        label.append(input);
+        if (duel) fields.append(label);
+        else {
+          const row = node('div', 'swl-skill-team-fields'), countLabel = node('div', 'swl-skill-size'); countLabel.style.setProperty('--squad-color', COLORS[index]);
+          const sizeInput = node('input'); sizeInput.type = 'number'; sizeInput.min = '1'; sizeInput.max = '20'; sizeInput.step = '1'; sizeInput.inputMode = 'numeric'; sizeInput.value = sizes[index]; sizeInput.dataset.skillSize = String(index);
+          sizeInput.setAttribute('aria-label', `${title} team ${index + 1} gymnast count`);
+          sizeInput.addEventListener('input', () => { if (phase === 'setup' && active && !destroyed) sizes[index] = sizeInput.value; });
+          const stepper = node('div', 'swl-skill-stepper'), less = button('−', `size-${index}-less`, 'swl-skill-step'), more = button('+', `size-${index}-more`, 'swl-skill-step');
+          less.setAttribute('aria-label', `Fewer gymnasts in team ${index + 1}`); more.setAttribute('aria-label', `More gymnasts in team ${index + 1}`);
+          stepper.append(less, sizeInput, more); countLabel.append(node('span', '', 'Gymnasts'), stepper); row.append(label, countLabel); fields.append(row);
+        }
       });
       const error = node('p', 'swl-skill-error', pool.length ? errorText : 'The skill list is not available yet. Return to this game once it has loaded.'); error.setAttribute('role', 'alert');
       panel.append(fields, error, button('Let’s play ↗', 'start-game', 'swl-skill-button swl-skill-primary', !pool.length));
@@ -204,19 +246,21 @@
       else {
         const list = node('ul', 'swl-skill-rating-guide');
         [[3, 'Almost perfect'], [2, 'Did it, messy'], [1, 'Does not count']].forEach(([stars, label]) => { const item = node('li'); item.append(node('b', '', '★'.repeat(stars)), node('span', '', label)); list.append(item); });
-        rules.append(list, node('p', 'swl-skill-muted', 'Teams alternate, with five turns each. Every skill is in the shuffle. Coach chooses a familiar skill to attempt, or draws another.'));
+        rules.append(list, node('p', 'swl-skill-muted', 'Teams take turns until every gymnast has had one go. Finished teams are skipped. Coach chooses a familiar skill to attempt, or draws another.'), node('p', 'swl-skill-fair-rule', 'Highest average wins: total stars ÷ gymnasts. This keeps different-sized teams fair.'));
       }
       rules.append(node('p', 'swl-skill-session-note', 'Game points stay here. Skill League marks and points stay the same.'));
       const grid = node('div', 'swl-skill-setup-grid'); grid.append(panel, rules); root.append(grid);
     }
     function scoreboard(root) {
-      const board = node('div', 'swl-skill-board'); board.setAttribute('aria-label', `${title} scoreboard`);
+      const board = node('div', 'swl-skill-board'); board.setAttribute('aria-label', `${title} scoreboard`); board.dataset.teamCount = String(teams.length);
       teams.forEach((team, index) => {
-        const item = node('div', `swl-skill-score${!duel && phase !== 'finished' && index === turn % 2 ? ' is-current' : ''}`); item.style.setProperty('--squad-color', team.color);
-        item.append(node('span', 'swl-skill-score-name', team.name), node('strong', '', String(team.score)), node('span', 'swl-skill-score-unit', duel ? `points · first to ${TARGET}` : `stars · ${team.turns}/${ROUNDS} turns`));
+        const item = node('div', `swl-skill-score${!duel && phase !== 'finished' && index === currentTeamIndex() ? ' is-current' : ''}`); item.style.setProperty('--squad-color', team.color);
+        item.append(node('span', 'swl-skill-score-name', team.name), node('strong', '', duel ? String(team.score) : averageText(team)), node('span', 'swl-skill-score-unit', duel ? `points · first to ${TARGET}` : `avg stars / gymnast${phase === 'finished' ? '' : ' so far'}`));
+        if (!duel) item.append(node('span', 'swl-skill-score-detail', `${team.score} total ${team.score === 1 ? 'star' : 'stars'} · ${team.turns}/${team.size} gymnasts`));
         if (duel) { const track = node('div', 'swl-skill-track'), fill = node('span'); fill.style.width = `${team.score / TARGET * 100}%`; track.append(fill); item.append(track); }
         board.append(item);
       }); root.append(board);
+      if (!duel) root.append(node('p', 'swl-skill-fair-note', 'Highest average wins · totals shown for every team.'));
     }
     function metaText(skill) {
       const category = ({ rolls: 'Rolls', acro: 'Acro & spins', leaps: 'Leaps' })[skill.category] || skill.category;
@@ -225,9 +269,13 @@
     }
     function playView(root) {
       const progress = node('div', 'swl-skill-progress');
-      progress.append(node('span', '', duel ? `LETTER ${turn + 1}` : `ROUND ${Math.floor(turn / 2) + 1} / ${ROUNDS}`), node('span', '', duel ? 'BOTH TEAMS PLAY' : 'TEAMS TAKE TURNS')); root.append(progress);
-      stage = node('section', 'swl-skill-stage'); stage.tabIndex = -1; stage.style.setProperty('--squad-color', duel ? COLORS[0] : teams[turn % 2].color);
-      stage.append(node('p', 'swl-skill-turn', duel ? 'Think it. Show it.' : `${teams[turn % 2].name}’s turn`));
+      progress.append(node('span', '', duel ? `LETTER ${turn + 1}` : `${completedGymnasts()} / ${turnOrder.length} GYMNASTS COMPLETE`), node('span', '', duel ? 'BOTH TEAMS PLAY' : `${teams.length} TEAMS`)); root.append(progress);
+      if (!duel) {
+        const track = node('div', 'swl-skill-total-progress'), fill = node('span'); track.setAttribute('role', 'progressbar'); track.setAttribute('aria-label', 'Gymnasts who have completed their turn'); track.setAttribute('aria-valuemin', '0'); track.setAttribute('aria-valuemax', String(turnOrder.length)); track.setAttribute('aria-valuenow', String(completedGymnasts())); fill.style.width = `${completedGymnasts() / turnOrder.length * 100}%`; track.append(fill); root.append(track);
+      }
+      stage = node('section', 'swl-skill-stage'); stage.tabIndex = -1; stage.style.setProperty('--squad-color', duel ? COLORS[0] : teams[currentTeamIndex()].color);
+      stage.append(node('p', 'swl-skill-turn', duel ? 'Think it. Show it.' : `${teams[currentTeamIndex()].name}’s turn`));
+      if (!duel) stage.append(node('p', 'swl-skill-gymnast-number', `Gymnast ${currentGymnast()} of ${teams[currentTeamIndex()].size}`));
       const face = node('div', `swl-skill-face${duel ? ' swl-skill-letter-face' : ''}`);
       if (['ready', 'paused'].includes(phase)) {
         face.append(node('span', 'swl-skill-placeholder', phase === 'paused' ? 'Ⅱ' : duel ? 'A–Z' : '↝'), node('h3', '', phase === 'paused' ? 'A little pause.' : duel ? 'What’s your letter?' : 'What’s your skill?'), node('p', 'swl-skill-muted', phase === 'paused' ? 'Your choice is saved. Resume the shuffle when everyone is ready.' : duel ? 'A fresh letter. One point up for grabs.' : 'Front gymnast ready? Let the shuffle choose.'));
@@ -238,7 +286,7 @@
       } else {
         if (!duel) face.append(node('span', 'swl-skill-badge', metaText(selected)));
         face.append(node(duel ? 'div' : 'h3', duel ? 'swl-skill-letter' : 'swl-skill-chosen', selected.label));
-        face.append(node('p', 'swl-skill-instruction', duel ? `Show a gymnastics skill beginning with ${selected.label}.` : 'One attempt. Then join the back of your team.'));
+        face.append(node('p', 'swl-skill-instruction', duel ? `Show a gymnastics skill beginning with ${selected.label}.` : 'One attempt. Then cheer on your team.'));
       }
       stage.append(face);
       const controls = node('div', 'swl-skill-controls');
@@ -247,7 +295,7 @@
       else if (phase === 'paused') controls.append(button('Resume shuffle ▶', 'resume', 'swl-skill-button swl-skill-primary'));
       else if (phase === 'awarded') {
         controls.append(node('p', 'swl-skill-award-result', skipped ? 'No points this letter' : duel ? `${teams[awardTeam].name} +1 point` : `${'★'.repeat(awardValue)} +${awardValue} ${awardValue === 1 ? 'star' : 'stars'}`));
-        controls.append(button(!duel && turn + 1 === ROUNDS * 2 ? 'See the results ↗' : duel ? 'Next letter ↝' : `Next: ${teams[(turn + 1) % 2].name} →`, 'next', 'swl-skill-button swl-skill-primary'), button(skipped ? 'Undo skip' : 'Undo rating', 'undo', 'swl-skill-text-button'));
+        controls.append(button(!duel && turn + 1 === turnOrder.length ? 'See the results ↗' : duel ? 'Next letter ↝' : `Next: ${teams[turnOrder[turn + 1]].name} →`, 'next', 'swl-skill-button swl-skill-primary'), button(skipped ? 'Undo skip' : 'Undo rating', 'undo', 'swl-skill-text-button'));
       }
       stage.append(controls);
       if (phase === 'revealed') {
@@ -269,9 +317,10 @@
       root.append(stage);
     }
     function finishView(root) {
-      const high = Math.max(...teams.map(team => team.score)), winners = teams.filter(team => team.score === high);
+      const winners = resultWinners(), best = winners[0];
       stage = node('section', 'swl-skill-finish'); stage.tabIndex = -1;
-      stage.append(node('span', 'swl-skill-trophy', '✦'), node('p', 'swl-skill-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : duel ? 'LETTER DUEL WINNERS' : 'SKILL SHUFFLE WINNERS'), node('h3', '', winners.map(team => team.name).join(' + ')), node('p', 'swl-skill-result-points', `${high} ${duel ? 'points' : 'stars'}`), node('p', 'swl-skill-muted', winners.length > 1 ? 'A tie! Both teams share the celebration.' : 'A team effort worth celebrating.'));
+      stage.append(node('span', 'swl-skill-trophy', '✦'), node('p', 'swl-skill-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : duel ? 'LETTER DUEL WINNERS' : 'SKILL SHUFFLE WINNERS'), node('h3', '', winners.map(team => team.name).join(' + ')), node('p', 'swl-skill-result-points', duel ? `${best.score} points` : `${averageText(best)} stars per gymnast`), node('p', 'swl-skill-muted', winners.length > 1 ? `A tie! ${winners.length === 2 ? 'Both' : 'All three'} teams share the celebration.` : 'A team effort worth celebrating.'));
+      if (!duel) stage.append(node('p', 'swl-skill-fair-note', `All ${turnOrder.length} gymnasts had one turn. Teams ranked by total stars ÷ gymnasts.`));
       const controls = node('div', 'swl-skill-controls'); controls.append(button('Play again ↝', 'replay', 'swl-skill-button swl-skill-primary'), button('Change teams', 'reset'), button('Undo last rating', 'undo', 'swl-skill-text-button')); stage.append(controls); root.append(stage);
     }
     function render(focus = false, focusAction = '') {
@@ -316,7 +365,7 @@
       },
       destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); document.removeEventListener('visibilitychange', onVisibility); container.replaceChildren(); },
       getState() {
-        return { mode, phase, active, turn, round: teams.length ? Math.floor(turn / 2) + 1 : 0, teams: teams.map(team => ({ ...team })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
+        return { mode, phase, active, turn, teamCount, round: teams.length ? duel ? Math.floor(turn / 2) + 1 : currentGymnast() : 0, currentTeam: !duel && teams.length ? currentTeamIndex() : null, currentGymnast: currentGymnast(), totalGymnasts: turnOrder.length, completedGymnasts: duel ? 0 : completedGymnasts(), teams: teams.map(team => ({ ...team, ...(!duel ? { average: team.turns ? team.score / team.turns : null } : {}) })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
       }
     };
     render(); return controller;
@@ -324,7 +373,7 @@
   function moduleFor(mode) {
     let instance = null, mountedContainer = null;
     return Object.freeze({
-      version: 1,
+      version: 2,
       mount(container, options = {}) {
         if (!container || typeof container.replaceChildren !== 'function') throw Error('A game container is required.');
         if (instance && !instance.destroyed && mountedContainer === container) { instance.updateOptions(options); instance.activate(); return instance; }

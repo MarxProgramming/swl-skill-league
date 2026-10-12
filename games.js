@@ -4,19 +4,17 @@
   const mounted = new Map();
   const descriptions = [
     {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
-    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'48 focused floor challenges. Match your timing, link skills and build clean team sequences.',module:'SWLTeam',art:'team'},
-    {id:'shuffle',name:'Skill Shuffle',tag:'2 teams · skill quality',description:'The next gymnast steps up. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
+    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'Floor shapes, synchronised jumps, conditioning and coaching impressions. A new challenge in ten seconds.',module:'SWLTeam',art:'team'},
+    {id:'shuffle',name:'Skill Shuffle',tag:'2–3 teams · skill quality',description:'Set your team sizes so everyone gets a turn. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
     {id:'letters',name:'Letter Duel',tag:'2 teams · quick thinking',description:'One big letter. Find a gymnastics skill that starts with it and perform it to win a point.',module:'SWLLetterDuel',art:'letters'},
-    {id:'stick',name:'Stick & Bank',tag:'2 teams · landings',description:'Stick the landing to build your pot. Bank the points, or risk another clean landing. First to ten wins.',module:'SWLStickBank',art:'stick'},
-    {id:'hold',name:'Hold the Line',tag:'2 teams · conditioning',description:'Same hold. Same ten seconds. Both teams take a turn; the cleanest shapes earn the most points.',module:'SWLHoldLine',art:'hold'}
+    {id:'relay',name:'Routine Relay',tag:'2 teams · connected skills',description:'Three skills. One flowing routine. Both teams perform the same sequence and earn points for clean skills and smooth linking.',module:'SWLRoutineRelay',art:'relay'}
   ];
   function node(tag, className, text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
   function art(type) {
     const marks={
       shuffle:'<rect x="29" y="37" width="105" height="131" rx="15" transform="rotate(-12 81 102)" fill="#bd9bff25" stroke="#bd9bff55"/><rect x="66" y="26" width="105" height="140" rx="15" transform="rotate(9 118 96)" fill="#272238" stroke="#bd9bff" stroke-width="2"/><path d="m117 58 10 22 24 3-17 17 4 24-21-11-21 11 4-24-17-17 24-3z" fill="#bd9bff"/><path d="M92 142h48" stroke="#f7f5fc" stroke-width="5" stroke-linecap="round"/>',
       letters:'<rect x="31" y="29" width="138" height="142" rx="24" fill="#21322e" stroke="#9ce8cf70" stroke-width="2"/><text x="100" y="135" text-anchor="middle" fill="#9ce8cf" font-size="104" font-family="system-ui" font-weight="850">A</text><path d="M160 14v20m-10-10h20" stroke="#f5c87d" stroke-width="3"/>',
-      stick:'<ellipse cx="100" cy="153" rx="76" ry="23" fill="#f5c87d12" stroke="#f5c87d60" stroke-width="2"/><ellipse cx="100" cy="153" rx="48" ry="12" fill="none" stroke="#f5c87d50"/><circle cx="100" cy="42" r="13" fill="#f5c87d"/><path d="M100 59v49m0-34L63 58m37 16 37-16m-37 50-20 41m20-41 20 41" stroke="#f5c87d" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>',
-      hold:'<circle cx="100" cy="108" r="69" fill="#253223" stroke="#d5fa7070" stroke-width="3"/><path d="M100 39a69 69 0 0 1 60 103" fill="none" stroke="#d5fa70" stroke-width="9" stroke-linecap="round"/><path d="M83 16h34m-17 0v18" stroke="#d5fa70" stroke-width="7" stroke-linecap="round"/><text x="100" y="126" text-anchor="middle" fill="#d5fa70" font-size="52" font-family="system-ui" font-weight="850">10</text>'
+      relay:'<rect x="13" y="65" width="47" height="70" rx="12" fill="#f5c87d22" stroke="#f5c87d"/><rect x="77" y="42" width="47" height="70" rx="12" fill="#bd9bff22" stroke="#bd9bff"/><rect x="140" y="65" width="47" height="70" rx="12" fill="#9ce8cf22" stroke="#9ce8cf"/><path d="m58 94 17-17m47 0 17 17" stroke="#f5f0e0" stroke-width="3" stroke-linecap="round"/><text x="37" y="111" text-anchor="middle" fill="#f5c87d" font-size="28" font-family="system-ui" font-weight="800">1</text><text x="100" y="88" text-anchor="middle" fill="#bd9bff" font-size="28" font-family="system-ui" font-weight="800">2</text><text x="164" y="111" text-anchor="middle" fill="#9ce8cf" font-size="28" font-family="system-ui" font-weight="800">3</text><path d="M43 160h114" stroke="#f5c87d60" stroke-width="3" stroke-linecap="round"/>'
     };
     if(marks[type])return '<svg viewBox="0 0 200 200" fill="none" aria-hidden="true">'+marks[type]+'</svg>';
     if(type==='wheel')return '<svg viewBox="0 0 200 200" fill="none" aria-hidden="true"><circle cx="100" cy="106" r="74" fill="#171e15" stroke="#d5fa7030" stroke-width="2"/><g stroke="#14151b" stroke-width="3"><path d="M100 106V33A73 73 0 0 1 163 70Z" fill="#d5fa70"/><path d="M100 106L163 70A73 73 0 0 1 163 142Z" fill="#3d5140"/><path d="M100 106L163 142A73 73 0 0 1 100 179Z" fill="#bd9bff"/><path d="M100 106V179A73 73 0 0 1 37 142Z" fill="#f4c97f"/><path d="M100 106L37 142A73 73 0 0 1 37 70Z" fill="#738d4d"/><path d="M100 106L37 70A73 73 0 0 1 100 33Z" fill="#66567c"/></g><circle cx="100" cy="106" r="19" fill="#151a12" stroke="#e0fbb4" stroke-width="2"/><path d="M105 94L95 108h9l-7 12" stroke="#d5fa70" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M91 20h18l-9 20Z" fill="#f7f5fc"/><circle cx="174" cy="33" r="3" fill="#d5fa70"/><path d="M22 38v12m-6-6h12" stroke="#bd9bff" stroke-width="2"/></svg>';
@@ -44,7 +42,7 @@
     if(root===container)return;root=container;options=config;root.classList.add('games-shell');
     lobby=node('div','games-lobby');const head=node('div','games-heading'),heading=node('div');
     heading.append(node('p','games-kicker','SWL Squad Training'),node('h1','','Squad games'));
-    head.append(heading,node('p','games-intro','Six ways to train together. Clean skills, stuck landings, strong shapes and a little competition. You coach. The screen keeps score.'));
+    head.append(heading,node('p','games-intro','Five ways to train together. Clean skills, teamwork, conditioning and a little competition. You coach. The screen keeps score.'));
     const cards=node('div','games-grid');
     descriptions.forEach((info,index)=>{
       const card=node('article','game-card game-card--'+info.id),top=node('div','game-card-top');

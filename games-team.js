@@ -57,9 +57,9 @@
     {
       "id": "seated-v-crew",
       "category": "Balance",
-      "title": "Seated V hold",
-      "task": "Show matching seated V balances, hold for three seconds, then lower together.",
-      "cue": "Lift into the shape with control. Coach chooses straight or bent knees so everyone can join the same timing.",
+      "title": "V sit",
+      "task": "Show matching V sits, hold for three seconds, then lower together.",
+      "cue": "Lift into the V sit with control. Coach chooses straight or bent knees so everyone can join the same timing.",
       "icon": "V"
     },
     {
@@ -69,6 +69,22 @@
       "task": "Make a balance with exactly three body contacts on the floor, then hold it with the team.",
       "cue": "Choose familiar hand, knee or foot contacts. Match the start and finish and keep the head free of weight.",
       "icon": "∴"
+    },
+    {
+      "id": "side-support-switch",
+      "category": "Balance",
+      "title": "Side support switch",
+      "task": "Hold a side support for two seconds, lower, then show the other side together.",
+      "cue": "Use the coach’s familiar knees-down or straight-leg version. Keep the supporting shoulder steady and change sides through the floor.",
+      "icon": "↔"
+    },
+    {
+      "id": "kneeling-reach-balance",
+      "category": "Balance",
+      "title": "Kneeling reach balance",
+      "task": "From hands and knees, reach one arm and the opposite leg out and hold together for three seconds.",
+      "cue": "Choose the same arm and leg before Go. Keep the back still and hips level; lower gently as a team.",
+      "icon": "↗"
     },
     {
       "id": "star-jump-together",
@@ -127,12 +143,20 @@
       "icon": "↔"
     },
     {
-      "id": "matching-lunge",
+      "id": "straddle-jump-together",
       "category": "Synchronise",
-      "title": "Matching lunge finish",
-      "task": "Step into a matching gymnastics lunge, stretch tall, then return to standing together.",
-      "cue": "Agree the leading leg and arm position. Control the step and keep the front knee tracking over the foot.",
-      "icon": "↕"
+      "title": "Straddle jump together",
+      "task": "Show one matching straddle jump and finish in a still two-foot landing together.",
+      "cue": "Use the coach-approved jump and comfortable leg range already practised. Match the timing rather than trying for extra height.",
+      "icon": "↔"
+    },
+    {
+      "id": "hop-and-stick",
+      "category": "Synchronise",
+      "title": "Hop and stick",
+      "task": "Make two small hops on the same leg together, then hold the final one-leg landing for two seconds.",
+      "cue": "Choose the leg before Go. Stay in your own spot, soften the landing and place the other foot down if needed.",
+      "icon": "↑"
     },
     {
       "id": "connected-floor-star",
@@ -157,14 +181,6 @@
       "task": "Use the whole team’s body shapes to spell M A R X clearly on the floor.",
       "cue": "Decide the letters and positions before Go. Use straight, angled or curved shapes; everyone stays supported by the floor.",
       "icon": "M"
-    },
-    {
-      "id": "partner-pikes",
-      "category": "Shapes",
-      "title": "Partner pike shapes",
-      "task": "In pairs, sit back-to-back in matching pike shapes, then open to a matching straddle.",
-      "cue": "Keep your own balance with light back contact. Extend the legs and toes without forcing the range.",
-      "icon": "⋁"
     },
     {
       "id": "paired-straddle",
@@ -199,20 +215,28 @@
       "icon": "⇄"
     },
     {
+      "id": "straight-floor-line",
+      "category": "Shapes",
+      "title": "Straight floor line",
+      "task": "Lie in parallel lanes and make matching long, straight gymnastics shapes from fingertips to toes.",
+      "cue": "Stretch the arms overhead and bring the legs together. Keep a comfortable body line on the floor and finish with pointed toes.",
+      "icon": "━"
+    },
+    {
+      "id": "narrow-wide-shapes",
+      "category": "Shapes",
+      "title": "Narrow and wide shapes",
+      "task": "Half the team makes a narrow straight shape on the floor while the other half makes a wide star; swap together.",
+      "cue": "Agree positions before Go and leave room for the wide shapes. Make the contrast clear while keeping everyone’s weight on the floor.",
+      "icon": "✧"
+    },
+    {
       "id": "forward-roll-together",
       "category": "Rolls",
       "title": "Forward roll together",
       "task": "Perform one practised forward roll together and finish in matching shapes.",
       "cue": "Coach checks readiness, mats and separate lanes before Go. Use the roll and exit already taught to each gymnast.",
       "icon": "↷"
-    },
-    {
-      "id": "tuck-rock-stand",
-      "category": "Rolls",
-      "title": "Tuck rock to stand",
-      "task": "Rock backwards and forwards in tuck, then return to standing together.",
-      "cue": "Use the familiar progression chosen by the coach. Hands may help with the stand; finish balanced rather than rushing.",
-      "icon": "⌒"
     },
     {
       "id": "log-roll-return",
@@ -223,44 +247,12 @@
       "icon": "↔"
     },
     {
-      "id": "egg-roll-freeze",
-      "category": "Rolls",
-      "title": "Tucked side roll",
-      "task": "In a tucked shape, roll sideways once and stop in a balanced tuck with the team.",
-      "cue": "Coach demonstrates the familiar tucked side roll first. Keep your own clear floor space and stop without unfolding early.",
-      "icon": "◌"
-    },
-    {
-      "id": "teddy-bear-roll",
-      "category": "Rolls",
-      "title": "Teddy bear roll",
-      "task": "Perform one practised teddy bear roll and finish together in a seated straddle.",
-      "cue": "Use the coach-taught roll and comfortable straddle range. Match the finish and keep each gymnast in a separate space.",
-      "icon": "↶"
-    },
-    {
       "id": "dish-arch-roll",
       "category": "Rolls",
       "title": "Dish to arch roll",
       "task": "Roll from dish to arch together, then return to dish with control.",
       "cue": "Keep a long body line in your own lane. Use familiar shapes and pause briefly at each end.",
       "icon": "≈"
-    },
-    {
-      "id": "roll-to-split",
-      "category": "Rolls",
-      "title": "Roll to split shape",
-      "task": "Link one familiar roll to a comfortable split or straddle shape, then hold the finish.",
-      "cue": "Agree the roll, transition and finish with the coach before Go. Aim for a smooth link, not a deeper split.",
-      "icon": "↗"
-    },
-    {
-      "id": "two-wave-roll",
-      "category": "Rolls",
-      "title": "Two-wave roll",
-      "task": "Half the team performs a log roll, then the other half follows one count later.",
-      "cue": "Arrange separate lanes before Go. Keep the same shape and finish, with a clear one-count gap between the groups.",
-      "icon": "⇉"
     },
     {
       "id": "jump-balance-link",
@@ -279,36 +271,12 @@
       "icon": "↷"
     },
     {
-      "id": "turn-jump-finish",
-      "category": "Sequence",
-      "title": "Turn, jump, finish",
-      "task": "Step a half-turn, perform one star jump, then finish in a gymnastics lunge together.",
-      "cue": "Agree the turn direction and leading leg. Show three clear actions with controlled links.",
-      "icon": "↱"
-    },
-    {
-      "id": "three-shape-routine",
-      "category": "Sequence",
-      "title": "Three-shape routine",
-      "task": "Link a low tuck, a straight standing shape and a one-leg balance into one short routine.",
-      "cue": "Agree a shared count. Keep the transitions smooth and hold the final balance for three seconds.",
-      "icon": "⋮"
-    },
-    {
       "id": "split-shape-salute",
       "category": "Sequence",
       "title": "Split shape to salute",
       "task": "Show a comfortable split or straddle, rise using your practised transition, then salute together.",
       "cue": "Plan the route to standing before Go. Control the rise and match the final straight shape.",
       "icon": "↥"
-    },
-    {
-      "id": "lunge-support-lunge",
-      "category": "Sequence",
-      "title": "Lunge, support, lunge",
-      "task": "Move from a lunge into front support, then return to a standing lunge together.",
-      "cue": "Use the coach’s familiar step-in and step-out route. Place hands securely and move one foot at a time if needed.",
-      "icon": "▱"
     },
     {
       "id": "roll-jump-finish",
@@ -325,6 +293,14 @@
       "task": "In pairs, perform a two-skill sequence as mirror images: one balance and one jump.",
       "cue": "Choose the order and opposite leading legs before Go. Match the timing and make the finish identical.",
       "icon": "⋈"
+    },
+    {
+      "id": "cartwheel-freeze",
+      "category": "Sequence",
+      "title": "Cartwheel and freeze",
+      "task": "Perform one familiar cartwheel in separate lanes, then freeze in a tall finishing shape together.",
+      "cue": "Coach approves each gymnast’s cartwheel or practised side-travel progression before Go. Leave clear lanes and control the finish.",
+      "icon": "↷"
     },
     {
       "id": "mirror-balances",
@@ -367,14 +343,6 @@
       "icon": "⇄"
     },
     {
-      "id": "copy-two-shapes",
-      "category": "Teamwork",
-      "title": "Copy two shapes",
-      "task": "One half of the team shows tuck then pike; the other half immediately repeats the same sequence.",
-      "cue": "Agree the two groups and counts before Go. Keep the shapes clear and finish in matching pikes.",
-      "icon": "⇉"
-    },
-    {
       "id": "partner-roll-finish",
       "category": "Teamwork",
       "title": "Partner roll finish",
@@ -389,6 +357,134 @@
       "task": "Perform a shared two-skill routine with one balance and one floor roll, all finishing together.",
       "cue": "Agree the skills and one quality target before Go: straight legs, pointed toes or a still finish. Coach judges that target.",
       "icon": "✓"
+    },
+    {
+      "id": "partner-line-check",
+      "category": "Teamwork",
+      "title": "Partner line check",
+      "task": "One partner shows a straight floor shape while the other checks arms, knees and toes; swap roles once.",
+      "cue": "Give one clear spoken correction without moving your partner. The gymnast shows the change, then both partners exchange roles.",
+      "icon": "⇄"
+    },
+    {
+      "id": "conditioning-burpees",
+      "category": "Conditioning",
+      "title": "Five burpees each",
+      "task": "Complete five short burpees each in 10 seconds: crouch, hands down, feet back, feet in, then stand.",
+      "cue": "Use the practised version agreed before Go; no press-up or high jump is needed. Keep control and stop when the timer ends.",
+      "icon": "↟"
+    },
+    {
+      "id": "conditioning-press-ups",
+      "category": "Conditioning",
+      "title": "Four press-ups each",
+      "task": "Complete four controlled press-ups each during your 10-second turn.",
+      "cue": "Coach chooses knees-down or full press-ups before Go. Keep a straight body line and lower and lift the chest with control.",
+      "icon": "↓"
+    },
+    {
+      "id": "conditioning-jumping-jacks",
+      "category": "Conditioning",
+      "title": "Eight jumping jacks each",
+      "task": "Complete eight jumping jacks each in 10 seconds, returning feet and arms together to count each rep.",
+      "cue": "Start together and use a steady shared rhythm. Land softly in your own space; a step-out version is fine when the coach chooses it.",
+      "icon": "✦"
+    },
+    {
+      "id": "conditioning-v-sits",
+      "category": "Conditioning",
+      "title": "Four V sits each",
+      "task": "Complete four V sits each in 10 seconds, lifting into the shape and lowering with control each time.",
+      "cue": "Start seated with hands available for support. Coach chooses bent or straight knees; count a rep only after returning to the start.",
+      "icon": "V"
+    },
+    {
+      "id": "conditioning-squats",
+      "category": "Conditioning",
+      "title": "Six squats each",
+      "task": "Complete six squats each in 10 seconds, returning to a tall stand after every squat.",
+      "cue": "Keep heels down and knees following the toes. Choose a comfortable depth and use the same steady count as the team.",
+      "icon": "↕"
+    },
+    {
+      "id": "conditioning-mountain-climbers",
+      "category": "Conditioning",
+      "title": "Six mountain climbers each",
+      "task": "Complete six alternating mountain climbers each in 10 seconds; each knee drawn forwards counts as one.",
+      "cue": "Start in the coach’s front-support position. Keep shoulders steady over hands and bring one knee forwards at a time without bouncing.",
+      "icon": "⇄"
+    },
+    {
+      "id": "conditioning-calf-raises",
+      "category": "Conditioning",
+      "title": "Six calf raises each",
+      "task": "Complete six calf raises each in 10 seconds, lifting both heels then lowering fully for every rep.",
+      "cue": "Stand tall with feet parallel and rise smoothly onto the toes. Keep the knees long and use the same controlled rhythm together.",
+      "icon": "↑"
+    },
+    {
+      "id": "conditioning-hollow-rocks",
+      "category": "Conditioning",
+      "title": "Four hollow rocks each",
+      "task": "Complete four small hollow rocks each in 10 seconds, counting one back-and-forward movement as a rep.",
+      "cue": "Use a familiar dish shape with the coach’s chosen arm and knee position. Keep the body shape still as you rock gently.",
+      "icon": "≈"
+    },
+    {
+      "id": "conditioning-pike-lifts",
+      "category": "Conditioning",
+      "title": "Four pike leg lifts each",
+      "task": "From a seated pike, complete four small leg lifts each in 10 seconds, lifting and lowering both heels together.",
+      "cue": "Place hands beside the legs for support and keep the knees long. A small clear lift counts; do not throw the upper body backwards.",
+      "icon": "⌃"
+    },
+    {
+      "id": "conditioning-straddle-lifts",
+      "category": "Conditioning",
+      "title": "Four straddle leg lifts each",
+      "task": "From a seated straddle, complete four alternating leg lifts each in 10 seconds; each lifted heel counts as one.",
+      "cue": "Keep the hands on the floor for support and use a comfortable straddle width. Lift one straight leg a little, lower, then change legs.",
+      "icon": "⋁"
+    },
+    {
+      "id": "conditioning-shoulder-taps",
+      "category": "Conditioning",
+      "title": "Six shoulder taps each",
+      "task": "Complete six alternating shoulder taps each in 10 seconds; each hand touching the opposite shoulder counts as one.",
+      "cue": "Coach chooses knees-down or full front support. Keep the hips steady, replace the hand securely, then change sides.",
+      "icon": "↔"
+    },
+    {
+      "id": "conditioning-dead-bug",
+      "category": "Conditioning",
+      "title": "Four opposite reaches each",
+      "task": "Lying on your back, complete four opposite arm-and-leg reaches each in 10 seconds, alternating sides.",
+      "cue": "Start with knees bent above the hips and arms up. Slowly extend an opposite arm and leg, return, then swap while keeping the back comfortable.",
+      "icon": "⋈"
+    },
+    {
+      "id": "reenact-marx",
+      "category": "Reenactment",
+      "title": "Marx coaching a gymnast",
+      "task": "Reenact Marx coaching a gymnast. One teammate plays Marx, another plays the gymnast, and the rest help set the scene.",
+      "cue": "You have 10 seconds. Use familiar coaching phrases, gestures and expressions to make your impression recognisable. Keep it playful and kind; acting is enough.",
+      "icon": "M"
+    },
+    {
+      "id": "reenact-dan",
+      "category": "Reenactment",
+      "title": "Dan coaching a gymnast",
+      "task": "Reenact Dan coaching a gymnast. One teammate plays Dan, another plays the gymnast, and the rest help set the scene.",
+      "cue": "You have 10 seconds. Use familiar coaching phrases, gestures and expressions to make your impression recognisable. Keep it playful and kind; acting is enough.",
+      "icon": "D"
+    },
+    {
+      "id": "reenact-isabella",
+      "category": "Reenactment",
+      "title": "Isabella coaching a gymnast",
+      "task": "Reenact Isabella coaching a gymnast. One teammate plays Isabella, another plays the gymnast, and the rest help set the scene.",
+      "cue": "You have 10 seconds. Use familiar coaching phrases, gestures and expressions to make your impression recognisable. Keep it playful and kind; acting is enough.",
+      "icon": "I"
     }
   ];
   const CARD_BY_ID = new Map(CARDS.map(card => [card.id, card]));
