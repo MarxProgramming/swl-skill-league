@@ -69,7 +69,7 @@
     let timer = null, timerGeneration = 0, renderGeneration = 0, remainingMs = duration, lastTick = 0;
     let preview = null, previewNumber = 0, resetPrompt = false, errorText = '', statusText = '', stage = null;
     let sessionId = null, completionSent = false, reelCards = [], reelViewport = null, reelTrack = null, reelBoundary = REEL_START;
-    let reelWidth = 360, reelCardWidth = 223.2, reelOffset = 0;
+    let reelWidth = 360, reelCardWidth = 223.2, reelOffset = 0, gameRoot = null, ownsImmersive = false;
     const now = () => performance.now();
     const currentTeamIndex = () => duel ? 0 : turnOrder[turn] ?? 0;
     const currentGymnast = () => teams.length && !duel ? teams[currentTeamIndex()].turns + (['awarded', 'finished'].includes(phase) ? 0 : 1) : 0;
@@ -90,7 +90,39 @@
       completionSent = true;
       try { options.onComplete?.({ gameId: duel ? 'letters' : 'shuffle', sessionId, ...(!duel ? { participantCount: turnOrder.length } : {}) }); } catch (_) {}
     }
-    const showStage = () => stage?.scrollIntoView?.({ block: 'start', behavior: motionOff() ? 'instant' : 'smooth' });
+    const immersive = () => !duel && active && !destroyed && phase !== 'setup';
+    const showStage = () => { if (!immersive()) stage?.scrollIntoView?.({ block: 'start', behavior: motionOff() ? 'instant' : 'smooth' }); };
+    function updateLayout() {
+      if (duel) return;
+      const body = document.body, playing = immersive();
+      if (!playing) {
+        if (ownsImmersive) {
+          body?.classList?.remove('swl-shuffle-playing');
+          body?.style?.removeProperty('--swl-shuffle-header-bottom');
+          body?.style?.removeProperty('--swl-shuffle-bottom-space');
+          ownsImmersive = false;
+        }
+        return;
+      }
+      body?.classList?.add('swl-shuffle-playing'); ownsImmersive = true;
+      const viewport = window.visualViewport;
+      const viewportTop = Math.max(0, Number(viewport?.offsetTop) || 0);
+      const viewportHeight = Number(viewport?.height) || window.innerHeight || document.documentElement?.clientHeight || 768;
+      const viewportBottom = viewportTop + viewportHeight;
+      const header = document.querySelector?.('.header')?.getBoundingClientRect?.();
+      const headerBottom = Math.max(viewportTop, Number(header?.bottom) || 76);
+      const nav = document.querySelector?.('.nav')?.getBoundingClientRect?.();
+      // Desktop navigation sits in the header; only a bottom navigation bar reserves space here.
+      const bottomNav = nav && nav.height > 0 && nav.top > headerBottom + 48 && nav.top > viewportTop + viewportHeight / 2;
+      const playBottom = Math.min(viewportBottom - 10, bottomNav ? nav.top - 8 : viewportBottom - 10);
+      const top = headerBottom + 48, height = Math.max(100, playBottom - top);
+      body?.style?.setProperty('--swl-shuffle-header-bottom', `${headerBottom}px`);
+      body?.style?.setProperty('--swl-shuffle-bottom-space', `${Math.max(0, viewportBottom - playBottom)}px`);
+      gameRoot?.style.setProperty('--swl-shuffle-play-top', `${top}px`);
+      gameRoot?.style.setProperty('--swl-shuffle-play-height', `${height}px`);
+      gameRoot?.style.setProperty('--swl-shuffle-card-font', `${Math.max(12, Math.min(29, height * .052))}px`);
+      if (gameRoot) gameRoot.dataset.fit = height < 300 ? 'short' : height < 430 ? 'compact' : 'roomy';
+    }
     function cancelTimer() { timerGeneration++; clearTimeout(timer); timer = null; }
     function button(text, action, className = 'swl-skill-button swl-skill-secondary', disabled = false) {
       const element = node('button', className, text), generation = renderGeneration;
@@ -315,7 +347,10 @@
       teams.forEach((team, index) => {
         const item = node('div', `swl-skill-score${!duel && phase !== 'finished' && index === currentTeamIndex() ? ' is-current' : ''}`); item.style.setProperty('--squad-color', team.color);
         item.append(node('span', 'swl-skill-score-name', team.name), node('strong', '', duel ? String(team.score) : averageText(team)), node('span', 'swl-skill-score-unit', duel ? `points · first to ${TARGET}` : `avg stars / gymnast${phase === 'finished' ? '' : ' so far'}`));
-        if (!duel) item.append(node('span', 'swl-skill-score-detail', `${team.score} total ${team.score === 1 ? 'star' : 'stars'} · ${team.turns}/${team.size} gymnasts`));
+        if (!duel) {
+          item.append(node('span', 'swl-skill-score-detail', `${team.score} total ${team.score === 1 ? 'star' : 'stars'} · ${team.turns}/${team.size} gymnasts`));
+          const compact = node('span', 'swl-skill-score-compact', `${team.score} ★ · ${team.turns}/${team.size} done`); compact.setAttribute('aria-hidden', 'true'); item.append(compact);
+        }
         if (duel) { const track = node('div', 'swl-skill-track'), fill = node('span'); fill.style.width = `${team.score / TARGET * 100}%`; track.append(fill); item.append(track); }
         board.append(item);
       }); root.append(board);
@@ -386,7 +421,7 @@
     function render(focus = false, focusAction = '') {
       if (destroyed) return;
       renderGeneration++; stage = null; reelViewport = reelTrack = null;
-      const root = node('div', `swl-skill-game swl-skill-${mode}-game`); root.dataset.static = String(motionOff()); root.dataset.phase = phase;
+      const root = node('div', `swl-skill-game swl-skill-${mode}-game${immersive() ? ' is-immersive' : ''}`); gameRoot = root; root.dataset.static = String(motionOff()); root.dataset.phase = phase;
       const heading = node('div', 'swl-skill-heading'), titles = node('div'); titles.append(node('p', 'swl-skill-kicker', duel ? 'ONE LETTER · TWO TEAMS · FIRST TO SEVEN' : 'SHUFFLE · SHOW IT · SCORE'), node('h2', '', title)); heading.append(titles);
       if (phase !== 'setup') heading.append(button('New game', 'reset', 'swl-skill-text-button')); root.append(heading);
       if (phase === 'setup') setupView(root); else { scoreboard(root); if (phase === 'finished') finishView(root); else playView(root); }
@@ -404,6 +439,7 @@
         }); root.append(prompt);
       }
       container.replaceChildren(root);
+      updateLayout();
       updateReel();
       if (focus || focusAction) {
         const target = resetPrompt ? root.querySelector('[data-skill-action="cancel-reset"]') : focusAction ? root.querySelector(`[data-skill-action="${focusAction}"]`) : phase === 'paused' ? root.querySelector('[data-skill-action="resume"]') : stage || root.querySelector('[data-skill-name="0"]');
@@ -412,9 +448,11 @@
     }
     function deactivate() { if (destroyed) return; pause(); active = false; cancelTimer(); render(); }
     function onVisibility() { if (document.hidden) { pause(); cancelTimer(); render(); } }
-    function onResize() { if (active && !destroyed && !document.hidden) updateReel(); }
+    function onResize() { if (active && !destroyed && !document.hidden) { updateLayout(); updateReel(); } }
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener?.('resize', onResize);
+    window.visualViewport?.addEventListener?.('resize', onResize);
+    window.visualViewport?.addEventListener?.('scroll', onResize);
     const controller = {
       deactivate,
       activate() { if (!destroyed) { active = true; render(); } },
@@ -426,7 +464,7 @@
           if (JSON.stringify(incoming) !== JSON.stringify(skills)) { skills = incoming; pool = duel ? letterPool(skills) : skills; bag = []; previous = ''; }
         }
       },
-      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener?.('resize', onResize); container.replaceChildren(); },
+      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); updateLayout(); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener?.('resize', onResize); window.visualViewport?.removeEventListener?.('resize', onResize); window.visualViewport?.removeEventListener?.('scroll', onResize); container.replaceChildren(); gameRoot = null; },
       getState() {
         return { mode, phase, active, sessionId, completionSent, turn, teamCount, round: teams.length ? duel ? Math.floor(turn / 2) + 1 : currentGymnast() : 0, currentTeam: !duel && teams.length ? currentTeamIndex() : null, currentGymnast: currentGymnast(), totalGymnasts: turnOrder.length, completedGymnasts: duel ? 0 : completedGymnasts(), teams: teams.map(team => ({ ...team, ...(!duel ? { average: team.turns ? team.score / team.turns : null } : {}) })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, reel: !duel && reelCards.length ? { position: reelPosition(), targetIndex: REEL_TARGET, targetId: reelCards[REEL_TARGET].id, width: reelWidth, cardWidth: reelCardWidth, gap: REEL_GAP, offset: reelOffset } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
       }

@@ -1,6 +1,7 @@
 (() => {
   'use strict';
-  let root, options, current = null, active = false, lobby, arena, stage, title, cards, ratingsApi, ratingsSummary = {}, pendingCount = 0;
+  let root, options, current = null, active = false, lobby, arena, stage, title, cards, ratingsApi, ratingsSummary = {}, pendingCount = 0, sortMode = 'hottest', liveRating, livePlays, liveHot;
+  const sortButtons = [];
   const ratingButtons = [];
   const mounted = new Map();
   const descriptions = [
@@ -30,7 +31,7 @@
   function moduleFor(id) { return window[descriptions.find(x=>x.id===id)?.module]; }
   function showLobby() {
     if(current)moduleFor(current)?.deactivate();
-    current=null;lobby.hidden=false;arena.hidden=true;renderCards();
+    current=null;ratingsApi?.setContext(null);lobby.hidden=false;arena.hidden=true;renderCards();
     mounted.forEach(el=>{el.hidden=true;});
     root.querySelector('.game-card-play')?.focus({preventScroll:true});
   }
@@ -39,38 +40,52 @@
     if(current&&current!==id)moduleFor(current)?.deactivate();
     const gameModule=moduleFor(id);if(!gameModule?.mount)return;
     if(!mounted.has(id)) {const host=node('div','game-stage');host.id='game-'+id;stage.append(host);mounted.set(id,host);}
-    current=id;lobby.hidden=true;arena.hidden=false;title.textContent=info.name;
+    current=id;ratingsApi?.setContext(id);lobby.hidden=true;arena.hidden=false;title.textContent=info.name;updateGameStats();
     mounted.forEach((el,key)=>{el.hidden=key!==id;});
     gameModule.mount(mounted.get(id),options);
     arena.querySelector('.games-back').focus({preventScroll:true});
     root.scrollIntoView({behavior:options.motionOff?.()?'instant':'smooth',block:'start'});
   }
-  function rankedGames(){return descriptions.slice().sort((a,b)=>{const x=ratingsSummary[a.id],y=ratingsSummary[b.id];return (y?.votes?y.sum/y.votes:-1)-(x?.votes?x.sum/x.votes:-1);});}
-  function ratingButton(){const button=node('button','quiet games-pending-ratings','Finish ratings');button.type='button';button.hidden=!pendingCount;button.addEventListener('click',()=>ratingsApi?.openPending());ratingButtons.push(button);return button;}
-  function renderCards(){if(!cards)return;const focused=document.activeElement?.closest?.('[data-game-id]')?.dataset.gameId;cards.replaceChildren();
+  function average(id){const rating=ratingsSummary[id];return rating?.votes?rating.sum/rating.votes:-1;}
+  function hottestId(){const rated=descriptions.filter(info=>ratingsSummary[info.id]?.votes);return rated.sort((a,b)=>average(b.id)-average(a.id)||(ratingsSummary[b.id].votes-ratingsSummary[a.id].votes))[0]?.id||null;}
+  function rankedGames(){return descriptions.slice().sort((a,b)=>sortMode==='played'?(ratingsSummary[b.id]?.plays||0)-(ratingsSummary[a.id]?.plays||0)||average(b.id)-average(a.id):average(b.id)-average(a.id)||(ratingsSummary[b.id]?.votes||0)-(ratingsSummary[a.id]?.votes||0));}
+  function ratingLabel(id){const rating=ratingsSummary[id];return rating?.votes?`★ ${(rating.sum/rating.votes).toFixed(1)} / 10`:'☆ Not rated yet';}
+  function playLabel(id){const value=ratingsSummary[id]?.plays;return value===undefined?'Plays loading…':`${value} ${value===1?'play':'plays'}`;}
+  function pauseForRating(){if(current){moduleFor(current)?.deactivate();moduleFor(current)?.mount(mounted.get(current),options);}}
+  function rateGame(id){if(!active)return;pauseForRating();ratingsApi?.openForGame(id);}
+  function updateGameStats(){if(!current||!liveRating)return;const info=descriptions.find(item=>item.id===current);liveRating.textContent=ratingLabel(current)+' · Rate';liveRating.setAttribute('aria-label','Rate '+info.name);livePlays.textContent=playLabel(current);livePlays.setAttribute('title','Completed games');liveHot.hidden=hottestId()!==current;}
+  function ratingButton(){const button=node('button','quiet games-pending-ratings','Finish ratings');button.type='button';button.hidden=!pendingCount;button.addEventListener('click',()=>{if(!active)return;pauseForRating();ratingsApi?.openPending();});ratingButtons.push(button);return button;}
+  function renderCards(){if(!cards||ratingsApi?.getState().current)return;const focused=document.activeElement?.closest?.('[data-game-id]')?.dataset.gameId,focusAction=document.activeElement?.dataset.gameAction;cards.replaceChildren();
     rankedGames().forEach((info,index)=>{
-      const card=node('article','game-card game-card--'+info.id),top=node('div','game-card-top');
+      const hot=hottestId()===info.id,card=node('article','game-card game-card--'+info.id+(hot?' is-hottest':'')),top=node('div','game-card-top');
       top.append(node('span','',String(index+1).padStart(2,'0')),node('span','game-card-tag',info.tag));
       const visual=node('div','game-card-art');visual.innerHTML=art(info.art);
       const play=node('button','game-card-play');play.type='button';play.setAttribute('aria-label','Play '+info.name);
-      play.append(node('span','','Let’s play'),node('span','','↗'));play.addEventListener('click',()=>openGame(info.id));
-      const rating=ratingsSummary[info.id];
-      const badge=node('p','game-card-rating',rating?.votes ? `★ ${(rating.sum/rating.votes).toFixed(1)} / 10 · ${rating.votes} votes` : rating ? 'Be the first squad to rate it' : 'Squad ratings loading…');
-      card.dataset.gameId=info.id;card.append(top,visual,node('h2','',info.name),node('p','game-card-desc',info.description),badge,play);cards.append(card);
+      play.dataset.gameAction='play';play.append(node('span','','Let’s play'),node('span','','↗'));play.addEventListener('click',()=>openGame(info.id));
+      const rating=ratingsSummary[info.id],stats=node('div','game-card-stats'),ratingGroup=node('div','game-card-rating-group');
+      const rate=node('button','game-card-rate',ratingLabel(info.id));rate.type='button';rate.dataset.gameAction='rate';rate.setAttribute('aria-label','Rate '+info.name);rate.addEventListener('click',()=>rateGame(info.id));
+      ratingGroup.append(rate,node('span','game-card-votes',rating?`${rating.votes} ${rating.votes===1?'vote':'votes'}`:'Ratings loading…'));
+      const plays=node('span','game-card-plays',playLabel(info.id));plays.setAttribute('title','Completed games');stats.append(ratingGroup,plays);
+      card.dataset.gameId=info.id;card.append(top,visual,node('h2','',info.name),node('p','game-card-desc',info.description),stats,play);
+      if(hot){const flame=node('span','game-hottest-badge','🔥 Hottest game');flame.setAttribute('title','Highest average squad rating');card.append(flame);}
+      cards.append(card);
     });
-    if(focused)cards.querySelector(`[data-game-id="${focused}"] .game-card-play`)?.focus({preventScroll:true});
+    if(focused)cards.querySelector(`[data-game-id="${focused}"] [data-game-action="${focusAction||'play'}"]`)?.focus({preventScroll:true});
   }
   function mount(container, config={}) {
-    if(root===container)return;root=container;options={...config,onComplete:details=>ratingsApi?.complete(details)};root.classList.add('games-shell');
+    if(root===container)return;root=container;options={...config,onComplete:details=>ratingsApi?.complete(details)};root.classList.add('games-shell');root.addEventListener('click',()=>ratingsApi?.cancelPrompt(),true);
     lobby=node('div','games-lobby');const head=node('div','games-heading'),heading=node('div');
     heading.append(node('p','games-kicker','SWL Squad Training'),node('h1','','Squad games'));
     head.append(heading,node('p','games-intro','Eight ways to train together. Clean skills, teamwork, conditioning and a little competition. You coach. The screen keeps score.'));
     cards=node('div','games-grid');renderCards();
     const note=node('p','games-note');note.append(node('span','','✧'),node('span','','Game scores are just for this session. Your Skill League points stay the same.'));
-    const ratingBar=node('div','games-rating-bar');ratingBar.append(node('span','','Squad favourites rise to the top.'),ratingButton());
+    const ratingBar=node('div','games-rating-bar'),sorts=node('div','games-sort');sorts.setAttribute('role','group');sorts.setAttribute('aria-label','Sort games');
+    [['hottest','🔥 Hottest'],['played','↻ Most played']].forEach(([value,label])=>{const button=node('button','games-sort-button',label);button.type='button';button.dataset.gameSort=value;button.setAttribute('aria-pressed',String(sortMode===value));button.addEventListener('click',()=>{if(!active)return;sortMode=value;sortButtons.forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.gameSort===sortMode)));renderCards();});sortButtons.push(button);sorts.append(button);});
+    ratingBar.append(sorts,node('span','games-sort-note','Class ratings · completed games'),ratingButton());
     lobby.append(head,ratingBar,cards,note);
-    arena=node('div','games-arena');arena.hidden=true;const bar=node('div','games-toolbar'),back=node('button','quiet games-back','← All games');back.type='button';back.addEventListener('click',showLobby);title=node('span','games-session-label');bar.append(back,title,ratingButton());stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
-    if(window.SWLGameRatings&&typeof config.requestRatings==='function')ratingsApi=window.SWLGameRatings.create({games:descriptions,request:config.requestRatings,onChange:(summary,pending)=>{ratingsSummary=summary;pendingCount=pending;ratingButtons.forEach(button=>{button.hidden=!pending;button.textContent=`Finish ratings${pending>1?' ('+pending+')':''}`;});if(!current)renderCards();}});
+    arena=node('div','games-arena');arena.hidden=true;const bar=node('div','games-toolbar'),back=node('button','quiet games-back','← All games');back.type='button';back.addEventListener('click',showLobby);title=node('span','games-session-label');liveRating=node('button','quiet games-live-rating','☆ Rate this game');liveRating.type='button';liveRating.addEventListener('click',()=>rateGame(current));livePlays=node('span','games-live-plays');liveHot=node('span','games-live-hot','🔥 Hottest game');liveHot.hidden=true;
+    bar.append(back,title,liveHot,livePlays,liveRating,ratingButton());stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
+    if(window.SWLGameRatings&&typeof config.requestRatings==='function')ratingsApi=window.SWLGameRatings.create({games:descriptions,request:config.requestRatings,onChange:(summary,pending)=>{ratingsSummary=summary;pendingCount=pending;ratingButtons.forEach(button=>{button.hidden=!pending;button.textContent=`Finish ratings${pending>1?' ('+pending+')':''}`;});if(!current)renderCards();else updateGameStats();}});
   }
   function setActive(value) {
     active=Boolean(value);ratingsApi?.setActive(active);if(active)ratingsApi?.refresh();

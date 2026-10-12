@@ -98,3 +98,100 @@
 @media(max-width:400px){.swl-skill-team-fields{grid-template-columns:1fr;gap:12px;padding-bottom:19px;border-bottom:1px solid #ffffff10}.swl-skill-team-fields:last-child{padding-bottom:0;border-bottom:0}.swl-skill-stepper{max-width:180px}.swl-skill-score-unit{line-height:1.6}.swl-skill-shuffle-game .swl-skill-score strong{font-size:31px}.swl-skill-fair-note{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.swl-skill-game *{animation:none!important;transition:none!important}}
 @media(max-width:400px){.swl-skill-reel-card{min-height:203px;padding:16px 12px}.swl-skill-reel-card b{font-size:18px}.swl-skill-reel-meta{font-size:9px}.swl-skill-reel-face{min-height:290px}.swl-skill-face .swl-skill-reel-result{font-size:25px}}
+
+/* Active Skill Shuffle occupies only the space between the real header and navigation. */
+.swl-skill-score-compact{display:none}
+body.swl-shuffle-playing{overflow:hidden;overscroll-behavior:none}
+.swl-skill-game.is-immersive{position:fixed;z-index:35;top:var(--swl-shuffle-play-top,124px);left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:1200px;height:var(--swl-shuffle-play-height,calc(100dvh - 210px));margin:0;display:flex;flex-direction:column;gap:7px;background:#101016;padding:5px 0 0;min-height:0}
+.swl-skill-game.is-immersive .swl-skill-heading{flex:none;gap:10px;margin:0;min-height:28px}
+.swl-skill-game.is-immersive .swl-skill-heading h2{font-size:22px;line-height:1.1;margin:0;letter-spacing:-.045em}
+.swl-skill-game.is-immersive .swl-skill-heading .swl-skill-kicker{display:none}
+.swl-skill-game.is-immersive .swl-skill-heading>.swl-skill-text-button{font-size:10px;min-height:28px;padding:5px}
+.swl-skill-game.is-immersive .swl-skill-board{flex:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0}
+.swl-skill-game.is-immersive .swl-skill-board[data-team-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.swl-skill-game.is-immersive .swl-skill-board .swl-skill-score{grid-template-columns:minmax(0,1fr) auto;gap:3px 6px;padding:8px 10px;border-radius:12px}
+.swl-skill-game.is-immersive .swl-skill-score-name{padding:0;font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.swl-skill-game.is-immersive .swl-skill-score strong{font-size:23px;line-height:1}
+.swl-skill-game.is-immersive .swl-skill-score strong:after{content:' avg';font-size:8px;letter-spacing:0;font-weight:650;color:#aaa5b6}
+.swl-skill-game.is-immersive .swl-skill-score-compact{display:block;grid-column:1/-1;color:#c0baca;font-size:10px;line-height:1.25;white-space:nowrap}
+.swl-skill-game.is-immersive .swl-skill-score-unit,.swl-skill-game.is-immersive .swl-skill-score-detail,.swl-skill-game.is-immersive .swl-skill-live,.swl-skill-game.is-immersive .swl-skill-reel-result{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+.swl-skill-game.is-immersive>.swl-skill-fair-note{display:none}
+.swl-skill-game.is-immersive .swl-skill-progress{flex:none;font-size:9px;line-height:1.2;letter-spacing:.08em;margin:0 2px}
+.swl-skill-game.is-immersive .swl-skill-total-progress{flex:none;height:2px;margin:-3px 0 0}
+.swl-skill-game.is-immersive .swl-skill-stage{flex:1;min-height:0;padding:12px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto auto;gap:8px 10px;border-radius:20px;box-shadow:none}
+.swl-skill-game.is-immersive .swl-skill-turn{grid-column:1;align-self:center;font-size:18px;line-height:1.2;text-align:left;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.swl-skill-game.is-immersive .swl-skill-gymnast-number{grid-column:2;align-self:center;font-size:11px;line-height:1.2;text-align:right;margin:0;white-space:nowrap}
+.swl-skill-game.is-immersive .swl-skill-face{grid-column:1/-1;grid-row:2;min-height:0;height:100%;padding:0;gap:9px;overflow:visible}
+.swl-skill-game.is-immersive .swl-skill-face:not(.swl-skill-reel-face){border:1px solid #bd9bff22;border-radius:16px;background:radial-gradient(ellipse at center,#bd9bff0c,transparent 75%);padding:10px}
+.swl-skill-game.is-immersive .swl-skill-face:not(.swl-skill-reel-face) h3{font-size:clamp(22px,3.5vw,40px);margin:0}
+.swl-skill-game.is-immersive .swl-skill-face>.swl-skill-muted{font-size:12px;line-height:1.4;margin:0}
+.swl-skill-game.is-immersive .swl-skill-placeholder{font-size:clamp(35px,6vw,75px);line-height:1}
+.swl-skill-game.is-immersive .swl-skill-reel-frame{height:min(100%,360px);flex:none;min-height:0;padding:9px 0 5px}
+.swl-skill-game.is-immersive .swl-skill-reel{height:100%;min-height:0;padding:6px 0;border-radius:13px}
+.swl-skill-game.is-immersive .swl-skill-reel-track{height:100%;min-height:0}
+.swl-skill-game.is-immersive .swl-skill-reel-card{height:100%;min-height:0;max-height:100%;padding:9px 12px;border-radius:10px;justify-content:center;gap:9px}
+.swl-skill-game.is-immersive .swl-skill-reel-card b{font-size:var(--swl-shuffle-card-font,21px);line-height:1.12;letter-spacing:-.025em}
+.swl-skill-game.is-immersive .swl-skill-reel-meta{font-size:9px;line-height:1.2;letter-spacing:.02em}
+.swl-skill-game.is-immersive .swl-skill-reel-symbol,.swl-skill-game.is-immersive .swl-skill-reel-caption,.swl-skill-game.is-immersive .swl-skill-reel-face>.swl-skill-instruction{display:none}
+.swl-skill-game.is-immersive .swl-skill-reel-pointer{top:0;bottom:0}
+.swl-skill-game.is-immersive .swl-skill-reel-pointer:before{border-top-width:11px;border-left-width:8px;border-right-width:8px;top:1px}
+.swl-skill-game.is-immersive .swl-skill-controls{grid-column:1/-1;grid-row:3;min-height:0;display:flex;gap:8px;flex-wrap:wrap}
+.swl-skill-game.is-immersive .swl-skill-controls:empty{display:none}
+.swl-skill-game.is-immersive .swl-skill-controls>.swl-skill-button{flex:1;min-height:44px;width:auto;font-size:14px;padding:10px 14px;border-radius:12px}
+.swl-skill-game.is-immersive .swl-skill-controls>.swl-skill-text-button{min-height:40px;padding:8px;font-size:11px}
+.swl-skill-game.is-immersive .swl-skill-go{min-width:0;max-width:550px}
+.swl-skill-game.is-immersive .swl-skill-award-result{font-size:17px;line-height:1.2;margin:0}
+.swl-skill-game.is-immersive .swl-skill-awards-label,.swl-skill-game.is-immersive .swl-skill-familiar{display:none}
+.swl-skill-game.is-immersive .swl-skill-awards{grid-column:1/-1;grid-row:3;gap:8px}
+.swl-skill-game.is-immersive .swl-skill-rate{min-height:74px;gap:4px;padding:8px 5px;border-radius:12px}
+.swl-skill-game.is-immersive .swl-skill-rate>span{font-size:22px;line-height:1;letter-spacing:1px}
+.swl-skill-game.is-immersive .swl-skill-rate b{font-size:12px;line-height:1.1}
+.swl-skill-game.is-immersive .swl-skill-rate small{font-size:10px;line-height:1.2}
+.swl-skill-game.is-immersive .swl-skill-extras{grid-column:1/-1;grid-row:4;margin:0;gap:0}
+.swl-skill-game.is-immersive .swl-skill-extras>.swl-skill-text-button{min-height:30px;padding:6px;font-size:10px;line-height:1.2}
+.swl-skill-game.is-immersive .swl-skill-finish{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:20px}
+.swl-skill-game.is-immersive .swl-skill-trophy{font-size:43px;margin:0}
+.swl-skill-game.is-immersive .swl-skill-finish h3{font-size:clamp(23px,3.5vw,45px);line-height:1.1;margin:0;max-width:32ch}
+.swl-skill-game.is-immersive .swl-skill-result-points{font-size:23px;line-height:1.2;margin:0}
+.swl-skill-game.is-immersive .swl-skill-finish>.swl-skill-muted,.swl-skill-game.is-immersive .swl-skill-finish>.swl-skill-fair-note{font-size:11px;line-height:1.4;margin:0}
+.swl-skill-game.is-immersive .swl-skill-finish .swl-skill-kicker{margin:0}
+.swl-skill-game.is-immersive .swl-skill-finish .swl-skill-controls{display:grid;grid-template-columns:1fr 1fr;width:min(100%,570px);margin:8px 0 0;gap:5px 8px}
+.swl-skill-game.is-immersive .swl-skill-finish .swl-skill-controls>.swl-skill-text-button{grid-column:1/-1;min-height:30px;padding:5px}
+.swl-skill-game.is-immersive .swl-skill-reset-prompt{position:absolute;z-index:5;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(530px,100%);max-height:100%;overflow:auto;margin:0;padding:20px;box-shadow:0 0 0 100vmax #08080dbc;gap:10px}
+.swl-skill-game.is-immersive[data-fit=compact]{gap:5px}
+.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-stage{padding:9px 10px;gap:5px 8px}
+.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-rate{min-height:65px;padding:6px 3px;gap:3px}
+.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-rate>span{font-size:19px}
+.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-reel-card{padding:6px 9px;gap:5px}
+.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-trophy,.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-finish>.swl-skill-muted{display:none}
+.swl-skill-game.is-immersive[data-fit=compact] .swl-skill-finish{gap:7px;padding:12px}
+.swl-skill-game.is-immersive[data-fit=short]{gap:4px;padding-top:0}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-heading{position:absolute;right:4px;top:0;z-index:2;min-height:20px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-heading>div{display:none}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-heading>.swl-skill-text-button{min-height:22px;padding:2px 0;font-size:9px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-board{margin-right:66px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-board .swl-skill-score{padding:5px 7px;gap:2px 4px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-score strong{font-size:18px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-score-name{font-size:10px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-score-compact{font-size:8px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-progress{font-size:8px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-stage{padding:7px 8px;gap:4px 8px;grid-template-columns:minmax(0,1fr) minmax(140px,.8fr);grid-template-rows:auto minmax(0,1fr) auto}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-face{grid-column:1;grid-row:2/4}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-controls,.swl-skill-game.is-immersive[data-fit=short] .swl-skill-awards{grid-column:2;grid-row:2;align-self:center}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-awards{gap:4px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-extras{grid-column:2;grid-row:3}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-turn{font-size:13px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-gymnast-number{font-size:10px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-rate{min-height:65px;padding:5px 2px;gap:4px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-rate>span{font-size:16px;letter-spacing:0}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-rate b{font-size:10px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-rate small{font-size:8px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-placeholder,.swl-skill-game.is-immersive[data-fit=short] .swl-skill-face>.swl-skill-muted,.swl-skill-game.is-immersive[data-fit=short] .swl-skill-trophy,.swl-skill-game.is-immersive[data-fit=short] .swl-skill-finish>.swl-skill-muted,.swl-skill-game.is-immersive[data-fit=short] .swl-skill-finish>.swl-skill-fair-note{display:none}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-face:not(.swl-skill-reel-face) h3{font-size:20px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-reel-card{padding:5px 8px;gap:5px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-reel-meta{font-size:8px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-finish{padding:8px;gap:5px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-finish h3{font-size:24px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-result-points{font-size:17px}
+.swl-skill-game.is-immersive[data-fit=short] .swl-skill-finish .swl-skill-controls{margin-top:3px}
+@media(max-width:400px){.swl-skill-game.is-immersive{width:calc(100% - 20px)}.swl-skill-game.is-immersive .swl-skill-board .swl-skill-score{padding:6px 7px;gap:3px 4px}.swl-skill-game.is-immersive .swl-skill-score-name{font-size:11px}.swl-skill-game.is-immersive .swl-skill-score strong{font-size:20px}.swl-skill-game.is-immersive .swl-skill-score-compact{font-size:9px}.swl-skill-game.is-immersive .swl-skill-turn{font-size:15px}.swl-skill-game.is-immersive .swl-skill-gymnast-number{font-size:10px}.swl-skill-game.is-immersive .swl-skill-rate small{font-size:9px}.swl-skill-game.is-immersive .swl-skill-reel-card b{font-size:min(var(--swl-shuffle-card-font),16px)}.swl-skill-game.is-immersive .swl-skill-finish .swl-skill-controls>.swl-skill-button{padding:9px 7px;font-size:12px}.swl-skill-game.is-immersive .swl-skill-reset-prompt>.swl-skill-button{width:auto;flex:1;font-size:12px;padding:10px}}
