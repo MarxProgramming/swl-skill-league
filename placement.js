@@ -66,7 +66,7 @@
     const selected = overallRows.find(row => row?.gymnast?.id === gymnast.id) || {};
     host.setAttribute('data-placement-motion', motionOff ? 'off' : 'on');
     host.innerHTML = `<div class="swlp-profile">
-      <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to skills</button>
+      <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to gymnast</button>
       <header class="swlp-hero">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
           <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)}</h2>${fireBadge(gymnast.id)}

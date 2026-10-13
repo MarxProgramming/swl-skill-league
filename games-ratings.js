@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const KEY='swl-game-rating-outbox-v1';
+  const PENDING_KEY=KEY+':pending:',SAVED_KEY=KEY+':saved:';
   const IDS=['wheel','team','shuffle','letters','handstand','addon','relayrace','timesense'];
   const MAX_PENDING=200,MAX_COMPLETED=500,PROMPT_DELAY=3000;
   const validId=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{15,99}$/.test(value);
@@ -26,6 +27,55 @@
         (entry.sealed===undefined||typeof entry.sealed==='boolean')&&(!entry.sealed||count(entry)===entry.target);
     }
     function remember(list,key){return list.filter(value=>value!==key).concat(key).slice(-MAX_COMPLETED);}
+    const pendingKey=(kind,entry)=>PENDING_KEY+kind+':'+entry.requestId;
+    const savedKey=(kind,entry)=>SAVED_KEY+kind+':'+pair(entry);
+    function readRecord(storage,key){try{const raw=storage.getItem(key);return raw&&raw.length<=50000?JSON.parse(raw):null;}catch(_){return null;}}
+    function validRecord(record){return object(record)&&record.version===1&&['rating','play'].includes(record.kind)&&(record.kind==='rating'?validEntry(record.entry):validIdentity(record.entry));}
+    function normalRating(entry){return {gameId:entry.gameId,sessionId:entry.sessionId,requestId:entry.requestId,counts:entry.counts.slice(),target:entry.target,sealed:entry.sealed===true,manual:entry.manual===true,countsPlay:entry.countsPlay===true,playLinked:entry.playLinked===true};}
+    function recordKeys(storage,prefix){const keys=[];for(let n=0;n<storage.length;n++){const key=storage.key(n);if(typeof key==='string'&&key.startsWith(prefix))keys.push(key);}return keys;}
+    function received(kind,entry){
+      const key=pair(entry);if(kind==='rating'){settled=remember(settled,key);rated.add(key);errors.delete(key);queue=queue.filter(item=>pair(item)!==key);}
+      else{recorded=remember(recorded,key);completed.add(key);playQueue=playQueue.filter(item=>pair(item)!==key);if(!playQueue.length)playError='';}
+    }
+    function isSaved(storage,kind,entry){const value=readRecord(storage,savedKey(kind,entry));return object(value)&&value.version===1&&value.kind===kind&&value.gameId===entry.gameId&&value.sessionId===entry.sessionId;}
+    function syncEntry(storage,kind,entry){
+      if(isSaved(storage,kind,entry)){received(kind,entry);return false;}
+      const record=readRecord(storage,pendingKey(kind,entry));
+      if(kind==='rating'&&validRecord(record)&&record.kind==='rating'&&pair(record.entry)===pair(entry)&&record.entry.requestId===entry.requestId&&record.entry.sealed){
+        if(!entry.sealed||JSON.stringify(entry.counts)!==JSON.stringify(record.entry.counts)){
+          Object.assign(entry,normalRating(record.entry));const message='This rating was submitted in another tab. Retry keeps that original submission.';errors.set(pair(entry),message);if(current===entry)error=message;
+        }
+      }
+      return true;
+    }
+    function loadJournal(){
+      try{
+        const storage=window.localStorage;if(!storage)return;
+        for(const key of recordKeys(storage,SAVED_KEY)){
+          const receipt=readRecord(storage,key);if(!object(receipt)||receipt.version!==1||!['rating','play'].includes(receipt.kind)||!IDS.includes(receipt.gameId)||!validId(receipt.sessionId)||key!==savedKey(receipt.kind,receipt))continue;
+          received(receipt.kind,receipt);
+        }
+        for(const key of recordKeys(storage,PENDING_KEY)){
+          const record=readRecord(storage,key);if(!validRecord(record)||key!==pendingKey(record.kind,record.entry)||isSaved(storage,record.kind,record.entry))continue;
+          const entry=record.entry,list=record.kind==='rating'?queue:playQueue,found=list.find(item=>pair(item)===pair(entry));
+          if(found){syncEntry(storage,record.kind,found);continue;}
+          if(list.length>=10000||list.some(item=>item.requestId===entry.requestId))continue;
+          if(record.kind==='rating'){const restored=normalRating(entry);queue.push(restored);rated.add(pair(entry));if(restored.sealed)errors.set(pair(entry),'Your rating is waiting to retry. Tap Retry saving when connected.');if(restored.playLinked)completed.add(pair(entry));}
+          else{playQueue.push({gameId:entry.gameId,sessionId:entry.sessionId,requestId:entry.requestId});completed.add(pair(entry));}
+        }
+      }catch(_){storageWarning=true;}
+      if(current&&!queue.includes(current))close();
+    }
+    function writeReceipt(storage,kind,entry){
+      const key=savedKey(kind,entry);if(!isSaved(storage,kind,entry))storage.setItem(key,JSON.stringify({version:1,kind,gameId:entry.gameId,sessionId:entry.sessionId,savedAt:Date.now()}));
+    }
+    function pruneReceipts(storage){const receipts=recordKeys(storage,SAVED_KEY);if(receipts.length>MAX_COMPLETED*2){receipts.sort((a,b)=>(readRecord(storage,a)?.savedAt||0)-(readRecord(storage,b)?.savedAt||0));receipts.slice(0,receipts.length-MAX_COMPLETED*2).forEach(key=>storage.removeItem(key));}}
+    function recordSaved(kind,entry){
+      try{
+        const storage=window.localStorage;writeReceipt(storage,kind,entry);storage.removeItem(pendingKey(kind,entry));
+        pruneReceipts(storage);
+      }catch(_){storageWarning=true;}
+    }
     try {
       const raw=window.localStorage?.getItem(KEY)||'[]',stored=raw.length<=4000000?JSON.parse(raw):null;
       const supported=object(stored)&&[2,3,4].includes(stored.version);
@@ -56,13 +106,22 @@
       }
     }catch(_){}
     settled.forEach(key=>rated.add(key));queue.forEach(entry=>rated.add(pair(entry)));
+    // Approved ratings are restored without automatically sending them. Keep
+    // their waiting state visible so the shared footer can offer Retry.
+    queue.filter(entry=>entry.sealed).forEach(entry=>errors.set(pair(entry),'Your rating is waiting to retry. Tap Retry saving when connected.'));
     recorded.forEach(key=>completed.add(key));playQueue.forEach(entry=>completed.add(pair(entry)));
     queue.filter(entry=>entry.playLinked).forEach(entry=>completed.add(pair(entry)));
+    // Independent records survive another tab replacing the legacy snapshot.
+    // Receipt markers prevent stale tabs from restoring acknowledged entries.
+    loadJournal();
     function persist(){
       try {
-        if(!window.localStorage||typeof window.localStorage.setItem!=='function')throw Error('Storage unavailable');
-        window.localStorage.setItem(KEY,JSON.stringify({version:4,queue,completed:settled,plays:playQueue,recorded}));storageWarning=false;
+        const storage=window.localStorage;if(!storage||typeof storage.setItem!=='function')throw Error('Storage unavailable');
+        for(const [kind,done] of [['rating',settled],['play',recorded]])for(const key of done){const [gameId,sessionId]=key.split('/');writeReceipt(storage,kind,{gameId,sessionId});}
+        for(const [kind,list] of [['rating',queue.slice()],['play',playQueue.slice()]])for(const entry of list){if(!syncEntry(storage,kind,entry))continue;storage.setItem(pendingKey(kind,entry),JSON.stringify({version:1,kind,entry}));}
+        storage.setItem(KEY,JSON.stringify({version:4,queue,completed:settled,plays:playQueue,recorded}));pruneReceipts(storage);storageWarning=false;
       }catch(_){storageWarning=true;}
+      if(current&&!queue.includes(current))close();
     }
     // Persist migrations before a reload can restore obsolete unsealed tallies.
     if(queue.length||playQueue.length||settled.length||recorded.length)persist();
@@ -132,6 +191,7 @@
     }
     async function saveEntry(entry){
       if(closed||busy||!entry||!queue.includes(entry)||count(entry)!==entry.target||!count(entry)||(current&&current!==entry))return false;
+      try{const wasSealed=entry.sealed;if(!syncEntry(window.localStorage,'rating',entry)){persist();void refresh();return false;}if(!wasSealed&&entry.sealed){if(current===entry)render();announce();return false;}}catch(_){storageWarning=true;}
       ensureRatingPlay(entry);entry.sealed=true;persist();busy=true;error='';errors.delete(pair(entry));readEpoch++;
       if(current===entry)render();announce();
       const payload=Object.freeze({action:'rate_game',gameId:entry.gameId,sessionId:entry.sessionId,requestId:entry.requestId,counts:Object.freeze(entry.counts.slice())});
@@ -140,10 +200,11 @@
         const result=accept(await response);if(closed)return false;
         const acknowledged=result[entry.gameId],scoreSum=entry.counts.reduce((total,value,index)=>total+value*(index+1),0);
         if(acknowledged.sessions<1||acknowledged.votes<count(entry)||acknowledged.sum<scoreSum)throw Error('The saved rating was not acknowledged.');
-        readEpoch++;applySummary(result);queue=queue.filter(item=>item!==entry);errors.delete(pair(entry));settled=remember(settled,pair(entry));persist();busy=false;
+        readEpoch++;applySummary(result);recordSaved('rating',entry);queue=queue.filter(item=>item!==entry);errors.delete(pair(entry));settled=remember(settled,pair(entry));persist();busy=false;
         if(current===entry&&dialog.open)close();else announce();return true;
       }catch(problem){
         if(closed)return false;busy=false;
+        if(!queue.includes(entry)){errors.delete(pair(entry));announce();return true;}
         const message=problem?.code==='replayed_request'?'This session was already rated with different details. Your local rating is still kept.':problem?.code==='ratings_full'?'The ratings sheet is full. Your rating is kept here until there is room to save.':'Couldn’t confirm the save. Your rating is kept here; tap Retry when connected.';
         errors.set(pair(entry),message);if(current===entry){error=message;render();}announce();return false;
       }
@@ -152,13 +213,15 @@
       if(closed||playBusy)return;playBusy=true;playError='';announce();
       try {
         while(!closed&&playQueue.length){
-          const entry=playQueue[0],payload=Object.freeze({action:'record_game_play',requestId:entry.requestId,gameId:entry.gameId,sessionId:entry.sessionId});readEpoch++;
+          const entry=playQueue[0];try{if(!syncEntry(window.localStorage,'play',entry)){persist();continue;}}catch(_){storageWarning=true;}
+          const payload=Object.freeze({action:'record_game_play',requestId:entry.requestId,gameId:entry.gameId,sessionId:entry.sessionId});readEpoch++;
           try {
             const result=accept(await request(payload));if(closed)return;
             if(result[entry.gameId].plays<1)throw Error('The completed game was not acknowledged.');
-            readEpoch++;applySummary(result);playQueue=playQueue.filter(item=>item!==entry);recorded=remember(recorded,pair(entry));persist();if(current)render();announce();
+            readEpoch++;applySummary(result);recordSaved('play',entry);playQueue=playQueue.filter(item=>item!==entry);recorded=remember(recorded,pair(entry));persist();if(current)render();announce();
           }catch(problem){
-            if(closed)return;playError=problem?.code==='plays_full'?'Game tracking is full. Your play is kept on this device.':'Your play has not been saved yet. It is kept on this device; tap Retry game saves when connected.';if(current)render();announce();break;
+            if(!closed&&!playQueue.includes(entry))continue;
+            if(closed)return;playError=storageWarning?'Your play is still waiting to save. Keep this page open and retry when connected.':problem?.code==='plays_full'?'Game tracking is full. Your play is kept on this device.':'Your play has not been saved yet. It is kept on this device; tap Retry game saves when connected.';if(current)render();announce();break;
           }
         }
       }finally{playBusy=false;if(current)render();announce();}
@@ -203,7 +266,7 @@
       const pending=queue.filter(entry=>entry.sealed);
       for(const entry of pending){if(closed||busy||(current&&current!==entry))break;if(!await saveEntry(entry))break;}
     }
-    async function flush(){if(closed)return;await Promise.all([refresh(),retryPending(),flushPlays()]);}
+    async function flush(){if(closed)return;loadJournal();await Promise.all([refresh(),retryPending(),flushPlays()]);}
     function reconnect(){void flush();}
     function cancel(event){event.preventDefault();close();}
     function visibility(){if(document.hidden)cancelPrompt();}
@@ -213,7 +276,7 @@
       setContext(gameId,sessionId){cancelPrompt();contextGame=titles.has(gameId)&&IDS.includes(gameId)&&(sessionId===undefined||validId(sessionId))?gameId:null;contextSession=validId(sessionId)?sessionId:null;if(dialog.open)close();},
       openPending(){if(queue.length)return open(queue[0]);return false;},
       setActive(value){active=Boolean(value);if(!active){cancelPrompt();if(dialog.open)close();}},
-      getState(){return {summary:clone(summary),queue:clone(queue),playQueue:clone(playQueue),busy,playBusy,playError,pendingSaveCount:queue.filter(entry=>entry.sealed).length+playQueue.length,retryNeeded:errors.size>0||!!playError,saveError:[...new Set([...errors.values(),playError].filter(Boolean))].join(' '),current:current?.sessionId||null,promptPending:promptTimer!==null,contextGame,contextSession};},
+      getState(){const pendingSaveCount=queue.filter(entry=>entry.sealed).length+playQueue.length;return {summary:clone(summary),queue:clone(queue),playQueue:clone(playQueue),busy,playBusy,playError,pendingSaveCount,storageWarning:storageWarning&&pendingSaveCount>0?'This browser cannot keep unsaved game feedback after the page closes. Keep this page open until saving succeeds.':'',retryNeeded:errors.size>0||!!playError,saveError:[...new Set([...errors.values(),playError].filter(Boolean))].join(' '),current:current?.sessionId||null,promptPending:promptTimer!==null,contextGame,contextSession};},
       destroy(){if(closed)return;closed=true;readEpoch++;cancelPrompt();window.removeEventListener('online',reconnect);document.removeEventListener('visibilitychange',visibility);dialog.removeEventListener('cancel',cancel);if(dialog.open)close();dialog.remove();}
     });
   }

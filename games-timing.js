@@ -32,7 +32,7 @@
     const groupRound=()=>undoRecord&&['confirmed','finished'].includes(state.phase)?undoRecord.round:(currentTeam()?.turns??0)+1;
     const gymnastIndex=()=>isRelay?state.laps.length:undoRecord&&['confirmed','finished'].includes(state.phase)?undoRecord.gymnast-1:currentTeam()?.turns??0;
     const elapsed=()=>state.elapsedMs+(state.phase==='running'?Math.max(0,performance.now()-state.runningSince):0);
-    const seconds=value=>(value/1000).toFixed(2);
+    const seconds=value=>(Math.round(value/10)/100).toFixed(2);
     const scoreText=units=>(units/factor).toFixed(isSense?1:2);
     function motionOff(){try{return Boolean(typeof options.motionOff==='function'?options.motionOff():options.motionOff)||Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)||Boolean(document.body?.classList?.contains('no-motion'));}catch(_){return true;}}
     function sound(payload){if(!canAct())return;try{options.playSound?.(payload);}catch(_) {}}

@@ -1579,8 +1579,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-timing.css?v=20261013c">
 <link rel="stylesheet" href="./games-addon.css?v=20261012b">
 <link rel="stylesheet" href="./games-ratings.css?v=20261013c">
-<link rel="stylesheet" href="./v2.css?v=20261013c">
+<link rel="stylesheet" href="./v2.css?v=20261013d">
 <link rel="stylesheet" href="./welcome.css">
+<link rel="stylesheet" href="./skills-catalogue.css?v=20261013d">
 </head>
 
 <body>
@@ -1600,9 +1601,6 @@ html:has(body.no-motion){scroll-behavior:auto}
       <button data-view="dashboard" aria-pressed="true">
         Leaderboards
       </button>
-      <button data-view="tracker" aria-pressed="false">
-        Skills
-      </button>
       <button data-view="directory" aria-pressed="false">Gymnasts</button>
       <button data-view="games" aria-pressed="false">
         Games
@@ -1610,6 +1608,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     </nav>
 
     <div class="utilities">
+      <button class="quiet all-skills-button" id="allSkillsButton" type="button" data-open-skills aria-controls="allSkills">All skills</button>
       <button class="quiet scoring-lock-button" id="lockButton" type="button" disabled aria-describedby="lockStatus"><span aria-hidden="true">◇</span> <span id="lockButtonLabel">Checking lock…</span></button>
     </div>
 
@@ -1683,17 +1682,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     </p>
   </section>
 
-  <section id="tracker" aria-label="Skill tracker" hidden>
-    <div class="tracker-head">
-      <div>
-        <p class="eyebrow">Room to grow</p>
-        <h1>Skill tracker</h1>
-        <p>Choose a gymnast to review skills, results and renewals.</p>
-      </div>
-    </div>
+  <section id="tracker" aria-label="Gymnast profile" hidden>
+    <div class="profile-navigation"><button class="quiet" type="button" data-back-gymnasts>← Back to gymnasts</button><h1 class="sr">Gymnast profile</h1><span>Skills &amp; progress</span></div>
 
     <div class="tracker-layout">
-      <details class="roster" id="rosterBox" open>
+      <details class="roster" id="rosterBox" hidden>
         <summary>
           <strong>Choose a gymnast</strong>
           <small id="selectedLabel">
@@ -1758,6 +1751,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     </div>
   </section>
   <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
+  <section id="allSkills" aria-labelledby="allSkillsTitle" hidden><div id="allSkillsRoot"></div></section>
   <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
@@ -1809,16 +1803,17 @@ html:has(body.no-motion){scroll-behavior:auto}
 
 <script src="./startup.js"></script>
 <script src="./celebration.js?v=20261012b"></script>
-<script src="./placement.js"></script>
+<script src="./placement.js?v=20261013d"></script>
 <script src="./lock.js"></script>
 <script src="./games-wheel.js?v=20261013c"></script>
-<script src="./games-team.js?v=20261013c"></script>
+<script src="./games-team.js?v=20261013d"></script>
 <script src="./games-skill.js?v=20261013c"></script>
-<script src="./games-timing.js?v=20261013c"></script>
+<script src="./games-timing.js?v=20261013d"></script>
 <script src="./games-addon.js?v=20261012b"></script>
-<script src="./games-ratings.js?v=20261013c"></script>
+<script src="./games-ratings.js?v=20261013d"></script>
 <script src="./games.js?v=20261013c"></script>
-<script src="./v2.js?v=20261013c"></script>
+<script src="./skills-catalogue.js?v=20261013d"></script>
+<script src="./v2.js?v=20261013d"></script>
 <script src="./welcome.js"></script>
 <script>
 (() => {
@@ -2077,7 +2072,18 @@ html:has(body.no-motion){scroll-behavior:auto}
   const shortGroupLabel = coach => /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
   const v2Api = () => typeof window === 'undefined' ? null : window.SWLV2;
 
-  const RECOVERY_KEY = 'swl-skill-league-pending-v2';
+  const RECOVERY_KEY = 'swl-skill-league-pending-v2'; // Read-only compatibility until a safe handoff.
+  const RECOVERY_PREFIX = RECOVERY_KEY + ':tab:';
+  const recoveryOwner = crypto.randomUUID();
+  const recoveryRecordKey = RECOVERY_PREFIX + recoveryOwner;
+  const recoverySessionKey = RECOVERY_KEY + ':session';
+  let recoveryReady = true;
+  let recoveryStarted = null;
+  let recoveryRelease = null;
+  let recoveryOtherWarning = '';
+  let recoveryFailureWarning = '';
+  const damagedRecoveryKeys = new Set();
+  let waitingBatches = [];
   let confirmedState = freshState();
   let state = freshState();
   let remoteRevision = null;
@@ -2106,6 +2112,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   let selectedId = null;
   let currentView = 'dashboard';
+  let directoryScroll = 0;
+  let catalogueReturnView = 'dashboard';
+  let catalogueReturnScroll = 0;
   let coachFilter = 'all';
   let leaderboardGroup = 'all';
   let placementGroup = 'own';
@@ -2210,8 +2219,8 @@ html:has(body.no-motion){scroll-behavior:auto}
       );
   }
 
-  const hasPending = () => Boolean(inFlight || queuedOps.length);
-  const canEdit = () => hasLoaded && damagedRecovery === null && lockKnown && !scoringLock.locked && !lockChanging;
+  const hasPending = () => Boolean(inFlight || waitingBatches.length || queuedOps.length);
+  const canEdit = () => recoveryReady && hasLoaded && damagedRecovery === null && lockKnown && !scoringLock.locked && !lockChanging;
   const cloneState = value => JSON.parse(JSON.stringify(value));
   const normalizeName = value => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB');
 
@@ -2272,7 +2281,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function rebuildState() {
     state = applyOperations(confirmedState, [
-      ...(inFlight?.operations || []), ...queuedOps
+      ...(inFlight?.operations || []), ...waitingBatches.flatMap(batch => batch.operations), ...queuedOps
     ]);
     GYMNASTS = state.gymnasts;
     GYMNAST_IDS = new Set(GYMNASTS.map(g => g.id));
@@ -2288,52 +2297,193 @@ html:has(body.no-motion){scroll-behavior:auto}
       throw Error('The saved group of changes is invalid.');
     }
     return Object.freeze({ requestId, operations: Object.freeze(
-      operations.map(operation => Object.freeze(validateOperation(operation)))
+      operations.map(operation => {
+        const clean = validateOperation(operation);
+        // Older immutable requests predate clientAt. Do not change their wire fingerprint.
+        if (!Object.hasOwn(operation, 'clientAt')) delete clean.clientAt;
+        return Object.freeze(clean);
+      })
     ) });
   }
 
+  function recoverySnapshot() {
+    return {version: 3, owner: recoveryOwner, savedAt: new Date().toISOString(),
+      base: confirmedState, revision: remoteRevision, inFlight, waitingBatches, queuedOps, selectedId};
+  }
+
+  function recoveryDownloadText() {
+    if (damagedRecovery === null) return JSON.stringify(state, null, 2);
+    if (!hasPending()) return damagedRecovery;
+    return JSON.stringify({app: APP_ID, recoveryVersion: 3,
+      unreadableRecords: damagedRecovery, recoveredQueue: recoverySnapshot()}, null, 2);
+  }
+
   function persistRecovery() {
-    if (damagedRecovery !== null) return;
+    if (damagedRecovery !== null || !recoveryReady) return false;
     try {
-      if (!hasPending()) {
-        localStorage.removeItem(RECOVERY_KEY);
-      } else {
-        localStorage.setItem(RECOVERY_KEY, JSON.stringify({
-          version: 1, base: confirmedState, revision: remoteRevision,
-          inFlight, queuedOps, selectedId
-        }));
-      }
-      recoveryWarning = '';
+      // A tab never replaces or clears another tab's record during ordinary saving.
+      if (!hasPending()) localStorage.removeItem(recoveryRecordKey);
+      else localStorage.setItem(recoveryRecordKey, JSON.stringify(recoverySnapshot()));
+      if (recoveryOtherWarning && !recoveryKeys().some(key => key !== recoveryRecordKey)) recoveryOtherWarning = '';
+      recoveryWarning = [recoveryFailureWarning, recoveryOtherWarning].filter(Boolean).join(' ');
+      return true;
     } catch {
       recoveryWarning = 'This browser cannot protect unsaved changes if you close the page. ' +
         'Keep it open until everything is saved, or export a backup.';
+      return false;
     }
   }
 
-  function restoreRecovery() {
-    let raw = null;
-    try {
-      raw = localStorage.getItem(RECOVERY_KEY);
-      if (!raw) return;
-      if (raw.length > 2_000_000) throw Error('Recovery data is too large.');
-      const saved = JSON.parse(raw);
-      if (!isObject(saved) || saved.version !== 1 || !Array.isArray(saved.queuedOps) ||
-          saved.queuedOps.length > 20000) throw Error('Invalid recovery data.');
-      confirmedState = parseState(JSON.stringify(saved.base));
-      remoteRevision = typeof saved.revision === 'string' ? saved.revision : null;
-      inFlight = saved.inFlight ? makeBatch(saved.inFlight.operations, saved.inFlight.requestId) : null;
-      queuedOps = saved.queuedOps.map(validateOperation);
-      selectedId = validGymnastId(saved.selectedId) ? saved.selectedId : null;
-      hasLoaded = true;
-      recoveredPending = hasPending();
-      rebuildState();
-    } catch {
-      if (raw !== null) {
-        damagedRecovery = raw;
-        recoveryWarning = 'Saved local changes could not be read. Download recovery data below, ' +
-          'then use Discard unsaved edits to start again.';
+  function recoveryKeys() {
+    const keys = [];
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(RECOVERY_PREFIX)) keys.push(key);
+    }
+    if (localStorage.getItem(RECOVERY_KEY)) keys.push(RECOVERY_KEY);
+    return keys.sort((a, b) => {
+      const savedAt = key => { try { return JSON.parse(localStorage.getItem(key)).savedAt || ''; } catch { return ''; } };
+      return savedAt(a).localeCompare(savedAt(b)) || a.localeCompare(b);
+    });
+  }
+
+  function parseRecovery(raw) {
+    if (raw.length > 2_000_000) throw Error('Recovery data is too large.');
+    const saved = JSON.parse(raw);
+    if (!isObject(saved) || ![1, 3].includes(saved.version) || !Array.isArray(saved.queuedOps) ||
+        saved.queuedOps.length > 20000 || (saved.waitingBatches !== undefined &&
+        (!Array.isArray(saved.waitingBatches) || saved.waitingBatches.length > 1000))) {
+      throw Error('Invalid recovery data.');
+    }
+    const base = parseState(JSON.stringify(saved.base));
+    const batches = [saved.inFlight, ...(saved.waitingBatches || [])].filter(Boolean)
+      .map(batch => makeBatch(batch.operations, batch.requestId));
+    const operations = saved.queuedOps.map(validateOperation);
+    // Seal drafts before moving them. A crash during handoff can leave two records,
+    // but both copies will replay the same immutable request IDs and payloads.
+    for (let index = 0; index < operations.length; index += 200) {
+      batches.push(makeBatch(operations.slice(index, index + 200)));
+    }
+    return {base, revision: typeof saved.revision === 'string' ? saved.revision : null,
+      batches, selectedId: validGymnastId(saved.selectedId) ? saved.selectedId : null,
+      sealed: {...saved, version: 3, inFlight: batches[0] || null,
+        waitingBatches: batches.slice(1), queuedOps: []}};
+  }
+
+  function adoptRecovery(key) {
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    let saved;
+    damagedRecoveryKeys.add(key); // Only keys whose abandoned-owner lock this tab acquired.
+    try { saved = parseRecovery(raw); }
+    catch {
+      damagedRecoveryKeys.add(key);
+      damagedRecovery = damagedRecovery === null ? raw : damagedRecovery + '\n' + raw;
+      recoveryWarning = 'Saved local changes could not be read. Download recovery data below, ' +
+        'then use Discard unsaved edits to start again.';
+      return;
+    }
+    // This source belongs to an abandoned tab whose lifetime lock we hold.
+    // Keep the source intact until the destination has been durably written.
+    localStorage.setItem(key, JSON.stringify(saved.sealed));
+    const seen = new Map([inFlight, ...waitingBatches].filter(Boolean)
+      .map(batch => [batch.requestId, JSON.stringify(batch.operations)]));
+    for (const batch of saved.batches) {
+      const previous = seen.get(batch.requestId);
+      if (previous && previous !== JSON.stringify(batch.operations)) throw Error('Conflicting recovery requests.');
+      if (!previous) {
+        waitingBatches.push(batch);
+        seen.set(batch.requestId, JSON.stringify(batch.operations));
       }
     }
+    const counter = revision => Number((revision || '').split(':')[0]) || 0;
+    if (!hasLoaded || counter(saved.revision) > counter(remoteRevision)) {
+      confirmedState = saved.base;
+      remoteRevision = saved.revision;
+      selectedId = saved.selectedId;
+    }
+    hasLoaded = true;
+    if (!inFlight && waitingBatches.length) inFlight = waitingBatches.shift();
+    rebuildState();
+    localStorage.setItem(recoveryRecordKey, JSON.stringify(recoverySnapshot()));
+    if (key !== recoveryRecordKey) localStorage.removeItem(key);
+    damagedRecoveryKeys.delete(key);
+  }
+
+  async function restoreRecovery() {
+    if (recoveryStarted) return recoveryStarted;
+    recoveryReady = false;
+    recoveryStarted = (async () => {
+      try {
+        const locks = typeof navigator !== 'undefined' ? navigator.locks : null;
+        if (locks?.request) {
+          // A lifetime lock distinguishes an abandoned queue from an open tab.
+          // No timer/lease can expire while an open tab is merely suspended.
+          await new Promise((resolve, reject) => {
+            locks.request(recoveryRecordKey, () => new Promise(release => {
+              recoveryRelease = release;
+              resolve();
+            })).catch(reject);
+          });
+          await locks.request(RECOVERY_KEY + ':handoff', async () => {
+            for (const key of recoveryKeys()) {
+              if (key === recoveryRecordKey) continue;
+              if (key === RECOVERY_KEY) { adoptRecovery(key); continue; }
+              await locks.request(key, {ifAvailable: true}, lock => {
+                if (lock) adoptRecovery(key);
+                else recoveryOtherWarning = 'Unsaved edits in another open tab stay protected there. If that tab has closed, reload this page to recover them.';
+              });
+            }
+          });
+        } else {
+          // Without Web Locks, recover only a genuine reload of this same tab.
+          // New/duplicated tabs never adopt a possibly live tab's draft.
+          let previous = null;
+          try {
+            const navigation = typeof performance !== 'undefined'
+              ? performance.getEntriesByType?.('navigation')?.[0]?.type : null;
+            if (navigation === 'reload' || navigation === 'back_forward' || document.wasDiscarded) {
+              previous = sessionStorage.getItem(recoverySessionKey);
+            }
+          } catch {}
+          if (previous?.startsWith(RECOVERY_PREFIX)) adoptRecovery(previous);
+          if (localStorage.getItem(RECOVERY_KEY)) {
+            const raw = localStorage.getItem(RECOVERY_KEY);
+            damagedRecoveryKeys.add(RECOVERY_KEY);
+            damagedRecovery = raw;
+            try {
+              parseRecovery(raw);
+              recoveryWarning = 'Earlier unsaved edits are protected. Download recovery data, or reopen this page ' +
+                'in an up-to-date browser to recover them safely.';
+            } catch {
+              recoveryWarning = 'Saved local changes could not be read. Download recovery data below, ' +
+                'then use Discard unsaved edits to start again.';
+            }
+          }
+          if (recoveryKeys().some(key => key !== recoveryRecordKey && key !== previous)) {
+            recoveryOtherWarning = 'Other unsaved edits remain protected in their original browser tab. Return there to save them.';
+          }
+        }
+        try { sessionStorage.setItem(recoverySessionKey, recoveryRecordKey); } catch {}
+        recoveredPending = hasPending();
+        rebuildState();
+      } catch {
+        if (damagedRecoveryKeys.size) {
+          const records = [];
+          for (const key of damagedRecoveryKeys) {
+            try { records.push({key, data: localStorage.getItem(key)}); } catch {}
+          }
+          damagedRecovery = JSON.stringify({recoveryRecords: records});
+        }
+        recoveryFailureWarning = 'Recovery could not finish. Your saved local records are protected. ' +
+          'Reload this page to try again, or download recovery data before discarding anything.';
+        recoveryWarning = recoveryFailureWarning;
+      } finally {
+        recoveryReady = true;
+        if (damagedRecovery === null && !recoveryWarning) recoveryWarning = recoveryOtherWarning;
+      }
+    })();
+    return recoveryStarted;
   }
 
   function cancelFlushTimers() {
@@ -2360,7 +2510,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       const field = operation.type === 'set_link' ? 'linking' : 'marks';
       queuedOps = queuedOps.filter(item => !(item.type === operation.type &&
         item.gymnastId === operation.gymnastId && item[key] === operation[key]));
-      const pendingBase = applyOperations(confirmedState, inFlight?.operations || []);
+      const pendingBase = applyOperations(confirmedState, [...(inFlight?.operations || []), ...waitingBatches.flatMap(batch => batch.operations)]);
       const baseValue = pendingBase[field]?.[operation.gymnastId]?.[operation[key]] ?? 0;
       if (baseValue !== operation.value) queuedOps.push(operation);
     } else {
@@ -2376,7 +2526,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderLockStatus();
     const unsaved = hasPending();
     const gameSave = window.SWLGames?.getSavingState?.() || {};
-    const warning = [saveError, readError, recoveryWarning, gameSave.saveError].filter(Boolean).join(' ');
+    const warning = [saveError, readError, recoveryWarning, gameSave.saveError, gameSave.storageWarning].filter(Boolean).join(' ');
     $('storageWarning').hidden = !warning;
     $('storageMessage').textContent = warning;
     $('retryButton').hidden = !(retryNeeded && unsaved) && !gameSave.retryNeeded;
@@ -2393,12 +2543,14 @@ html:has(body.no-motion){scroll-behavior:auto}
       : null;
     $('saveStatus').textContent = damagedRecovery !== null ? 'Local recovery data needs attention · download recovery data'
       : unsaved
-      ? (lockKnown && scoringLock.locked ? 'Unsaved changes kept on this device · scoring locked'
+      ? (lockKnown && scoringLock.locked ? 'Unsaved changes pending here · scoring locked'
         : retryNeeded ? 'Unsaved changes · retry needed'
         : sending ? 'Saving changes to Google Sheets…'
           : recoveredPending ? 'Recovered unsaved changes · connecting…'
             : 'Changes queued · saving shortly…')
-      : gameSave.pendingSaveCount ? (gameSave.retryNeeded ? 'Game data kept on this device · retry saving' : 'Saving game ratings and plays…')
+      : recoveryFailureWarning ? 'Some local recovery data is protected · reload to recover'
+      : recoveryOtherWarning ? 'Other tabs have protected unsaved edits · reload after closing them'
+      : gameSave.pendingSaveCount ? (gameSave.retryNeeded ? 'Game data pending here · retry saving' : 'Saving game ratings and plays…')
       : importing ? 'Restoring backup to Google Sheets…'
         : saveError ? 'Backup restore unconfirmed · refresh scores'
         : reading && !hasLoaded ? 'Loading scores from Google Sheets…'
@@ -2423,7 +2575,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     locked: 'Scoring is locked for everyone. Unlock scoring before retrying your saved edits.',
     invalid_pin: 'That code is not correct. Try again.',
     pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
-    conflict: 'The Google Sheet has changed. Reload its latest scores before saving.',
+    conflict: 'This save can no longer be confirmed safely. Review the latest Google Sheet and download an unsaved backup before discarding or re-entering these edits.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
     invalid_state: 'The scores include an unknown gymnast, skill or status.',
@@ -2480,13 +2632,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     } finally { clearTimeout(timeout); }
   }
 
-  function acceptConfirmed(result, startedEpoch) {
+  function acceptConfirmed(result, startedEpoch, ownScoreSave = false) {
     acceptLock(result.lock);
     const counter = revision => /^\d+:/.test(revision || '') ? Number(revision.split(':')[0]) : -1;
     const current = counter(remoteRevision);
     const incoming = counter(result.revision);
     if (remoteRevision && (incoming < current ||
         (incoming === current && startedEpoch < baseEpoch))) return false;
+    // The API has a global revision but no per-cell revision. A foreign revision
+    // can include a same-value renewal or A→B→A change, including linking scores.
+    // Keep Undo after our own ordinary acknowledgement; otherwise fail closed.
+    if (remoteRevision && result.revision !== remoteRevision &&
+        (!ownScoreSave || incoming > current + 1)) history = [];
     confirmedState = result.state;
     remoteRevision = result.revision;
     baseEpoch++;
@@ -2556,24 +2713,40 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   async function flushQueue(force = false) {
-    if (sending || importing || !hasLoaded || damagedRecovery !== null || !lockKnown || scoringLock.locked ||
+    if (sending || importing || !recoveryReady || !hasLoaded || damagedRecovery !== null || !lockKnown || scoringLock.locked ||
         (!sessionReadDone && !force) || (retryNeeded && !force) || !hasPending()) return false;
     cancelFlushTimers();
     if (!inFlight) {
-      inFlight = makeBatch(queuedOps.slice(0, 200));
-      queuedOps = queuedOps.slice(200);
+      if (waitingBatches.length) inFlight = waitingBatches.shift();
+      else {
+        inFlight = makeBatch(queuedOps.slice(0, 200));
+        queuedOps = queuedOps.slice(200);
+      }
     }
     const batch = inFlight;
     const startedEpoch = baseEpoch;
     sending = true;
     retryNeeded = false;
     saveError = '';
-    persistRecovery();
+    const protectedBatch = persistRecovery();
     renderSaveStatus();
     try {
+      if (!protectedBatch) {
+        let stored;
+        try { stored = localStorage.getItem(recoveryRecordKey); }
+        catch { throw Error('Browser recovery storage is unavailable. Keep this page open and retry saving.'); }
+        if (stored) {
+          let saved;
+          try { saved = JSON.parse(stored); } catch {}
+          if (!saved?.inFlight || saved.inFlight.requestId !== batch.requestId ||
+              JSON.stringify(saved.inFlight.operations) !== JSON.stringify(batch.operations)) {
+            throw Error('The save could not be protected in this browser. Download an unsaved backup or free browser storage, then retry.');
+          }
+        }
+      }
       const result = await scoresRequest({ action: 'patch',
         requestId: batch.requestId, operations: batch.operations });
-      acceptConfirmed(result, startedEpoch);
+      acceptConfirmed(result, startedEpoch, true);
       inFlight = null;
       retryNeeded = false;
       saveError = '';
@@ -2879,7 +3052,7 @@ html:has(body.no-motion){scroll-behavior:auto}
                   data-gymnast="${gymnast.id}"
                   aria-label="Position ${index + 1}: ${
                     escapeHTML(gymnast.name)
-                  }, ${entry.points} points. Open tracker."
+                  }, ${entry.points} points. Open gymnast profile."
                 >
                   <span class="place" aria-hidden="true">
                     ${String(index + 1).padStart(2, '0')}
@@ -3400,15 +3573,28 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
   }
 
+  function backToGymnasts() {
+    setView('directory', false);
+    window.scrollTo({top:directoryScroll,behavior:'instant'});
+    const card = Array.from($('directoryRoot').querySelectorAll('[data-gymnast]')).find(button => button.dataset.gymnast === selectedId);
+    (card || $('directorySearch') || $('main')).focus({preventScroll:true});
+  }
+
   function chooseGymnast() {
-    $('rosterBox').open = true;
+    backToGymnasts();
+    $('directorySearch')?.focus({preventScroll:true});
+  }
 
-    $('rosterBox').scrollIntoView({
-      behavior: reducedMotion() ? 'instant' : 'smooth',
-      block: 'start'
-    });
+  function openAllSkills() {
+    if (currentView !== 'catalogue') { catalogueReturnView = currentView; catalogueReturnScroll = window.scrollY; }
+    setView('catalogue');
+    $('allSkillsTitle')?.focus({preventScroll:true});
+  }
 
-    $('search').focus({ preventScroll: true });
+  function closeAllSkills() {
+    setView(catalogueReturnView, false);
+    window.scrollTo({top:catalogueReturnScroll,behavior:'instant'});
+    $('allSkillsButton').focus({preventScroll:true});
   }
 
   function stepGymnast(direction) {
@@ -3421,7 +3607,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
-    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics'].includes(view)) return;
+    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue'].includes(view)) return;
+    if (currentView === 'directory' && view !== 'directory') directoryScroll = window.scrollY;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
@@ -3432,14 +3619,16 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('games').hidden = view !== 'games';
     if ($('directory')) $('directory').hidden = view !== 'directory';
     if ($('analytics')) $('analytics').hidden = view !== 'analytics';
-    $('nav').style.setProperty('--nav-index', view === 'games' ? '3' : view === 'directory' ? '2' : tracker || placement ? '1' : '0');
+    if ($('allSkills')) $('allSkills').hidden = view !== 'catalogue';
+    $('allSkillsButton')?.setAttribute('aria-pressed',String(view === 'catalogue'));
+    $('nav').style.setProperty('--nav-index', view === 'games' ? '2' : view === 'directory' || tracker || placement ? '1' : '0');
     renderV2();
     window.SWLGames?.setActive(view === 'games');
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
         'aria-pressed',
-        String(button.dataset.view === (placement ? 'tracker' : view === 'analytics' ? 'dashboard' : view))
+        String(button.dataset.view === (tracker || placement ? 'directory' : view === 'analytics' || view === 'catalogue' ? 'dashboard' : view))
       );
     });
 
@@ -3490,20 +3679,14 @@ html:has(body.no-motion){scroll-behavior:auto}
   function openGymnast(id) {
     if (!GYMNAST_IDS.has(id)) return;
 
+    if (!['directory','tracker','placement'].includes(currentView)) directoryScroll = 0;
     selectedId = id;
 
     setView('tracker', false);
     renderRoster();
     renderAthlete();
 
-    if (matchMedia('(max-width:850px)').matches) {
-      $('rosterBox').open = false;
-    }
-
-    $('athleteSummary').scrollIntoView({
-      behavior: reducedMotion() ? 'instant' : 'smooth',
-      block: 'start'
-    });
+    window.scrollTo({top:0,behavior:'instant'});
 
     $('athleteTitle').focus({ preventScroll: true });
   }
@@ -3736,6 +3919,16 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     const source = document.activeElement;
     const last = history[history.length - 1];
+    const current = last.type === 'set_link' ? linkRating(last.gymnast, last.complex) : mark(last.gymnast, last.skill);
+    if (current !== last.after) {
+      // An undo belongs to the value it produced, not a newer coach's score.
+      history = history.filter(item => !(item.gymnast === last.gymnast &&
+        (last.type === 'set_link' ? item.type === 'set_link' && item.complex === last.complex
+          : item.type !== 'set_link' && item.skill === last.skill)));
+      renderSaveStatus();
+      toast('That score changed after your edit. The newer score has been kept.');
+      return;
+    }
     enqueueOperation(last.type === 'set_link'
       ? { type: 'set_link', gymnastId: last.gymnast, complexId: last.complex, value: last.before }
       : { type: 'set_mark', gymnastId: last.gymnast, skillId: last.skill, value: last.before });
@@ -3768,7 +3961,13 @@ html:has(body.no-motion){scroll-behavior:auto}
     const button = event.target.closest('button');
 
     if (button && !button.disabled) {
-      if (button.dataset.view) {
+      if (button.hasAttribute('data-back-gymnasts')) {
+        backToGymnasts();
+      } else if (button.hasAttribute('data-open-skills')) {
+        openAllSkills();
+      } else if (button.hasAttribute('data-close-skills')) {
+        closeAllSkills();
+      } else if (button.dataset.view) {
         if (button.dataset.view === 'analytics') v2Api()?.resetAnalytics();
         setView(button.dataset.view);
 
@@ -3924,7 +4123,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   $('exportButton').addEventListener('click', () => {
     if (!hasLoaded && damagedRecovery === null) return;
-    const content = damagedRecovery !== null ? damagedRecovery : JSON.stringify(state, null, 2);
+    const content = recoveryDownloadText();
 
     const url = URL.createObjectURL(
       new Blob([content], { type: 'application/json' })
@@ -3955,7 +4154,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       const gymnast = cleanGymnast({ id: 'g_' + crypto.randomUUID(),
         name: $('gymnastName').value, coach: $('gymnastCoach').value || 'Unassigned' });
       const duplicate = GYMNASTS.find(item => normalizeName(item.name) === normalizeName(gymnast.name));
-      if (duplicate) throw Error(`${duplicate.name} is already in the ${duplicate.coach} group. Choose them from the roster.`);
+      if (duplicate) throw Error(`${duplicate.name} is already in the ${duplicate.coach} group. Find them in Gymnasts.`);
       enqueueOperation({ type: 'add_gymnast', ...gymnast });
       errorElement.hidden = true;
       $('gymnastName').value = '';
@@ -3984,8 +4183,10 @@ html:has(body.no-motion){scroll-behavior:auto}
       await window.SWLGames?.retrySaves?.();
       const gameSave = window.SWLGames?.getSavingState?.() || {};
       toast(damagedRecovery !== null ? 'Local recovery data needs attention. Download recovery data before discarding anything.'
-        : hasPending() && scoringLock.locked ? 'Edits are kept here. Unlock scoring to save them.'
-        : hasPending() || gameSave.pendingSaveCount ? 'Some changes are still waiting. Your data is kept on this device.'
+        : hasPending() && scoringLock.locked ? 'Edits are still pending here. Unlock scoring to save them.'
+        : hasPending() || gameSave.pendingSaveCount ? 'Some changes are still waiting. Keep this page open and retry saving.'
+        : recoveryFailureWarning ? 'Some local recovery data still needs attention. Reload this page to recover it safely.'
+        : recoveryOtherWarning ? 'Other tabs still have protected unsaved edits. Return there, or reload after closing them.'
         : connected ? 'Everything is saved to Google Sheets.' : 'Could not reconnect yet. Please try again.');
     } finally { retryingSaves = false; renderSaveStatus(); }
   }
@@ -3997,8 +4198,12 @@ html:has(body.no-motion){scroll-behavior:auto}
       'A request that timed out may already have saved to the Sheet. Export a backup first if you want to keep these edits.')) return;
     cancelFlushTimers();
     inFlight = null;
+    waitingBatches = [];
     queuedOps = [];
+    for (const key of damagedRecoveryKeys) { try { localStorage.removeItem(key); } catch {} }
+    damagedRecoveryKeys.clear();
     damagedRecovery = null;
+    recoveryFailureWarning = '';
     retryNeeded = false;
     recoveredPending = false;
     saveError = '';
@@ -4057,12 +4262,14 @@ html:has(body.no-motion){scroll-behavior:auto}
     playSound: details => window.SWLCelebration?.gameSound(details)
   });
   v2Api()?.mount({directory:$('directoryRoot'),analytics:$('analyticsRoot'),openGymnast,setView});
-  restoreRecovery();
+  $('directoryRoot').querySelector('.directory-tools')?.append($('addGymnastDetails'));
+  window.SWLSkillsCatalogue?.mount($('allSkillsRoot'),{categories:CATEGORIES,skills:SKILLS});
+  const recovery = restoreRecovery();
   syncHeader();
   updateMotion();
   renderAll();
   $('dashboard').classList.add('enter');
-  readScores().finally(() => window.SWLStartup?.finish({ error: !hasLoaded }));
+  recovery.then(() => readScores()).finally(() => window.SWLStartup?.finish({ error: !hasLoaded }));
 })();
 </script>
 </body>

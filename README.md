@@ -1,6 +1,6 @@
 # SWL Squad Training 2.0
 
-A static gymnastics training app with four views: Leaderboards, Skills, Gymnasts and Games, plus a focused Analytics page. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The eight games run independently on the current device, with anonymous game ratings saved to Google Sheets.
+A static gymnastics training app with three main views: Leaderboards, Gymnasts and Games, plus focused Analytics and All skills pages. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The eight games run independently on the current device, with anonymous game ratings saved to Google Sheets.
 
 After the opening screen, the main page goes directly to the leaderboards, with a small Scoring guide button. Squad filters switch every board between All squads, All senior squad (Marx and Dan together), Dan’s senior squad, Marx’s senior squad and Marx’s floor and vault. Each board shows the top five and a softly blurred sixth-place preview; selecting a gymnast opens their skills. The podium medals gleam in a staggered gold, silver, then bronze sequence.
 
@@ -76,6 +76,22 @@ For local checking, serve this folder using any static HTTP server. The website 
 
 SWL marking guide: Achieved means the intended skill would count without downgrade and has at most 0.5 deductions. Perfect allows at most 0.2 deductions and requires the correct skill shape. Linking ratings assess transitions, balance and presentation independently of skill marks. Ratings save to the separate Linking tab in the same Sheet and are included in unsaved-edit recovery and undo.
 
-The Gymnasts directory offers an optional Add a complex selector. One selected three-skill group appears under every visible name, with abbreviated labels, full accessible names and due-renewal buttons. Marks use the same scoring lock, instant updates, background saves and undo as the Skills page. Clearing the selector returns to names only.
+The Gymnasts directory offers an optional Add a complex selector. One selected three-skill group appears under every visible name, with abbreviated labels, full accessible names and due-renewal buttons. Marks use the same scoring lock, instant updates, background saves and undo as the full gymnast profile. Achieved marks are purple with one tick; Perfect marks are mint with two ticks. Clearing the selector returns to names only. Opening a gymnast keeps Gymnasts selected; Back to gymnasts restores the directory search, squad, complex and scroll position. The existing Add gymnast form is available in the directory.
 
 Retry saving is always available in the footer. It reconnects if needed and retries pending league edits, game ratings and play counts while preserving unsaved work and shared scoring-lock rules.
+
+## Skill catalogue and IGA reference
+
+The subtle All skills header button opens a read-only catalogue of all seven complexes and 21 skills, including the existing skill points and completion bonuses. It never assigns or changes gymnast marks. Filters narrow the catalogue by category, and Back restores the previous view.
+
+Seventeen clear floor-skill matches show difficulty letters from the official [IGA 2026 Women’s Artistic Code of Points](https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-CODE-OF-POINTS-2026.pdf#page=9). These A–G letters are separate from competition levels or Gems grades. Unspecified combinations, the half-turn jump and the unspecified front somersault are left ungraded. Handstand roll to pike stand is identified as Regional pathway only. Qualifications for straight jumps, turns on one foot and change-leg leaps remain visible without information pop-ups.
+
+## Save recovery audit
+
+Each scoring tab owns a separate recovery record, so an idle tab cannot erase another tab’s pending edits. Browser Web Locks coordinate recovery of abandoned tabs; older browsers preserve other tabs’ records and explain when recovery needs a newer browser. Immutable request IDs survive reloads and handoffs. A newer revision from another coach clears stale Undo history, while an unchanged refresh or your own save acknowledgement preserves it.
+
+Game ratings and plays use independent recovery records and saved receipts, preventing one tab from replacing another tab’s submission. Recovered approved submissions correctly offer Retry; drafts are never submitted until Save is pressed. Storage failures remain visible and do not promise a device backup when one cannot be saved. Timer displays and confirmed scores now use the same hundredth-second rounding.
+
+The backend keeps durable score and lock request receipts in an additive RequestReceipts tab. Interrupted requests fail safely rather than blocking everyone or replaying over newer edits. Existing retained receipts are migrated; receipts already evicted by the previous server cannot be reconstructed. The same endpoint, permissions, scoring rules, gymnast marks and game rating data are retained.
+
+Release checks use isolated local fixture data with the production Sheet connection blocked. They cover phone/iPad layouts, catalogue/profile navigation, all eight game interfaces, failed saves and two-tab recovery; production leaderboard marks are not changed for testing.
