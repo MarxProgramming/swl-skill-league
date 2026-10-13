@@ -1,6 +1,6 @@
 /* Version 2 extends the existing SWL palette and keeps every view touch-friendly. */
-.nav{grid-template-columns:repeat(4,minmax(0,1fr));flex-basis:470px;width:470px}
-.nav::before,.nav.tracking::before{width:calc((100% - 2 * var(--nav-inset) - 12px)/4)}
+.nav{grid-template-columns:repeat(5,minmax(0,1fr));flex-basis:550px;width:550px}
+.nav::before,.nav.tracking::before{width:calc((100% - 2 * var(--nav-inset) - 16px)/5)}
 .version-tag{color:#d5fa70;border:1px solid #d5fa7035;padding:1px 4px;border-radius:4px;margin-left:3px;font-size:7px;letter-spacing:0}
 .board-filters,.directory-groups{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
 .board-filters button,.directory-groups button{white-space:normal;max-width:100%;font-size:11px;line-height:1.5;min-height:42px;padding:10px 15px;background:#ffffff04;border:1px solid #ffffff16;border-radius:12px;color:#a8a2b6;font-weight:750}
@@ -37,3 +37,6 @@
 /* Give tablet navigation room for every label. */
 @media(min-width:601px) and (max-width:1000px){.header-inner{flex-wrap:wrap}.nav{order:3;flex:1 0 100%;width:100%}}
 .analytics-scope,.revisit-grid strong{min-width:0;overflow-wrap:anywhere}
+/* Five clear navigation targets, including the isolated camera workspace. */
+@media(min-width:601px) and (max-width:1100px){.header-inner{flex-wrap:wrap;padding:13px 0}.brand{flex:1}.nav{order:3;flex:1 0 100%;width:100%}}
+@media(max-width:600px){.nav button{font-size:9px;padding:0 1px}.nav button:first-child{font-size:8px}.nav{left:10px;right:10px}}

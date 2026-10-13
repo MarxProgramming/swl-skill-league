@@ -1579,8 +1579,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-timing.css?v=20261012b">
 <link rel="stylesheet" href="./games-addon.css?v=20261012b">
 <link rel="stylesheet" href="./games-ratings.css?v=20261012c">
-<link rel="stylesheet" href="./v2.css">
+<link rel="stylesheet" href="./v2.css?v=20261013a">
 <link rel="stylesheet" href="./welcome.css">
+<link rel="stylesheet" href="./replay.css?v=20261013a">
 </head>
 
 <body>
@@ -1607,6 +1608,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <button data-view="games" aria-pressed="false">
         Games
       </button>
+      <button data-view="replay" aria-pressed="false" aria-label="Video Replay">Replay</button>
     </nav>
 
     <div class="utilities">
@@ -1760,6 +1762,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
   <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
+  <section id="replay" aria-label="Video Replay" hidden><div id="replayRoot"><p class="warning">Video Replay is unavailable. Reload to try again. The rest of the app is ready to use.</p></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
   </section>
@@ -1819,6 +1822,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games.js?v=20261012c"></script>
 <script src="./v2.js"></script>
 <script src="./welcome.js"></script>
+<script src="./replay-engine.js?v=20261013a"></script>
+<script src="./replay.js?v=20261013a"></script>
 <script>
 (() => {
   'use strict';
@@ -3412,7 +3417,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
-    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics'].includes(view)) return;
+    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'replay'].includes(view)) return;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
@@ -3423,9 +3428,15 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('games').hidden = view !== 'games';
     if ($('directory')) $('directory').hidden = view !== 'directory';
     if ($('analytics')) $('analytics').hidden = view !== 'analytics';
-    $('nav').style.setProperty('--nav-index', view === 'games' ? '3' : view === 'directory' ? '2' : tracker || placement ? '1' : '0');
+    if ($('replay')) $('replay').hidden = view !== 'replay';
+    $('nav').style.setProperty('--nav-index', view === 'replay' ? '4' : view === 'games' ? '3' : view === 'directory' ? '2' : tracker || placement ? '1' : '0');
     renderV2();
     window.SWLGames?.setActive(view === 'games');
+    try { window.SWLReplay?.setActive(view === 'replay'); }
+    catch (_) {
+      try { window.SWLReplay?.destroy?.(); } catch (_) {}
+      if ($('replayRoot')) $('replayRoot').textContent = 'Video Replay is unavailable. Reload to try again. Your scores and games are still available.';
+    }
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
@@ -4028,6 +4039,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     playSound: details => window.SWLCelebration?.gameSound(details)
   });
   v2Api()?.mount({directory:$('directoryRoot'),analytics:$('analyticsRoot'),openGymnast,setView});
+  try { window.SWLReplay?.mount($('replayRoot')); }
+  catch (_) {
+    try { window.SWLReplay?.destroy?.(); } catch (_) {}
+    $('replayRoot').textContent = 'Video Replay is unavailable. Reload to try again. Your scores and games are still available.';
+  }
   restoreRecovery();
   syncHeader();
   updateMotion();

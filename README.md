@@ -1,6 +1,6 @@
 # SWL Squad Training 2.0
 
-A static gymnastics training app with four views: Leaderboards, Skills, Gymnasts, and Games, plus a focused Analytics page. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The eight games run independently on the current device, with anonymous game ratings saved to Google Sheets.
+A static gymnastics training app with five views: Leaderboards, Skills, Gymnasts, Games, and Video Replay, plus a focused Analytics page. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The eight games run independently on the current device, with anonymous game ratings saved to Google Sheets. Video Replay is a separate, on-device camera workspace.
 
 After the opening screen, the main page goes directly to the leaderboards, with a small Scoring guide button. Squad filters switch every board between All squads, All senior squad (Marx and Dan together), Dan’s senior squad, Marx’s senior squad and Marx’s floor and vault. Each board shows the top five and a softly blurred sixth-place preview; selecting a gymnast opens their skills. The podium medals gleam in a staggered gold, silver, then bronze sequence.
 
@@ -52,6 +52,14 @@ Routine Relay, Stick & Bank and Hold the Line are no longer offered in the app.
 All eight games follow the Sound control and the device’s reduced-motion preference. Game cues have stronger, longer countdown tones, a distinct two-tone finish, an audible spin start and clearer wheel ticks. Skill-mark bells keep their existing mix. Device volume still controls speaker output.
 
 Challenge design draws on [British Gymnastics’ Partner School session plans](https://a.storyblok.com/f/83342/x/d431c09726/09_2021_session-plans-1-24-final.pdf), [Oak National Academy’s sequence lessons](https://www.thenational.academy/teachers/programmes/physical-education-primary-ks2/units/gymnastics-movements-balances-and-sequence-composition/lessons/sequence-formation-combining-individual-and-pair-balances), and [Seascale’s gymnastics sequences](https://www.seascaleschool.co.uk/gym-sequences/). The app’s challenge wording and game formats are original adaptations, not official programmes or endorsements.
+
+## Video Replay
+
+Choose a delay from 1–30 seconds, select the front or rear camera, and press Start. The browser requests camera permission at that point. Video is silent and stays in a bounded rolling buffer on the device; it is never uploaded to Google Sheets or any server. Once the selected delay has filled, the screen shows the earlier camera view. Replay captures the most recent available seconds for review.
+
+Review a clip with play/pause, slow motion, a time scrubber and one captured frame at a time. Drawing tools mark a paused frame, with colours, undo and clear. Save frame includes those marks. Save clip prepares a video separately, then offers the device's share/save menu when file sharing is supported or a download fallback. Video exports contain the captured footage without drawing overlays. Browsers cannot directly request access to an iPad's entire camera roll; the system share menu controls the available Save Video or Save to Files destinations.
+
+Leaving Replay, switching away from the browser or stopping the camera releases the camera. A frozen replay remains available in the current page session; reloading clears unsaved footage. Restarting the camera requires pressing Start again. Camera denial, unavailable devices and unsupported video export show messages within Replay, leaving league scoring and games available. Camera and export support depend on the browser and device. Safari on iPad or a current desktop browser over HTTPS is recommended.
 
 ## Publish with GitHub Pages
 
