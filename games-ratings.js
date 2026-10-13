@@ -28,7 +28,7 @@
     function remember(list,key){return list.filter(value=>value!==key).concat(key).slice(-MAX_COMPLETED);}
     try {
       const raw=window.localStorage?.getItem(KEY)||'[]',stored=raw.length<=4000000?JSON.parse(raw):null;
-      const supported=object(stored)&&[2,3].includes(stored.version);
+      const supported=object(stored)&&[2,3,4].includes(stored.version);
       const entries=Array.isArray(stored)?stored:supported&&Array.isArray(stored.queue)?stored.queue:[];
       const sessions=new Set(),requests=new Set();
       entries.filter(validEntry).slice(0,MAX_PENDING).forEach(entry=>{
@@ -37,11 +37,16 @@
         const sealed=entry.sealed===true;
         // A previously approved batch must retry unchanged. Unapproved old
         // tallies start afresh as one class choice and are never transmitted.
-        const keepChoice=sealed||(stored?.version===3&&entry.target===1&&count(entry)<=1);
-        queue.push({gameId:entry.gameId,sessionId:entry.sessionId,requestId:entry.requestId,counts:keepChoice?entry.counts.slice():Array(10).fill(0),target:sealed?entry.target:1,sealed,manual:stored?.version===3&&entry.manual===true});
+        const keepChoice=sealed||([3,4].includes(stored?.version)&&entry.target===1&&count(entry)<=1);
+        const manual=[3,4].includes(stored?.version)&&entry.manual===true;
+        // Previously sealed submissions retry under their original rules. Every
+        // v3 completion already queued a play, even if its old receipt aged out.
+        const countsPlay=stored?.version===4?entry.countsPlay===true:!sealed;
+        const playLinked=stored?.version===4?entry.playLinked===true:stored?.version===3&&!manual;
+        queue.push({gameId:entry.gameId,sessionId:entry.sessionId,requestId:entry.requestId,counts:keepChoice?entry.counts.slice():Array(10).fill(0),target:sealed?entry.target:1,sealed,manual,countsPlay,playLinked});
       });
       if(supported&&Array.isArray(stored.completed))settled=[...new Set(stored.completed.filter(validPair))].slice(-MAX_COMPLETED);
-      if(stored?.version===3){
+      if([3,4].includes(stored?.version)){
         const seenSessions=new Set(),seenRequests=new Set();
         if(Array.isArray(stored.plays))stored.plays.filter(validIdentity).slice(0,10000).forEach(entry=>{
           if(seenSessions.has(pair(entry))||seenRequests.has(entry.requestId))return;
@@ -52,10 +57,11 @@
     }catch(_){}
     settled.forEach(key=>rated.add(key));queue.forEach(entry=>rated.add(pair(entry)));
     recorded.forEach(key=>completed.add(key));playQueue.forEach(entry=>completed.add(pair(entry)));
+    queue.filter(entry=>entry.playLinked).forEach(entry=>completed.add(pair(entry)));
     function persist(){
       try {
         if(!window.localStorage||typeof window.localStorage.setItem!=='function')throw Error('Storage unavailable');
-        window.localStorage.setItem(KEY,JSON.stringify({version:3,queue,completed:settled,plays:playQueue,recorded}));storageWarning=false;
+        window.localStorage.setItem(KEY,JSON.stringify({version:4,queue,completed:settled,plays:playQueue,recorded}));storageWarning=false;
       }catch(_){storageWarning=true;}
     }
     // Persist migrations before a reload can restore obsolete unsealed tallies.
@@ -119,16 +125,19 @@
       const footer=node('div','rating-actions');footer.append(button(busy?'Saving…':entry.sealed?'Retry saving rating':'Save class rating','save','rating-button rating-primary',busy||total!==entry.target||!total),button('Finish later','later','rating-button rating-text'));
       const status=node('p','rating-status',error||(busy?'Saving your rating. You can finish later while this continues.':entry.sealed?'Retry uses the original submission.':selected?'You can change the score before saving.':'No rating is sent until you press Save.'));status.setAttribute('role','status');
       dialog.append(top,title,intro,averageBox,grid,scale,choiceText,footer,status);
+      if(entry.countsPlay)dialog.append(node('p','rating-play-note',entry.playLinked?'This review belongs to the same play and will not count it twice.':'Saving this review also counts one play of the game.'));
+      if(playError){const retry=node('div','rating-retry');retry.append(node('p','rating-status',playError),button(playBusy?'Retrying game saves…':'Retry game saves','retry-saves','rating-button rating-primary',playBusy||busy));dialog.append(retry);}
       if(storageWarning)dialog.append(node('p','rating-status','This browser cannot keep unsaved feedback after the page closes. Keep it open until saving succeeds.'));
       if(dialog.open&&focused){const next=focusAction?dialog.querySelector(`[data-rating-action="${focusAction}"]`):null;if(next&&!next.disabled)next.focus?.({preventScroll:true});else dialog.querySelector('[data-rating-action="later"]')?.focus?.({preventScroll:true});}
     }
     async function saveEntry(entry){
       if(closed||busy||!entry||!queue.includes(entry)||count(entry)!==entry.target||!count(entry)||(current&&current!==entry))return false;
-      entry.sealed=true;persist();busy=true;error='';errors.delete(pair(entry));readEpoch++;
+      ensureRatingPlay(entry);entry.sealed=true;persist();busy=true;error='';errors.delete(pair(entry));readEpoch++;
       if(current===entry)render();announce();
       const payload=Object.freeze({action:'rate_game',gameId:entry.gameId,sessionId:entry.sessionId,requestId:entry.requestId,counts:Object.freeze(entry.counts.slice())});
       try {
-        const result=accept(await request(payload));if(closed)return false;
+        const response=(async()=>request(payload))();void flushPlays();
+        const result=accept(await response);if(closed)return false;
         const acknowledged=result[entry.gameId],scoreSum=entry.counts.reduce((total,value,index)=>total+value*(index+1),0);
         if(acknowledged.sessions<1||acknowledged.votes<count(entry)||acknowledged.sum<scoreSum)throw Error('The saved rating was not acknowledged.');
         readEpoch++;applySummary(result);queue=queue.filter(item=>item!==entry);errors.delete(pair(entry));settled=remember(settled,pair(entry));persist();busy=false;
@@ -140,7 +149,7 @@
       }
     }
     async function flushPlays(){
-      if(closed||playBusy)return;playBusy=true;playError='';
+      if(closed||playBusy)return;playBusy=true;playError='';announce();
       try {
         while(!closed&&playQueue.length){
           const entry=playQueue[0],payload=Object.freeze({action:'record_game_play',requestId:entry.requestId,gameId:entry.gameId,sessionId:entry.sessionId});readEpoch++;
@@ -149,18 +158,24 @@
             if(result[entry.gameId].plays<1)throw Error('The completed game was not acknowledged.');
             readEpoch++;applySummary(result);playQueue=playQueue.filter(item=>item!==entry);recorded=remember(recorded,pair(entry));persist();if(current)render();announce();
           }catch(problem){
-            if(closed)return;playError=problem?.code==='plays_full'?'Completed game tracking is full. This game is kept on this device.':'Completed game kept on this device until tracking reconnects.';announce();break;
+            if(closed)return;playError=problem?.code==='plays_full'?'Game tracking is full. Your play is kept on this device.':'Your play has not been saved yet. It is kept on this device; tap Retry game saves when connected.';if(current)render();announce();break;
           }
         }
-      }finally{playBusy=false;announce();}
+      }finally{playBusy=false;if(current)render();announce();}
     }
     function perform(action){
-      if(!current||closed)return;if(action==='later'){close();return;}if(busy)return;
+      if(!current||closed)return;if(action==='later'){close();return;}if(action==='retry-saves'){void flush();return;}if(busy)return;
       const entry=current;if(action==='save'){void saveEntry(entry);return;}if(entry.sealed)return;
       if(action.startsWith('vote-')){const value=Number(action.slice(5));if(!Number.isInteger(value)||value<1||value>10)return;entry.counts=Array(10).fill(0);entry.counts[value-1]=1;entry.target=1;error='';persist();render();}
     }
+    function ensureRatingPlay(entry){
+      if(!entry.countsPlay||entry.playLinked)return;
+      const key=pair(entry);entry.playLinked=true;
+      if(completed.has(key))return;
+      completed.add(key);playQueue.push({gameId:entry.gameId,sessionId:entry.sessionId,requestId:uid()});
+    }
     function ratingEntry(gameId,sessionId,manual=false){
-      const entry={gameId,sessionId,requestId:uid(),counts:Array(10).fill(0),target:1,sealed:false,manual};rated.add(pair(entry));queue.push(entry);return entry;
+      const entry={gameId,sessionId,requestId:uid(),counts:Array(10).fill(0),target:1,sealed:false,manual,countsPlay:true,playLinked:completed.has(gameId+'/'+sessionId)};rated.add(pair(entry));queue.push(entry);return entry;
     }
     function schedulePrompt(entry){
       cancelPrompt();if(!entry||!active||contextGame!==entry.gameId||(contextSession&&contextSession!==entry.sessionId))return;
@@ -177,10 +192,10 @@
       if(!entry&&!rated.has(pair(details))&&queue.length<MAX_PENDING)entry=ratingEntry(details.gameId,details.sessionId);
       persist();announce();schedulePrompt(entry);void flushPlays();return true;
     }
-    function openForGame(gameId){
-      if(closed||busy||dialog.open||!titles.has(gameId)||!IDS.includes(gameId))return false;
-      cancelPrompt();let entry=queue.find(item=>item.gameId===gameId);
-      if(!entry){if(queue.length>=MAX_PENDING)return false;entry=ratingEntry(gameId,uid(),true);persist();announce();}
+    function openForGame(gameId,sessionId){
+      if(closed||busy||dialog.open||!titles.has(gameId)||!IDS.includes(gameId)||(sessionId!==undefined&&!validId(sessionId)))return false;
+      cancelPrompt();let entry=queue.find(item=>item.gameId===gameId&&(sessionId===undefined||item.sessionId===sessionId));
+      if(!entry){if(queue.length>=MAX_PENDING||(sessionId!==undefined&&rated.has(gameId+'/'+sessionId)))return false;entry=ratingEntry(gameId,sessionId||uid(),true);persist();announce();}
       return open(entry);
     }
     async function retryPending(){
@@ -188,16 +203,17 @@
       const pending=queue.filter(entry=>entry.sealed);
       for(const entry of pending){if(closed||busy||(current&&current!==entry))break;if(!await saveEntry(entry))break;}
     }
-    function reconnect(){if(closed)return;void refresh();void retryPending();void flushPlays();}
+    async function flush(){if(closed)return;await Promise.all([refresh(),retryPending(),flushPlays()]);}
+    function reconnect(){void flush();}
     function cancel(event){event.preventDefault();close();}
     function visibility(){if(document.hidden)cancelPrompt();}
     dialog.addEventListener('cancel',cancel);window.addEventListener('online',reconnect);document.addEventListener('visibilitychange',visibility);
     announce();void refresh();if(playQueue.length)void flushPlays();
-    return Object.freeze({complete,refresh,retryPending,openForGame,cancelPrompt,
+    return Object.freeze({complete,refresh,retryPending,flush,openForGame,cancelPrompt,
       setContext(gameId,sessionId){cancelPrompt();contextGame=titles.has(gameId)&&IDS.includes(gameId)&&(sessionId===undefined||validId(sessionId))?gameId:null;contextSession=validId(sessionId)?sessionId:null;if(dialog.open)close();},
       openPending(){if(queue.length)return open(queue[0]);return false;},
       setActive(value){active=Boolean(value);if(!active){cancelPrompt();if(dialog.open)close();}},
-      getState(){return {summary:clone(summary),queue:clone(queue),playQueue:clone(playQueue),busy,playBusy,playError,current:current?.sessionId||null,promptPending:promptTimer!==null,contextGame,contextSession};},
+      getState(){return {summary:clone(summary),queue:clone(queue),playQueue:clone(playQueue),busy,playBusy,playError,pendingSaveCount:queue.filter(entry=>entry.sealed).length+playQueue.length,retryNeeded:errors.size>0||!!playError,saveError:[...new Set([...errors.values(),playError].filter(Boolean))].join(' '),current:current?.sessionId||null,promptPending:promptTimer!==null,contextGame,contextSession};},
       destroy(){if(closed)return;closed=true;readEpoch++;cancelPrompt();window.removeEventListener('online',reconnect);document.removeEventListener('visibilitychange',visibility);dialog.removeEventListener('cancel',cancel);if(dialog.open)close();dialog.remove();}
     });
   }

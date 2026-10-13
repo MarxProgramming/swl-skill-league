@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const DAY=86400000, esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let directory,analytics,actions,data,directoryGroup='all',analyticsGroup='all',analyticsGymnast='all';
+  let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all';
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
   const initials=name=>name.trim().split(/\s+/).filter((_,i,a)=>i===0||i===a.length-1).map(s=>Array.from(s)[0]).join('');
@@ -10,8 +10,9 @@
   function restore(root,key) {if(!key)return;const el=key.id?root.querySelector('#'+key.id):[...root.querySelectorAll('[data-directory-group]')].find(e=>e.dataset.directoryGroup===key.group);el?.focus({preventScroll:true});if(typeof key.selection==='number')try{el.setSelectionRange(key.selection,key.selection);}catch(_){}}
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
-    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>A quick route from a name to their next skill.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div id="directoryGroups" class="directory-groups" role="group" aria-label="Filter gymnast directory by squad"></div></div><div id="directoryResults"></div>`;
+    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Find a gymnast, or add a complex to mark the whole squad at a glance.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div id="directoryGroups" class="directory-groups" role="group" aria-label="Filter gymnast directory by squad"></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex <span>⌄</span></label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div></div><div id="directoryResults"></div>`;
     directory.querySelector('#directorySearch').addEventListener('input',renderDirectory);
+    directory.querySelector('#directoryComplex').addEventListener('change',e=>{directoryComplex=e.target.value;renderDirectory();});
     directory.addEventListener('click',e=>{const b=e.target.closest('[data-directory-group]');if(b){directoryGroup=b.dataset.directoryGroup;renderDirectory();}});
     analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 2.0</p><h1>Progress, in focus.</h1><p>Strong foundations. Fresh skills. Momentum you can see.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Squad<select id="analyticsGroup"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><div id="analyticsContent"></div>`;
     analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;analyticsGymnast='all';renderAnalytics();});
@@ -19,15 +20,41 @@
     analytics.addEventListener('click',e=>{const b=e.target.closest('[data-analytics-group]');if(b){analyticsGroup=b.dataset.analyticsGroup;analyticsGymnast='all';renderAnalytics();analytics.scrollIntoView({behavior:'instant',block:'start'});}});
   }
   function render(next) {data=next;if(!directory)return;renderDirectory();renderAnalytics();}
+  const shortSkills={
+    'rolls-base-0':'HS → fwd roll','rolls-base-1':'½ turn jump','rolls-base-2':'Bwd roll → support',
+    'rolls-upgrade-0':'HS roll → pike','rolls-upgrade-1':'1½ turn jump','rolls-upgrade-2':'Bwd roll → HS',
+    'rolls-pro-0':'HS pir. → pike roll','rolls-pro-1':'1/1 split jump','rolls-pro-2':'Bwd roll → HS pir.',
+    'acro-base-0':'Bwd walkover','acro-base-1':'½ spin','acro-base-2':'Fwd walkover',
+    'acro-upgrade-0':'Split flick','acro-upgrade-1':'1½ spin','acro-upgrade-2':'Chassé free CW',
+    'acro-pro-0':'Back tuck','acro-pro-1':'Double spin','acro-pro-2':'Front somi',
+    'leaps-base-0':'Split leap','leaps-base-1':'Cat leap 1/1','leaps-base-2':'Split change'
+  };
+  function complexOptions() {
+    return data.categories.flatMap(c=>c.tiers.map(([tier,label])=>({id:c.id+'-'+tier,label:c.name+' · '+label,skills:data.skills.filter(k=>k.category===c.id&&k.tier===tier)}))).filter(c=>c.skills.length===3);
+  }
+  function quickMarks(g,complex) {
+    if(!complex)return '';
+    return `<div class="directory-quick" role="group" aria-label="${esc(complex.label)} for ${esc(g.name)}"><span class="directory-quick-label">${esc(complex.label)}</span><div class="directory-quick-grid">${complex.skills.map(k=>{
+      const level=data.mark(g.id,k.id),fresh=data.skillFreshness(g.id,k.id),status=['Unticked','Achieved','Perfect'][level],next=['Achieved','Perfect','Unticked'][level];
+      return `<div class="directory-quick-cell${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${['○','✓','✦'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong></button>${fresh.due?`<button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew ${esc(k.name)} for ${esc(g.name)}"${data.canEdit===false?' disabled':''}>↻ Renew</button>`:''}</div>`;
+    }).join('')}</div></div>`;
+  }
   function renderDirectory() {
     if(!data)return;const key=focusKey(directory),groups=groupOptions();
     if(directoryGroup!=='all'&&!groups.includes(directoryGroup))directoryGroup='all';
+    const complexes=complexOptions(),select=directory.querySelector('#directoryComplex');
+    if(directoryComplex&&!complexes.some(c=>c.id===directoryComplex))directoryComplex='';
+    const options='<option value="">No complex · names only</option>'+complexes.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
+    if(select.innerHTML!==options)select.innerHTML=options;
+    select.value=directoryComplex;select.disabled=!data.hasLoaded;
+    const complex=complexes.find(c=>c.id===directoryComplex);
+    directory.querySelector('#directoryComplexHint').textContent=complex?(data.canEdit===false?'Scoring is locked. You can view the three marks below each name.':'Mark each skill below a name. HS = handstand · CW = cartwheel.'): 'One complex at a time. Your choice appears below every gymnast.';
     directory.querySelector('#directoryGroups').innerHTML=[['all','All squads'],...groups.map(g=>[g,data.shortGroupLabel(g)])].map(([id,name])=>`<button type="button" data-directory-group="${esc(id)}" aria-pressed="${id===directoryGroup}">${esc(name)}</button>`).join('');
     const query=directory.querySelector('#directorySearch').value.trim().toLocaleLowerCase('en-GB');
     const people=data.gymnasts.filter(g=>(directoryGroup==='all'||g.coach===directoryGroup)&&(g.name+' '+data.groupLabel(g.coach)).toLocaleLowerCase('en-GB').includes(query));
     directory.querySelector('#directoryResults').innerHTML=!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
       const gymnasts=people.filter(g=>g.coach===group).sort((a,b)=>a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
-      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(data.groupLabel(group))}</h2><span>${gymnasts.length} ${gymnasts.length===1?'gymnast':'gymnasts'}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id),due=data.skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<button class="directory-card${data.fireCount(g.id)>=3?' is-on-fire':''}" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)}</strong>${data.fireBadge(g.id)}<small>${s.achieved}/${data.skills.length} skills · ${s.perfect} perfect</small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>pts ↗</small></span></button>`;}).join('')}</div></section>`;
+      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(data.groupLabel(group))}</h2><span>${gymnasts.length} ${gymnasts.length===1?'gymnast':'gymnasts'}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id),due=data.skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${data.fireCount(g.id)>=3?' is-on-fire':''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)}</strong>${data.fireBadge(g.id)}<small>${s.achieved}/${data.skills.length} skills · ${s.perfect} perfect</small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>pts ↗</small></span></button>${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>';
     restore(directory,key);
   }

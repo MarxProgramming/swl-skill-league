@@ -1576,12 +1576,11 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-wheel.css?v=20261012b">
 <link rel="stylesheet" href="./games-team.css?v=20261012b">
 <link rel="stylesheet" href="./games-skill.css?v=20261012c">
-<link rel="stylesheet" href="./games-timing.css?v=20261012b">
+<link rel="stylesheet" href="./games-timing.css?v=20261013c">
 <link rel="stylesheet" href="./games-addon.css?v=20261012b">
-<link rel="stylesheet" href="./games-ratings.css?v=20261012c">
-<link rel="stylesheet" href="./v2.css?v=20261013a">
+<link rel="stylesheet" href="./games-ratings.css?v=20261013c">
+<link rel="stylesheet" href="./v2.css?v=20261013c">
 <link rel="stylesheet" href="./welcome.css">
-<link rel="stylesheet" href="./replay.css?v=20261013b">
 </head>
 
 <body>
@@ -1608,7 +1607,6 @@ html:has(body.no-motion){scroll-behavior:auto}
       <button data-view="games" aria-pressed="false">
         Games
       </button>
-      <button data-view="replay" aria-pressed="false" aria-label="Video Replay">Replay</button>
     </nav>
 
     <div class="utilities">
@@ -1762,7 +1760,6 @@ html:has(body.no-motion){scroll-behavior:auto}
   <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
   <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
-  <section id="replay" aria-label="Video Replay" hidden><div id="replayRoot"><p class="warning">Video Replay is unavailable. Reload to try again. The rest of the app is ready to use.</p></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
   </section>
@@ -1773,6 +1770,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   <div class="footer-sync">
     <span id="saveStatus" role="status">Connecting to Google Sheets…</span>
     <button class="quiet" type="button" data-open-welcome>About this app</button>
+    <button class="quiet" id="retrySavingButton" type="button">↻ Retry saving</button>
     <button class="quiet" id="refreshButton">↻ Refresh scores</button>
   </div>
 </footer>
@@ -1813,17 +1811,15 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./celebration.js?v=20261012b"></script>
 <script src="./placement.js"></script>
 <script src="./lock.js"></script>
-<script src="./games-wheel.js?v=20261012b"></script>
-<script src="./games-team.js?v=20261012b"></script>
-<script src="./games-skill.js?v=20261012c"></script>
-<script src="./games-timing.js?v=20261012b"></script>
+<script src="./games-wheel.js?v=20261013c"></script>
+<script src="./games-team.js?v=20261013c"></script>
+<script src="./games-skill.js?v=20261013c"></script>
+<script src="./games-timing.js?v=20261013c"></script>
 <script src="./games-addon.js?v=20261012b"></script>
-<script src="./games-ratings.js?v=20261012c"></script>
-<script src="./games.js?v=20261012c"></script>
-<script src="./v2.js"></script>
+<script src="./games-ratings.js?v=20261013c"></script>
+<script src="./games.js?v=20261013c"></script>
+<script src="./v2.js?v=20261013c"></script>
 <script src="./welcome.js"></script>
-<script src="./replay-engine.js?v=20261013b"></script>
-<script src="./replay.js?v=20261013b"></script>
 <script>
 (() => {
   'use strict';
@@ -2098,6 +2094,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let recoveredPending = false;
   let damagedRecovery = null;
   let saveError = '';
+  let retryingSaves = false;
   let readError = '';
   let recoveryWarning = '';
   let flushTimer;
@@ -2195,7 +2192,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     return fireCount(id) >= 3 ? '<span class="fire-badge" title="Three or more different skill gains in the past seven days"><span aria-hidden="true">🔥</span> On fire</span>' : '';
   }
   function renderV2() {
-    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,groupLabel,shortGroupLabel,fireBadge,hasLoaded});
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'all' || (group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : gymnast.coach === group);
@@ -2378,11 +2375,14 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderSaveStatus() {
     renderLockStatus();
     const unsaved = hasPending();
-    const warning = [saveError, readError, recoveryWarning].filter(Boolean).join(' ');
+    const gameSave = window.SWLGames?.getSavingState?.() || {};
+    const warning = [saveError, readError, recoveryWarning, gameSave.saveError].filter(Boolean).join(' ');
     $('storageWarning').hidden = !warning;
     $('storageMessage').textContent = warning;
-    $('retryButton').hidden = !retryNeeded || !unsaved;
-    $('retryButton').disabled = sending || importing || !canEdit();
+    $('retryButton').hidden = !(retryNeeded && unsaved) && !gameSave.retryNeeded;
+    $('retryButton').disabled = retryingSaves || sending || importing;
+    $('retrySavingButton').disabled = retryingSaves || sending || importing;
+    $('retrySavingButton').textContent = retryingSaves ? '↻ Retrying…' : '↻ Retry saving';
     $('discardPendingButton').hidden = !(retryNeeded && unsaved) && damagedRecovery === null;
     $('discardPendingButton').disabled = sending || importing;
 
@@ -2391,12 +2391,14 @@ html:has(body.no-motion){scroll-behavior:auto}
           hour: '2-digit', minute: '2-digit'
         })
       : null;
-    $('saveStatus').textContent = unsaved
+    $('saveStatus').textContent = damagedRecovery !== null ? 'Local recovery data needs attention · download recovery data'
+      : unsaved
       ? (lockKnown && scoringLock.locked ? 'Unsaved changes kept on this device · scoring locked'
         : retryNeeded ? 'Unsaved changes · retry needed'
         : sending ? 'Saving changes to Google Sheets…'
           : recoveredPending ? 'Recovered unsaved changes · connecting…'
             : 'Changes queued · saving shortly…')
+      : gameSave.pendingSaveCount ? (gameSave.retryNeeded ? 'Game data kept on this device · retry saving' : 'Saving game ratings and plays…')
       : importing ? 'Restoring backup to Google Sheets…'
         : saveError ? 'Backup restore unconfirmed · refresh scores'
         : reading && !hasLoaded ? 'Loading scores from Google Sheets…'
@@ -2411,7 +2413,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('exportButton').textContent = damagedRecovery !== null ? 'Download recovery data' : 'Download unsaved backup';
     $('addGymnastButton').disabled = !canEdit();
     $('toastUndo').disabled = !canEdit() || !history.length;
-    document.querySelectorAll('button[data-skill], button[data-link-complex]').forEach(button => {
+    document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew]').forEach(button => {
       button.disabled = !canEdit();
     });
     if ($('undoButton')) $('undoButton').disabled = !canEdit() || !history.length;
@@ -2495,6 +2497,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   function restoreControlFocus(source) {
     if (!source || document.activeElement !== document.body) return;
     let target = source.isConnected ? source : null;
+    if (!target && source.id) target = $(source.id);
+    if (!target && source.dataset?.quickRenew && source.dataset?.quickGymnast) target = $('quick-' + source.dataset.quickGymnast + '-' + source.dataset.quickRenew);
     if (!target && source.dataset?.gymnast) {
       target = Array.from(document.querySelectorAll('[data-gymnast]'))
         .find(button => button.dataset.gymnast === source.dataset.gymnast);
@@ -3417,7 +3421,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
-    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'replay'].includes(view)) return;
+    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics'].includes(view)) return;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
@@ -3428,15 +3432,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('games').hidden = view !== 'games';
     if ($('directory')) $('directory').hidden = view !== 'directory';
     if ($('analytics')) $('analytics').hidden = view !== 'analytics';
-    if ($('replay')) $('replay').hidden = view !== 'replay';
-    $('nav').style.setProperty('--nav-index', view === 'replay' ? '4' : view === 'games' ? '3' : view === 'directory' ? '2' : tracker || placement ? '1' : '0');
+    $('nav').style.setProperty('--nav-index', view === 'games' ? '3' : view === 'directory' ? '2' : tracker || placement ? '1' : '0');
     renderV2();
     window.SWLGames?.setActive(view === 'games');
-    try { window.SWLReplay?.setActive(view === 'replay'); }
-    catch (_) {
-      try { window.SWLReplay?.destroy?.(); } catch (_) {}
-      if ($('replayRoot')) $('replayRoot').textContent = 'Video Replay is unavailable. Reload to try again. Your scores and games are still available.';
-    }
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
@@ -3627,14 +3625,13 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
   }
 
-  function changeSkill(skillId, button, chosen) {
+  function changeSkill(skillId, button, chosen, gymnastId = selectedId) {
     if (
       !canEdit() ||
-      !selectedId ||
+      !GYMNAST_IDS.has(gymnastId) ||
       !SKILL_IDS.has(skillId)
     ) return;
 
-    const gymnastId = selectedId;
     const skill = SKILLS.find(s => s.id === skillId);
     const before = mark(gymnastId, skillId);
     const after = chosen === undefined
@@ -3705,9 +3702,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
   }
 
-  function renewSkill(skillId, button) {
-    if (!canEdit() || !selectedId || !SKILL_IDS.has(skillId) || mark(selectedId,skillId) === 0) return;
-    enqueueOperation({type:'renew_mark',gymnastId:selectedId,skillId});
+  function renewSkill(skillId, button, gymnastId = selectedId) {
+    if (!canEdit() || !GYMNAST_IDS.has(gymnastId) || !SKILL_IDS.has(skillId) || mark(gymnastId,skillId) === 0) return;
+    enqueueOperation({type:'renew_mark',gymnastId,skillId});
     updateAthlete(false); renderBoards(); renderRoster(); renderSaveStatus();
     restoreControlFocus(button);
     toast('Renewed for 30 days · level and points kept.');
@@ -3775,6 +3772,10 @@ html:has(body.no-motion){scroll-behavior:auto}
         if (button.dataset.view === 'analytics') v2Api()?.resetAnalytics();
         setView(button.dataset.view);
 
+      } else if (button.hasAttribute('data-quick-skill')) {
+        changeSkill(button.dataset.quickSkill,button,undefined,button.dataset.quickGymnast);
+      } else if (button.hasAttribute('data-quick-renew')) {
+        renewSkill(button.dataset.quickRenew,button,button.dataset.quickGymnast);
       } else if (button.hasAttribute('data-board-group')) {
         leaderboardGroup=button.dataset.boardGroup; renderBoards();
       } else if (button.hasAttribute('data-renew-skill')) {
@@ -3973,7 +3974,23 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
   });
 
-  $('retryButton').addEventListener('click', () => flushQueue(true));
+  async function retrySaving() {
+    if (retryingSaves || sending || importing) return;
+    retryingSaves = true;
+    renderSaveStatus();
+    try {
+      if (!hasLoaded || !lockKnown || !connected) await readScores();
+      if (hasPending()) await flushQueue(true);
+      await window.SWLGames?.retrySaves?.();
+      const gameSave = window.SWLGames?.getSavingState?.() || {};
+      toast(damagedRecovery !== null ? 'Local recovery data needs attention. Download recovery data before discarding anything.'
+        : hasPending() && scoringLock.locked ? 'Edits are kept here. Unlock scoring to save them.'
+        : hasPending() || gameSave.pendingSaveCount ? 'Some changes are still waiting. Your data is kept on this device.'
+        : connected ? 'Everything is saved to Google Sheets.' : 'Could not reconnect yet. Please try again.');
+    } finally { retryingSaves = false; renderSaveStatus(); }
+  }
+  $('retryButton').addEventListener('click', retrySaving);
+  $('retrySavingButton').addEventListener('click', retrySaving);
   $('discardPendingButton').addEventListener('click', async () => {
     if (sending || importing) return;
     if (!confirm('Discard the unsaved edits kept on this device and reload Google Sheets? ' +
@@ -4035,15 +4052,11 @@ html:has(body.no-motion){scroll-behavior:auto}
   window.SWLGames?.mount($('gamesRoot'), {
     skills: SKILLS.map(skill => ({id:skill.id,label:skill.name,category:skill.category,tier:skill.tier})),
     requestRatings: body => scoresRequest(body),
+    onSaveChange: () => renderSaveStatus(),
     motionOff: reducedMotion,
     playSound: details => window.SWLCelebration?.gameSound(details)
   });
   v2Api()?.mount({directory:$('directoryRoot'),analytics:$('analyticsRoot'),openGymnast,setView});
-  try { window.SWLReplay?.mount($('replayRoot')); }
-  catch (_) {
-    try { window.SWLReplay?.destroy?.(); } catch (_) {}
-    $('replayRoot').textContent = 'Video Replay is unavailable. Reload to try again. Your scores and games are still available.';
-  }
   restoreRecovery();
   syncHeader();
   updateMotion();

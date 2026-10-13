@@ -6,10 +6,10 @@
   const mounted = new Map();
   const descriptions = [
     {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
-    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'Floor shapes, synchronised jumps, conditioning and coaching impressions. A new challenge in ten seconds.',module:'SWLTeam',art:'team'},
+    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'Four rounds of floor shapes, jumps to stick, conditioning and coaching impressions. Ten seconds to meet each challenge.',module:'SWLTeam',art:'team'},
     {id:'shuffle',name:'Skill Shuffle',tag:'2–3 teams · skill quality',description:'Set your team sizes so everyone gets a turn. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
     {id:'letters',name:'Letter Duel',tag:'2 teams · quick thinking',description:'One big letter. Find a gymnastics skill that starts with it and perform it to win a point.',module:'SWLLetterDuel',art:'letters'},
-    {id:'handstand',name:'Handstand League',tag:'2–3 teams · against the clock',description:'Every gymnast gets a turn. Start, stop and bank their seconds. Pro mode adds a neatness bonus — or wipes a fall.',module:'SWLHandstand',art:'handstand'},
+    {id:'handstand',name:'Handstand Timer',tag:'2–3 teams · against the clock',description:'Individual turns or whole-group rounds. Bank your team’s seconds; in Group mode, the last gymnast down sits out the next round.',module:'SWLHandstand',art:'handstand'},
     {id:'addon',name:'Add-On',tag:'2–3 teams · build a routine',description:'Start with one skill. Shuffle three choices, pick the next addition and grow your team’s routine. Earn stars for how well it flows.',module:'SWLAddOn',art:'relay'},
     {id:'relayrace',name:'Conditioning Relay',tag:'2–3 teams · pace & teamwork',description:'One team, one clock, everyone through the line. Tap each handover; the screen tracks every split and the team’s average time.',module:'SWLConditioningRelay',art:'relayrace'},
     {id:'timesense',name:'Time Sense',tag:'2–3 teams · trust your timing',description:'Hold a balance and judge the target time with the clock hidden. Stop when you think you’ve hit it. Closest estimates win.',module:'SWLTimeSense',art:'timesense'}
@@ -53,7 +53,7 @@
   function playLabel(id){const value=ratingsSummary[id]?.plays;return value===undefined?'Plays loading…':`${value} ${value===1?'play':'plays'}`;}
   function pauseForRating(){if(current){moduleFor(current)?.deactivate();moduleFor(current)?.mount(mounted.get(current),options);}}
   function rateGame(id){if(!active)return;pauseForRating();ratingsApi?.openForGame(id);}
-  function updateGameStats(){if(!current||!liveRating)return;const info=descriptions.find(item=>item.id===current);liveRating.textContent=ratingLabel(current)+' · Rate';liveRating.setAttribute('aria-label','Rate '+info.name);livePlays.textContent=playLabel(current);livePlays.setAttribute('title','Completed games');liveHot.hidden=hottestId()!==current;}
+  function updateGameStats(){if(!current||!liveRating)return;const info=descriptions.find(item=>item.id===current);liveRating.textContent=ratingLabel(current)+' · Rate';liveRating.setAttribute('aria-label','Rate '+info.name);livePlays.textContent=playLabel(current);livePlays.setAttribute('title','Completed or reviewed games');liveHot.hidden=hottestId()!==current;}
   function ratingButton(){const button=node('button','quiet games-pending-ratings','Finish ratings');button.type='button';button.hidden=!pendingCount;button.addEventListener('click',()=>{if(!active)return;pauseForRating();ratingsApi?.openPending();});ratingButtons.push(button);return button;}
   function renderCards(){if(!cards||ratingsApi?.getState().current)return;const focused=document.activeElement?.closest?.('[data-game-id]')?.dataset.gameId,focusAction=document.activeElement?.dataset.gameAction;cards.replaceChildren();
     rankedGames().forEach((info,index)=>{
@@ -65,7 +65,7 @@
       const rating=ratingsSummary[info.id],stats=node('div','game-card-stats'),ratingGroup=node('div','game-card-rating-group');
       const rate=node('button','game-card-rate',ratingLabel(info.id));rate.type='button';rate.dataset.gameAction='rate';rate.setAttribute('aria-label','Rate '+info.name);rate.addEventListener('click',()=>rateGame(info.id));
       ratingGroup.append(rate,node('span','game-card-votes',rating?`${rating.votes} ${rating.votes===1?'vote':'votes'}`:'Ratings loading…'));
-      const plays=node('span','game-card-plays',playLabel(info.id));plays.setAttribute('title','Completed games');stats.append(ratingGroup,plays);
+      const plays=node('span','game-card-plays',playLabel(info.id));plays.setAttribute('title','Completed or reviewed games');stats.append(ratingGroup,plays);
       card.dataset.gameId=info.id;card.append(top,visual,node('h2','',info.name),node('p','game-card-desc',info.description),stats,play);
       if(hot){const flame=node('span','game-hottest-badge','🔥 Hottest game');flame.setAttribute('title','Highest average squad rating');card.append(flame);}
       cards.append(card);
@@ -81,11 +81,11 @@
     const note=node('p','games-note');note.append(node('span','','✧'),node('span','','Game scores are just for this session. Your Skill League points stay the same.'));
     const ratingBar=node('div','games-rating-bar'),sorts=node('div','games-sort');sorts.setAttribute('role','group');sorts.setAttribute('aria-label','Sort games');
     [['hottest','🔥 Hottest'],['played','↻ Most played']].forEach(([value,label])=>{const button=node('button','games-sort-button',label);button.type='button';button.dataset.gameSort=value;button.setAttribute('aria-pressed',String(sortMode===value));button.addEventListener('click',()=>{if(!active)return;sortMode=value;sortButtons.forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.gameSort===sortMode)));renderCards();});sortButtons.push(button);sorts.append(button);});
-    ratingBar.append(sorts,node('span','games-sort-note','Class ratings · completed games'),ratingButton());
+    ratingBar.append(sorts,node('span','games-sort-note','Class ratings · games played'),ratingButton());
     lobby.append(head,ratingBar,cards,note);
     arena=node('div','games-arena');arena.hidden=true;const bar=node('div','games-toolbar'),back=node('button','quiet games-back','← All games');back.type='button';back.addEventListener('click',showLobby);title=node('span','games-session-label');liveRating=node('button','quiet games-live-rating','☆ Rate this game');liveRating.type='button';liveRating.addEventListener('click',()=>rateGame(current));livePlays=node('span','games-live-plays');liveHot=node('span','games-live-hot','🔥 Hottest game');liveHot.hidden=true;
     bar.append(back,title,liveHot,livePlays,liveRating,ratingButton());stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
-    if(window.SWLGameRatings&&typeof config.requestRatings==='function')ratingsApi=window.SWLGameRatings.create({games:descriptions,request:config.requestRatings,onChange:(summary,pending)=>{ratingsSummary=summary;pendingCount=pending;ratingButtons.forEach(button=>{button.hidden=!pending;button.textContent=`Finish ratings${pending>1?' ('+pending+')':''}`;});if(!current)renderCards();else updateGameStats();}});
+    if(window.SWLGameRatings&&typeof config.requestRatings==='function')ratingsApi=window.SWLGameRatings.create({games:descriptions,request:config.requestRatings,onChange:(summary,pending)=>{ratingsSummary=summary;pendingCount=pending;ratingButtons.forEach(button=>{button.hidden=!pending;button.textContent=`Finish ratings${pending>1?' ('+pending+')':''}`;});if(!current)renderCards();else updateGameStats();config.onSaveChange?.();}});
   }
   function setActive(value) {
     active=Boolean(value);ratingsApi?.setActive(active);if(active)ratingsApi?.refresh();
@@ -94,5 +94,5 @@
       else moduleFor(current)?.deactivate();
     }
   }
-  window.SWLGames=Object.freeze({mount,setActive,get current(){return current;}});
+  window.SWLGames=Object.freeze({mount,setActive,retrySaves:()=>ratingsApi?.flush(),getSavingState:()=>ratingsApi?.getState()||{},get current(){return current;}});
 })();

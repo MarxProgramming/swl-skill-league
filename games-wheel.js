@@ -7,6 +7,8 @@
     'press-ups':'Place hands under shoulders and keep a long body shape. Bend your elbows to lower your chest, then push back up. Knees down is an option.',
     'jumping jacks':'Jump your feet apart as your arms lift, then bring your feet and arms back together. One out-and-in movement is one rep.',
     'V-sits':'From sitting, lift your legs and chest towards a V shape, then lower with control. Bent knees are welcome. Count each lift.',
+    'squat jumps':'Lower into a comfortable squat, jump upwards, then land softly and reset before the next rep. Count each controlled jump.',
+    'bridge rocks':'From your practised bridge, gently shift your shoulders towards your hands, then return. Count each controlled out-and-back rock; use the range agreed with your coach.',
     'squats':'Bend your knees and hips into a comfortable squat, then stand tall. Count each return to standing.',
     'plank':'Hold a long body shape on forearms and toes for the time shown, keeping your middle steady. Knees may rest on the floor.',
     'hollow rocks':'Lie on your back in a familiar hollow shape and make small, controlled rocks. Count each forward-and-back rock.',
@@ -35,8 +37,8 @@
   const CRAZY=[
     exercise('burpees','burpees',12,'reps',['BURPEES'],9),
     {id:'funniest-pose',name:'Funniest gymnast pose',amount:1,unit:'round',words:['FUNNIEST','POSE'],kind:'fun',weight:8,detail:'Everyone makes a funny, comfortable pose. Coach picks the funniest gymnast, who gets the next spin.'},
-    exercise('press-ups','press-ups',15,'reps',['PRESS','UPS'],8),
-    exercise('robot-freeze','robot-pose freeze',20,'seconds',['ROBOT','FREEZE'],7,'Choose a funny robot pose and hold it for the time shown.'),
+    exercise('press-ups','press-ups',10,'reps',['PRESS','UPS'],8),
+    exercise('squat-jumps','squat jumps',10,'reps',['SQUAT','JUMPS'],7),
     exercise('v-sits','V-sits',15,'reps',['V-SITS'],8),
     {id:'coach-splits',name:'All coaches do funny splits',amount:1,unit:'round',words:['★'],kind:'coach-jackpot',weight:2,detail:'A rare coach surprise! All coaches choose a comfortable funny splits pose, or another pose of their choice.'},
     exercise('squat-hold','squat hold',30,'seconds',['SQUAT','HOLD'],8),
@@ -44,7 +46,7 @@
     exercise('tuck-jumps','tuck jumps',12,'reps',['TUCK','JUMPS'],8),
     exercise('silly-statue','silly statue',10,'seconds',['SILLY','STATUE'],7,'Choose a funny gymnast statue and hold it for the time shown.'),
     exercise('mountain-climbers','mountain climbers',20,'reps',['MOUNTAIN','CLIMBERS'],8),
-    exercise('one-leg-balance','one-leg balance',20,'seconds',['ONE-LEG','BALANCE'],6,'Stand tall on one leg with your arms held steady and your eyes on a fixed point. Swap legs halfway through the time. Use a light toe touch if needed.'),
+    exercise('bridge-rocks','bridge rocks',10,'reps',['BRIDGE','ROCKS'],6),
     exercise('star-jumps','star jumps',5,'reps',['STAR','JUMPS'],7),
     {id:'free-time',name:'free time',amount:300,unit:'seconds',words:['FREE','TIME'],kind:'free-time',weight:5,detail:'Supervised free time in the designated area, for the time shown.'}
   ];

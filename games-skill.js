@@ -336,7 +336,7 @@
       if (duel) rules.append(node('p', '', 'Both teams play every letter. The coach awards 1 point to either team, or skips. First to 7 wins.'), node('p', 'swl-skill-muted', 'Use a familiar gymnastics floor skill or shape approved by the coach. Hints include the skill list and other floor basics. For numbered skills, use the first word.'));
       else {
         const list = node('ul', 'swl-skill-rating-guide');
-        [[3, 'Almost perfect'], [2, 'Did it, messy'], [1, 'Does not count']].forEach(([stars, label]) => { const item = node('li'); item.append(node('b', '', '★'.repeat(stars)), node('span', '', label)); list.append(item); });
+        [[1, 'Does not count'], [2, 'Did it, messy'], [3, 'Almost perfect']].forEach(([stars, label]) => { const item = node('li'); item.append(node('b', '', '★'.repeat(stars)), node('span', '', label)); list.append(item); });
         rules.append(list, node('p', 'swl-skill-muted', 'Teams take turns until every gymnast has had one go. Finished teams are skipped. Coach chooses a familiar skill to attempt, or draws another.'), node('p', 'swl-skill-fair-rule', 'Highest average wins: total stars ÷ gymnasts. This keeps different-sized teams fair.'));
       }
       rules.append(node('p', 'swl-skill-session-note', 'Game points stay here. Skill League marks and points stay the same.'));
@@ -403,7 +403,7 @@
           extras.append(button('Skip this letter', 'skip', 'swl-skill-text-button'), hint); stage.append(extras);
           if (hints) { const hintBox = node('aside', 'swl-skill-hints'); hintBox.append(node('p', 'swl-skill-kicker', 'FAMILIAR FLOOR SKILLS & SHAPES')); const list = node('ul'); selected.matches.forEach(skill => list.append(node('li', '', skill.label))); hintBox.append(list); stage.append(hintBox); }
         } else {
-          [[3, 'Almost perfect'], [2, 'Did it, messy'], [1, 'Does not count']].forEach(([stars, label]) => { const control = button('', `rate-${stars}`, 'swl-skill-rate'); control.setAttribute('aria-label', `${stars} ${stars === 1 ? 'star' : 'stars'}: ${label}`); control.append(node('span', '', '★'.repeat(stars)), node('b', '', `${stars} ${stars === 1 ? 'star' : 'stars'}`), node('small', '', label)); awards.append(control); });
+          [[1, 'Does not count'], [2, 'Did it, messy'], [3, 'Almost perfect']].forEach(([stars, label]) => { const control = button('', `rate-${stars}`, 'swl-skill-rate'); control.setAttribute('aria-label', `${stars} ${stars === 1 ? 'star' : 'stars'}: ${label}`); control.append(node('span', '', '★'.repeat(stars)), node('b', '', `${stars} ${stars === 1 ? 'star' : 'stars'}`), node('small', '', label)); awards.append(control); });
           stage.append(awards);
           const alternatives = node('div', 'swl-skill-extras'); alternatives.append(button('Coach: draw another skill', 'redraw', 'swl-skill-text-button'));
           stage.append(alternatives, node('p', 'swl-skill-familiar', 'Coach chooses a familiar skill to attempt.'));
