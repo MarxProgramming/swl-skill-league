@@ -1,21 +1,23 @@
 (() => {
   'use strict';
   if(window.SWLReplayEngine?.version===1)return;
-  const FPS=24,FRAME_MS=1000/FPS,MAX_BYTES=64*1024*1024,MAX_CLIP_BYTES=32*1024*1024,MAX_FRAMES=800,MARGIN_MS=1500;
+  const FPS=60,FALLBACK_FPS=30,FRAME_MS=1000/FPS,MAX_BYTES=64*1024*1024,MAX_CLIP_BYTES=32*1024*1024,MAX_FRAMES=2000,MARGIN_MS=1500,UI_INTERVAL=100;
   let sequence=0;
   const now=()=>performance.now();
   const abortError=()=>{const error=new Error('Export canceled.');error.name='AbortError';return error;};
   const friendly=error=>({NotAllowedError:'Camera access was not allowed. Enable it in your browser, then try again.',PermissionDeniedError:'Camera access was not allowed. Enable it in your browser, then try again.',NotFoundError:'No camera was found on this device.',DevicesNotFoundError:'No camera was found on this device.',NotReadableError:'The camera is busy. Close other camera apps, then try again.',TrackStartError:'The camera is busy. Close other camera apps, then try again.',OverconstrainedError:'That camera is unavailable. Try the other camera.'}[error?.name]||error?.message||'The camera could not start. Please try again.');
-  function create({video,canvas,onChange=()=>{}}={}){
+  function create({video,canvas,onChange=()=>{},onFrame}={}){
     if(!video||!canvas||typeof canvas.getContext!=='function')throw TypeError('Replay needs a video element and a display canvas.');
     const media=window.navigator?.mediaDevices||(typeof navigator!=='undefined'?navigator.mediaDevices:null);
     const capture=document.createElement('canvas'),context=capture.getContext('2d',{alpha:false}),display=canvas.getContext('2d',{alpha:false});
     const URLApi=window.URL||(typeof URL!=='undefined'?URL:null),Recorder=window.MediaRecorder;
     const clock=()=>now();
-    let active=true,destroyed=false,stream=null,cameraToken=0,captureTimer=null,encoding=false,startPromise=null,cancelReady=null,trackListeners=[];
+    let active=true,destroyed=false,stream=null,cameraToken=0,captureTimer=null,videoCallback=null,encoding=false,startPromise=null,cancelReady=null,trackListeners=[];
+    let captureFPS=0,cameraFPS=0,captureTimes=[],lastFrameKey=null,lastCaptureTime=-Infinity,captureCredit=2,creditTime=null,lastNotify=-Infinity;
     let frames=[],clip=null,review=false,delaySeconds=10,facingMode='environment',error='',phase='idle',limited=false,bufferCapped=false,frameSerial=0;
-    let playing=false,speed=1,positionMs=0,playStarted=0,playOrigin=0,playTimer=null,playToken=0;
-    let displayed=null,pendingDraw=null,renderFrame=null,drawing=false,drawEpoch=0,rendering=false,exportJob=null,exportProgress=0;
+    let playing=false,speed=1,positionMs=0,playStarted=0,playOrigin=0,playTimer=null,playRAF=null,playToken=0;
+    let displayed=null,pendingDraw=null,renderFrame=null,renderTarget=null,drawing=false,drawEpoch=0,rendering=false,exportJob=null,exportProgress=0;
+    const retained=new Map();let retainedSize=0;
     const imageDecoders=new Set();
     video.muted=true;video.playsInline=true;
     const available=()=>active&&!destroyed&&!document.hidden;
@@ -26,69 +28,101 @@
       for(const type of ['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']){try{if(Recorder.isTypeSupported(type))return type;}catch(_) {}}
       return null;
     }
-    const exportSupported=()=>Boolean(mimeType()&&typeof capture.captureStream==='function');
-    function retainedBytes(){const seen=new Set();let bytes=0;for(const frame of frames.concat(clip?.frames||[],exportJob?.clip.frames||[],[displayed?.frame,pendingDraw?.frame,renderFrame])){if(frame&&!seen.has(frame.id)){seen.add(frame.id);bytes+=frame.blob.size;}}return bytes;}
+    const preferredMime=mimeType(),canExport=Boolean(preferredMime&&typeof capture.captureStream==='function'),supported=Boolean(media?.getUserMedia&&context&&display&&typeof capture.toBlob==='function');
+    const exportSupported=()=>canExport;
+    // Each owner holds a reference; shared ring/clip frames count toward the byte budget only once.
+    function retain(frame){if(!frame)return;const count=retained.get(frame.id)||0;if(!count)retainedSize+=frame.blob.size;retained.set(frame.id,count+1);}
+    function release(frame){if(!frame)return;const count=retained.get(frame.id);if(count===1){retained.delete(frame.id);retainedSize-=frame.blob.size;}else if(count)retained.set(frame.id,count-1);}
+    function dropFirst(){release(frames.shift());}
+    function clearRing(){for(const frame of frames)release(frame);frames=[];}
+    function replaceClip(next){for(const frame of next?.frames||[])retain(frame);for(const frame of clip?.frames||[])release(frame);clip=next;}
+    function displayIndex(){if(!displayed)return-1;if(review&&clip)return displayed.clipId===clip.id?displayed.index:-1;const index=frames.length?displayed.frame.serial-frames[0].serial:-1;return index>=0&&index<frames.length?index:-1;}
     function metadata(){return clip?Object.freeze({id:clip.id,startTime:clip.startMs/1000,endTime:clip.endMs/1000,duration:clip.durationMs/1000,frameCount:clip.frames.length,width:clip.width,height:clip.height}):null;}
     function getState(){
-      const list=review&&clip?clip.frames:frames,index=displayed?list.findIndex(frame=>frame.id===displayed.frame.id):-1;
-      return Object.freeze({phase,cameraRunning:Boolean(stream),bufferSeconds:span(),effectiveDelaySeconds:Math.min(delaySeconds,span()),delaySeconds,clipDuration:clipDuration(),position:positionMs/1000,frameIndex:index,frameCount:list.length,playing,speed,error,limited,exporting:Boolean(exportJob),exportProgress,clipId:clip?.id||null,frameId:displayed?.frame.id||null,captureWidth:capture.width||0,captureHeight:capture.height||0,supported:Boolean(media?.getUserMedia&&context&&display&&typeof capture.toBlob==='function'),exportSupported:exportSupported(),rendering,bufferBytes:retainedBytes(),clip:metadata()});
+      const list=review&&clip?clip.frames:frames;
+      return Object.freeze({phase,cameraRunning:Boolean(stream),bufferSeconds:span(),effectiveDelaySeconds:Math.min(delaySeconds,span()),delaySeconds,clipDuration:clipDuration(),position:positionMs/1000,frameIndex:displayIndex(),frameCount:list.length,playing,speed,error,limited,exporting:Boolean(exportJob),exportProgress,clipId:clip?.id||null,frameId:displayed?.frame.id||null,captureWidth:capture.width||0,captureHeight:capture.height||0,captureFPS,cameraFPS,targetFPS:FPS,supported,exportSupported:canExport,rendering,bufferBytes:retainedSize,clip:metadata()});
     }
-    function notify(){if(!destroyed)try{onChange(getState());}catch(_) {}}
+    function notify(immediate=true){if(destroyed||(!immediate&&clock()-lastNotify<UI_INTERVAL))return;lastNotify=clock();try{onChange(getState());}catch(_) {}}
     function cancelImages(owner){for(const task of [...imageDecoders])if(!owner||task.owner===owner)task.cancel();}
-    function invalidateDraw(){drawEpoch++;pendingDraw=null;rendering=false;cancelImages('render');}
-    function clearDisplay(){invalidateDraw();displayed=null;try{display?.clearRect(0,0,canvas.width,canvas.height);}catch(_) {}}
+    function invalidateDraw(){drawEpoch++;release(pendingDraw?.frame);pendingDraw=null;rendering=false;cancelImages('render');}
+    function clearDisplay(){invalidateDraw();release(displayed?.frame);displayed=null;try{display?.clearRect(0,0,canvas.width,canvas.height);}catch(_) {}}
     async function decode(frame,owner){
       const bitmap=window.createImageBitmap||(typeof createImageBitmap==='function'?createImageBitmap:null);
       if(bitmap){const image=await bitmap(frame.blob);return{image,close(){image.close?.();}};}
       const ImageClass=window.Image;if(!ImageClass||!URLApi?.createObjectURL)throw Error('This browser cannot display captured frames.');
       return new Promise((resolve,reject)=>{const image=new ImageClass(),url=URLApi.createObjectURL(frame.blob);let released=false,timeout;const task={owner,cancel:()=>failed(abortError())};const release=()=>{if(released)return;released=true;clearTimeout(timeout);imageDecoders.delete(task);URLApi.revokeObjectURL(url);image.onload=image.onerror=null;};const failed=problem=>{release();image.src='';reject(problem);};imageDecoders.add(task);image.onload=()=>{release();resolve({image,close(){image.src='';}});};image.onerror=()=>failed(Error('A captured frame could not be displayed.'));timeout=setTimeout(()=>failed(Error('A captured frame took too long to display.')),5000);image.src=url;});
     }
-    function requestDraw(frame,index,relativeMs,clipId=null){if(!frame||!available())return;pendingDraw={frame,index,relativeMs,clipId,epoch:drawEpoch};rendering=true;void pumpDraw();}
+    function requestDraw(frame,index,relativeMs,clipId=null){if(!frame||!available())return;const same=target=>target?.epoch===drawEpoch&&target.frame.id===frame.id&&target.clipId===clipId;if(same(pendingDraw)||(!pendingDraw&&same(renderTarget)))return;retain(frame);release(pendingDraw?.frame);pendingDraw={frame,index,relativeMs,clipId,epoch:drawEpoch};rendering=true;void pumpDraw();}
     async function pumpDraw(){
       if(drawing||!pendingDraw)return;drawing=true;
       try{
-        while(pendingDraw&&!destroyed){const target=pendingDraw;pendingDraw=null;renderFrame=target.frame;let decoded;
+        while(pendingDraw&&!destroyed){const target=pendingDraw;pendingDraw=null;renderFrame=target.frame;renderTarget=target;let decoded;
           try{decoded=await decode(target.frame,'render');if(target.epoch!==drawEpoch||!available())continue;
             if(canvas.width!==target.frame.width)canvas.width=target.frame.width;if(canvas.height!==target.frame.height)canvas.height=target.frame.height;
-            display.drawImage(decoded.image,0,0,canvas.width,canvas.height);displayed=target;rendering=Boolean(pendingDraw);notify();
+            display.drawImage(decoded.image,0,0,canvas.width,canvas.height);retain(target.frame);release(displayed?.frame);displayed=target;rendering=Boolean(pendingDraw);
+            if(typeof onFrame==='function')try{onFrame(getState());}catch(_){}
+            notify(review&&(!playing||typeof onFrame!=='function'));
           }catch(problem){if(target.epoch===drawEpoch&&available()&&problem?.name!=='AbortError'){error='A video frame could not be displayed. Try starting the camera again.';notify();}}
-          finally{decoded?.close();renderFrame=null;}
+          finally{decoded?.close();release(renderFrame);renderFrame=null;renderTarget=null;}
         }
       }finally{drawing=false;if(!pendingDraw)rendering=false;}
     }
     function trim(){
-      const cutoff=frames.length?frames.at(-1).timeMs-delaySeconds*1000-MARGIN_MS:0;while(frames.length>1&&frames[0].timeMs<cutoff)frames.shift();
-      let capped=false;while(frames.length>MAX_FRAMES){frames.shift();capped=true;}
-      while(frames.length&&retainedBytes()>MAX_BYTES){frames.shift();capped=true;}
+      const cutoff=frames.length?frames.at(-1).timeMs-delaySeconds*1000-MARGIN_MS:0;while(frames.length>1&&frames[0].timeMs<cutoff)dropFirst();
+      let capped=false;while(frames.length>MAX_FRAMES){dropFirst();capped=true;}
+      while(frames.length&&retainedSize>MAX_BYTES){dropFirst();capped=true;}
       bufferCapped=capped||(bufferCapped&&span()+.001<delaySeconds);limited=bufferCapped&&span()+.001<delaySeconds;
     }
-    function frameAt(list,timeMs){let low=0,high=list.length-1,index=0;while(low<=high){const mid=(low+high)>>1;if(list[mid].timeMs<=timeMs){index=mid;low=mid+1;}else high=mid-1;}return index;}
-    function renderDelay(){
+    function frameAt(list,timeMs){let low=0,high=list.length-1,index=0;while(low<=high){const mid=(low+high)>>1;if(list[mid].timeMs<=timeMs+.001){index=mid;low=mid+1;}else high=mid-1;}return index;}
+    function renderDelay(immediate=false){
       if(review)return;if(!stream){phase=error?'error':'idle';notify();return;}
-      const ready=span()+.001>=delaySeconds;
+      const ready=span()+.001>=delaySeconds,previous=phase;
       phase=frames.length&&(ready||limited)?'delay':'buffering';
       if(frames.length&&(ready||limited)){const target=frames.at(-1).timeMs-delaySeconds*1000,index=frameAt(frames,target);if(displayed?.frame.id!==frames[index].id)requestDraw(frames[index],index,0);}
-      notify();
+      notify(immediate||previous!==phase);
     }
     function dimensions(){const width=Number(video.videoWidth),height=Number(video.videoHeight);if(!(width>0&&height>0))return null;const scale=Math.min(1,(width>=height?960:720)/width,(width>=height?720:960)/height);return{width:Math.max(1,Math.round(width*scale)),height:Math.max(1,Math.round(height*scale))};}
+    function fallbackFrameKey(){
+      try{const count=video.getVideoPlaybackQuality?.().totalVideoFrames;if(Number.isFinite(count)&&count>0)return 'decoded:'+count;}catch(_){}
+      if(Number.isFinite(video.webkitDecodedFrameCount)&&video.webkitDecodedFrameCount>0)return 'decoded:'+video.webkitDecodedFrameCount;
+      return Number.isFinite(video.currentTime)?'time:'+video.currentTime:null;
+    }
+    function captureFrame(token,timestamp,key){
+      if(token!==cameraToken||!stream||!available()||encoding||key!==null&&key===lastFrameKey)return;
+      const size=dimensions();if(!size||video.readyState<2)return;
+      if(!Number.isFinite(timestamp)||timestamp<=lastCaptureTime)timestamp=clock();
+      if(timestamp<=lastCaptureTime)return;
+      captureCredit=Math.min(2,captureCredit+(creditTime===null?0:Math.max(0,timestamp-creditTime)*FPS/1000));creditTime=timestamp;
+      if(captureCredit<.999)return;captureCredit--;
+      lastFrameKey=key;lastCaptureTime=timestamp;
+      if(capture.width!==size.width)capture.width=size.width;if(capture.height!==size.height)capture.height=size.height;
+      encoding=true;
+      try{context.drawImage(video,0,0,size.width,size.height);capture.toBlob(blob=>{
+        encoding=false;if(token!==cameraToken||destroyed)return;
+        if(!blob||!Number.isFinite(blob.size)||blob.size<=0||blob.size>MAX_CLIP_BYTES){cameraFailure('The camera frame could not be captured. Try starting it again.');return;}
+        const serial=++frameSerial,frame=Object.freeze({id:'frame-'+serial+'-'+(++sequence),serial,blob,timeMs:timestamp,width:size.width,height:size.height});retain(frame);frames.push(frame);
+        captureTimes.push(timestamp);while(captureTimes.length>2&&captureTimes[0]<timestamp-1500)captureTimes.shift();const elapsed=timestamp-captureTimes[0];captureFPS=elapsed>=250?Math.round((captureTimes.length-1)*10000/elapsed)/10:0;
+        trim();renderDelay();if(review)notify(false);
+      },'image/jpeg',.7);}catch(_){encoding=false;cameraFailure('The camera frame could not be captured. Try starting it again.');}
+    }
     function scheduleCapture(token){
-      if(captureTimer!==null)clearTimeout(captureTimer);let due=clock();
-      const tick=()=>{
-        captureTimer=null;if(token!==cameraToken||!stream||!available())return;
-        const size=dimensions();if(!encoding&&size&&video.readyState>=2){
-          if(capture.width!==size.width)capture.width=size.width;if(capture.height!==size.height)capture.height=size.height;
-          const timestamp=clock();encoding=true;
-          try{context.drawImage(video,0,0,size.width,size.height);capture.toBlob(blob=>{
-            if(token!==cameraToken||destroyed)return;encoding=false;
-            if(!blob||!Number.isFinite(blob.size)||blob.size<=0||blob.size>MAX_CLIP_BYTES){cameraFailure('The camera frame could not be captured. Try starting it again.');return;}
-            const frame=Object.freeze({id:'frame-'+(++frameSerial)+'-'+(++sequence),blob,timeMs:timestamp,width:size.width,height:size.height});frames.push(frame);trim();renderDelay();if(review)notify();
-          },'image/jpeg',.7);}catch(_){encoding=false;cameraFailure('The camera frame could not be captured. Try starting it again.');return;}
-        }
-        if(token!==cameraToken||!stream||!available())return;due+=FRAME_MS;if(due<=clock())due=clock()+FRAME_MS;captureTimer=setTimeout(tick,Math.max(0,due-clock()));
-      };tick();
+      const valid=()=>token===cameraToken&&stream&&available();
+      const rate=Math.min(FPS,cameraFPS||FALLBACK_FPS),interval=1000/rate;let due=clock();
+      const fallback=()=>{
+        captureTimer=null;if(!valid())return;captureFrame(token,clock(),fallbackFrameKey());if(!valid())return;
+        due+=interval;if(due<=clock())due=clock()+interval;captureTimer=setTimeout(fallback,Math.max(0,due-clock()));
+      };
+      if(typeof video.requestVideoFrameCallback!=='function'){fallback();return;}
+      const next=()=>{if(!valid())return;try{videoCallback=video.requestVideoFrameCallback(receiveFrame);}catch(_){videoCallback=null;due=clock();fallback();}};
+      const receiveFrame=(timestamp,metadata={})=>{
+        videoCallback=null;if(!valid())return;
+        const key=Number.isFinite(metadata.presentedFrames)?'presented:'+metadata.presentedFrames:Number.isFinite(metadata.mediaTime)?'media:'+metadata.mediaTime:null;
+        const time=Number.isFinite(metadata.captureTime)?metadata.captureTime:Number.isFinite(metadata.presentationTime)?metadata.presentationTime:timestamp;
+        captureFrame(token,time,key);next();
+      };next();
     }
     function releaseCamera(){
-      cameraToken++;if(captureTimer!==null)clearTimeout(captureTimer);captureTimer=null;encoding=false;cancelReady?.();cancelReady=null;
+      cameraToken++;if(captureTimer!==null)clearTimeout(captureTimer);captureTimer=null;if(videoCallback!==null)try{video.cancelVideoFrameCallback?.(videoCallback);}catch(_){}videoCallback=null;captureFPS=0;cancelReady?.();cancelReady=null;
       for(const [track,listener]of trackListeners)track.removeEventListener?.('ended',listener);trackListeners=[];
       const previous=stream;stream=null;if(previous)for(const track of previous.getTracks())try{track.stop();}catch(_) {}
       try{video.pause?.();video.srcObject=null;}catch(_) {}
@@ -109,19 +143,20 @@
       if(settings.delaySeconds!==undefined)setDelay(settings.delaySeconds);
       if(settings.facingMode!==undefined)facingMode=settings.facingMode==='user'?'user':'environment';
       if(!getState().supported){error='Camera replay is not supported in this browser. Try Safari or Chrome on a secure page.';phase='error';notify();return Promise.resolve(false);}
-      releaseCamera();pause();frames=[];limited=bufferCapped=false;error='';if(!review)clearDisplay();phase='starting';const token=cameraToken;notify();
+      releaseCamera();pause();clearRing();captureTimes=[];lastFrameKey=null;lastCaptureTime=-Infinity;captureCredit=2;creditTime=null;cameraFPS=0;limited=bufferCapped=false;error='';if(!review)clearDisplay();phase='starting';const token=cameraToken;notify();
       const promise=(async()=>{
         try{
           const acquired=await media.getUserMedia({audio:false,video:{facingMode:{ideal:facingMode},width:{ideal:960},height:{ideal:720},frameRate:{ideal:FPS,max:FPS}}});
           if(token!==cameraToken||!available()){for(const track of acquired.getTracks())track.stop();return false;}
           stream=acquired;
+          try{const rate=stream.getVideoTracks()[0]?.getSettings?.().frameRate;cameraFPS=Number.isFinite(rate)&&rate>0?rate:0;}catch(_){}
           for(const track of stream.getVideoTracks()){const ended=()=>{if(token===cameraToken)cameraFailure('The camera stopped. Start it again when you’re ready.');};track.addEventListener?.('ended',ended);trackListeners.push([track,ended]);}
           video.srcObject=stream;await waitForVideo(token);if(token!==cameraToken||!available())return false;
           phase=review&&clip?'replay':'buffering';scheduleCapture(token);notify();return token===cameraToken&&Boolean(stream);
         }catch(problem){if(token===cameraToken&&problem?.name!=='AbortError')cameraFailure(friendly(problem));return false;}
       })();startPromise=promise;promise.then(()=>{if(startPromise===promise)startPromise=null;},()=>{if(startPromise===promise)startPromise=null;});return promise;
     }
-    function cancelPlayback(){playToken++;if(playTimer!==null)clearTimeout(playTimer);playTimer=null;}
+    function cancelPlayback(){playToken++;if(playTimer!==null)clearTimeout(playTimer);playTimer=null;if(playRAF!==null)window.cancelAnimationFrame?.(playRAF);playRAF=null;}
     function currentPosition(){return playing?Math.min(clip?.durationMs||0,playOrigin+(clock()-playStarted)*speed):positionMs;}
     function pause(){
       if(destroyed)return;if(playing){positionMs=displayed?.clipId===clip?.id?displayed.relativeMs:currentPosition();invalidateDraw();}playing=false;cancelPlayback();notify();
@@ -130,33 +165,33 @@
     function suspend(){pause();releaseCamera();invalidateDraw();cancelExport();phase=review&&clip?'replay':error?'error':'idle';notify();}
     function stop(){if(!destroyed)suspend();}
     function setActive(value){if(destroyed)return;active=Boolean(value);if(!active)suspend();else notify();}
-    function setDelay(value){const seconds=Number(value);if(!Number.isFinite(seconds)||seconds<1||seconds>30)throw RangeError('Choose a delay from 1 to 30 seconds.');delaySeconds=seconds;trim();renderDelay();}
+    function setDelay(value){const seconds=Number(value);if(!Number.isFinite(seconds)||seconds<1||seconds>30)throw RangeError('Choose a delay from 1 to 30 seconds.');delaySeconds=seconds;trim();if(review)notify();else renderDelay(true);}
     function replay(){
       if(!available())return false;if(!frames.length){error='Record a moment before replaying it.';notify();return false;}
       pause();cancelExport();const last=frames.at(-1).timeMs,chosen=frames.filter(frame=>frame.timeMs>=last-delaySeconds*1000).slice(-MAX_FRAMES);let bytes=chosen.reduce((total,frame)=>total+frame.blob.size,0);while(chosen.length>1&&bytes>MAX_CLIP_BYTES)bytes-=chosen.shift().blob.size;const first=chosen[0];
-      clip=Object.freeze({id:'clip-'+(++sequence),frames:Object.freeze(chosen.slice()),startMs:first.timeMs,endMs:last,durationMs:last-first.timeMs,width:first.width,height:first.height});review=true;positionMs=0;error='';phase='replay';clearDisplay();trim();requestDraw(first,0,0,clip.id);notify();return true;
+      replaceClip(Object.freeze({id:'clip-'+(++sequence),frames:Object.freeze(chosen.slice()),startMs:first.timeMs,endMs:last,durationMs:last-first.timeMs,width:first.width,height:first.height}));review=true;positionMs=0;error='';phase='replay';clearDisplay();trim();requestDraw(first,0,0,clip.id);notify();return true;
     }
-    function returnToDelay(){if(destroyed)return;pause();review=false;positionMs=0;error='';clearDisplay();trim();renderDelay();}
+    function returnToDelay(){if(destroyed)return;pause();review=false;positionMs=0;error='';clearDisplay();trim();renderDelay(true);}
     function showPosition(milliseconds){if(!clip)return;positionMs=Math.min(clip.durationMs,Math.max(0,milliseconds));const index=frameAt(clip.frames,clip.startMs+positionMs);if(displayed?.frame.id!==clip.frames[index].id||displayed.clipId!==clip.id)requestDraw(clip.frames[index],index,clip.frames[index].timeMs-clip.startMs,clip.id);}
     function play(){
       if(!available()||!clip||clip.durationMs<=0||playing)return false;review=true;phase='replay';if(positionMs>=clip.durationMs)positionMs=0;
       playing=true;playOrigin=positionMs;playStarted=clock();const token=++playToken;
-      const tick=()=>{playTimer=null;if(token!==playToken||!playing||!available())return;showPosition(currentPosition());if(positionMs>=clip.durationMs){playing=false;notify();return;}notify();playTimer=setTimeout(tick,FRAME_MS);};tick();return true;
+      const tick=()=>{playTimer=null;playRAF=null;if(token!==playToken||!playing||!available())return;showPosition(currentPosition());if(positionMs>=clip.durationMs){playing=false;notify();return;}notify(false);if(typeof window.requestAnimationFrame==='function')playRAF=window.requestAnimationFrame(tick);else playTimer=setTimeout(tick,FRAME_MS);};notify();tick();return true;
     }
     function seek(seconds){if(!available()||!clip)return false;const value=Number(seconds);if(!Number.isFinite(value))return false;pause();review=true;phase='replay';invalidateDraw();showPosition(value*1000);notify();return true;}
-    function step(delta){if(!available()||!clip)return false;const amount=Math.trunc(Number(delta));if(!Number.isFinite(amount))return false;pause();review=true;phase='replay';const index=displayed?.clipId===clip.id?clip.frames.findIndex(frame=>frame.id===displayed.frame.id):frameAt(clip.frames,clip.startMs+positionMs);const target=Math.max(0,Math.min(clip.frames.length-1,index+amount));invalidateDraw();showPosition(clip.frames[target].timeMs-clip.startMs);notify();return true;}
+    function step(delta){if(!available()||!clip)return false;const amount=Math.trunc(Number(delta));if(!Number.isFinite(amount))return false;pause();review=true;phase='replay';const index=displayed?.clipId===clip.id?displayed.index:frameAt(clip.frames,clip.startMs+positionMs);const target=Math.max(0,Math.min(clip.frames.length-1,index+amount));invalidateDraw();showPosition(clip.frames[target].timeMs-clip.startMs);notify();return true;}
     function setSpeed(value){const next=Number(value);if(![.25,.5,1,2].includes(next))throw RangeError('Choose 0.25×, 0.5×, 1× or 2× speed.');const wasPlaying=playing,position=currentPosition();pause();speed=next;positionMs=position;if(wasPlaying)play();else notify();}
-    function getCurrentFrame(){if(!displayed)return null;const frame=displayed.frame,list=displayed.clipId&&clip?.id===displayed.clipId?clip.frames:frames;return Object.freeze({blob:frame.blob,id:frame.id,index:list.findIndex(item=>item.id===frame.id),time:displayed.clipId?displayed.relativeMs/1000:frame.timeMs/1000,timeMs:frame.timeMs,width:frame.width,height:frame.height,clipId:displayed.clipId});}
+    function getCurrentFrame(){if(!displayed)return null;const frame=displayed.frame;return Object.freeze({blob:frame.blob,id:frame.id,index:displayIndex(),time:displayed.clipId?displayed.relativeMs/1000:frame.timeMs/1000,timeMs:frame.timeMs,width:frame.width,height:frame.height,clipId:displayed.clipId});}
     function exportClip({onProgress=()=>{},signal}={}){
       if(destroyed||!available())return Promise.reject(abortError());if(exportJob)return Promise.reject(Error('An export is already running.'));
       if(!clip||clip.durationMs<=0)return Promise.reject(Error('Capture at least two frames before exporting video.'));
-      const type=mimeType();if(!exportSupported()||!type)return Promise.reject(Error('Video export is not supported in this browser. You can still save a frame.'));
+      const type=preferredMime;if(!exportSupported()||!type)return Promise.reject(Error('Video export is not supported in this browser. You can still save a frame.'));
       if(signal?.aborted)return Promise.reject(abortError());
       const frozen=clip,output=document.createElement('canvas'),ctx=output.getContext('2d',{alpha:false});output.width=frozen.width;output.height=frozen.height;
       return new Promise((resolve,reject)=>{
-        const job={closed:false,cancel:null,clip:frozen,stream:null,recorder:null,timers:new Set(),waiters:new Set(),chunks:[],bytes:0};exportJob=job;exportProgress=0;notify();
-        const progress=value=>{if(job.closed)return;exportProgress=Math.max(0,Math.min(1,value));try{onProgress(exportProgress);}catch(_){}notify();};
-        const finish=(problem,result)=>{if(job.closed)return;job.closed=true;for(const timer of job.timers)clearTimeout(timer);job.timers.clear();for(const resolveWait of job.waiters)resolveWait();job.waiters.clear();cancelImages(job);signal?.removeEventListener?.('abort',job.cancel);if(job.recorder){job.recorder.ondataavailable=job.recorder.onerror=job.recorder.onstop=null;try{if(job.recorder.state!=='inactive')job.recorder.stop();}catch(_) {}}for(const track of job.stream?.getTracks()||[])try{track.stop();}catch(_){}job.chunks=[];job.clip=null;if(exportJob===job)exportJob=null;if(problem&&problem.name!=='AbortError')error=problem.message||'Video export failed. Please try again.';notify();problem?reject(problem):resolve(result);};
+        const job={closed:false,cancel:null,clip:frozen,stream:null,recorder:null,timers:new Set(),waiters:new Set(),chunks:[],bytes:0};for(const frame of frozen.frames)retain(frame);exportJob=job;exportProgress=0;let lastProgress=-Infinity;notify();
+        const progress=value=>{if(job.closed)return;exportProgress=Math.max(0,Math.min(1,value));if(exportProgress!==0&&exportProgress!==1&&clock()-lastProgress<UI_INTERVAL)return;lastProgress=clock();try{onProgress(exportProgress);}catch(_){}notify(exportProgress===0||exportProgress===1);};
+        const finish=(problem,result)=>{if(job.closed)return;job.closed=true;for(const timer of job.timers)clearTimeout(timer);job.timers.clear();for(const resolveWait of job.waiters)resolveWait();job.waiters.clear();cancelImages(job);signal?.removeEventListener?.('abort',job.cancel);if(job.recorder){job.recorder.ondataavailable=job.recorder.onerror=job.recorder.onstop=null;try{if(job.recorder.state!=='inactive')job.recorder.stop();}catch(_) {}}for(const track of job.stream?.getTracks()||[])try{track.stop();}catch(_){}job.chunks=[];for(const frame of job.clip?.frames||[])release(frame);job.clip=null;if(exportJob===job)exportJob=null;if(problem&&problem.name!=='AbortError')error=problem.message||'Video export failed. Please try again.';notify();problem?reject(problem):resolve(result);};
         job.cancel=()=>finish(abortError());signal?.addEventListener?.('abort',job.cancel,{once:true});
         const wait=delay=>new Promise(resolveWait=>{if(job.closed){resolveWait();return;}job.waiters.add(resolveWait);const timer=setTimeout(()=>{job.timers.delete(timer);job.waiters.delete(resolveWait);resolveWait();},Math.max(0,delay));job.timers.add(timer);});
         const draw=decoded=>{ctx.fillStyle='#000';ctx.fillRect(0,0,output.width,output.height);const width=decoded.image.width||output.width,height=decoded.image.height||output.height,scale=Math.min(output.width/width,output.height/height);ctx.drawImage(decoded.image,(output.width-width*scale)/2,(output.height-height*scale)/2,width*scale,height*scale);};
@@ -185,7 +220,7 @@
     }
     function visibility(){if(document.hidden&&!destroyed)suspend();}
     function pagehide(){if(!destroyed)suspend();}
-    function destroy(){if(destroyed)return;suspend();destroyed=true;invalidateDraw();frames=[];clip=null;displayed=null;onChange=()=>{};document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);capture.width=capture.height=1;}
+    function destroy(){if(destroyed)return;suspend();destroyed=true;clearRing();replaceClip(null);clearDisplay();onChange=()=>{};onFrame=null;document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);capture.width=capture.height=1;}
     document.addEventListener('visibilitychange',visibility);window.addEventListener('pagehide',pagehide);notify();
     return Object.freeze({start,stop,setActive,setDelay,replay,returnToDelay,play,pause,seek,step,setSpeed,exportClip,destroy,getState,getCurrentFrame});
   }

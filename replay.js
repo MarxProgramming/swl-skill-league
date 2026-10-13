@@ -17,7 +17,8 @@
   function create(root) {
     let engine = null, active = true, destroyed = false, starting = false, state = {}, noticeText = '', noticeError = false;
     let tool = 'view', color = COLORS[0][0], gesture = null, angleDraft = null, lastFrameId = null, lastClipId = null;
-    let prepared = null, preparedUrl = null, exportController = null, exportGeneration = 0, preparing = false, scrubHolding = false, lastPaint = '';
+    let prepared = null, preparedUrl = null, exportController = null, exportGeneration = 0, preparing = false, scrubHolding = false, lastPaint = '', overlayHasInk = false;
+    let fullMode = null, fullToken = 0, fullRequest = false, fullTray = null, fullRestore = null, lastControls = '';
     const drawings = new Map(), handlers = [], fields = {}, buttons = {};
     const listen = (target, event, handler, options) => { target.addEventListener(event, handler, options); handlers.push(() => target.removeEventListener(event, handler, options)); };
     const usable = () => active && !destroyed && !document.hidden;
@@ -38,8 +39,8 @@
     const cameraActions = node('div', 'replay-camera-actions'); cameraActions.append(button('Start camera', 'start', 'replay-primary'), button('Stop camera', 'stop', 'replay-quiet'));
     settings.append(delayField, label('Camera', fields.facing), cameraActions); shell.append(settings);
     const studio = node('section', 'replay-studio'); studio.setAttribute('aria-label', 'Video replay studio');
-    const studioTop = node('div', 'replay-studio-top'), badge = node('span', 'replay-mode', 'CAMERA OFF'), indicator = node('span', 'replay-indicator');
-    studioTop.append(badge, indicator, button('Full screen ⛶', 'fullscreen', 'replay-quiet')); studio.append(studioTop);
+    const studioTop = node('div', 'replay-studio-top'), badge = node('span', 'replay-mode', 'CAMERA OFF'), indicator = node('span', 'replay-indicator'), fps = node('span', 'replay-fps'); fps.setAttribute('aria-label', 'Measured camera frame rate');
+    studioTop.append(badge, indicator, fps, button('Stop camera', 'fullscreen-camera', 'replay-quiet replay-fullscreen-only'), button('Full screen ⛶', 'fullscreen', 'replay-quiet')); studio.append(studioTop);
     const display = node('div', 'replay-display'); display.tabIndex = 0; display.setAttribute('aria-label', 'Video display');
     const video = node('video', 'replay-source'); video.muted = true; video.playsInline = true; video.autoplay = true; video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('aria-hidden', 'true'); video.tabIndex = -1;
     const canvas = node('canvas', 'replay-picture'); canvas.setAttribute('aria-label', 'Delayed video or selected replay frame');
@@ -47,7 +48,8 @@
     const empty = node('div', 'replay-empty'), emptyIcon = node('span', 'replay-empty-icon', '↶'), emptyTitle = node('h2', '', 'See the skill again.'), emptyDescription = node('p', '', 'Choose a delay, point the camera at the floor and press Start camera.'), bufferTrack = node('div', 'replay-buffer-track'), bufferFill = node('span'); bufferTrack.append(bufferFill); bufferTrack.hidden = true; empty.append(emptyIcon, emptyTitle, emptyDescription, bufferTrack);
     display.append(video, canvas, overlay, empty); studio.append(display);
     const primaryRow = node('div', 'replay-primary-row'), replayDescription = node('p', 'replay-capture-note', 'Camera audio is off. Nothing is uploaded.');
-    primaryRow.append(button('Replay last 10 seconds ↶', 'replay', 'replay-primary replay-main-action'), button('Back to delayed view', 'return-delay', 'replay-secondary'), replayDescription); studio.append(primaryRow);
+    primaryRow.append(button('Replay last 10 seconds ↶', 'replay', 'replay-primary replay-main-action'), button('Back to delayed view', 'return-delay', 'replay-secondary'), replayDescription);
+    const dock = node('div', 'replay-dock'); dock.append(primaryRow); studio.append(dock);
     const review = node('div', 'replay-review'); review.hidden = true;
     const timeline = node('div', 'replay-timeline'), time = node('output', 'replay-time', '0:00.0 / 0:00.0'); time.setAttribute('aria-label', 'Replay position and duration');
     fields.scrubber = node('input'); fields.scrubber.type = 'range'; fields.scrubber.min = '0'; fields.scrubber.max = '0'; fields.scrubber.step = '0.001'; fields.scrubber.value = '0'; fields.scrubber.dataset.replayScrubber = ''; fields.scrubber.setAttribute('aria-label', 'Choose a moment in the replay');
@@ -67,15 +69,19 @@
     fields.width = node('select'); fields.width.setAttribute('aria-label', 'Drawing thickness'); [[2, 'Fine'], [4, 'Medium'], [7, 'Bold']].forEach(([value, caption]) => { const option = node('option', '', caption); option.value = String(value); fields.width.append(option); }); fields.width.value = '4';
     const inkOptions = node('div', 'replay-ink-options'); inkOptions.append(colors, fields.width, button('Undo', 'undo-drawing', 'replay-quiet'), button('Clear frame', 'clear-drawing', 'replay-quiet'));
     const toolHint = node('p', 'replay-tool-hint', 'Choose a tool. The replay pauses when you draw.');
-    toolsPanel.append(toolsHeading, tools, inkOptions, toolHint); review.append(toolsPanel);
+    toolsPanel.append(toolsHeading, tools, inkOptions, toolHint);
     const save = node('section', 'replay-save'); save.setAttribute('aria-label', 'Save replay');
     const saveActions = node('div', 'replay-save-actions'); saveActions.append(button('Prepare video clip', 'prepare-clip', 'replay-secondary'), button('Save this frame', 'save-frame', 'replay-quiet'), button('Cancel preparation', 'cancel-export', 'replay-quiet'));
     const exportProgress = node('progress', 'replay-export-progress'); exportProgress.max = 1; exportProgress.value = 0; exportProgress.setAttribute('aria-label', 'Preparing video clip'); exportProgress.hidden = true;
     const saveHint = node('p', 'replay-save-hint', 'The clip contains the video. Frame images include your drawings.');
     const ready = node('div', 'replay-save-ready'); ready.hidden = true; const readyText = node('p', '', 'Ready to save.'); const readyActions = node('div', 'replay-ready-actions'); readyActions.append(button('Share / save…', 'share-clip', 'replay-primary'), button('Download', 'download-clip', 'replay-secondary')); const previewVideo = node('video', 'replay-export-preview'); previewVideo.controls = true; previewVideo.playsInline = true; previewVideo.preload = 'metadata'; previewVideo.setAttribute('playsinline', ''); previewVideo.setAttribute('aria-label', 'Prepared replay clip preview'); previewVideo.hidden = true; const shareHint = node('p', 'replay-share-hint', 'On iPad, choose Save Video or Save to Files when offered by the share sheet.'); ready.append(readyText, readyActions, previewVideo, shareHint);
-    save.append(saveActions, exportProgress, saveHint, ready); review.append(save); studio.append(review); shell.append(studio);
+    save.append(saveActions, exportProgress, saveHint, ready);
+    const tray = node('div', 'replay-tray'), trayHeading = node('div', 'replay-tray-heading'); trayHeading.append(node('span', 'replay-label', 'Replay tools'), button('Close ×', 'close-tray', 'replay-quiet')); tray.append(trayHeading, toolsPanel, save); review.append(tray); dock.append(review);
+    const fullTools = node('div', 'replay-full-tools'); fullTools.append(button('Draw', 'draw-tray', 'replay-secondary'), button('Save', 'save-tray', 'replay-secondary')); dock.append(fullTools);
+    const studioHome = node('div', 'replay-studio-home'); studio.append(video); studioHome.append(studio); shell.append(studioHome);
     const notice = node('p', 'replay-notice'); notice.setAttribute('role', 'status'); notice.setAttribute('aria-live', 'polite');
     const footer = node('p', 'replay-footnote', 'Leaving this tab stops the camera. Your frozen replay stays here until you start a new one or reload.'); shell.append(notice, footer); root.replaceChildren(shell);
+    const portal = node('div', 'replay-shell replay-fullscreen-workspace'); portal.setAttribute('role', 'dialog'); portal.setAttribute('aria-modal', 'true'); portal.setAttribute('aria-label', 'Full screen video replay'); portal.tabIndex = -1;
 
     function announce(message, error = false) { noticeText = message; noticeError = error; update(); }
     function clearGesture() {
@@ -95,25 +101,43 @@
       if (lastClipId && state.clipId && lastClipId !== state.clipId) { cancelExport(); revokePrepared(); drawings.clear(); clearGesture(); }
       if (state.clipId) lastClipId = state.clipId;
       if (lastFrameId !== state.frameId) { clearGesture(); lastFrameId = state.frameId; }
-      update();
+      if (controlKey() !== lastControls) update(); else paint();
+    }
+    function receiveFrame(next) {
+      if (destroyed) return; state = next || state;
+      if (lastFrameId !== state.frameId) { clearGesture(); lastFrameId = state.frameId; }
+      paint();
+    }
+    function controlKey() {
+      return JSON.stringify([state.phase, state.cameraRunning, Math.round((state.bufferSeconds || 0) * 10), state.delaySeconds, state.clipDuration, Math.round((state.position || 0) * 10), state.frameIndex <= 0, state.frameIndex >= state.frameCount - 1, state.frameCount < 2, state.playing, state.speed, state.error, state.limited, state.exporting, state.exportSupported, state.supported, state.rendering, !!state.frameId, Math.round(state.captureFPS || 0), (drawings.get(state.frameId) || []).length, active, starting, preparing, !!fullMode, fullTray, tool, color, noticeText, noticeError, prepared?.kind, angleDraft?.points.length, scrubHolding]);
     }
     function canShare() { try { return !!prepared && typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [prepared.file] }); } catch (_) { return false; } }
     function update() {
       if (destroyed) return;
+      lastControls = controlKey();
       const inReview = reviewing(), running = !!state.cameraRunning, buffered = Number(state.bufferSeconds) || 0, delay = Number(state.delaySeconds) || Number(fields.delay.value) || 10;
       const available = state.supported !== false && !!engine;
       shell.dataset.phase = state.phase || 'idle'; shell.dataset.drawing = String(inReview && tool !== 'view');
+      portal.dataset.phase = state.phase || 'idle'; portal.dataset.drawing = shell.dataset.drawing;
+      portal.dataset.tray = fullTray || '';
       buttons.start.disabled = !active || !available || running || busy() || state.phase === 'starting'; buttons.stop.disabled = !active || (!running && !starting && state.phase !== 'starting');
       text(buttons.start, starting || state.phase === 'starting' ? 'Opening camera…' : 'Start camera');
+      text(buttons['fullscreen-camera'], running ? 'Stop camera' : starting || state.phase === 'starting' ? 'Opening…' : 'Start camera'); buttons['fullscreen-camera'].disabled = running ? buttons.stop.disabled : buttons.start.disabled;
       fields.facing.disabled = running || busy(); fields.delay.disabled = busy();
       [5, 10, 15, 20, 30].forEach(value => { buttons[`delay-${value}`].setAttribute('aria-pressed', String(value === delay)); buttons[`delay-${value}`].disabled = busy(); });
       const availableSeconds = Number(Math.min(delay, buffered || delay).toFixed(1));
-      buttons.replay.disabled = !active || !running || buffered <= 0 || busy(); text(buttons.replay, `Replay last ${availableSeconds} seconds ↶`);
+      buttons.replay.disabled = !active || !running || buffered <= 0 || busy(); text(buttons.replay, fullMode ? `Replay ${availableSeconds}s ↶` : `Replay last ${availableSeconds} seconds ↶`);
+      text(buttons['return-delay'], fullMode ? 'Delay' : 'Back to delayed view');
       buttons['return-delay'].hidden = !inReview || !running; buttons['return-delay'].disabled = busy();
       text(badge, inReview ? 'REPLAY' : running ? state.limited ? `${availableSeconds}s DELAY · DEVICE LIMIT` : buffered < delay ? 'BUILDING YOUR DELAY' : `${delay}s DELAY` : 'CAMERA OFF'); badge.dataset.live = String(running && !inReview);
       text(indicator, inReview ? 'A moment to learn from' : running ? `${buffered.toFixed(1)}s buffered` : 'Ready when you are');
+      const actualFPS = Math.round(Number(state.captureFPS) || 0); fps.hidden = !running || !actualFPS; text(fps, `${actualFPS} fps`); fps.title = 'Measured captured frames per second';
       text(replayDescription, running && state.limited ? `This device is keeping ${availableSeconds}s of video. Replay uses this shorter buffer. Audio is off.` : 'Camera audio is off. Nothing is uploaded.');
       review.hidden = !inReview; empty.hidden = !!state.frameId;
+      tray.hidden = !!fullMode && (!fullTray || !inReview); toolsPanel.hidden = !!fullMode && fullTray !== 'draw'; save.hidden = !!fullMode && fullTray !== 'save';
+      buttons['draw-tray'].disabled = !inReview || busy(); buttons['save-tray'].disabled = !inReview;
+      buttons['draw-tray'].setAttribute('aria-expanded', String(fullTray === 'draw')); buttons['save-tray'].setAttribute('aria-expanded', String(fullTray === 'save'));
+      text(buttons['draw-tray'], tool === 'view' ? 'Draw' : `${tool[0].toUpperCase() + tool.slice(1)} ✎`);
       bufferTrack.hidden = !running || inReview || state.limited || buffered >= delay; bufferFill.style.width = `${Math.min(100, buffered / delay * 100)}%`;
       text(emptyTitle, running ? `Building your ${delay}s delay` : starting || state.phase === 'starting' ? 'Opening your camera…' : 'See the skill again.');
       text(emptyDescription, running ? `${Math.min(delay, buffered).toFixed(1)} of ${delay} seconds ready. Keep the camera steady.` : 'Choose a delay, point the camera at the floor and press Start camera.');
@@ -159,13 +183,16 @@
       }
     }
     function paint() {
+      const strokes = drawings.get(state.frameId) || [], hasInk = reviewing() && !!(strokes.length || gesture || angleDraft);
+      if (!hasInk && !overlayHasInk) return;
       const rect = display.getBoundingClientRect(); if (!rect.width || !rect.height) return;
       const ratio = Math.min(2, window.devicePixelRatio || 1), width = Math.round(rect.width * ratio), height = Math.round(rect.height * ratio);
-      const strokes = drawings.get(state.frameId) || [], endpoint = gesture?.points[gesture.points.length - 1];
+      const endpoint = gesture?.points[gesture.points.length - 1];
       const signature = [state.frameId, reviewing(), width, height, ratio, canvas.width, canvas.height, strokes.length, gesture?.tool, gesture?.points.length, endpoint?.x, endpoint?.y, angleDraft?.points.length].join(':');
       if (signature === lastPaint) return; lastPaint = signature;
       if (overlay.width !== width || overlay.height !== height) { overlay.width = width; overlay.height = height; }
       const context = overlay.getContext('2d'); if (!context) return; context.setTransform(ratio, 0, 0, ratio, 0, 0); context.clearRect(0, 0, rect.width, rect.height);
+      overlayHasInk = hasInk;
       if (!reviewing() || !state.frameId) return;
       const box = imageBox(rect.width, rect.height); strokes.forEach(stroke => drawStroke(context, stroke, box));
       if (angleDraft?.frameId === state.frameId) drawStroke(context, angleDraft, box);
@@ -238,27 +265,73 @@
       if (!preparedUrl) preparedUrl = URL.createObjectURL(prepared.blob);
       const link = node('a'); link.href = preparedUrl; link.download = prepared.name; link.rel = 'noopener'; link.style.display = 'none'; document.body.append(link); link.click(); link.remove(); announce('Download requested. Check this browser’s downloads or Files.');
     }
-    async function fullscreen() {
-      try {
-        if (document.fullscreenElement === studio) await document.exitFullscreen();
-        else if (studio.requestFullscreen) await studio.requestFullscreen();
-        else { shell.classList.toggle('replay-expanded'); text(buttons.fullscreen, shell.classList.contains('replay-expanded') ? 'Close large view' : 'Full screen ⛶'); announce('Full screen is unavailable here. The replay is enlarged in the page instead.'); }
-      } catch (_) { shell.classList.add('replay-expanded'); text(buttons.fullscreen, 'Close large view'); announce('The replay is enlarged in the page. Full screen is not available in this browser.'); }
+    const nativeFullElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+    function exitNative() {
+      if (nativeFullElement() !== portal) return;
+      const leave = document.exitFullscreen || document.webkitExitFullscreen || document.webkitCancelFullScreen;
+      try { Promise.resolve(leave?.call(document)).catch(() => {}); } catch (_) {}
+    }
+    function fitFullscreen() {
+      if (!fullMode) { paint(); return; }
+      const viewport = window.visualViewport, native = nativeFullElement() === portal;
+      portal.style.setProperty('--replay-viewport-top', `${native ? 0 : viewport?.offsetTop || 0}px`);
+      portal.style.setProperty('--replay-viewport-left', `${native ? 0 : viewport?.offsetLeft || 0}px`);
+      portal.style.setProperty('--replay-viewport-height', `${native ? window.innerHeight : viewport?.height || window.innerHeight || 768}px`);
+      portal.style.setProperty('--replay-viewport-width', `${native ? window.innerWidth : viewport?.width || window.innerWidth || 1024}px`);
+      portal.style.setProperty('--replay-dock-height', `${dock.getBoundingClientRect().height || 132}px`);
       paint();
+    }
+    function exitFull(restoreFocus = true) {
+      if (!fullMode) return;
+      fullToken++; fullMode = null; fullRequest = false; fullTray = null; clearGesture(); previewVideo.pause?.(); exitNative();
+      studioHome.append(studio); shell.append(notice, footer); portal.remove();
+      if (fullRestore) {
+        document.body.style.overflow = fullRestore.bodyOverflow;
+        document.body.style.overscrollBehavior = fullRestore.bodyOverscroll;
+        if (document.documentElement?.style) document.documentElement.style.overflow = fullRestore.htmlOverflow;
+        fullRestore.inert.forEach(([element, original]) => { element.inert = original; });
+        if (restoreFocus && usable()) { try { fullRestore.focus?.focus({ preventScroll: true }); } catch (_) {} }
+        fullRestore = null;
+      }
+      text(buttons.fullscreen, 'Full screen ⛶'); update();
+    }
+    async function fullscreen() {
+      if (fullMode) { exitFull(); return; }
+      clearGesture(); fullMode = 'fallback'; fullTray = null; const token = ++fullToken;
+      fullRestore = { focus: document.activeElement, bodyOverflow: document.body.style.overflow || '', bodyOverscroll: document.body.style.overscrollBehavior || '', htmlOverflow: document.documentElement?.style?.overflow || '', inert: Array.from(document.body.children || []).map(element => [element, element.inert]) };
+      fullRestore.inert.forEach(([element]) => { element.inert = true; });
+      document.body.style.overflow = 'hidden'; document.body.style.overscrollBehavior = 'none'; if (document.documentElement?.style) document.documentElement.style.overflow = 'hidden';
+      document.body.append(portal); portal.append(studio, notice); text(buttons.fullscreen, 'Exit full screen ×'); update(); fitFullscreen();
+      try { buttons.fullscreen.focus({ preventScroll: true }); } catch (_) {}
+      const request = portal.requestFullscreen || portal.webkitRequestFullscreen || portal.webkitRequestFullScreen;
+      if (!request) return;
+      fullRequest = true;
+      try {
+        await Promise.resolve(request.call(portal));
+        if (token !== fullToken || !usable()) { if (!fullMode || !usable()) exitNative(); return; }
+        fullMode = nativeFullElement() === portal ? 'native' : 'fallback';
+      } catch (_) { if (token === fullToken) fullMode = 'fallback'; }
+      finally { if (token === fullToken) { fullRequest = false; fitFullscreen(); } }
+    }
+    function fullscreenChanged() {
+      if (!fullMode) { if (nativeFullElement() === portal) exitNative(); return; }
+      if (nativeFullElement() === portal) { fullMode = 'native'; fullRequest = false; fitFullscreen(); }
+      else if (fullMode === 'native' && !fullRequest) exitFull();
     }
     async function perform(action) {
       try {
+        if (action === 'fullscreen-camera') action = state.cameraRunning ? 'stop' : 'start';
         if (action.startsWith('delay-')) { checkDelay(Number(action.slice(6))); update(); }
         else if (action === 'start') {
           const delay = checkDelay(fields.delay.value); if (!delay || !engine) return;
           starting = true; noticeText = ''; noticeError = false; update();
           try { await engine.start({ delaySeconds: delay, facingMode: fields.facing.value === 'user' ? 'user' : 'environment' }); } finally { starting = false; update(); }
         } else if (action === 'stop') { cancelExport(); engine?.stop(); starting = false; announce('Camera stopped. A frozen replay, if you made one, is still available.'); }
-        else if (action === 'replay') { noticeText = ''; clearGesture(); tool = 'view'; engine?.replay(); }
-        else if (action === 'return-delay') { clearGesture(); tool = 'view'; engine?.returnToDelay(); }
+        else if (action === 'replay') { noticeText = ''; clearGesture(); fullTray = null; tool = 'view'; engine?.replay(); fitFullscreen(); }
+        else if (action === 'return-delay') { clearGesture(); fullTray = null; tool = 'view'; engine?.returnToDelay(); fitFullscreen(); }
         else if (action === 'play') { clearGesture(); tool = 'view'; state.playing ? engine?.pause() : engine?.play(); update(); }
         else if (action === 'step-back' || action === 'step-forward') { clearGesture(); engine?.pause(); engine?.step(action === 'step-back' ? -1 : 1); }
-        else if (action.startsWith('tool-')) { tool = action.slice(5); clearGesture(); if (tool !== 'view') engine?.pause(); update(); }
+        else if (action.startsWith('tool-')) { tool = action.slice(5); clearGesture(); if (tool !== 'view') engine?.pause(); if (fullMode) fullTray = null; update(); if (fullMode) display.focus?.({ preventScroll: true }); }
         else if (action.startsWith('color-')) { color = COLORS[Number(action.slice(6))]?.[0] || COLORS[0][0]; update(); }
         else if (action === 'undo-drawing') { if (angleDraft) angleDraft = null; else drawings.get(state.frameId)?.pop(); update(); }
         else if (action === 'clear-drawing') { drawings.delete(state.frameId); clearGesture(); update(); }
@@ -268,6 +341,8 @@
         else if (action === 'share-clip') await shareClip();
         else if (action === 'download-clip') downloadClip();
         else if (action === 'fullscreen') await fullscreen();
+        else if (action === 'draw-tray' || action === 'save-tray') { fullTray = fullTray === action.slice(0, -5) ? null : action.slice(0, -5); if (fullTray) { engine?.pause(); previewVideo.pause?.(); } update(); fitFullscreen(); }
+        else if (action === 'close-tray') { const previousTray = fullTray; fullTray = null; previewVideo.pause?.(); update(); buttons[`${previousTray || 'draw'}-tray`].focus?.({ preventScroll: true }); }
       } catch (error) { if (usable()) announce(errorMessage(error), true); }
     }
     listen(fields.delay, 'change', () => { if (usable()) checkDelay(fields.delay.value); });
@@ -276,15 +351,30 @@
     listen(fields.scrubber, 'input', () => { if (usable() && reviewing() && !busy()) { const position = Number(fields.scrubber.value); clearGesture(); engine.pause(); engine.seek(position); } });
     listen(fields.scrubber, 'change', () => { scrubHolding = false; update(); }); listen(fields.scrubber, 'pointerup', () => { scrubHolding = false; update(); }); listen(fields.scrubber, 'pointercancel', () => { scrubHolding = false; update(); });
     listen(overlay, 'pointerdown', strokeStart); listen(overlay, 'pointermove', strokeMove); listen(overlay, 'pointerup', event => strokeEnd(event)); listen(overlay, 'pointercancel', event => strokeEnd(event, true)); listen(overlay, 'lostpointercapture', event => { if (gesture?.pointerId === event.pointerId) { gesture = null; paint(); } });
-    listen(window, 'resize', paint); listen(document, 'fullscreenchange', () => { text(buttons.fullscreen, document.fullscreenElement === studio ? 'Exit full screen' : 'Full screen ⛶'); paint(); });
+    listen(window, 'resize', fitFullscreen); if (window.visualViewport) { listen(window.visualViewport, 'resize', fitFullscreen); listen(window.visualViewport, 'scroll', fitFullscreen); }
+    listen(document, 'fullscreenchange', fullscreenChanged); listen(document, 'webkitfullscreenchange', fullscreenChanged);
+    listen(document, 'keydown', event => {
+      if (!fullMode) return;
+      if (event.key === 'Escape') { event.preventDefault(); if (fullTray) { const previousTray = fullTray; fullTray = null; previewVideo.pause?.(); update(); buttons[`${previousTray}-tray`].focus?.({ preventScroll: true }); } else exitFull(); }
+      else if (event.key === 'Tab') {
+        const candidates = Array.from(portal.querySelectorAll('button,input,select,video[controls],[tabindex]')).filter(element => {
+          if (element.disabled || element.tabIndex === -1 || (element.getClientRects && !element.getClientRects().length)) return false;
+          for (let parent = element; parent && parent !== portal; parent = parent.parentNode) if (parent.hidden) return false;
+          return true;
+        });
+        const first = candidates[0], last = candidates[candidates.length - 1];
+        if (first && event.shiftKey && (document.activeElement === first || document.activeElement === portal)) { event.preventDefault(); last.focus(); }
+        else if (last && !event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    });
     listen(display, 'keydown', event => { if (!usable() || !reviewing() || busy()) return; if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); engine.pause(); engine.step(event.key === 'ArrowLeft' ? -1 : 1); } else if (event.key === ' ') { event.preventDefault(); perform('play'); } });
-    const pauseForExit = () => { cancelExport(); clearGesture(); scrubHolding = false; starting = false; previewVideo.pause?.(); if (document.fullscreenElement === studio) { try { Promise.resolve(document.exitFullscreen?.()).catch(() => {}); } catch (_) {} } shell.classList.remove('replay-expanded'); text(buttons.fullscreen, 'Full screen ⛶'); engine?.setActive(false); update(); };
+    const pauseForExit = () => { exitFull(false); cancelExport(); clearGesture(); scrubHolding = false; starting = false; previewVideo.pause?.(); engine?.setActive(false); update(); };
     listen(document, 'visibilitychange', () => { if (document.hidden) pauseForExit(); else if (active) { engine?.setActive(true); update(); } }); listen(window, 'pagehide', pauseForExit);
-    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(paint) : null; observer?.observe(display);
-    try { engine = window.SWLReplayEngine?.create({ video, canvas, onChange: receive }) || null; if (engine) receive(engine.getState()); else update(); } catch (error) { announce(errorMessage(error), true); }
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(fitFullscreen) : null; observer?.observe(display); observer?.observe(dock);
+    try { engine = window.SWLReplayEngine?.create({ video, canvas, onChange: receive, onFrame: receiveFrame }) || null; if (engine) receive(engine.getState()); else update(); } catch (error) { announce(errorMessage(error), true); }
     return {
       setActive(value) { if (destroyed) return; active = !!value; if (!active) pauseForExit(); else { engine?.setActive(!document.hidden); update(); } },
-      getState() { return { ...state, active, drawingTool: tool, currentFrameDrawings: (drawings.get(state.frameId) || []).length, prepared: prepared?.kind || null, preparing }; },
+      getState() { return { ...state, active, drawingTool: tool, currentFrameDrawings: (drawings.get(state.frameId) || []).length, prepared: prepared?.kind || null, preparing, fullscreen: fullMode, fullTray }; },
       destroy() { if (destroyed) return; pauseForExit(); destroyed = true; active = false; revokePrepared(); observer?.disconnect(); handlers.forEach(remove => remove()); engine?.destroy(); drawings.clear(); root.replaceChildren(); }
     };
   }

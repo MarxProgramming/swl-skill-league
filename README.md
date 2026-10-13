@@ -55,7 +55,9 @@ Challenge design draws on [British Gymnastics’ Partner School session plans](h
 
 ## Video Replay
 
-Choose a delay from 1–30 seconds, select the front or rear camera, and press Start. The browser requests camera permission at that point. Video is silent and stays in a bounded rolling buffer on the device; it is never uploaded to Google Sheets or any server. Once the selected delay has filled, the screen shows the earlier camera view. Replay captures the most recent available seconds for review.
+Choose a delay from 1–30 seconds, select the front or rear camera, and press Start. The browser requests camera permission at that point. Video is silent and stays in a bounded rolling buffer on the device; it is never uploaded to Google Sheets or any server. Capture targets up to 60 frames per second where the camera and device can sustain it, using new video-frame callbacks when available. The displayed frame rate reports actual capture performance rather than the requested target. Once the selected delay has filled, the screen shows the earlier camera view. Replay captures the most recent available seconds for review.
+
+Full screen fills the display with the video and a compact control dock. Drawing and saving tools open on demand. Supported browsers use native full screen; a screen-filling in-page mode is available elsewhere, with a visible exit control.
 
 Review a clip with play/pause, slow motion, a time scrubber and one captured frame at a time. Drawing tools mark a paused frame, with colours, undo and clear. Save frame includes those marks. Save clip prepares a video separately, then offers the device's share/save menu when file sharing is supported or a download fallback. Video exports contain the captured footage without drawing overlays. Browsers cannot directly request access to an iPad's entire camera roll; the system share menu controls the available Save Video or Save to Files destinations.
 
