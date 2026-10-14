@@ -1579,7 +1579,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-timing.css?v=20261013c">
 <link rel="stylesheet" href="./games-addon.css?v=20261012b">
 <link rel="stylesheet" href="./games-ratings.css?v=20261013c">
-<link rel="stylesheet" href="./v2.css?v=20261014a">
+<link rel="stylesheet" href="./v2.css?v=20261014b">
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261013d">
 </head>
@@ -1634,7 +1634,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   <section id="dashboard" aria-label="Leaderboards">
     <h1 class="sr">Leaderboards</h1>
 
-    <div class="board-filters" id="leaderboardFilters" role="group" aria-label="Leaderboard squad"></div>
+    <div class="board-filter-controls">
+      <div class="board-filters" id="leaderboardFilters" role="group" aria-label="Leaderboard squad"></div>
+      <label class="board-age-filter" for="leaderboardAge"><span>Age</span><select id="leaderboardAge" aria-describedby="leaderboardScope"><option value="all">All ages</option></select></label>
+    </div>
     <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
     <div class="stats">
       <div class="stat">
@@ -1780,7 +1783,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+1</strong>. All three Perfect earn <strong>+5 instead</strong>. This includes leaps. The bonus follows the current marks.</li>
     <li><strong>Controlled linking and presentation earn extra.</strong> In each Rolls or Acro complex, choose Good <strong>+1</strong>, Excellent <strong>+2</strong>, or Perfect <strong>+3</strong>. Judge smooth transitions, balance and presentation. Leaps have no linking rating.</li>
-    <li><strong>Keep skills fresh.</strong> Each level lasts 30 days. Renew after practising to keep it. With 7 days left, the skill turns red and joins the unticked list. Expiry drops one level; renewals do not add points. The gymnast with the most retained skill gains today earns an On fire badge. Today follows London time; tied leaders share it, and renewals do not count.</li>
+    <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
+    <li><strong>Keep skills fresh.</strong> Each level lasts 30 days. Renew after practising to keep it. With 7 days left, the skill turns red and joins the unticked list. Expiry drops one level; renewals do not add points. Earn 10 net points today for Hot, or 15 for On fire. Skills, linking and completion bonuses all count. Renewals add no points; resets and undo reduce today’s progress. Automatic expiry does not take away today’s gains. Today follows London time. On the first tracking day, only points earned since tracking began count.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically.</li>
   </ul>
 </dialog>
@@ -1803,7 +1807,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
 <script src="./startup.js"></script>
 <script src="./celebration.js?v=20261012b"></script>
-<script src="./placement.js?v=20261014a"></script>
+<script src="./placement.js?v=20261014b"></script>
 <script src="./lock.js"></script>
 <script src="./games-wheel.js?v=20261013c"></script>
 <script src="./games-team.js?v=20261013d"></script>
@@ -1812,8 +1816,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-addon.js?v=20261012b"></script>
 <script src="./games-ratings.js?v=20261013d"></script>
 <script src="./games.js?v=20261013c"></script>
-<script src="./skills-catalogue.js?v=20261014a"></script>
-<script src="./v2.js?v=20261014a"></script>
+<script src="./skills-catalogue.js?v=20261014b"></script>
+<script src="./v2.js?v=20261014b"></script>
 <script src="./welcome.js"></script>
 <script>
 (() => {
@@ -1976,6 +1980,39 @@ html:has(body.no-motion){scroll-behavior:auto}
       index === 0 || index === words.length - 1 ? word[0] : ''
     ).join('');
 
+  // IGA Women's Artistic National Pathway, January 2026, printed page 5.
+  // Public age metadata only: birth dates are never part of this website's data.
+  const AGE_CATEGORIES = [
+    {id:'mm', name:'Mini Marvels', min:5, max:6, range:'5–6'},
+    {id:'ll', name:'Little Leapers', min:7, max:8, range:'7–8'},
+    {id:'ss', name:'Skill Seekers', min:9, max:10, range:'9–10'},
+    {id:'tb', name:'Trailblazers', min:11, max:12, range:'11–12'},
+    {id:'p', name:'Pioneers', min:13, max:14, range:'13–14'},
+    {id:'l', name:'Legends', min:15, max:16, range:'15–16'},
+    {id:'m', name:'Masters', min:17, max:Infinity, range:'17+'}
+  ];
+  const londonDateFormat = new Intl.DateTimeFormat('en-GB', {
+    timeZone:'Europe/London', year:'numeric', month:'2-digit', day:'2-digit'
+  });
+  function londonDay(at = Date.now()) {
+    const date = new Date(at);
+    if (!Number.isFinite(date.getTime())) return '';
+    const parts = Object.fromEntries(londonDateFormat.formatToParts(date).map(part => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+  const londonYear = (at = Date.now()) => Number(londonDay(at).slice(0, 4));
+  function ageCategory(gymnast, at = Date.now()) {
+    if (!gymnast || gymnast.ageYear !== londonYear(at) || !Number.isInteger(gymnast.competitionAge)) return 'unknown';
+    const category = AGE_CATEGORIES.find(item => gymnast.competitionAge >= item.min && gymnast.competitionAge <= item.max);
+    return category && category.id === gymnast.ageCategoryId ? category.id : 'unknown';
+  }
+  function ageCategoryLabel(id) {
+    if (id === 'all') return 'All ages';
+    const category = AGE_CATEGORIES.find(item => item.id === id);
+    return category ? `${category.name} (${category.range})` : 'No current age category';
+  }
+  const inLeaderboardAge = (gymnast, age = 'all') => age === 'all' || ageCategory(gymnast) === age;
+
   const freshState = () => ({
     app: APP_ID,
     version: 1,
@@ -1985,7 +2022,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     linking: {},
     skillDates: {},
     expiryDays: 30,
-    expiryStartedAt: null
+    expiryStartedAt: null,
+    dailyProgress: null
   });
 
   const isObject = value =>
@@ -2022,7 +2060,16 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (!Array.isArray(data.gymnasts) || data.gymnasts.length > 2000) {
         throw Error('The gymnast roster could not be read.');
       }
-      clean.gymnasts = data.gymnasts.map(cleanGymnast);
+      clean.gymnasts = data.gymnasts.map(value => {
+        const gymnast = cleanGymnast(value);
+        // Only the three explicitly public age fields survive parsing.
+        if (value.ageYear !== undefined || value.competitionAge !== undefined || value.ageCategoryId !== undefined) {
+          gymnast.ageYear = Number.isInteger(value.ageYear) && value.ageYear >= 2000 && value.ageYear <= 9999 ? value.ageYear : null;
+          gymnast.competitionAge = Number.isInteger(value.competitionAge) && value.competitionAge >= 0 && value.competitionAge <= 120 ? value.competitionAge : null;
+          gymnast.ageCategoryId = AGE_CATEGORIES.some(category => category.id === value.ageCategoryId) ? value.ageCategoryId : null;
+        }
+        return gymnast;
+      });
     }
     const ids = new Set(clean.gymnasts.map(g => g.id));
     if (ids.size !== clean.gymnasts.length) throw Error('The roster contains duplicate gymnast IDs.');
@@ -2063,6 +2110,22 @@ html:has(body.no-motion){scroll-behavior:auto}
           clean.skillDates[id][skill] = {renewedAt:detail.renewedAt || null,earnedAt:detail.earnedAt || null};
         }
       }
+    }
+    if (data.dailyProgress != null) {
+      const progress = data.dailyProgress;
+      if (!isObject(progress) || typeof progress.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(progress.day) ||
+          (!Number.isFinite(Date.parse(progress.day + 'T12:00:00Z')) || new Date(progress.day + 'T12:00:00Z').toISOString().slice(0, 10) !== progress.day) || typeof progress.startedAt !== 'string' ||
+          !Number.isFinite(Date.parse(progress.startedAt)) || typeof progress.complete !== 'boolean' || !isObject(progress.points)) {
+        throw Error('Today’s progress could not be read. Refresh to load the latest scores.');
+      }
+      const points = {};
+      for (const [id, value] of Object.entries(progress.points)) {
+        if (!ids.has(id) || typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value) > 10000) {
+          throw Error('Today’s progress contains an invalid score.');
+        }
+        points[id] = value;
+      }
+      clean.dailyProgress = {day:progress.day, startedAt:progress.startedAt, complete:progress.complete, points};
     }
     clean.expiryStartedAt = typeof data.expiryStartedAt === 'string' && Number.isFinite(Date.parse(data.expiryStartedAt)) ? data.expiryStartedAt : null;
     return clean;
@@ -2120,6 +2183,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let catalogueReturnScroll = 0;
   let coachFilter = 'all';
   let leaderboardGroup = 'all';
+  let leaderboardAge = 'all';
   let placementGroup = 'own';
   let categoryFilter = 'all';
   let statusFilter = 'all';
@@ -2150,20 +2214,20 @@ html:has(body.no-motion){scroll-behavior:auto}
     state.marks[id]?.[skill] ?? 0;
   const linkRating = (id, complex) => state.linking?.[id]?.[complex] ?? 0;
 
-  function completionBonus(id, category, tier) {
+  function completionBonus(id, category, tier, source = state) {
     const skills = SKILLS.filter(skill => skill.category === category && skill.tier === tier);
     if (skills.length !== 3) return 0;
-    if (skills.every(skill => mark(id, skill.id) === 2)) return 5;
-    return skills.every(skill => mark(id, skill.id) > 0) ? 1 : 0;
+    if (skills.every(skill => (source.marks[id]?.[skill.id] ?? 0) === 2)) return 5;
+    return skills.every(skill => (source.marks[id]?.[skill.id] ?? 0) > 0) ? 1 : 0;
   }
 
-  function summary(id, category = 'overall') {
+  function summary(id, category = 'overall', source = state) {
     const total = SKILLS
       .filter(skill =>
         category === 'overall' || skill.category === category
       )
       .reduce((total, skill) => {
-        const value = mark(id, skill.id);
+        const value = source.marks[id]?.[skill.id] ?? 0;
 
         total.points += value * skill.points;
         total.achieved += Number(value > 0);
@@ -2178,11 +2242,11 @@ html:has(body.no-motion){scroll-behavior:auto}
         max: 0
       });
     const complexes = COMPLEXES.filter(complex => category === 'overall' || complex.category === category);
-    total.linking = complexes.reduce((points, complex) => points + linkRating(id, complex.id), 0);
+    total.linking = complexes.reduce((points, complex) => points + (source.linking?.[id]?.[complex.id] ?? 0), 0);
     total.points += total.linking;
     total.max += complexes.length * 3;
     const groups = SKILL_GROUPS.filter(group => category === 'overall' || group.category === category);
-    total.completion = groups.reduce((points, group) => points + completionBonus(id, group.category, group.tier), 0);
+    total.completion = groups.reduce((points, group) => points + completionBonus(id, group.category, group.tier, source), 0);
     total.points += total.completion;
     total.max += groups.length * 5;
     return total;
@@ -2194,56 +2258,43 @@ html:has(body.no-motion){scroll-behavior:auto}
     const remaining = expiry === null ? null : expiry - at;
     return {level, expiry, days: remaining === null ? null : Math.max(0, Math.ceil(remaining / 86400000)), due:level > 0 && remaining !== null && remaining <= 7 * 86400000};
   }
-  const londonDayFormat = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit'
-  });
-  let fireCache = null;
-  function fireLeaders(at = Date.now()) {
-    const now = new Date(at).getTime();
-    if (!Number.isFinite(now)) return {counts: new Map(), highest: 0};
-    const day = londonDayFormat.format(new Date(now));
-    if (fireCache?.state === state && fireCache.roster === GYMNASTS && fireCache.day === day &&
-        now >= fireCache.from && now < fireCache.until) return fireCache;
-    const counts = new Map();
-    let highest = 0, until = Infinity;
-    for (const gymnast of GYMNASTS) {
-      let count = 0;
-      for (const skill of SKILLS) {
-        if (mark(gymnast.id, skill.id) <= 0) continue;
-        const earned = Date.parse(state.skillDates?.[gymnast.id]?.[skill.id]?.earnedAt || '');
-        if (!Number.isFinite(earned) || londonDayFormat.format(new Date(earned)) !== day) continue;
-        if (earned > now) { until = Math.min(until, earned); continue; }
-        count++;
-      }
-      counts.set(gymnast.id, count);
-      highest = Math.max(highest, count);
-    }
-    // One tally serves every view; changing marks, London date or a future-date
-    // boundary invalidates it. Filters never change the league-wide winners.
-    fireCache = {state, roster: GYMNASTS, day, from: now, until, counts, highest};
-    return fireCache;
-  }
+  // Retained-skill count remains available for the momentum chart; heat is points-based.
   function fireCount(id, at = Date.now()) {
-    return fireLeaders(at).counts.get(id) || 0;
+    const day = londonDay(at), now = new Date(at).getTime();
+    return SKILLS.filter(skill => {
+      const earned = Date.parse(state.skillDates?.[id]?.[skill.id]?.earnedAt || '');
+      return mark(id, skill.id) > 0 && Number.isFinite(earned) && earned <= now && londonDay(earned) === day;
+    }).length;
   }
-  function isOnFire(id, at = Date.now()) {
-    const leaders = fireLeaders(at);
-    return leaders.highest > 0 && leaders.counts.get(id) === leaders.highest;
+  function dailyPoints(id, at = Date.now()) {
+    const progress = confirmedState.dailyProgress;
+    // Older servers and yesterday's cached response cannot establish today's baseline.
+    if (!progress || progress.day !== londonDay(at) || Date.parse(progress.startedAt) > new Date(at).getTime()) return 0;
+    const signed = (progress.points[id] ?? 0) + summary(id, 'overall', state).points - summary(id, 'overall', confirmedState).points;
+    return Math.max(0, Math.round(signed * 1000000) / 1000000);
   }
+  function heatLevel(id, at = Date.now()) {
+    const points = dailyPoints(id, at);
+    return points >= 15 ? 'fire' : points >= 10 ? 'hot' : 'none';
+  }
+  const isOnFire = (id, at = Date.now()) => heatLevel(id, at) === 'fire';
+  const heatClass = id => heatLevel(id) === 'fire' ? ' is-on-fire' : heatLevel(id) === 'hot' ? ' is-hot' : '';
   function fireBadge(id, at = Date.now()) {
-    if (!isOnFire(id, at)) return '';
-    const count = fireCount(id, at);
-    return `<span class="fire-badge" title="Most retained skill gains today across all squads (London time): ${count}. Tied leaders share the badge."><span aria-hidden="true">🔥</span> On fire</span>`;
+    const level = heatLevel(id, at);
+    if (level === 'none') return '';
+    const label = level === 'fire' ? 'On fire' : 'Hot';
+    const partial = confirmedState.dailyProgress?.complete === false ? ' since tracking began today' : ' today';
+    return `<span class="fire-badge heat-${level}" title="${dailyPoints(id, at)} net points${partial} (London time). Hot from 10 points; On fire from 15."><span aria-hidden="true">🔥</span> ${label}</span>`;
   }
   function renderV2() {
-    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'all' || (group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : gymnast.coach === group);
   }
-  function standings(category, group = 'all') {
+  function standings(category, group = 'all', age = 'all') {
     return GYMNASTS
-      .filter(gymnast => inLeaderboardGroup(gymnast, group))
+      .filter(gymnast => inLeaderboardGroup(gymnast, group) && inLeaderboardAge(gymnast, age))
       .map(gymnast => ({
         gymnast,
         ...summary(gymnast.id, category)
@@ -3018,8 +3069,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     const groups = [...new Set(GYMNASTS.map(g => g.coach))];
     if (!['all','senior'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
     if ($('leaderboardFilters')) $('leaderboardFilters').innerHTML = [['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<button type="button" class="chip" data-board-group="${escapeHTML(id)}" aria-pressed="${leaderboardGroup===id}">${escapeHTML(label)}</button>`).join('');
-    if ($('leaderboardScope')) $('leaderboardScope').textContent = leaderboardGroup === 'all' ? 'All squads · overall leaderboards' : leaderboardGroup === 'senior' ? 'All senior squad · Marx and Dan’s groups' : groupLabel(leaderboardGroup) + ' · group leaderboards';
-    const all = GYMNASTS.filter(g=>inLeaderboardGroup(g,leaderboardGroup)).map(g => summary(g.id));
+    const groupGymnasts = GYMNASTS.filter(g=>inLeaderboardGroup(g,leaderboardGroup));
+    if (!['all','unknown',...AGE_CATEGORIES.map(category=>category.id)].includes(leaderboardAge)) leaderboardAge = 'all';
+    const ages = ['all', ...AGE_CATEGORIES.map(category=>category.id)];
+    if (groupGymnasts.some(g=>ageCategory(g)==='unknown') || leaderboardAge === 'unknown') ages.push('unknown');
+    if ($('leaderboardAge')) {
+      $('leaderboardAge').disabled = !hasLoaded;
+      $('leaderboardAge').innerHTML = ages.map(id=>`<option value="${id}"${leaderboardAge===id?' selected':''}>${escapeHTML(ageCategoryLabel(id))}${hasLoaded?' · '+groupGymnasts.filter(g=>inLeaderboardAge(g,id)).length:''}</option>`).join('');
+    }
+    const filteredGymnasts = groupGymnasts.filter(g=>inLeaderboardAge(g,leaderboardAge));
+    const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : groupLabel(leaderboardGroup);
+    if ($('leaderboardScope')) $('leaderboardScope').textContent = `${squadLabel} · ${ageCategoryLabel(leaderboardAge)}${hasLoaded ? ` · ${filteredGymnasts.length} gymnast${filteredGymnasts.length===1?'':'s'}` : ''} · age reached in ${londonYear()}`;
+    const all = filteredGymnasts.map(g => summary(g.id));
 
     if (!hasLoaded) {
       ['squadPoints', 'achievedCount', 'perfectCount'].forEach(id => {
@@ -3046,6 +3107,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     });
 
     $('emptyNote').hidden = all.some(g => g.points > 0);
+    $('emptyNote').textContent = !all.length
+      ? 'No gymnasts match this squad and age group. Choose All ages or another squad.'
+      : 'No points in this selection yet. Achieve a skill to start climbing the leaderboards.';
 
     const boards = [
       {
@@ -3083,7 +3147,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         </div>
 
         <ol class="ranking">
-          ${standings(board.id, leaderboardGroup).slice(0, 6).map((entry, index) => {
+          ${standings(board.id, leaderboardGroup, leaderboardAge).slice(0, 6).map((entry, index) => {
             const gymnast = entry.gymnast;
 
             const person = `
@@ -3131,7 +3195,7 @@ html:has(body.no-motion){scroll-behavior:auto}
             return `
               <li>
                 <button
-                  class="rank-row ${medal}${isOnFire(gymnast.id) ? ' is-on-fire' : ''}"
+                  class="rank-row ${medal}${heatClass(gymnast.id)}"
                   data-gymnast="${gymnast.id}"
                   aria-label="Position ${index + 1}: ${
                     escapeHTML(gymnast.name)
@@ -3179,7 +3243,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
           ${group.map(gymnast => `
             <button
-              class="gymnast${isOnFire(gymnast.id) ? ' is-on-fire' : ''}"
+              class="gymnast${heatClass(gymnast.id)}"
               data-gymnast="${gymnast.id}"
               aria-pressed="${gymnast.id === selectedId}"
             >
@@ -3287,7 +3351,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
 
     $('athletePanel').innerHTML = `
-      <section class="athlete-summary${isOnFire(gymnast.id) ? ' is-on-fire' : ''}" id="athleteSummary">
+      <section class="athlete-summary${heatClass(gymnast.id)}" id="athleteSummary">
         <div class="athlete-info">
           <p class="eyebrow">${escapeHTML(groupLabel(gymnast.coach))}</p>
 
@@ -3330,7 +3394,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
       <div class="coach-bar">
         <button
-          class="chooser${isOnFire(gymnast.id) ? ' is-on-fire' : ''}"
+          class="chooser${heatClass(gymnast.id)}"
           id="gymnastChooser"
           data-choose
           aria-label="Change gymnast, currently ${escapeHTML(gymnast.name)}"
@@ -3503,7 +3567,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('athleteAchieved').textContent = total.achieved;
     $('athletePerfect').textContent = total.perfect;
     $('athleteSummary')?.classList?.toggle('is-on-fire', isOnFire(selectedId));
+    $('athleteSummary')?.classList?.toggle('is-hot', heatLevel(selectedId) === 'hot');
     $('gymnastChooser')?.classList?.toggle('is-on-fire', isOnFire(selectedId));
+    $('gymnastChooser')?.classList?.toggle('is-hot', heatLevel(selectedId) === 'hot');
     if ($('athleteFire')) $('athleteFire').innerHTML = fireBadge(selectedId);
     if ($('chooserFire')) $('chooserFire').innerHTML = fireBadge(selectedId);
 
@@ -3739,7 +3805,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!gymnast) return;
     window.SWLPlacement.render({
       gymnast,
-      fireBadge, fireCount, isOnFire, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : 'All squads', ownGroup:placementGroup === 'own',
+      fireBadge, fireCount, isOnFire, heatLevel, dailyPoints, ageCategories:AGE_CATEGORIES, ageCategory, ageCategoryLabel, londonYear, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : 'All squads', ownGroup:placementGroup === 'own',
       boards: [{id:'overall',name:'Overall league',icon:'ϟ',color:'#f3ce86'}, ...CATEGORIES]
         .map(board => ({...board, rows:standings(board.id, placementGroup === 'own' ? gymnast.coach : 'all')})),
       motionOff: reducedMotion() || !animate
@@ -4042,6 +4108,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderAthlete();
     renderSaveStatus();
   }
+
+  $('leaderboardAge')?.addEventListener('change', event => {
+    leaderboardAge = event.target.value;
+    renderBoards();
+  });
 
   document.addEventListener('click', event => {
     const button = event.target.closest('button');
