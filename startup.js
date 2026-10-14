@@ -3,8 +3,8 @@
   if (window.SWLStartup) return;
 
   const MINIMUM_MS = 900;
-  const EXIT_MS = 4000;
-  const MAXIMUM_MS = 12000;
+  const EXIT_MS = 1800;
+  const MAXIMUM_MS = 6000;
   const REVEAL_MS = 520;
   let startedAt = 0;
   let started = false;
@@ -196,7 +196,7 @@
         if (!overlay || finished || leaving) return;
         enter.hidden = false;
         overlay.querySelector('.swl-startup__hint').hidden = false;
-        if (!finishRequested) status.textContent = 'Your scores are taking a little longer. Squad training is ready to open.';
+        if (!finishRequested) status.textContent = 'Google Sheets is still connecting. You can open training while it loads.';
       }, EXIT_MS);
       if (queuedFinish !== null) finish(queuedFinish);
     } catch {
