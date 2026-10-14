@@ -68,7 +68,7 @@ No build step, package installation, or Actions workflow is required. `.nojekyll
 
 The Apps Script deployment must accept the public `swl-pages-v1` protocol and have access to the league’s Google Sheet. The browser sends ordinary text requests to that deployment and reads its JSON response. `config.js` contains only the public endpoint URL; visitors do not need a Google or website-owner login.
 
-Scoring is always open to anyone using the website. There is no PIN, lock button, automatic lock or access-status polling. Editing begins only after valid scores have loaded; a connection problem never replaces the league with made-up scores.
+Scoring has a shared manual lock. Lock scoring pauses score changes for everyone; the existing PIN unlocks it. There is no automatic timer: either state persists until explicitly changed. Profiles, leaderboards and games remain available. Access checks run every 30 seconds and retain the last confirmed state during transient failures; the backend enforces the lock on every save. The faster data loading and safe retry behaviour are retained.
 
 Keep the Google Sheet publicly viewable with public access set to **Viewer**; the owner and Apps Script retain edit access. Changes appear immediately and save in the background. If saving fails, the page retains the edits and displays **Retry save**. Wait for **All changes saved to Google Sheets** before closing.
 
