@@ -31,6 +31,7 @@
     const selected = distance === 0;
     const peek = Math.abs(distance) === 3;
     const gymnast = row.gymnast || {};
+    const fire = !peek && options.isOnFire(gymnast.id);
     const details = `<span class="swlp-row-position"><span class="sr">Position </span>${position}</span>
       <span class="swlp-row-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
       <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)}</strong>${options.fireBadge(gymnast.id)}
@@ -40,7 +41,7 @@
       return `<li class="swlp-row swlp-peek" data-placement-position="${position}" data-placement-peek="${distance < 0 ? 'above' : 'below'}" aria-hidden="true">
         <div class="swlp-peek-content">${details}</div><span class="swlp-peek-label">${distance < 0 ? 'Just above' : 'Just below'}</span></li>`;
     }
-    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
+    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${fire ? ' is-on-fire' : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
   }
 
   function boardHTML(board, gymnast, options) {
@@ -56,10 +57,10 @@
     </article>`;
   }
 
-  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', groupLabel = value => value, scope = 'All squads', ownGroup = false } = {}) {
+  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', isOnFire = () => false, groupLabel = value => value, scope = 'All squads', ownGroup = false } = {}) {
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
-    const options = { fireBadge, groupLabel };
+    const options = { fireBadge, isOnFire, groupLabel };
     const overall = boards.find(board => board.id === 'overall');
     const overallRows = Array.isArray(overall?.rows) ? overall.rows : [];
     const overallWindow = placementWindow(overallRows, gymnast.id);
@@ -67,7 +68,7 @@
     host.setAttribute('data-placement-motion', motionOff ? 'off' : 'on');
     host.innerHTML = `<div class="swlp-profile">
       <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to gymnast</button>
-      <header class="swlp-hero">
+      <header class="swlp-hero${isOnFire(gymnast.id) ? ' is-on-fire' : ''}">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
           <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)}</h2>${fireBadge(gymnast.id)}
             <p class="swlp-coach">${escapeHTML(groupLabel(gymnast.coach || 'Your league'))}</p></div></div>

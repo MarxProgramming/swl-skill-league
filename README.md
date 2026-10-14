@@ -8,9 +8,9 @@ Completing all three skills at Perfect in any Rolls or Acro complex, or all thre
 
 Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each skill value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six non-leap complexes. Linking bonuses are not doubled.
 
-Each three-skill Rolls or Acro complex, and the three-leap collection, also earns an automatic completion bonus: 5 points when all three skills are at least Achieved, or 10 when all three are Perfect. The 10-point bonus replaces the 5-point bonus. A mix of Achieved and Perfect earns 5; lowering or clearing a mark recalculates the bonus immediately. Completion bonuses are derived from the existing marks and require no separate saved field.
+Each three-skill Rolls or Acro complex, and the three-leap collection, also earns an automatic completion bonus: 1 point when all three skills are at least Achieved, or 5 when all three are Perfect. The 5-point bonus replaces the 1-point bonus. A mix of Achieved and Perfect earns 1; lowering or clearing a mark recalculates the bonus immediately. Completion bonuses are derived from the existing marks and require no separate saved field.
 
-The maximum is 358 points: 270 for skills, 18 for linking, and 70 for completing all seven groups at Perfect. Category maxima are Rolls 144, Acro 144, and Leaps 70.
+The maximum is 323 points: 270 for skills, 18 for linking, and 35 for completing all seven groups at Perfect. Category maxima are Rolls 129, Acro 129, and Leaps 65. Existing gymnasts are recalculated immediately from unchanged skill marks; no score migration or additional award is saved.
 
 Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending, then names alphabetically to resolve equal scores.
 
@@ -24,7 +24,7 @@ The leaderboard’s Analytics button always opens All squads and All gymnasts. P
 
 Each achieved or perfect skill lasts 30 days at its current level. At expiry it drops one level; after another 30 days without renewal, Achieved becomes unticked. Automatic expiry still applies while scoring is locked. Existing marks begin a fresh 30-day period at migration, preserving all launch scores. Renew keeps the current level and resets the timer; it requires unlocked scoring. Undo restores the previous mark as a manual reassessment: any retained level gets a fresh 30-day timer, and the undone gain does not count toward On fire. Skills with seven days or less remaining turn red and appear in the Unticked + due for renewal list.
 
-Google Sheets stores server-authoritative renewal and latest-gain dates. A gymnast is On fire after gains on three distinct, currently retained skills in the last seven days. Renewals do not count. Historical gains before version 2 are not invented.
+Google Sheets stores server-authoritative renewal and latest-gain dates. On fire marks the gymnast or tied gymnasts with the most gains today on distinct, currently retained skills across all squads. Today is the Europe/London calendar day, including daylight-saving changes. One gain can lead; zero gains produce no winner. Renewals do not count, and clearing a gained skill removes it from today’s count. Each retained skill counts once using its latest server-authoritative gain date; no historical event log or past gains are invented. Filters do not change the league-wide winners.
 
 The searchable Gymnasts directory groups every gymnast by squad. Analytics shows retained and perfect skills, category completion, renewal deadlines, recent gains, squad comparisons and a skill map, scoped to all squads, a squad or one gymnast. It uses current marks and their latest dates, rather than claiming a complete historical event log. Placement profiles default to their own squad with an All squads switch.
 
@@ -95,3 +95,5 @@ Game ratings and plays use independent recovery records and saved receipts, prev
 The backend keeps durable score and lock request receipts in an additive RequestReceipts tab. Interrupted requests fail safely rather than blocking everyone or replaying over newer edits. Existing retained receipts are migrated; receipts already evicted by the previous server cannot be reconstructed. The same endpoint, permissions, scoring rules, gymnast marks and game rating data are retained.
 
 Release checks use isolated local fixture data with the production Sheet connection blocked. They cover phone/iPad layouts, catalogue/profile navigation, all eight game interfaces, failed saves and two-tab recovery; production leaderboard marks are not changed for testing.
+
+Scoring unlocks are shared and last 30 minutes. Google Sheets stores the authoritative deadline; every score write checks it. The browser also pauses scoring at the deadline, including after waking from the background, preserving unsaved edits for explicit retry after unlocking. GitHub Pages continues to host the app; Google Sheets remains the shared data store.

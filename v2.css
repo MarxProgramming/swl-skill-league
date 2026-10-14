@@ -43,3 +43,55 @@
 .directory-complex-tools{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px 15px;margin-top:18px;padding-top:17px;border-top:1px solid #ffffff12}.directory-complex-tools label{font-size:12px;font-weight:750;color:#d4c7e7;white-space:nowrap}.directory-complex-tools label span{margin-left:9px;color:#bd9bff}.directory-complex-tools select{min-width:0;min-height:44px;width:100%;padding:10px 26px 10px 12px;color:#eee8fa;background:#101116;border:1px solid #bd9bff35;border-radius:10px;font-size:12px}.directory-complex-tools p{grid-column:1/-1;font-size:10px;color:#938b9e;line-height:1.6;margin:0}
 .directory-quick{padding:0 12px 13px}.directory-quick-label{display:block;font-size:9px;color:#9d90af;line-height:1.5;margin:0 2px 8px}.directory-quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.directory-quick-cell{min-width:0}.directory-quick-skill{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;width:100%;min-height:71px;height:100%;padding:8px 3px;border:1px solid #ffffff1f;border-radius:10px;background:#ffffff03;color:#a59bac;transition:background .18s,border-color .18s}.directory-quick-skill>span{font-size:18px;line-height:1}.directory-quick-skill strong{font-size:9px;line-height:1.4;font-weight:700;overflow-wrap:anywhere}.directory-quick-skill.level-1{color:#bd9bff;background:#bd9bff15;border-color:#bd9bff60}.directory-quick-skill.level-2{color:#d5fa70;background:#d5fa7010;border-color:#d5fa7045}.directory-quick-skill:not(:disabled):active{transform:scale(.97)}.directory-quick-skill:disabled{cursor:default;opacity:.8}.directory-quick-cell.is-due .directory-quick-skill{height:auto;border-color:#f58b8170;background:#f2766510}.directory-quick-renew{display:block;width:100%;min-height:34px;padding:5px 1px;margin-top:4px;border:1px solid #f58b8135;border-radius:8px;background:#f58b8109;color:#ffc2b9;font-size:9px}.directory-quick-renew:disabled{opacity:.5;cursor:default}
 @media(max-width:420px){.directory-complex-tools{grid-template-columns:minmax(0,1fr)}.directory-profile{padding:17px 14px}.directory-quick-skill{min-height:68px}}
+
+/* Today's skill-gain leaders: the moving heat stays behind readable content. */
+.is-on-fire:is(.rank-row,.gymnast,.athlete-summary,.chooser,.directory-card,.swlp-hero,.swlp-row,.analytics-scope,.revisit-grid>button,.skill-map th button){
+  position:relative;isolation:isolate;overflow:hidden;
+  border-color:#ff9d527d!important;
+  background:linear-gradient(125deg,#47251f,#241b21 53%,#191820)!important;
+  box-shadow:inset 0 1px 0 #ffda9f30,inset 0 -1px 0 #ff8e4c26,0 0 22px #f9703621!important;
+}
+/* Explicit overrides let a hot podium card retain its medal position and dimensions. */
+.is-on-fire:is(.rank-row,.gymnast,.athlete-summary,.chooser,.directory-card,.swlp-hero,.swlp-row,.analytics-scope,.revisit-grid>button,.skill-map th button)::before{
+  content:""!important;position:absolute!important;pointer-events:none!important;z-index:-1!important;
+  inset:-35% -18% -25%!important;width:auto!important;height:auto!important;border:0!important;border-radius:inherit;
+  background:radial-gradient(ellipse at 12% 91%,#ffbb5c70,transparent 39%),radial-gradient(ellipse at 82% 100%,#f146246b,transparent 43%),radial-gradient(ellipse at 49% 107%,#ffd48152,transparent 38%),linear-gradient(155deg,transparent 35%,#ff65251c 60%,transparent 78%)!important;
+  transform-origin:50% 90%;opacity:.72;
+  animation:swl-lava-flow 7s ease-in-out infinite alternate!important;
+  animation-delay:-2s!important;
+}
+.rank-row.is-on-fire::after{display:none!important}
+.directory-card.is-on-fire:nth-child(2n)::before,.swlp-row.is-on-fire:nth-child(2n)::before{animation-delay:-4.5s!important}
+.is-on-fire:is(.athlete-summary,.swlp-hero)::before{animation-duration:9s!important}
+.is-on-fire:is(.gymnast,.chooser,.analytics-scope,.skill-map th button)::before{opacity:.52}
+.rank-row.is-on-fire .person strong,.gymnast.is-on-fire .gymnast-name,.chooser.is-on-fire .chooser-copy strong,.directory-card.is-on-fire .directory-person strong,.swlp-row.is-on-fire .swlp-row-person strong,.athlete-summary.is-on-fire h2,.swlp-hero.is-on-fire h2{
+  color:#fff2dd;text-shadow:0 0 18px #ffad5036;
+}
+.directory-card.is-on-fire .directory-avatar,.gymnast.is-on-fire .avatar,.chooser.is-on-fire .avatar,.swlp-row.is-on-fire .swlp-row-avatar,.swlp-hero.is-on-fire .swlp-avatar{
+  color:#ffe3af;background:linear-gradient(145deg,#a8492b55,#ffb55118);border-color:#ffb66c70;box-shadow:inset 0 1px #ffe7b626,0 0 15px #ff862b24;
+}
+.fire-badge{font-size:9px!important;line-height:1.45;color:#ffe1a1!important;border-color:#ffa55b75;background:linear-gradient(115deg,#8b352d70,#6b452246);box-shadow:inset 0 1px #fff0b81c,0 0 13px #ff7b2a22;padding:3px 7px;max-width:100%;font-style:normal}
+.fire-badge>span{font-size:12px;line-height:1;flex:0 0 auto}
+.person strong .fire-badge,.gymnast-name .fire-badge,.directory-person .fire-badge,.swlp-row-person .fire-badge,.chooser-copy .fire-badge,.skill-map th .fire-badge{display:table;width:max-content;margin:5px 0 2px;font-size:8px!important;letter-spacing:.02em}
+#athleteFire .fire-badge,.swlp-hero .swlp-identity .fire-badge{font-size:11px!important;padding:5px 9px;margin-top:10px}
+.chooser-copy{min-width:0}.chooser-copy strong{overflow-wrap:anywhere}.chooser-copy .fire-badge{white-space:nowrap}
+.directory-person .fire-badge{font-size:8px!important}.directory-person small{overflow-wrap:anywhere}
+.swlp-row-person .fire-badge{font-size:8px!important;padding:2px 5px;margin-top:4px}
+.swlp-peek .fire-badge{animation:none!important}.swlp-peek .fire-badge>span{animation:none!important}
+.analytics-scope.is-on-fire{width:fit-content;max-width:100%;padding:10px 13px;border:1px solid;border-radius:11px;line-height:1.7}
+.analytics-scope>.fire-badge{margin:2px 7px 2px 5px;color:#ffe1a1}
+.skill-map th button.is-on-fire{padding:7px 9px;border:1px solid;border-radius:9px;width:100%;min-width:0;overflow-wrap:anywhere}
+.revisit-grid .is-on-fire .fire-badge{display:table;width:max-content;margin-top:6px}
+@keyframes swl-lava-flow{
+  0%{transform:translate3d(-4%,3%,0) scale(1.02);opacity:.63}
+  50%{transform:translate3d(2%,-2%,0) scale(1.06);opacity:.84}
+  100%{transform:translate3d(4%,1%,0) scale(1.03);opacity:.72}
+}
+@media(max-width:600px){
+  .fire-badge{font-size:8px!important}.person strong .fire-badge{padding:2px 5px;font-size:7px!important}
+  .directory-person .fire-badge{font-size:8px!important}.analytics-scope>.fire-badge{display:table;margin:5px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  .is-on-fire.is-on-fire::before,.fire-badge,.fire-badge>span{animation:none!important;transform:none!important}
+}
+body.no-motion .is-on-fire::before,body.no-motion .fire-badge,body.no-motion .fire-badge>span,[data-placement-motion="off"] .is-on-fire::before,[data-placement-motion="off"] .fire-badge,[data-placement-motion="off"] .fire-badge>span{animation:none!important;transform:none!important}
