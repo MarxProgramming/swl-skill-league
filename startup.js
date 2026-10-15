@@ -164,7 +164,7 @@
             <button class="swl-startup__enter" type="button" hidden>Enter training ↗</button>
             <p class="swl-startup__hint" hidden>You can enter while your scores finish loading.</p>
           </div>
-          <p class="swl-startup__signature">VERSION 2.0 · SWL SQUAD TRAINING</p>
+          <p class="swl-startup__signature">VERSION 2.5 · SWL SQUAD TRAINING</p>
         </div>`;
       status = overlay.querySelector('#swlStartupStatus');
       enter = overlay.querySelector('.swl-startup__enter');

@@ -36,15 +36,15 @@
   ];
   const CRAZY=[
     exercise('burpees','burpees',12,'reps',['BURPEES'],9),
-    {id:'funniest-pose',name:'Funniest gymnast pose',amount:1,unit:'round',words:['FUNNIEST','POSE'],kind:'fun',weight:8,detail:'Everyone makes a funny, comfortable pose. Coach picks the funniest gymnast, who gets the next spin.'},
+    exercise('jumping-jacks','jumping jacks',15,'reps',['JUMPING','JACKS'],8),
     exercise('press-ups','press-ups',10,'reps',['PRESS','UPS'],8),
     exercise('squat-jumps','squat jumps',10,'reps',['SQUAT','JUMPS'],7),
     exercise('v-sits','V-sits',15,'reps',['V-SITS'],8),
-    {id:'coach-splits',name:'All coaches do funny splits',amount:1,unit:'round',words:['★'],kind:'coach-jackpot',weight:2,detail:'A rare coach surprise! All coaches choose a comfortable funny splits pose, or another pose of their choice.'},
+    {id:'coach-plank',name:'All coaches join a plank',amount:20,unit:'seconds',words:['★'],kind:'coach-jackpot',weight:2,detail:'The whole squad and all coaches hold a controlled plank for the time shown. Knees down is an option.'},
     exercise('squat-hold','squat hold',30,'seconds',['SQUAT','HOLD'],8),
     {id:'coach-next',name:'Coach joins next spin',amount:1,unit:'round',words:['COACH','JOINS NEXT'],kind:'coach-next',weight:9,detail:'Your coach joins the next exercise round. Finish this option, then spin again.'},
     exercise('tuck-jumps','tuck jumps',12,'reps',['TUCK','JUMPS'],8),
-    exercise('silly-statue','silly statue',10,'seconds',['SILLY','STATUE'],7,'Choose a funny gymnast statue and hold it for the time shown.'),
+    exercise('dish-rocks','dish rocks',10,'reps',['DISH','ROCKS'],7,'Lie in a familiar dish shape and make small, controlled rocks. Count each forward-and-back rock.'),
     exercise('mountain-climbers','mountain climbers',20,'reps',['MOUNTAIN','CLIMBERS'],8),
     exercise('bridge-rocks','bridge rocks',10,'reps',['BRIDGE','ROCKS'],6),
     exercise('star-jumps','star jumps',5,'reps',['STAR','JUMPS'],7),

@@ -9,6 +9,8 @@
   let overlay = null, cleanupTimer = null, generation = 0, fadeStartsAt = 0;
   let audioContext = null, masterGain = null, roomInput = null, soundButton = null, motionObserver = null;
   let audioGeneration = 0;
+  const prizeQueue=[];
+  let prizeTimer=null;
   let soundEnabled = true;
   try { soundEnabled = localStorage.getItem(SOUND_KEY) !== 'off'; } catch (_) {}
 
@@ -356,22 +358,23 @@
     flourish(token);
     if (!document.body) return;
     const quiet = motionOff() || typeof document.body.animate !== 'function';
-    fadeStartsAt = quiet ? Infinity : Date.now() + 4560;
-    overlay = make(`swl-celebration${quiet ? ' is-static' : ''}`);
+    const isPrize=details.kind==='prize', duration=isPrize?7600:CELEBRATION_MS;
+    fadeStartsAt = quiet ? Infinity : Date.now() + duration*.8;
+    overlay = make(`swl-celebration${quiet ? ' is-static' : ''}${isPrize?' is-prize':''}`);
     const veil = make('swl-celebration-veil');
     veil.setAttribute('aria-hidden', 'true');
     const banner = make('swl-celebration-banner');
     banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); banner.setAttribute('aria-atomic', 'true');
     const medals = make('swl-celebration-medals'); medals.setAttribute('aria-hidden', 'true');
-    for (let i = 0; i < 3; i++) medals.append(make('swl-celebration-medal', '✓', 'span'));
+    for (let i = 0; i < (isPrize?1:3); i++) medals.append(make('swl-celebration-medal', isPrize?'🏆':'✓', 'span'));
     const title = make('swl-celebration-title', undefined, 'p');
     const isLeaps = details.kind === 'leaps';
-    title.append(make('', 'PERFECT', 'span'), make('', isLeaps ? 'LEAPS' : 'COMPLEX', 'span'));
+    title.append(make('', isPrize?'PRIZE':'PERFECT', 'span'), make('', isPrize?'WON!':isLeaps ? 'LEAPS' : 'COMPLEX', 'span'));
     const gymnastName = String(details.gymnastName || 'What a performance!').slice(0, 120);
     const tierName = isLeaps ? '' : details.tierName || ({base:'Base complex',upgrade:'Upgrades',pro:'Pro upgrades'}[details.tier]) || '';
-    const detail = [details.categoryName, tierName].filter(Boolean).map(value => String(value).slice(0,100)).join(' · ');
+    const detail = isPrize ? `${details.thresholds.join(' & ')} POINT${details.thresholds.length>1?' MILESTONES':'S'}` : [details.categoryName, tierName].filter(Boolean).map(value => String(value).slice(0,100)).join(' · ');
     banner.append(medals, title, make('swl-celebration-name', gymnastName, 'p'),
-      make('swl-celebration-detail', detail, 'p'), make('swl-celebration-caption', 'Three skills. All perfect.', 'p'));
+      make('swl-celebration-detail', detail, 'p'), make('swl-celebration-caption', isPrize?'You’ve won a prize. Brilliant foundations!':'Three skills. All perfect.', 'p'));
     overlay.append(veil, banner);
     document.body.append(overlay);
     if (!quiet) {
@@ -383,11 +386,27 @@
         {opacity:1,transform:'translate3d(0,0,0) scale(1)',offset:.13},
         {opacity:1,transform:'translate3d(0,0,0) scale(1)',offset:.8},
         {opacity:0,transform:'translate3d(0,-8px,0) scale(.99)',offset:1}
-      ], {duration:5700,easing:'ease-in-out'});
+      ], {duration:duration-100,easing:'ease-in-out'});
       animate(veil, [{opacity:0},{opacity:1,offset:.15},{opacity:1,offset:.8},{opacity:0}],
-        {duration:5700,easing:'linear'});
+        {duration:duration-100,easing:'linear'});
     }
-    cleanupTimer = setTimeout(clearVisuals, quiet ? 3200 : CELEBRATION_MS);
+    cleanupTimer = setTimeout(clearVisuals, quiet ? (isPrize?6500:3200) : duration);
+  }
+
+  function prizes(milestones) {
+    for (const item of milestones||[]) {
+      const thresholds=(item.thresholds||[]).filter(value=>value===200||value===250);
+      if(thresholds.length) prizeQueue.push({kind:'prize',gymnastName:String(item.gymnastName||''),thresholds});
+    }
+    if(prizeTimer) return;
+    const next=()=>{
+      prizeTimer=null;
+      if(!prizeQueue.length)return;
+      if(overlay){prizeTimer=setTimeout(next,400);return;}
+      play(prizeQueue.shift());
+      if(prizeQueue.length)prizeTimer=setTimeout(next,7700);
+    };
+    next();
   }
 
   function initialize() {
@@ -413,10 +432,10 @@
       if(event.key==='swl-motion-paused') settleMotion();
       if(event.key===SOUND_KEY) { soundEnabled=event.newValue!=='off'; updateSoundButton(); if(!soundEnabled) silence(); }
     });
-    window.addEventListener('pagehide',stop);
+    window.addEventListener('pagehide',()=>{stop();prizeQueue.length=0;clearTimeout(prizeTimer);prizeTimer=null;});
   }
 
-  window.SWLCelebration = Object.freeze({version:1,play,ding,gameSound,stop,unlockAudio,setSoundEnabled,
+  window.SWLCelebration = Object.freeze({version:1,play,prizes,ding,gameSound,stop,unlockAudio,setSoundEnabled,
     get soundEnabled(){return soundEnabled;},get active(){return Boolean(overlay);}});
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',initialize,{once:true});
   else initialize();

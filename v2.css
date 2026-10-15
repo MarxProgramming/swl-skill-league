@@ -109,3 +109,8 @@ body.no-motion .is-on-fire::before,[data-placement-motion="off"] .is-on-fire::be
 @media(max-width:600px){.age-cohort-grid{grid-template-columns:minmax(0,1fr)}.age-cohort{padding:17px}.age-cohort-metrics b{font-size:25px}.age-distribution-grid{gap:7px}.age-bar{padding:10px 4px;gap:6px}.age-bar>b{font-size:9px}.age-bar>small{font-size:8px}.age-bar-track{height:54px}.analytics-filters>label{flex:initial}}
 
 .board-filter-controls{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:10px}.board-filter-controls .board-filters{flex:1 1 450px;margin:0}.board-age-filter{display:grid;gap:6px;flex:0 1 260px;min-width:180px;font-size:10px;font-weight:750;color:#b6aac5}.board-age-filter select{min-height:42px;width:100%;max-width:100%;padding:10px 30px 10px 12px;border:1px solid #bd9bff40;border-radius:11px;background:#17151f;color:#eee6f7;font-size:11px}.board-age-filter select:focus-visible{outline:2px solid #bd9bff;outline-offset:3px}@media(max-width:600px){.board-filter-controls{gap:10px}.board-age-filter{flex:1 1 100%;min-width:0}.board-filter-controls .board-filters{flex-basis:100%}}
+
+/* Matching squad and age selectors keep the leaderboard header compact. */
+.board-filter-controls .board-squad-filter{flex:1 1 300px;max-width:500px}
+.board-filter-controls .board-age-filter{min-width:0}
+@media(max-width:600px){.board-filter-controls .board-squad-filter{max-width:none;flex:1 1 100%}}

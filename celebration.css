@@ -73,3 +73,8 @@
 }
 @media(prefers-reduced-motion:reduce){.swl-celebration-confetti{display:none}}
 body.no-motion .swl-celebration-confetti{display:none}
+
+.swl-celebration.is-prize .swl-celebration-banner{border-color:#ffd77a;background:radial-gradient(ellipse at 50% 0,#705b2c,#282317 45%,#15171b 100%);box-shadow:0 25px 100px #0009,0 0 75px #ffd06740,inset 0 1px #fff5}
+.swl-celebration.is-prize .swl-celebration-medal{width:66px;height:66px;font-size:37px;background:linear-gradient(145deg,#fff1b1,#c78e29);border-color:#ffe397}
+.swl-celebration.is-prize .swl-celebration-detail{font-size:18px;font-weight:800;color:#ffe2a2;letter-spacing:.08em}
+.swl-celebration.is-prize .swl-celebration-caption{line-height:1.7;letter-spacing:.06em}

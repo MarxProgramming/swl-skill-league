@@ -2,7 +2,7 @@
   'use strict';
   const KEY='swl-game-rating-outbox-v1';
   const PENDING_KEY=KEY+':pending:',SAVED_KEY=KEY+':saved:';
-  const IDS=['wheel','team','shuffle','letters','handstand','addon','relayrace','timesense'];
+  const IDS=['wheel','team','shuffle','draft','letters','handstand','addon','relayrace','timesense'];
   const MAX_PENDING=200,MAX_COMPLETED=500,PROMPT_DELAY=3000;
   const validId=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{15,99}$/.test(value);
   const uid=()=>{try{return 'rating_'+window.crypto.randomUUID().replace(/-/g,'');}catch(_){return 'rating_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2).padEnd(16,'0');}};

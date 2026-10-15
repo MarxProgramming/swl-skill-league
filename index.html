@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Squad Training 2.0</title>
+<title>SWL · Squad Training 2.5</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
@@ -1570,18 +1570,18 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css?v=20261012b">
+<link rel="stylesheet" href="./celebration.css?v=20261015a">
 <link rel="stylesheet" href="./placement.css">
-<link rel="stylesheet" href="./games.css?v=20261012c">
-<link rel="stylesheet" href="./games-wheel.css?v=20261012b">
-<link rel="stylesheet" href="./games-team.css?v=20261012b">
-<link rel="stylesheet" href="./games-skill.css?v=20261012c">
-<link rel="stylesheet" href="./games-timing.css?v=20261013c">
-<link rel="stylesheet" href="./games-addon.css?v=20261012b">
-<link rel="stylesheet" href="./games-ratings.css?v=20261013c">
-<link rel="stylesheet" href="./v2.css?v=20261014d">
+<link rel="stylesheet" href="./games.css?v=20261015a">
+<link rel="stylesheet" href="./games-wheel.css?v=20261015a">
+<link rel="stylesheet" href="./games-team.css?v=20261015a">
+<link rel="stylesheet" href="./games-skill.css?v=20261015a">
+<link rel="stylesheet" href="./games-timing.css?v=20261015a">
+<link rel="stylesheet" href="./games-addon.css?v=20261015a">
+<link rel="stylesheet" href="./games-ratings.css?v=20261015a">
+<link rel="stylesheet" href="./v2.css?v=20261015a">
 <link rel="stylesheet" href="./welcome.css">
-<link rel="stylesheet" href="./skills-catalogue.css?v=20261013d">
+<link rel="stylesheet" href="./skills-catalogue.css?v=20261015a">
 </head>
 
 <body>
@@ -1593,7 +1593,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>SQUAD TRAINING <span class="version-tag">2.0</span></small>
+        <small>SQUAD TRAINING <span class="version-tag">2.5</span></small>
       </div>
     </div>
 
@@ -1635,7 +1635,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <h1 class="sr">Leaderboards</h1>
 
     <div class="board-filter-controls">
-      <div class="board-filters" id="leaderboardFilters" role="group" aria-label="Leaderboard squad"></div>
+      <label class="board-age-filter board-squad-filter" for="leaderboardGroup"><span>Squad</span><select id="leaderboardGroup" aria-describedby="leaderboardScope"><option value="all">Overall · all squads</option></select></label>
       <label class="board-age-filter" for="leaderboardAge"><span>Age</span><select id="leaderboardAge" aria-describedby="leaderboardScope"><option value="all">All ages</option></select></label>
     </div>
     <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
@@ -1805,19 +1805,20 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261014d"></script>
-<script src="./lock.js?v=20261014d"></script>
-<script src="./celebration.js?v=20261012b"></script>
-<script src="./placement.js?v=20261014d"></script>
-<script src="./games-wheel.js?v=20261013c"></script>
-<script src="./games-team.js?v=20261013d"></script>
-<script src="./games-skill.js?v=20261013c"></script>
-<script src="./games-timing.js?v=20261013d"></script>
-<script src="./games-addon.js?v=20261012b"></script>
-<script src="./games-ratings.js?v=20261013d"></script>
-<script src="./games.js?v=20261013c"></script>
-<script src="./skills-catalogue.js?v=20261014d"></script>
-<script src="./v2.js?v=20261014d"></script>
+<script src="./startup.js?v=20261015a"></script>
+<script src="./lock.js?v=20261015a"></script>
+<script src="./celebration.js?v=20261015a"></script>
+<script src="./placement.js?v=20261015a"></script>
+<script src="./games-wheel.js?v=20261015a"></script>
+<script src="./games-team.js?v=20261015a"></script>
+<script src="./games-skill.js?v=20261015a"></script>
+<script src="./games-draft.js?v=20261015a"></script>
+<script src="./games-timing.js?v=20261015a"></script>
+<script src="./games-addon.js?v=20261015a"></script>
+<script src="./games-ratings.js?v=20261015a"></script>
+<script src="./games.js?v=20261015a"></script>
+<script src="./skills-catalogue.js?v=20261015a"></script>
+<script src="./v2.js?v=20261015a"></script>
 <script src="./welcome.js"></script>
 <script>
 (() => {
@@ -2023,7 +2024,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     skillDates: {},
     expiryDays: 30,
     expiryStartedAt: null,
-    dailyProgress: null
+    dailyProgress: null,
+    weeklyProgress: null,
+    prizes: {}
   });
 
   const isObject = value =>
@@ -2127,12 +2130,53 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
       clean.dailyProgress = {day:progress.day, startedAt:progress.startedAt, complete:progress.complete, points};
     }
+    if (data.weeklyProgress != null) {
+      const progress = data.weeklyProgress;
+      if (!isObject(progress) || progress.windowDays !== 7 || typeof progress.day !== 'string' ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(progress.day) || !Number.isFinite(Date.parse(progress.day+'T12:00:00Z')) ||
+          !Number.isFinite(Date.parse(progress.startedAt)) || typeof progress.complete !== 'boolean' ||
+          !isObject(progress.points) || !isObject(progress.heat) || !isObject(progress.history)) {
+        throw Error('Weekly progress could not be read. Refresh to load the latest scores.');
+      }
+      const points={}, heat={}, history={};
+      for (const [id,value] of Object.entries(progress.points)) {
+        if (!ids.has(id) || typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value)>10000) throw Error('Invalid weekly score.');
+        points[id]=value;
+      }
+      for (const [id,value] of Object.entries(progress.heat)) {
+        if (!ids.has(id) || !isObject(value)) throw Error('Invalid weekly heat.');
+        heat[id]={};
+        for (const key of ['hotUntil','onFireUntil']) {
+          if (value[key]!=null && (typeof value[key]!=='string' || !Number.isFinite(Date.parse(value[key])))) throw Error('Invalid heat date.');
+          heat[id][key]=value[key]||null;
+        }
+      }
+      for (const [id,rows] of Object.entries(progress.history)) {
+        if (!ids.has(id) || !Array.isArray(rows) || rows.length>60) throw Error('Invalid weekly history.');
+        history[id]=rows.map(row=>{
+          if (!isObject(row) || !/^\d{4}-\d{2}-\d{2}$/.test(row.day) || !Number.isFinite(Date.parse(row.day+'T12:00:00Z')) || typeof row.points!=='number' || !Number.isFinite(row.points) || Math.abs(row.points)>10000) throw Error('Invalid weekly history entry.');
+          return {day:row.day,points:row.points};
+        });
+      }
+      clean.weeklyProgress={windowDays:7,day:progress.day,startedAt:progress.startedAt,complete:progress.complete,points,heat,history};
+    }
+    if (data.prizes != null) {
+      if (!isObject(data.prizes)) throw Error('Prize milestones could not be read.');
+      for (const [id,awards] of Object.entries(data.prizes)) {
+        if (!ids.has(id) || !isObject(awards)) throw Error('Invalid prize milestone.');
+        clean.prizes[id]={};
+        for (const threshold of ['200','250']) {
+          if (awards[threshold]!=null && (typeof awards[threshold]!=='string' || !Number.isFinite(Date.parse(awards[threshold])))) throw Error('Invalid prize date.');
+          if (awards[threshold]) clean.prizes[id][threshold]=awards[threshold];
+        }
+      }
+    }
     clean.expiryStartedAt = typeof data.expiryStartedAt === 'string' && Number.isFinite(Date.parse(data.expiryStartedAt)) ? data.expiryStartedAt : null;
     return clean;
   }
 
   const groupLabel = coach => coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach;
-  const shortGroupLabel = coach => /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
+  const shortGroupLabel = coach => /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
   const v2Api = () => typeof window === 'undefined' ? null : window.SWLV2;
 
   const RECOVERY_KEY = 'swl-skill-league-pending-v2'; // Read-only compatibility until a safe handoff.
@@ -2269,9 +2313,19 @@ html:has(body.no-motion){scroll-behavior:auto}
     const signed = (progress.points[id] ?? 0) + summary(id, 'overall', state).points - summary(id, 'overall', confirmedState).points;
     return Math.max(0, Math.round(signed * 1000000) / 1000000);
   }
+  function weeklyPoints(id, at = Date.now()) {
+    const progress=confirmedState.weeklyProgress;
+    if (!progress || Date.parse(progress.startedAt)>Number(new Date(at))) return 0;
+    const day=londonDay(at), end=Date.parse(day+'T12:00:00Z'), first=end-6*86400000;
+    const stored=progress.day===day ? (progress.points[id]||0) : (progress.history[id]||[]).reduce((sum,row)=>{
+      const date=Date.parse(row.day+'T12:00:00Z');return sum+(date>=first&&date<=end?row.points:0);
+    },0);
+    return Math.max(0,Math.round((stored+summary(id,'overall',state).points-summary(id,'overall',confirmedState).points)*1000000)/1000000);
+  }
   function heatLevel(id, at = Date.now()) {
-    const points = dailyPoints(id, at);
-    return points >= 15 ? 'fire' : points >= 10 ? 'hot' : 'none';
+    const points=weeklyPoints(id,at), heat=confirmedState.weeklyProgress?.heat[id], now=Number(new Date(at));
+    return points>=15 || Date.parse(heat?.onFireUntil)>now ? 'fire'
+      : points>=10 || Date.parse(heat?.hotUntil)>now ? 'hot' : 'none';
   }
   const isOnFire = (id, at = Date.now()) => heatLevel(id, at) === 'fire';
   const heatClass = id => heatLevel(id) === 'fire' ? ' is-on-fire' : heatLevel(id) === 'hot' ? ' is-hot' : '';
@@ -2279,11 +2333,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     const level = heatLevel(id, at);
     if (level === 'none') return '';
     const label = level === 'fire' ? 'On fire' : 'Hot';
-    const partial = confirmedState.dailyProgress?.complete === false ? ' since tracking began today' : ' today';
-    return `<span class="fire-badge heat-${level}" title="${dailyPoints(id, at)} net points${partial} (London time). Hot from 10 points; On fire from 15."><span aria-hidden="true">🔥</span> ${label}</span>`;
+    return `<span class="fire-badge heat-${level}" title="${weeklyPoints(id,at)} net points in the last seven days. Hot from 10 points; On fire from 15. Earned heat stays for seven days."><span aria-hidden="true">🔥</span> ${label}</span>`;
   }
   function renderV2() {
-    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'all' || (group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : gymnast.coach === group);
@@ -2726,6 +2779,15 @@ html:has(body.no-motion){scroll-behavior:auto}
     // Keep Undo after our own ordinary acknowledgement; otherwise fail closed.
     if (remoteRevision && result.revision !== remoteRevision &&
         (!ownScoreSave || incoming > current + 1)) history = [];
+    // Award celebrations only follow a confirmed save, never page loads or background reads.
+    if (hasLoaded && ownScoreSave) {
+      const milestones=[];
+      for (const gymnast of result.state.gymnasts) {
+        const thresholds=[200,250].filter(value=>result.state.prizes?.[gymnast.id]?.[value]&&!confirmedState.prizes?.[gymnast.id]?.[value]);
+        if(thresholds.length) milestones.push({gymnastName:gymnast.name,thresholds});
+      }
+      if(milestones.length) try { window.SWLCelebration?.prizes?.(milestones); } catch {}
+    }
     confirmedState = result.state;
     remoteRevision = result.revision;
     baseEpoch++;
@@ -2745,7 +2807,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (target && !target.disabled) target.focus({ preventScroll: true });
   }
 
+  let scoreViewSignature='';
   function refreshScoreViews() {
+    const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,londonDay()]);
+    if(signature===scoreViewSignature){renderSaveStatus();return;}
+    scoreViewSignature=signature;
     renderBoards();
     renderRoster();
     const gymnastInfo = selectedId ? JSON.stringify(GYMNASTS.find(g => g.id === selectedId)) : '';
@@ -2999,19 +3065,29 @@ html:has(body.no-motion){scroll-behavior:auto}
     element._frame = requestAnimationFrame(step);
   }
 
+  function stableHTML(element,html) {
+    if (!element || element._renderedHTML===html) return;
+    element.innerHTML=html;element._renderedHTML=html;
+  }
   function renderBoards() {
     renderV2();
     if (currentView === 'placement') renderPlacementProfile();
     const groups = [...new Set(GYMNASTS.map(g => g.coach))];
     if (!['all','senior'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
-    if ($('leaderboardFilters')) $('leaderboardFilters').innerHTML = [['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<button type="button" class="chip" data-board-group="${escapeHTML(id)}" aria-pressed="${leaderboardGroup===id}">${escapeHTML(label)}</button>`).join('');
+    if ($('leaderboardGroup')) {
+      const options=[['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
+      stableHTML($('leaderboardGroup'),options);
+      $('leaderboardGroup').value=leaderboardGroup;
+      $('leaderboardGroup').disabled=!hasLoaded;
+    }
     const groupGymnasts = GYMNASTS.filter(g=>inLeaderboardGroup(g,leaderboardGroup));
     if (!['all','unknown',...AGE_CATEGORIES.map(category=>category.id)].includes(leaderboardAge)) leaderboardAge = 'all';
     const ages = ['all', ...AGE_CATEGORIES.map(category=>category.id)];
     if (groupGymnasts.some(g=>ageCategory(g)==='unknown') || leaderboardAge === 'unknown') ages.push('unknown');
     if ($('leaderboardAge')) {
       $('leaderboardAge').disabled = !hasLoaded;
-      $('leaderboardAge').innerHTML = ages.map(id=>`<option value="${id}"${leaderboardAge===id?' selected':''}>${escapeHTML(ageCategoryLabel(id))}${hasLoaded?' · '+groupGymnasts.filter(g=>inLeaderboardAge(g,id)).length:''}</option>`).join('');
+      const ageOptions = ages.map(id=>`<option value="${id}"${leaderboardAge===id?' selected':''}>${escapeHTML(ageCategoryLabel(id))}${hasLoaded?' · '+groupGymnasts.filter(g=>inLeaderboardAge(g,id)).length:''}</option>`).join('');
+      stableHTML($('leaderboardAge'),ageOptions);
     }
     const filteredGymnasts = groupGymnasts.filter(g=>inLeaderboardAge(g,leaderboardAge));
     const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : groupLabel(leaderboardGroup);
@@ -3057,7 +3133,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       ...CATEGORIES
     ];
 
-    $('boards').innerHTML = boards.map((board, boardIndex) => `
+    const boardHTML = boards.map((board, boardIndex) => `
       <article
         class="board ${board.id === 'overall' ? 'overall' : ''}"
         style="--accent:${board.color};--delay:${boardIndex * 70}ms"
@@ -3148,6 +3224,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         </ol>
       </article>
     `).join('');
+    stableHTML($('boards'),boardHTML);
   }
 
   function renderRoster() {
@@ -4044,6 +4121,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderAthlete();
     renderSaveStatus();
   }
+
+  $('leaderboardGroup')?.addEventListener('change', event => {
+    leaderboardGroup=event.target.value;renderBoards();
+  });
 
   $('leaderboardAge')?.addEventListener('change', event => {
     leaderboardAge = event.target.value;

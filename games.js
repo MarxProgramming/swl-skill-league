@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  let root, options, current = null, active = false, lobby, arena, stage, title, cards, ratingsApi, ratingsSummary = {}, pendingCount = 0, sortMode = 'hottest', liveRating, livePlays, liveHot;
+  let root, options, current = null, active = false, lobby, arena, stage, title, cards, ratingsApi, ratingsSummary = {}, pendingCount = 0, sortMode = 'hottest', liveRating, livePlays, liveHot, cardsSignature = '';
   const sortButtons = [];
   const ratingButtons = [];
   const mounted = new Map();
@@ -8,6 +8,7 @@
     {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
     {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'Four rounds of floor shapes, jumps to stick, conditioning and coaching impressions. Ten seconds to meet each challenge.',module:'SWLTeam',art:'team'},
     {id:'shuffle',name:'Skill Shuffle',tag:'2–3 teams · skill quality',description:'Set your team sizes so everyone gets a turn. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
+    {id:'draft',name:'Team Skill Draft',tag:'2–3 teams · choose your gymnast',description:'One shared skill. Every team chooses an unused gymnast to attempt it. The best attempt wins a point; every performer steps out until everyone has had a turn.',module:'SWLTeamSkillDraft',art:'draft'},
     {id:'letters',name:'Letter Duel',tag:'2 teams · quick thinking',description:'One big letter. Find a gymnastics skill that starts with it and perform it to win a point.',module:'SWLLetterDuel',art:'letters'},
     {id:'handstand',name:'Handstand Timer',tag:'2–3 teams · against the clock',description:'Individual turns or whole-group rounds. Bank your team’s seconds; in Group mode, the last gymnast down sits out the next round.',module:'SWLHandstand',art:'handstand'},
     {id:'addon',name:'Add-On',tag:'2–3 teams · build a routine',description:'Start with one skill. Shuffle three choices, pick the next addition and grow your team’s routine. Earn stars for how well it flows.',module:'SWLAddOn',art:'relay'},
@@ -20,6 +21,7 @@
       handstand:'<circle cx="100" cy="105" r="73" stroke="#9ce8cf30" stroke-width="2"/><circle cx="100" cy="136" r="10" fill="#9ce8cf"/><path d="M100 121V80m0 0L88 32m12 48 12-48M99 113 81 164m20-51 18 51M72 165h17m22 0h17" stroke="#9ce8cf" stroke-width="8" stroke-linecap="round"/><path d="M161 33v25m-8-17 8-8 8 8" stroke="#f5c87d" stroke-width="3"/>',
       relayrace:'<circle cx="100" cy="105" r="64" stroke="#f5c87d" stroke-width="5"/><path d="M100 105 129 80M85 23h30m-15 0v17m50 14 12-12" stroke="#f5c87d" stroke-width="7" stroke-linecap="round"/><circle cx="100" cy="105" r="7" fill="#f5c87d"/><path d="M26 161h41m-26 13h37" stroke="#bd9bff" stroke-width="4" stroke-linecap="round"/>',
       timesense:'<circle cx="100" cy="100" r="71" fill="#bd9bff12" stroke="#bd9bff65" stroke-width="2" stroke-dasharray="2 12"/><path d="M100 40v11m0 98v11M40 100h11m98 0h11" stroke="#bd9bff" stroke-width="4"/><text x="100" y="120" text-anchor="middle" fill="#bd9bff" font-family="system-ui" font-size="58" font-weight="850">?</text><circle cx="154" cy="154" r="14" fill="#d5fa70"/><path d="m148 154 4 4 8-8" stroke="#15161d" stroke-width="3" stroke-linecap="round"/>',
+      draft:'<path d="M100 28v40m-55 42 55-42 55 42" stroke="#bd9bff" stroke-width="4" stroke-linecap="round"/><rect x="69" y="16" width="62" height="58" rx="12" fill="#272238" stroke="#bd9bff" stroke-width="2"/><path d="m100 28 5 11 12 2-9 8 2 12-10-6-10 6 2-12-9-8 12-2z" fill="#bd9bff"/><circle cx="45" cy="125" r="25" fill="#d5fa7020" stroke="#d5fa70" stroke-width="2"/><circle cx="155" cy="125" r="25" fill="#ffd78220" stroke="#ffd782" stroke-width="2"/><text x="45" y="134" text-anchor="middle" fill="#d5fa70" font-size="26" font-family="system-ui" font-weight="850">1</text><text x="155" y="134" text-anchor="middle" fill="#ffd782" font-size="26" font-family="system-ui" font-weight="850">2</text><path d="M69 174h62" stroke="#bd9bff55" stroke-width="4" stroke-linecap="round"/>',
       shuffle:'<rect x="29" y="37" width="105" height="131" rx="15" transform="rotate(-12 81 102)" fill="#bd9bff25" stroke="#bd9bff55"/><rect x="66" y="26" width="105" height="140" rx="15" transform="rotate(9 118 96)" fill="#272238" stroke="#bd9bff" stroke-width="2"/><path d="m117 58 10 22 24 3-17 17 4 24-21-11-21 11 4-24-17-17 24-3z" fill="#bd9bff"/><path d="M92 142h48" stroke="#f7f5fc" stroke-width="5" stroke-linecap="round"/>',
       letters:'<rect x="31" y="29" width="138" height="142" rx="24" fill="#21322e" stroke="#9ce8cf70" stroke-width="2"/><text x="100" y="135" text-anchor="middle" fill="#9ce8cf" font-size="104" font-family="system-ui" font-weight="850">A</text><path d="M160 14v20m-10-10h20" stroke="#f5c87d" stroke-width="3"/>',
       relay:'<rect x="13" y="65" width="47" height="70" rx="12" fill="#f5c87d22" stroke="#f5c87d"/><rect x="77" y="42" width="47" height="70" rx="12" fill="#bd9bff22" stroke="#bd9bff"/><rect x="140" y="65" width="47" height="70" rx="12" fill="#9ce8cf22" stroke="#9ce8cf"/><path d="m58 94 17-17m47 0 17 17" stroke="#f5f0e0" stroke-width="3" stroke-linecap="round"/><text x="37" y="111" text-anchor="middle" fill="#f5c87d" font-size="28" font-family="system-ui" font-weight="800">1</text><text x="100" y="88" text-anchor="middle" fill="#bd9bff" font-size="28" font-family="system-ui" font-weight="800">2</text><text x="164" y="111" text-anchor="middle" fill="#9ce8cf" font-size="28" font-family="system-ui" font-weight="800">3</text><path d="M43 160h114" stroke="#f5c87d60" stroke-width="3" stroke-linecap="round"/>'
@@ -55,7 +57,11 @@
   function rateGame(id){if(!active)return;pauseForRating();ratingsApi?.openForGame(id);}
   function updateGameStats(){if(!current||!liveRating)return;const info=descriptions.find(item=>item.id===current);liveRating.textContent=ratingLabel(current)+' · Rate';liveRating.setAttribute('aria-label','Rate '+info.name);livePlays.textContent=playLabel(current);livePlays.setAttribute('title','Completed or reviewed games');liveHot.hidden=hottestId()!==current;}
   function ratingButton(){const button=node('button','quiet games-pending-ratings','Finish ratings');button.type='button';button.hidden=!pendingCount;button.addEventListener('click',()=>{if(!active)return;pauseForRating();ratingsApi?.openPending();});ratingButtons.push(button);return button;}
-  function renderCards(){if(!cards||ratingsApi?.getState().current)return;const focused=document.activeElement?.closest?.('[data-game-id]')?.dataset.gameId,focusAction=document.activeElement?.dataset.gameAction;cards.replaceChildren();
+  function renderCards(){if(!cards||ratingsApi?.getState().current)return;
+    const signature=JSON.stringify([sortMode,descriptions.map(info=>{const rating=ratingsSummary[info.id];return rating?[rating.votes,rating.sum,rating.plays]:null;})]);
+    // Keep the same card nodes, focus and running animations when a poll has no visual changes.
+    if(signature===cardsSignature)return;cardsSignature=signature;
+    const focused=document.activeElement?.closest?.('[data-game-id]')?.dataset.gameId,focusAction=document.activeElement?.dataset.gameAction;cards.replaceChildren();
     rankedGames().forEach((info,index)=>{
       const hot=hottestId()===info.id,card=node('article','game-card game-card--'+info.id+(hot?' is-hottest':'')),top=node('div','game-card-top');
       top.append(node('span','',String(index+1).padStart(2,'0')),node('span','game-card-tag',info.tag));
@@ -73,10 +79,10 @@
     if(focused)cards.querySelector(`[data-game-id="${focused}"] [data-game-action="${focusAction||'play'}"]`)?.focus({preventScroll:true});
   }
   function mount(container, config={}) {
-    if(root===container)return;root=container;options={...config,onComplete:details=>ratingsApi?.complete(details)};root.classList.add('games-shell');root.addEventListener('click',()=>ratingsApi?.cancelPrompt(),true);
+    if(root===container)return;root=container;cardsSignature='';options={...config,onComplete:details=>ratingsApi?.complete(details)};root.classList.add('games-shell');root.addEventListener('click',()=>ratingsApi?.cancelPrompt(),true);
     lobby=node('div','games-lobby');const head=node('div','games-heading'),heading=node('div');
     heading.append(node('p','games-kicker','SWL Squad Training'),node('h1','','Squad games'));
-    head.append(heading,node('p','games-intro','Eight ways to train together. Clean skills, teamwork, conditioning and a little competition. You coach. The screen keeps score.'));
+    head.append(heading,node('p','games-intro','Nine ways to train together. Clean skills, teamwork, conditioning and a little competition. You coach. The screen keeps score.'));
     cards=node('div','games-grid');renderCards();
     const note=node('p','games-note');note.append(node('span','','✧'),node('span','','Game scores are just for this session. Your Skill League points stay the same.'));
     const ratingBar=node('div','games-rating-bar'),sorts=node('div','games-sort');sorts.setAttribute('role','group');sorts.setAttribute('aria-label','Sort games');

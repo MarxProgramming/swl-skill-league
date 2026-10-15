@@ -14,6 +14,18 @@ The maximum is 323 points: 270 for skills, 18 for linking, and 35 for completing
 
 Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending, then names alphabetically to resolve equal scores.
 
+## Version 2.5
+
+Team Skill Draft is a separate game for two or three equal-sized teams. Shuffle one shared skill, let each team choose an unused gymnast, and award one point to the best attempt. Every performer uses a turn; play ends when everyone has had one go. Anonymous class ratings and completed plays use the same Google Sheets tracking as the other games. The wheel uses conditioning in place of the former funny/silly entries.
+
+Leaderboards have matching squad and age dropdowns, including Hannah’s floor and vault. Nine additional gymnasts are stored in the shared roster; dates of birth stay in private Apps Script properties and only competition age/category reaches the public app.
+
+Heat uses net points over the last seven London calendar days: 10 for Hot and 15 for On fire. Earned heat lasts seven days; removing unearned points reverses it. Analytics shows eight weekly windows of signed net points, with untracked periods marked clearly. Automatic skill expiry does not subtract momentum. The tracking ledger starts with available recorded progress rather than inventing earlier activity.
+
+First confirmed score milestones at 200 and 250 points earn a prize celebration. Durable milestone records prevent repeat awards after refresh, retry or later score reductions. Existing qualifying totals are registered quietly at migration. Perfect-complex celebrations finish before a queued prize appears.
+
+Unchanged refreshes retain leaderboard, directory, analytics and game-card elements. Changed analytics content preserves its open legend, map scroll and focused control. Manual scoring locks still have no timer.
+
 ## First visit
 
 A personal welcome note from Marx explains the app as a small experiment alongside normal squad training: tracking foundational floor skills, celebrating progress and adding friendly competition within each squad. It appears after the startup screen on the first visit in a browser. Dismissing it is remembered on that device/browser; About this app in the footer opens it again. It stores no personal information.
