@@ -1570,18 +1570,18 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css?v=20261015b">
+<link rel="stylesheet" href="./celebration.css?v=20261015c">
 <link rel="stylesheet" href="./placement.css">
-<link rel="stylesheet" href="./games.css?v=20261015b">
-<link rel="stylesheet" href="./games-wheel.css?v=20261015b">
-<link rel="stylesheet" href="./games-team.css?v=20261015b">
-<link rel="stylesheet" href="./games-skill.css?v=20261015b">
-<link rel="stylesheet" href="./games-timing.css?v=20261015b">
-<link rel="stylesheet" href="./games-addon.css?v=20261015b">
-<link rel="stylesheet" href="./games-ratings.css?v=20261015b">
-<link rel="stylesheet" href="./v2.css?v=20261015b">
+<link rel="stylesheet" href="./games.css?v=20261015c">
+<link rel="stylesheet" href="./games-wheel.css?v=20261015c">
+<link rel="stylesheet" href="./games-team.css?v=20261015c">
+<link rel="stylesheet" href="./games-skill.css?v=20261015c">
+<link rel="stylesheet" href="./games-timing.css?v=20261015c">
+<link rel="stylesheet" href="./games-addon.css?v=20261015c">
+<link rel="stylesheet" href="./games-ratings.css?v=20261015c">
+<link rel="stylesheet" href="./v2.css?v=20261015c">
 <link rel="stylesheet" href="./welcome.css">
-<link rel="stylesheet" href="./skills-catalogue.css?v=20261015b">
+<link rel="stylesheet" href="./skills-catalogue.css?v=20261015c">
 </head>
 
 <body>
@@ -1784,7 +1784,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+1</strong>. All three Perfect earn <strong>+5 instead</strong>. This includes leaps. The bonus follows the current marks.</li>
     <li><strong>Controlled linking and presentation earn extra.</strong> In each Rolls or Acro complex, choose Good <strong>+1</strong>, Excellent <strong>+2</strong>, or Perfect <strong>+3</strong>. Judge smooth transitions, balance and presentation. Leaps have no linking rating.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Keep skills fresh.</strong> Each level lasts 30 days. Renew after practising to keep it. With 7 days left, the skill turns red and joins the unticked list. Expiry drops one level; renewals do not add points. Earn 10 net points today for Hot, or 15 for On fire. Skills, linking and completion bonuses all count. Renewals add no points; resets and undo reduce today’s progress. Automatic expiry does not take away today’s gains. Today follows London time. On the first tracking day, only points earned since tracking began count.</li>
+    <li><strong>Keep skills fresh.</strong> Each level lasts 30 days. Renew after practising to keep it. With 7 days left, the skill turns red and joins the unticked list. Expiry drops one level; renewals do not add points. Hot needs 10 qualifying points in seven days; On fire needs 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades, pro upgrades and linking outside basic Rolls still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically.</li>
   </ul>
 </dialog>
@@ -1805,20 +1805,20 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261015b"></script>
-<script src="./lock.js?v=20261015b"></script>
-<script src="./celebration.js?v=20261015b"></script>
-<script src="./placement.js?v=20261015b"></script>
-<script src="./games-wheel.js?v=20261015b"></script>
-<script src="./games-team.js?v=20261015b"></script>
-<script src="./games-skill.js?v=20261015b"></script>
-<script src="./games-draft.js?v=20261015b"></script>
-<script src="./games-timing.js?v=20261015b"></script>
-<script src="./games-addon.js?v=20261015b"></script>
-<script src="./games-ratings.js?v=20261015b"></script>
-<script src="./games.js?v=20261015b"></script>
-<script src="./skills-catalogue.js?v=20261015b"></script>
-<script src="./v2.js?v=20261015b"></script>
+<script src="./startup.js?v=20261015c"></script>
+<script src="./lock.js?v=20261015c"></script>
+<script src="./celebration.js?v=20261015c"></script>
+<script src="./placement.js?v=20261015c"></script>
+<script src="./games-wheel.js?v=20261015c"></script>
+<script src="./games-team.js?v=20261015c"></script>
+<script src="./games-skill.js?v=20261015c"></script>
+<script src="./games-draft.js?v=20261015c"></script>
+<script src="./games-timing.js?v=20261015c"></script>
+<script src="./games-addon.js?v=20261015c"></script>
+<script src="./games-ratings.js?v=20261015c"></script>
+<script src="./games.js?v=20261015c"></script>
+<script src="./skills-catalogue.js?v=20261015c"></script>
+<script src="./v2.js?v=20261015c"></script>
 <script src="./welcome.js"></script>
 <script>
 (() => {
@@ -2158,7 +2158,24 @@ html:has(body.no-motion){scroll-behavior:auto}
           return {day:row.day,points:row.points};
         });
       }
-      clean.weeklyProgress={windowDays:7,day:progress.day,startedAt:progress.startedAt,complete:progress.complete,points,heat,history};
+      const heatPoints={}, heatHistory={};
+      let heatRule=null;
+      if (progress.heatRule != null) {
+        if (progress.heatRule !== 'foundation-perfect-v1' || !isObject(progress.heatPoints) || !isObject(progress.heatHistory)) throw Error('Heat progress could not be read.');
+        heatRule=progress.heatRule;
+        for (const [id,value] of Object.entries(progress.heatPoints)) {
+          if (!ids.has(id) || typeof value!=='number' || !Number.isFinite(value) || Math.abs(value)>10000) throw Error('Invalid heat score.');
+          heatPoints[id]=value;
+        }
+        for (const [id,rows] of Object.entries(progress.heatHistory)) {
+          if (!ids.has(id) || !Array.isArray(rows) || rows.length>60) throw Error('Invalid heat history.');
+          heatHistory[id]=rows.map(row=>{
+            if (!isObject(row) || !/^\d{4}-\d{2}-\d{2}$/.test(row.day) || !Number.isFinite(Date.parse(row.day+'T12:00:00Z')) || typeof row.points!=='number' || !Number.isFinite(row.points) || Math.abs(row.points)>10000) throw Error('Invalid heat history entry.');
+            return {day:row.day,points:row.points};
+          });
+        }
+      }
+      clean.weeklyProgress={windowDays:7,day:progress.day,startedAt:progress.startedAt,complete:progress.complete,points,heat,history,heatRule,heatPoints,heatHistory};
     }
     if (data.prizes != null) {
       if (!isObject(data.prizes)) throw Error('Prize milestones could not be read.');
@@ -2294,6 +2311,23 @@ html:has(body.no-motion){scroll-behavior:auto}
     return total;
   }
 
+  // Heat measures qualifying progress separately from league scores.
+  function heatScore(id, source = state) {
+    const excluded = item => item.category === 'rolls' && item.tier === 'base';
+    const marks = source.marks[id] || {};
+    let points = SKILLS.reduce((sum, skill) => {
+      const level = marks[skill.id] || 0;
+      if (excluded(skill)) return sum;
+      return sum + (skill.tier === 'base' ? Math.max(0, level - 1) : level) * skill.points;
+    }, 0);
+    points += COMPLEXES.filter(complex => !excluded(complex)).reduce((sum, complex) => sum + (source.linking?.[id]?.[complex.id] || 0), 0);
+    points += SKILL_GROUPS.filter(group => !excluded(group)).reduce((sum, group) => {
+      const bonus = completionBonus(id, group.category, group.tier, source);
+      return sum + (group.tier === 'base' && bonus !== 5 ? 0 : bonus);
+    }, 0);
+    return points;
+  }
+
   function skillFreshness(id, skill, at = Date.now()) {
     const level = mark(id, skill), renewedAt = state.skillDates?.[id]?.[skill]?.renewedAt;
     const expiry = renewedAt ? Date.parse(renewedAt) + 30 * 86400000 : null;
@@ -2324,8 +2358,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     },0);
     return Math.max(0,Math.round((stored+summary(id,'overall',state).points-summary(id,'overall',confirmedState).points)*1000000)/1000000);
   }
+  function weeklyHeatPoints(id, at = Date.now()) {
+    const progress=confirmedState.weeklyProgress;
+    if (progress?.heatRule !== 'foundation-perfect-v1' || Date.parse(progress.startedAt)>Number(new Date(at))) return 0;
+    const day=londonDay(at), end=Date.parse(day+'T12:00:00Z'), first=end-6*86400000;
+    const stored=progress.day===day ? (progress.heatPoints[id]||0) : (progress.heatHistory[id]||[]).reduce((sum,row)=>{
+      const date=Date.parse(row.day+'T12:00:00Z');return sum+(date>=first&&date<=end?row.points:0);
+    },0);
+    return Math.max(0,Math.round((stored+heatScore(id,state)-heatScore(id,confirmedState))*1000000)/1000000);
+  }
   function heatLevel(id, at = Date.now()) {
-    const points=weeklyPoints(id,at), heat=confirmedState.weeklyProgress?.heat[id], now=Number(new Date(at));
+    if (confirmedState.weeklyProgress?.heatRule !== 'foundation-perfect-v1') return 'none';
+    const points=weeklyHeatPoints(id,at), heat=confirmedState.weeklyProgress?.heat[id], now=Number(new Date(at));
     return points>=15 || Date.parse(heat?.onFireUntil)>now ? 'fire'
       : points>=10 || Date.parse(heat?.hotUntil)>now ? 'hot' : 'none';
   }
@@ -2335,10 +2379,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     const level = heatLevel(id, at);
     if (level === 'none') return '';
     const label = level === 'fire' ? 'On fire' : 'Hot';
-    return `<span class="fire-badge heat-${level}" title="${weeklyPoints(id,at)} net points in the last seven days. Hot from 10 points; On fire from 15. Earned heat stays for seven days."><span aria-hidden="true">🔥</span> ${label}</span>`;
+    return `<span class="fire-badge heat-${level}" title="${weeklyHeatPoints(id,at)} qualifying points in the last seven days. Basic Rolls and basic Achieved marks earn no heat. Hot from 10 points; On fire from 15. Earned heat stays for seven days."><span aria-hidden="true">🔥</span> ${label}</span>`;
   }
   function renderV2() {
-    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'all' || (group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : gymnast.coach === group);
