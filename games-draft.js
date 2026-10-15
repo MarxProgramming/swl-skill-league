@@ -19,7 +19,7 @@
   function session() { try { if (window.crypto?.randomUUID) return 'draft-' + window.crypto.randomUUID(); } catch (_) {} return `draft-${Date.now().toString(36)}-${++sequence}-${randomBelow(0x100000000).toString(36)}`; }
   function meta(skill) { return [({rolls:'Rolls',acro:'Acro & spins',leaps:'Leaps'})[skill.category] || skill.category, ({base:'Base',upgrade:'Upgrade',pro:'Pro'})[skill.tier] || skill.tier].filter(Boolean).join(' · '); }
   function create(container, config) {
-    let options = config, skills = catalogue(config.skills), bag = [], previous = '';
+    let options = config, skills = catalogue(config.skills), difficulty='hard', pool=window.SWLShuffleShowcase.poolFor(skills,difficulty), bag = [], previous = '', podium=null;
     let phase = 'setup', active = true, destroyed = false, teamCount = 2, size = '5', names = DEFAULTS.slice(), teams = [];
     let round = 0, selected = null, winner = null, remaining = DURATION, lastTime = 0, timer = null, timerGeneration = 0, renderGeneration = 0;
     let sessionId = null, completionSent = false, resetPrompt = false, error = '', status = '', root, stage, reel, track, cards = [], boundary = START;
@@ -48,7 +48,7 @@
       el.addEventListener('click',() => { if (generation === renderGeneration && !el.disabled) perform(action); }); return el;
     }
     function nextSkill() {
-      if (!bag.length) { bag = shuffle(skills); if (bag.length > 1 && bag[bag.length-1].id === previous) { const j = randomBelow(bag.length-1); [bag[j],bag[bag.length-1]] = [bag[bag.length-1],bag[j]]; } }
+      if (!bag.length) { bag = shuffle(pool); if (bag.length > 1 && bag[bag.length-1].id === previous) { const j = randomBelow(bag.length-1); [bag[j],bag[bag.length-1]] = [bag[bag.length-1],bag[j]]; } }
       const choice = bag.pop(); previous = choice.id; return choice;
     }
     function position() { return START + (TARGET-START) * (1-Math.pow(1-Math.max(0,Math.min(1,1-remaining/DURATION)),4)); }
@@ -62,11 +62,12 @@
     }
     function buildReel() {
       cards = []; boundary = START;
-      for (let i = 0; i < 32; i++) { const alternatives = skills.filter(skill => skill.id !== cards[i-1]?.id && (i === TARGET-1 || i === TARGET+1 ? skill.id !== selected.id : true)), choices = alternatives.length ? alternatives : skills; cards.push(i === TARGET ? selected : choices[randomBelow(choices.length)]); }
+      for (let i = 0; i < 32; i++) { const alternatives = pool.filter(skill => skill.id !== cards[i-1]?.id && (i === TARGET-1 || i === TARGET+1 ? skill.id !== selected.id : true)), choices = alternatives.length ? alternatives : pool; cards.push(i === TARGET ? selected : choices[randomBelow(choices.length)]); }
     }
     function prepareRound() { cancelTimer(); phase = 'ready'; selected = null; winner = null; remaining = DURATION; cards = []; status = `Round ${round+1}. Each team will choose one gymnast who has not had a turn.`; }
     function start(replay = false) {
-      if (!skills.length || (phase !== 'setup' && !(replay && phase === 'finished'))) return;
+      if (!pool.length || (phase !== 'setup' && !(replay && phase === 'finished'))) return;
+      podium?.finish(true);podium?.destroy();podium=null;
       if (!replay) {
         const sizeValue = count(size), chosen = names.slice(0,teamCount).map((value,i) => clean(value) || DEFAULTS[i]);
         if (!sizeValue) { error = 'Enter a whole number from 1 to 20 gymnasts per team.'; render(); return; }
@@ -83,7 +84,7 @@
       timer = setTimeout(() => { if (generation !== timerGeneration || !active || destroyed || phase !== 'shuffling') return; timer = null; if (document.hidden) { pause(); render(); return; } syncTime(); if (remaining <= 0 || motionOff()) { reveal(); return; } updateReel(true); frame(); },Math.min(16,remaining));
     }
     function draw() {
-      if (phase !== 'ready' || !skills.length) return;
+      if (phase !== 'ready' || !pool.length) return;
       selected = nextSkill(); phase = 'shuffling'; remaining = DURATION; lastTime = performance.now(); buildReel();
       if (motionOff()) { reveal(); return; } status = 'One shared skill. Who will your team choose?'; render(true); sound({kind:'reel-start'}); frame();
     }
@@ -96,21 +97,24 @@
     }
     function undo() {
       if (!finishedRound() || winner === null) return;
+      podium?.finish(true);podium?.destroy();podium=null;
       if (winner >= 0) teams[winner].score--; teams.forEach(team => team.turns--); winner = null; phase = 'revealed'; status = 'Round award undone. Coach, choose again.'; render(true);
     }
     function next() {
       if (phase !== 'awarded') return;
       if (teams.every(team => team.turns === team.size)) {
-        phase = 'finished'; status = `All ${total()} gymnasts have had one turn.`; render(true); sound({kind:'finish',perfect:true});
-        if (!completionSent) { completionSent = true; try { options.onComplete?.({gameId:'draft',sessionId,participantCount:total()}); } catch (_) {} } return;
+        phase = 'finished'; status = `All ${total()} gymnasts have had one turn.`;
+        const entries=teams.map((team,index)=>({id:String(index),name:team.name,color:team.color,value:team.score,unit:team.score===1?'point':'points',detail:`${team.size} gymnasts`,rank:1+teams.filter(other=>other.score>team.score).length}));
+        podium=window.SWLShuffleShowcase.createPodium(entries,{motionOff,sound,onDone:details=>{render(true);if(!completionSent){completionSent=true;try{options.onComplete?.({gameId:'draft',sessionId,participantCount:total(),...(details.promptRating===false?{promptRating:false}:{})});}catch(_){}}}});render(true);podium.start();return;
       }
       round++; prepareRound(); render(true);
     }
-    function reset() { cancelTimer(); phase = 'setup'; teams = []; round = 0; selected = winner = null; resetPrompt = false; error = status = ''; cards = []; sessionId = null; completionSent = false; remaining = DURATION; render(true); }
+    function reset() { podium?.finish(true);podium?.destroy();podium=null;cancelTimer(); phase = 'setup'; teams = []; round = 0; selected = winner = null; resetPrompt = false; error = status = ''; cards = []; sessionId = null; completionSent = false; remaining = DURATION; render(true); }
     function perform(action) {
       if (!active || destroyed || document.hidden) return;
       if (resetPrompt) { if (action === 'confirm-reset') reset(); else if (action === 'cancel-reset') { resetPrompt = false; render(true); } return; }
       if (phase === 'setup') {
+        if(action.startsWith('difficulty-')){const value=action.slice(11);if(window.SWLShuffleShowcase.levels.some(level=>level.id===value)){difficulty=value;pool=window.SWLShuffleShowcase.poolFor(skills,difficulty);bag=[];previous='';error='';render();container.querySelector(`[data-difficulty="${value}"]`)?.focus();}return;}
         if (action === 'teams-2' || action === 'teams-3') { teamCount = Number(action.slice(-1)); error = ''; render(false,action); return; }
         if (action === 'size-less' || action === 'size-more') { size = String(Math.min(20,Math.max(1,(count(size) || 5)+(action === 'size-less' ? -1 : 1)))); error = ''; render(false,action); return; }
       }
@@ -121,9 +125,10 @@
     }
     function setupView() {
       const grid = node('div','swl-skill-setup-grid'), panel = node('section','swl-skill-setup');
-      panel.append(node('p','swl-skill-kicker',`${skills.length} SKILLS · ONE SHARED SHUFFLE`),node('h3','','Choose your teams'),node('p','swl-skill-muted','Two or three equal-sized teams. Each round, choose one gymnast who has not had a turn. No individual names needed.'));
+      panel.append(node('p','swl-skill-kicker',`${pool.length} SKILLS · ONE SHARED SHUFFLE`),node('h3','','Choose your teams'),node('p','swl-skill-muted','Two or three equal-sized teams. Each round, choose one gymnast who has not had a turn. No individual names needed.'));
       const choices = node('div','swl-skill-team-count'); choices.setAttribute('role','group'); choices.setAttribute('aria-label','Number of Team Skill Draft teams');
       [2,3].forEach(value => { const control = button(`${value} teams`,`teams-${value}`,'swl-skill-team-choice'); control.setAttribute('aria-pressed',String(value === teamCount)); choices.append(control); }); panel.append(choices);
+      {const generation=renderGeneration;panel.append(window.SWLShuffleShowcase.difficultyView(difficulty,skills,value=>{if(generation===renderGeneration)perform('difficulty-'+value);}));}
       const fields = node('div','swl-skill-names'); names.slice(0,teamCount).forEach((name,index) => {
         const label = node('label','swl-skill-name'); label.style.setProperty('--squad-color',COLORS[index]); label.append(node('span','',`Team ${index+1}`));
         const input = node('input'); input.type = 'text'; input.value = name; input.maxLength = 24; input.autocomplete = 'off'; input.dataset.draftName = String(index); input.setAttribute('aria-label',`Team Skill Draft team ${index+1} name`);
@@ -132,7 +137,7 @@
       const sizeField = node('div','swl-skill-size swl-draft-size'); sizeField.append(node('span','','Gymnasts per team')); const stepper = node('div','swl-skill-stepper');
       const input = node('input'); input.type = 'number'; input.min = '1'; input.max = '20'; input.step = '1'; input.inputMode = 'numeric'; input.value = size; input.dataset.draftSize = 'all'; input.setAttribute('aria-label','Gymnasts per team'); input.addEventListener('input',() => { if (phase === 'setup' && active && !destroyed) size = input.value; });
       const less = button('−','size-less','swl-skill-step'), more = button('+','size-more','swl-skill-step'); less.setAttribute('aria-label','Fewer gymnasts per team'); more.setAttribute('aria-label','More gymnasts per team'); stepper.append(less,input,more); sizeField.append(stepper); panel.append(sizeField);
-      const errorNode = node('p','swl-skill-error',skills.length ? error : 'The skill list is not available yet. Return once it has loaded.'); errorNode.setAttribute('role','alert'); panel.append(errorNode,button('Let’s play ↗','start-game','swl-skill-button swl-skill-primary',!skills.length));
+      const errorNode = node('p','swl-skill-error',pool.length ? error : 'The skill list is not available yet. Return once it has loaded.'); errorNode.setAttribute('role','alert'); panel.append(errorNode,button('Let’s play ↗','start-game','swl-skill-button swl-skill-primary',!pool.length));
       const rules = node('aside','swl-skill-rules'); rules.append(node('span','swl-skill-rule-icon','↝'),node('h3','','Same skill. Your choice.'));
       const list = node('ol','swl-draft-rules'); ['Shuffle one skill for every team.','Each team chooses one gymnast who has not competed yet.','The coach awards 1 point for the best attempt. A tied round can have no point.','Every performer steps out, whether they won or not.','Continue until everyone has had one go. Most points wins.'].forEach(text => list.append(node('li','',text)));
       rules.append(list,node('p','swl-skill-muted','Keep the unused gymnasts on one side and move performers to the other side. Coach can redraw a skill before any attempts.'),node('p','swl-skill-session-note','Game points stay here. Skill League marks and points stay the same.')); grid.append(panel,rules); root.append(grid);
@@ -147,7 +152,7 @@
       cards.forEach((skill,index) => { const item = node('div',`swl-skill-reel-card${index === TARGET && remaining === 0 ? ' is-selected' : ''}`); item.dataset.skillId = skill.id; item.dataset.tier = skill.tier; item.append(node('span','swl-skill-reel-meta',meta(skill)),node('b','',skill.label),node('span','swl-skill-reel-symbol','◇')); track.append(item); }); reel.append(track); frame.append(reel); face.append(frame,node('h3','swl-skill-reel-result',selected.label));
     }
     function playView() {
-      const progress = node('div','swl-skill-progress'); progress.append(node('span','',`ROUND ${round+1} / ${teams[0].size}`),node('span','',`${completed()} / ${total()} GYMNASTS COMPLETE`)); root.append(progress);
+      const progress = node('div','swl-skill-progress'); progress.append(node('span','',`${difficulty.toUpperCase()} · ROUND ${round+1} / ${teams[0].size}`),node('span','',`${completed()} / ${total()} GYMNASTS COMPLETE`)); root.append(progress);
       const progressBar = node('div','swl-skill-total-progress'), fill = node('span'); progressBar.setAttribute('role','progressbar'); progressBar.setAttribute('aria-label','Gymnasts who have taken their turn'); progressBar.setAttribute('aria-valuemin','0'); progressBar.setAttribute('aria-valuemax',String(total())); progressBar.setAttribute('aria-valuenow',String(completed())); fill.style.width = `${completed()/total()*100}%`; progressBar.append(fill); root.append(progressBar);
       stage = node('section','swl-skill-stage'); stage.tabIndex = -1; stage.style.setProperty('--squad-color',COLORS[1]); stage.append(node('p','swl-skill-turn','Every team plays'),node('p','swl-skill-gymnast-number',finishedRound() ? 'Performers step out' : 'Pick someone unused'));
       const face = node('div',`swl-skill-face${selected ? ' swl-skill-reel-face' : ''}`);
@@ -165,6 +170,7 @@
       root.append(stage);
     }
     function finishView() {
+      if(podium){stage=node('section','swl-skill-finish swl-skill-podium-finish');stage.tabIndex=-1;podium.render(stage);if(podium.getState().finished){const controls=node('div','swl-skill-controls');controls.append(button('Play again ↝','replay','swl-skill-button swl-skill-primary'),button('Change teams','reset','swl-skill-button swl-skill-secondary'),button('Undo last award','undo'));stage.append(controls);}root.append(stage);return;}
       const best = winners(); stage = node('section','swl-skill-finish'); stage.tabIndex = -1;
       stage.append(node('span','swl-skill-trophy','✦'),node('p','swl-skill-kicker',best.length > 1 ? 'SHARED TOP SPOT' : 'TEAM SKILL DRAFT WINNERS'),node('h3','',best.map(team => team.name).join(' + ')),node('p','swl-skill-result-points',`${best[0].score} ${best[0].score === 1 ? 'point' : 'points'}`),node('p','swl-skill-muted',`All ${total()} gymnasts have had one turn. Every attempt helped the team.`));
       const controls = node('div','swl-skill-controls'); controls.append(button('Play again ↝','replay','swl-skill-button swl-skill-primary'),button('Change teams','reset','swl-skill-button swl-skill-secondary'),button('Undo last award','undo')); stage.append(controls); root.append(stage);
@@ -173,7 +179,7 @@
       if (destroyed) return; renderGeneration++; reel = track = stage = null;
       root = node('div',`swl-skill-game swl-skill-draft-game${immersive() ? ' is-immersive' : ''}`); root.dataset.static = String(motionOff()); root.dataset.phase = phase;
       const heading = node('div','swl-skill-heading'), titles = node('div'); titles.append(node('p','swl-skill-kicker','SHARED SKILL · PICK YOUR PERFORMER'),node('h2','','Team Skill Draft')); heading.append(titles); if (phase !== 'setup') heading.append(button('New game','reset')); root.append(heading);
-      if (phase === 'setup') setupView(); else { scoreboard(); if (phase === 'finished') finishView(); else playView(); }
+      if (phase === 'setup') setupView(); else { if(phase!=='finished')scoreboard(); if (phase === 'finished') finishView(); else playView(); }
       const live = node('p','swl-skill-live',status); live.setAttribute('role','status'); live.setAttribute('aria-live','polite'); root.append(live);
       if (resetPrompt) {
         const prompt = node('div','swl-skill-reset-prompt'); prompt.setAttribute('role','alertdialog'); prompt.setAttribute('aria-label','Start a new Team Skill Draft game?'); prompt.append(node('strong','','Start a new game?'),node('p','','This clears this game’s points and turns.'),button('Keep this game','cancel-reset','swl-skill-button swl-skill-primary'),button('Clear and restart','confirm-reset','swl-skill-button swl-skill-secondary'));
@@ -182,15 +188,15 @@
       container.replaceChildren(root); updateLayout(); updateReel();
       if (focus || focusAction) { const target = resetPrompt ? root.querySelector('[data-draft-action="cancel-reset"]') : focusAction ? root.querySelector(`[data-draft-action="${focusAction}"]`) : phase === 'paused' ? root.querySelector('[data-draft-action="resume"]') : stage || root.querySelector('[data-draft-name="0"]'); try { target?.focus({preventScroll:true}); } catch (_) {} }
     }
-    function deactivate() { if (destroyed) return; pause(); active = false; cancelTimer(); render(); }
-    function onVisibility() { if (document.hidden) { pause(); cancelTimer(); render(); } }
+    function deactivate() { if (destroyed) return;podium?.finish(true); pause(); active = false; cancelTimer(); render(); }
+    function onVisibility() { if (document.hidden) {podium?.finish(true); pause(); cancelTimer(); render(); } }
     function onResize() { if (active && !destroyed && !document.hidden) { updateLayout(); updateReel(); } }
     document.addEventListener('visibilitychange',onVisibility); window.addEventListener?.('resize',onResize); window.visualViewport?.addEventListener?.('resize',onResize); window.visualViewport?.addEventListener?.('scroll',onResize);
     const controller = {
       deactivate, activate() { if (!destroyed) { active = true; render(); } }, get destroyed() { return destroyed; },
-      updateOptions(next) { options = {...options,...next}; if (phase === 'setup' && Array.isArray(next?.skills)) { const incoming = catalogue(next.skills); if (JSON.stringify(incoming) !== JSON.stringify(skills)) { skills = incoming; bag = []; previous = ''; } } },
-      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); updateLayout(); document.removeEventListener('visibilitychange',onVisibility); window.removeEventListener?.('resize',onResize); window.visualViewport?.removeEventListener?.('resize',onResize); window.visualViewport?.removeEventListener?.('scroll',onResize); container.replaceChildren(); },
-      getState() { return {phase,active,teamCount,size:count(size),round:teams.length ? round+1 : 0,totalGymnasts:total(),completedGymnasts:completed(),teams:teams.map(team => ({...team,remaining:team.size-team.turns})),selected:selected ? {...selected} : null,winner,remainingMs:remaining,sessionId,completionSent,resetPrompt,skillCount:skills.length,reel:cards.length ? {position:position(),targetIndex:TARGET,targetId:cards[TARGET].id,width:reelWidth,cardWidth,gap:GAP,offset} : null}; }
+      updateOptions(next) { options = {...options,...next}; if (phase === 'setup' && Array.isArray(next?.skills)) { const incoming = catalogue(next.skills); if (JSON.stringify(incoming) !== JSON.stringify(skills)) { skills = incoming;pool=window.SWLShuffleShowcase.poolFor(skills,difficulty); bag = []; previous = ''; } } },
+      destroy() { if (destroyed) return;podium?.finish(true);podium?.destroy();podium=null; destroyed = true; active = false; cancelTimer(); updateLayout(); document.removeEventListener('visibilitychange',onVisibility); window.removeEventListener?.('resize',onResize); window.visualViewport?.removeEventListener?.('resize',onResize); window.visualViewport?.removeEventListener?.('scroll',onResize); container.replaceChildren(); },
+      getState() { return {phase,active,difficulty,poolSize:pool.length,podium:podium?.getState()||null,teamCount,size:count(size),round:teams.length ? round+1 : 0,totalGymnasts:total(),completedGymnasts:completed(),teams:teams.map(team => ({...team,remaining:team.size-team.turns})),selected:selected ? {...selected} : null,winner,remainingMs:remaining,sessionId,completionSent,resetPrompt,skillCount:skills.length,reel:cards.length ? {position:position(),targetIndex:TARGET,targetId:cards[TARGET].id,width:reelWidth,cardWidth,gap:GAP,offset} : null}; }
     }; render(); return controller;
   }
   let instance = null, host = null;

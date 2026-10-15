@@ -253,7 +253,7 @@
       completed.add(pair(details));playQueue.push({gameId:details.gameId,sessionId:details.sessionId,requestId:uid()});
       let entry=queue.find(item=>pair(item)===pair(details));
       if(!entry&&!rated.has(pair(details))&&queue.length<MAX_PENDING)entry=ratingEntry(details.gameId,details.sessionId);
-      persist();announce();schedulePrompt(entry);void flushPlays();return true;
+      persist();announce();if(details.promptRating!==false)schedulePrompt(entry);void flushPlays();return true;
     }
     function openForGame(gameId,sessionId){
       if(closed||busy||dialog.open||!titles.has(gameId)||!IDS.includes(gameId)||(sessionId!==undefined&&!validId(sessionId)))return false;

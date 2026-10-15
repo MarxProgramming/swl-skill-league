@@ -57,7 +57,7 @@
     </article>`;
   }
 
-  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false } = {}) {
+  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
     const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':level==='hot'?'is-hot':'';};
@@ -74,7 +74,7 @@
           <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)}</h2>
             <p class="swlp-coach heat-meta"><span class="heat-meta-text">${escapeHTML(groupLabel(gymnast.coach || 'Your league'))}</span>${fireBadge(gymnast.id)}</p></div></div>
         <div class="swlp-overall"><p>${escapeHTML(scope)} position</p><strong>${overallWindow.position ? `<span aria-hidden="true">#</span>${overallWindow.position}` : '—'}</strong>
-          <small>${overallWindow.position ? `of ${overallWindow.total} gymnasts` : 'Scores are loading'}</small></div>
+          <small>${overallWindow.position ? `of ${overallWindow.total} ${escapeHTML(participantLabel)}` : 'Scores are loading'}</small></div>
         <div class="swlp-facts" aria-label="Gymnast score summary">
           <span><strong>${displayNumber(selected.points)}</strong><small>total points</small></span>
           <span><strong>${displayNumber(selected.achieved)}</strong><small>skills achieved</small></span>
@@ -82,8 +82,7 @@
         </div>
       </header>
       <div class="swlp-scope" role="group" aria-label="Placement comparison">
-        <button type="button" class="filter-chip${ownGroup ? ' active' : ''}" data-placement-scope="own" aria-pressed="${ownGroup}">Own squad</button>
-        <button type="button" class="filter-chip${!ownGroup ? ' active' : ''}" data-placement-scope="all" aria-pressed="${!ownGroup}">All squads</button>
+        ${scopeOptions.map(option=>`<button type="button" class="filter-chip${selectedScope===option.id?' active':''}" data-placement-scope="${escapeHTML(option.id)}" aria-pressed="${selectedScope===option.id}">${escapeHTML(option.label)}</button>`).join('')}
         <span>${escapeHTML(scope)}</span>
       </div>
       <div class="swlp-section-head"><div><p class="swlp-eyebrow">Your place in the league</p><h3>A closer look at every board</h3></div>

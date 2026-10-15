@@ -259,6 +259,18 @@
     } else if (kind === 'reel-reveal') {
       [2093,2637.02,3135.96,4186].forEach((frequency,index)=>gameTone(context,start+index*.085,frequency,frequency,.5,.65,'triangle'));
       gameTone(context,start+.26,3135.96,3135.96,.8,.2);
+    } else if (kind === 'podium-place') {
+      const frequency = {3:2093,2:2637.02,1:3135.96}[details.rank] || 2637.02;
+      gameTone(context,start,frequency,frequency,.38,.64,'triangle');
+      gameTone(context,start+.07,frequency*1.5,frequency*1.5,.4,.24);
+    } else if (kind === 'podium-count') {
+      const progress = Math.max(0,Math.min(1,Number(details.progress)||0));
+      const frequency = ({3:2093,2:2637.02,1:3135.96}[details.rank] || 2637.02) * [1,1.125,1.25,1.333333,1.5,2][Math.round(progress*5)];
+      gameTone(context,start,frequency,frequency,.12,.48,'triangle');
+      gameTone(context,start,frequency*1.25,frequency*1.25,.1,.13);
+    } else if (kind === 'podium-win') {
+      [2637.02,3135.96,3951.07,5274.04].forEach((frequency,index)=>gameTone(context,start+index*.14,frequency,frequency,.65,.7,'triangle'));
+      gameTone(context,start+.42,3951.07,3951.07,.9,.24);
     } else if (kind === 'choice') {
       gameTone(context,start,2637.02,3135.96,.13,.48,'triangle');
     } else if (kind === 'wheel-start') gameTone(context, start, 900, 2400, .2, .7, 'triangle');

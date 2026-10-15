@@ -1570,18 +1570,18 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css?v=20261015c">
+<link rel="stylesheet" href="./celebration.css?v=20261015d">
 <link rel="stylesheet" href="./placement.css">
-<link rel="stylesheet" href="./games.css?v=20261015c">
-<link rel="stylesheet" href="./games-wheel.css?v=20261015c">
-<link rel="stylesheet" href="./games-team.css?v=20261015c">
-<link rel="stylesheet" href="./games-skill.css?v=20261015c">
-<link rel="stylesheet" href="./games-timing.css?v=20261015c">
-<link rel="stylesheet" href="./games-addon.css?v=20261015c">
-<link rel="stylesheet" href="./games-ratings.css?v=20261015c">
-<link rel="stylesheet" href="./v2.css?v=20261015c">
+<link rel="stylesheet" href="./games.css?v=20261015d">
+<link rel="stylesheet" href="./games-wheel.css?v=20261015d">
+<link rel="stylesheet" href="./games-team.css?v=20261015d">
+<link rel="stylesheet" href="./games-skill.css?v=20261015d">
+<link rel="stylesheet" href="./games-timing.css?v=20261015d">
+<link rel="stylesheet" href="./games-addon.css?v=20261015d">
+<link rel="stylesheet" href="./games-ratings.css?v=20261015d">
+<link rel="stylesheet" href="./v2.css?v=20261015d">
 <link rel="stylesheet" href="./welcome.css">
-<link rel="stylesheet" href="./skills-catalogue.css?v=20261015c">
+<link rel="stylesheet" href="./skills-catalogue.css?v=20261015d">
 </head>
 
 <body>
@@ -1805,20 +1805,20 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261015c"></script>
-<script src="./lock.js?v=20261015c"></script>
-<script src="./celebration.js?v=20261015c"></script>
-<script src="./placement.js?v=20261015c"></script>
-<script src="./games-wheel.js?v=20261015c"></script>
-<script src="./games-team.js?v=20261015c"></script>
-<script src="./games-skill.js?v=20261015c"></script>
-<script src="./games-draft.js?v=20261015c"></script>
-<script src="./games-timing.js?v=20261015c"></script>
-<script src="./games-addon.js?v=20261015c"></script>
-<script src="./games-ratings.js?v=20261015c"></script>
-<script src="./games.js?v=20261015c"></script>
-<script src="./skills-catalogue.js?v=20261015c"></script>
-<script src="./v2.js?v=20261015c"></script>
+<script src="./startup.js?v=20261015d"></script>
+<script src="./lock.js?v=20261015d"></script>
+<script src="./celebration.js?v=20261015d"></script>
+<script src="./placement.js?v=20261015d"></script>
+<script src="./games-wheel.js?v=20261015d"></script>
+<script src="./games-team.js?v=20261015d"></script>
+<script src="./games-skill.js?v=20261015d"></script>
+<script src="./games-draft.js?v=20261015d"></script>
+<script src="./games-timing.js?v=20261015d"></script>
+<script src="./games-addon.js?v=20261015d"></script>
+<script src="./games-ratings.js?v=20261015d"></script>
+<script src="./games.js?v=20261015d"></script>
+<script src="./skills-catalogue.js?v=20261015d"></script>
+<script src="./v2.js?v=20261015d"></script>
 <script src="./welcome.js"></script>
 <script>
 (() => {
@@ -2192,8 +2192,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     return clean;
   }
 
-  const groupLabel = coach => coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach;
-  const shortGroupLabel = coach => /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
+  const coachingGroupKey = coach => String(coach || '').trim().toLowerCase() === 'coaches' ? 'coaches' : coach;
+  const isCoachParticipant = gymnast => coachingGroupKey(gymnast?.coach) === 'coaches';
+  const groupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach;
+  const shortGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
   const v2Api = () => typeof window === 'undefined' ? null : window.SWLV2;
 
   const RECOVERY_KEY = 'swl-skill-league-pending-v2'; // Read-only compatibility until a safe handoff.
@@ -2382,10 +2384,13 @@ html:has(body.no-motion){scroll-behavior:auto}
     return `<span class="fire-badge heat-${level}" title="${weeklyHeatPoints(id,at)} qualifying points in the last seven days. Basic Rolls and basic Achieved marks earn no heat. Hot from 10 points; On fire from 15. Earned heat stays for seven days."><span aria-hidden="true">🔥</span> ${label}</span>`;
   }
   function renderV2() {
-    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,fireBadge,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,isCoachParticipant,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
-    return group === 'all' || (group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : gymnast.coach === group);
+    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : coachingGroupKey(gymnast.coach) === coachingGroupKey(group));
+  }
+  function profileGymnasts(gymnast = GYMNASTS.find(g => g.id === selectedId)) {
+    return GYMNASTS.filter(g => isCoachParticipant(g) === isCoachParticipant(gymnast));
   }
   function standings(category, group = 'all', age = 'all') {
     return GYMNASTS
@@ -3177,10 +3182,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderBoards() {
     renderV2();
     if (currentView === 'placement') renderPlacementProfile();
-    const groups = [...new Set(GYMNASTS.map(g => g.coach))];
-    if (!['all','senior'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
+    const groups = [...new Set(GYMNASTS.map(g => coachingGroupKey(g.coach)))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));
+    if (!['all','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
     if ($('leaderboardGroup')) {
-      const options=[['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)])].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
+      const options=[['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
       stableHTML($('leaderboardGroup'),options);
       $('leaderboardGroup').value=leaderboardGroup;
       $('leaderboardGroup').disabled=!hasLoaded;
@@ -3195,8 +3200,8 @@ html:has(body.no-motion){scroll-behavior:auto}
       stableHTML($('leaderboardAge'),ageOptions);
     }
     const filteredGymnasts = groupGymnasts.filter(g=>inLeaderboardAge(g,leaderboardAge));
-    const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : groupLabel(leaderboardGroup);
-    if ($('leaderboardScope')) $('leaderboardScope').textContent = `${squadLabel} · ${ageCategoryLabel(leaderboardAge)}${hasLoaded ? ` · ${filteredGymnasts.length} gymnast${filteredGymnasts.length===1?'':'s'}` : ''} · age reached in ${londonYear()}`;
+    const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : leaderboardGroup === 'overall' ? 'Overall · all squads + coaches' : groupLabel(leaderboardGroup);
+    if ($('leaderboardScope')) $('leaderboardScope').textContent = `${squadLabel} · ${ageCategoryLabel(leaderboardAge)}${hasLoaded ? ` · ${filteredGymnasts.length} ${leaderboardGroup==='coaches'?(filteredGymnasts.length===1?'coach':'coaches'):(leaderboardGroup==='overall'?'participant':'gymnast')+(filteredGymnasts.length===1?'':'s')}` : ''}${leaderboardGroup==='coaches'?'':` · age reached in ${londonYear()}`}`;
     const all = filteredGymnasts.map(g => summary(g.id));
 
     if (!hasLoaded) {
@@ -3338,15 +3343,15 @@ html:has(body.no-motion){scroll-behavior:auto}
       .trim()
       .toLocaleLowerCase('en-GB');
 
-    const coaches = [...new Set(GYMNASTS.map(gymnast => gymnast.coach))];
-    if (coachFilter !== 'all' && !coaches.includes(coachFilter.slice(6))) coachFilter = 'all';
-    $('coachChips').innerHTML = [['all', 'All'], ...coaches.map(coach => ['group:' + coach, coach])]
+    const coaches = [...new Set(GYMNASTS.map(gymnast => coachingGroupKey(gymnast.coach)))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));
+    if (!['all','overall'].includes(coachFilter) && !coaches.includes(coachFilter.slice(6))) coachFilter = 'all';
+    $('coachChips').innerHTML = [['all', 'All squads'], ...coaches.map(coach => ['group:' + coach, shortGroupLabel(coach)]), ['overall', 'Overall · all squads + coaches']]
       .map(([value, label]) => `<button class="chip" data-coach="${escapeHTML(value)}" aria-pressed="${coachFilter === value}">${escapeHTML(label)}</button>`).join('');
     $('coachOptions').innerHTML = [...new Set(['Marx', 'Dan', ...coaches])]
-      .map(coach => `<option value="${escapeHTML(coach)}"></option>`).join('');
+      .map(coach => `<option value="${escapeHTML(coach==='coaches'?'Coaches':coach)}"></option>`).join('');
 
     const filtered = GYMNASTS.filter(gymnast =>
-      (coachFilter === 'all' || gymnast.coach === coachFilter.slice(6)) &&
+      inLeaderboardGroup(gymnast, ['all','overall'].includes(coachFilter) ? coachFilter : coachFilter.slice(6)) &&
       gymnast.name.toLocaleLowerCase('en-GB').includes(query)
     );
 
@@ -3354,7 +3359,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('rosterList').innerHTML = filtered.length
       ? coaches.map(coach => {
-        const group = filtered.filter(g => g.coach === coach);
+        const group = filtered.filter(g => coachingGroupKey(g.coach) === coach);
 
         return group.length ? `
           <h2 class="group-label">${escapeHTML(groupLabel(coach))}</h2>
@@ -3393,7 +3398,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('selectedLabel').textContent = selectedId
       ? GYMNASTS.find(g => g.id === selectedId).name
-      : `${GYMNASTS.length} gymnasts · ${coaches.length} coaching groups`;
+      : `${filtered.length} ${coachFilter==='group:coaches'?'coaches':coachFilter==='overall'?'participants':'gymnasts'} · ${new Set(filtered.map(g=>coachingGroupKey(g.coach))).size} coaching groups`;
   }
 
   function skillHTML(skill, index) {
@@ -3453,7 +3458,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
 
     const gymnast = GYMNASTS.find(g => g.id === selectedId);
-    const gymnastIndex = GYMNASTS.findIndex(g => g.id === selectedId);
+    const profileRoster = profileGymnasts(gymnast);
+    const gymnastIndex = profileRoster.findIndex(g => g.id === selectedId);
 
     if (!hasLoaded) {
       $('athletePanel').innerHTML = `
@@ -3523,7 +3529,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
           <span class="chooser-copy">
             <small>
-              Gymnast ${gymnastIndex + 1} / ${GYMNASTS.length}
+              ${isCoachParticipant(gymnast)?'Coach':'Gymnast'} ${gymnastIndex + 1} / ${profileRoster.length}
             </small>
             <strong>${escapeHTML(gymnast.name)} <span id="chooserFire">${fireBadge(gymnast.id)}</span></strong>
           </span>
@@ -3532,10 +3538,10 @@ html:has(body.no-motion){scroll-behavior:auto}
         </button>
 
         <div class="stepper">
-          <button data-step="-1" aria-label="Previous gymnast">
+          <button data-step="-1" aria-label="Previous ${isCoachParticipant(gymnast)?'coach':'gymnast'}">
             ←
           </button>
-          <button data-step="1" aria-label="Next gymnast">
+          <button data-step="1" aria-label="Next ${isCoachParticipant(gymnast)?'coach':'gymnast'}">
             →
           </button>
         </div>
@@ -3868,12 +3874,11 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function stepGymnast(direction) {
-    const index = GYMNASTS.findIndex(g => g.id === selectedId);
-
-    const next =
-      (index + direction + GYMNASTS.length) % GYMNASTS.length;
-
-    openGymnast(GYMNASTS[next].id);
+    const roster = profileGymnasts();
+    if (!roster.length) return;
+    const index = roster.findIndex(g => g.id === selectedId);
+    const next = (index + direction + roster.length) % roster.length;
+    openGymnast(roster[next].id);
   }
 
   function setView(view, scroll = true) {
@@ -3921,11 +3926,15 @@ html:has(body.no-motion){scroll-behavior:auto}
     const hadTitleFocus = focus?.id === 'placementTitle';
     const gymnast = GYMNASTS.find(item => item.id === selectedId);
     if (!gymnast) return;
+    const coach = isCoachParticipant(gymnast);
+    if (coach && placementGroup === 'all') placementGroup = 'own';
+    const placementScope = placementGroup === 'own' ? coachingGroupKey(gymnast.coach) : placementGroup;
     window.SWLPlacement.render({
       gymnast,
-      fireBadge, fireCount, isOnFire, heatLevel, dailyPoints, ageCategories:AGE_CATEGORIES, ageCategory, ageCategoryLabel, londonYear, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : 'All squads', ownGroup:placementGroup === 'own',
+      fireBadge, fireCount, isOnFire, heatLevel, dailyPoints, ageCategories:AGE_CATEGORIES, ageCategory, ageCategoryLabel, londonYear, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : placementGroup === 'overall' ? 'Overall · all squads + coaches' : 'All squads', ownGroup:placementGroup === 'own',
+      selectedScope:placementGroup, scopeOptions:[{id:'own',label:coach?'Coaches':'Own squad'},...(!coach?[{id:'all',label:'All squads'}]:[]),{id:'overall',label:'Overall · all squads + coaches'}], participantLabel:placementGroup==='overall'?'participants':coach?'coaches':'gymnasts',
       boards: [{id:'overall',name:'Overall league',icon:'ϟ',color:'#f3ce86'}, ...CATEGORIES]
-        .map(board => ({...board, rows:standings(board.id, placementGroup === 'own' ? gymnast.coach : 'all')})),
+        .map(board => ({...board, rows:standings(board.id, placementScope)})),
       motionOff: reducedMotion() || !animate
     });
     if (hadBackFocus) $('placementContent').querySelector('[data-back-to-skills]')?.focus({preventScroll:true});
@@ -3950,7 +3959,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!GYMNAST_IDS.has(id)) return;
 
     if (!['directory','tracker','placement'].includes(currentView)) directoryScroll = 0;
+    if (selectedId !== id) placementGroup = 'own';
     selectedId = id;
+    v2Api()?.showGymnastInDirectory?.(id);
 
     setView('tracker', false);
     renderRoster();
@@ -4228,7 +4239,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   $('leaderboardGroup')?.addEventListener('change', event => {
-    leaderboardGroup=event.target.value;renderBoards();
+    leaderboardGroup=event.target.value;if(leaderboardGroup==='coaches')leaderboardAge='all';renderBoards();
   });
 
   $('leaderboardAge')?.addEventListener('change', event => {
@@ -4255,7 +4266,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       } else if (button.hasAttribute('data-quick-renew')) {
         renewSkill(button.dataset.quickRenew,button,button.dataset.quickGymnast);
       } else if (button.hasAttribute('data-board-group')) {
-        leaderboardGroup=button.dataset.boardGroup; renderBoards();
+        leaderboardGroup=button.dataset.boardGroup;if(leaderboardGroup==='coaches')leaderboardAge='all';renderBoards();
       } else if (button.hasAttribute('data-renew-skill')) {
         renewSkill(button.dataset.renewSkill,button);
       } else if (button.hasAttribute('data-placement-scope')) {

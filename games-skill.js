@@ -1,3 +1,71 @@
+/* Shared by the two shuffle games; all point values remain session-only. */
+(() => {
+  'use strict';
+  const LEVELS = [
+    {id:'easy',name:'Easy',detail:'Base complexes + leaps'},
+    {id:'medium',name:'Medium',detail:'Base + upgrades + leaps'},
+    {id:'hard',name:'Hard',detail:'Every skill, including pro'}
+  ];
+  const node = (tag, className = '', text = '') => { const el=document.createElement(tag);el.className=className;el.textContent=text;return el; };
+  const poolFor=(skills,difficulty)=>skills.filter(skill=>difficulty==='hard'||skill.tier==='base'||difficulty==='medium'&&skill.tier==='upgrade');
+  function difficultyView(selected,skills,onSelect){
+    const wrap=node('fieldset','swl-shuffle-difficulty'),legend=node('legend','','Skill difficulty');wrap.append(legend);
+    const choices=node('div','swl-shuffle-difficulty-options');
+    LEVELS.forEach(level=>{const button=node('button','swl-shuffle-difficulty-button');button.type='button';button.dataset.difficulty=level.id;button.setAttribute('aria-pressed',String(selected===level.id));button.append(node('b','',level.name),node('span','',level.detail),node('small','',`${poolFor(skills,level.id).length} skills`));button.addEventListener('click',()=>onSelect(level.id));choices.append(button);});wrap.append(choices);return wrap;
+  }
+  function createPodium(entries,{motionOff=()=>false,sound=()=>{},onDone=()=>{}}={}){
+    const groups=[...new Set(entries.map(entry=>entry.rank))].sort((a,b)=>b-a),lead=500,stageMs=1700,countMs=950;
+    const duration=lead+(groups.length-1)*stageMs+countMs;
+    let elapsed=0,last=0,timer=null,generation=0,running=false,finished=false,destroyed=false,host=null,root=null,caption=null,live=null,burst=null;
+    let seenRank=-1,lastChime=-1,burstUntil=0,revealed=new Set();const labels=new Map(),scores=new Map(),details=new Map(),cardNodes=new Map();
+    const format=value=>Number(value.toFixed(3)).toLocaleString('en-GB');
+    const emit=cue=>{try{sound(cue);}catch(_) {}};
+    function cancel(){generation++;clearTimeout(timer);timer=null;}
+    function position(){return Math.max(-1,Math.min(groups.length-1,Math.floor((elapsed-lead)/stageMs)));}
+    function countProgress(index){return Math.max(0,Math.min(1,(elapsed-lead-index*stageMs)/countMs));}
+    function confetti(){
+      if(!root||burst||motionOff()||performance.now()>=burstUntil)return;
+      burst=node('div','swl-podium-confetti');burst.setAttribute('aria-hidden','true');
+      for(let i=0;i<42;i++){const piece=node('i','swl-podium-piece');piece.style.setProperty('--piece-x',`${(i*37)%101}%`);piece.style.setProperty('--piece-drift',`${((i*53)%200)-100}px`);piece.style.setProperty('--piece-delay',`${(i%9)*.06}s`);piece.style.setProperty('--piece-turn',`${(i%2?-1:1)*(170+i*17)}deg`);piece.style.setProperty('--piece-color',['#ffd782','#d5fa70','#bd9bff'][i%3]);burst.append(piece);}root.append(burst);
+    }
+    function paint(quiet=false){
+      if(!root)return;const current=finished?groups.length-1:position();
+      if(current>=0){for(let i=0;i<=current;i++)revealed.add(groups[i]);}
+      entries.forEach(entry=>{
+        const card=cardNodes.get(entry.id),visible=revealed.has(entry.rank),index=groups.indexOf(entry.rank),progress=finished?1:countProgress(index);
+        card.dataset.revealed=String(visible);card.dataset.winner=String(visible&&entry.rank===1);labels.get(entry.id).textContent=visible?entry.name:'Waiting…';scores.get(entry.id).textContent=visible?format(entry.value*(1-Math.pow(1-progress,3))):'—';details.get(entry.id).textContent=visible?entry.detail||'':'';
+      });
+      const winners=entries.filter(entry=>entry.rank===1).map(entry=>entry.name);
+      if(caption)caption.textContent=finished?(winners.length>1?'Shared win: '+winners.join(' + ')+'!':winners[0]+' wins!'):current<0?'The results are in…':groups[current]===1?'And the winner'+(entries.filter(e=>e.rank===1).length>1?'s are…':' is…'):groups[current]===2?'Second place':'Third place';
+      if(live)live.textContent=finished?entries.filter(e=>e.rank===1).map(e=>e.name).join(' + ')+' take the top spot.':current<0?'Preparing the podium.':(groups[current]===1?'First':groups[current]===2?'Second':'Third')+' place: '+entries.filter(e=>e.rank===groups[current]).map(e=>e.name).join(' + ');
+      if(!quiet&&current!==seenRank&&current>=0){seenRank=current;lastChime=-1;emit({kind:'podium-place',rank:groups[current]});}
+      if(!quiet&&current>=0&&!finished){const step=Math.floor(countProgress(current)*6);if(step>lastChime&&step<6){lastChime=step;emit({kind:'podium-count',rank:groups[current],progress:countProgress(current)});}}
+      root.dataset.finished=String(finished);
+      if(finished)confetti();
+    }
+    function finish(silent=false){
+      if(destroyed||finished)return;cancel();running=false;elapsed=duration;finished=true;burstUntil=silent?0:performance.now()+4200;groups.forEach(rank=>revealed.add(rank));paint(true);
+      if(!silent)emit({kind:'podium-win'});
+      try{onDone({promptRating:!silent});}catch(_) {}
+    }
+    function frame(){
+      cancel();if(!running||destroyed||finished)return;const token=generation;
+      timer=setTimeout(()=>{if(token!==generation||!running||destroyed||finished)return;timer=null;if(document.hidden){finish(true);return;}const time=performance.now();elapsed+=Math.max(0,time-last);last=time;if(elapsed>=duration){finish();return;}paint();frame();},32);
+    }
+    return {
+      start(){if(destroyed||running||finished)return;if(motionOff()){finish();return;}running=true;last=performance.now();paint();frame();},
+      finish,
+      render(target){host=target;if(root){root.dataset.static=String(motionOff());host.append(root);paint(true);return root;}root=node('section','swl-podium');root.dataset.teams=String(entries.length);root.dataset.static=String(motionOff());root.setAttribute('aria-label','Team results podium');labels.clear();scores.clear();details.clear();cardNodes.clear();burst=null;
+        caption=node('p','swl-podium-caption');root.append(caption);const row=node('div','swl-podium-row');
+        const order=entries.slice().sort((a,b)=>({2:0,1:1,3:2}[a.rank]-{2:0,1:1,3:2}[b.rank])||a.id.localeCompare(b.id));
+        order.forEach(entry=>{const card=node('article','swl-podium-place');card.dataset.place=String(entry.rank);card.style.setProperty('--squad-color',entry.color);card.append(node('span','swl-podium-medal',entry.rank===1?'♛':entry.rank===2?'✦':'◇'));const name=node('h3','swl-podium-name'),value=node('b','swl-podium-value'),detail=node('span','swl-podium-detail');labels.set(entry.id,name);scores.set(entry.id,value);details.set(entry.id,detail);cardNodes.set(entry.id,card);card.append(name,value,node('span','swl-podium-unit',entry.unit),detail,node('span','swl-podium-rank',`${entry.rank}${entry.rank===1?'st':entry.rank===2?'nd':'rd'}`));row.append(card);});root.append(row);live=node('p','swl-podium-live');live.setAttribute('role','status');live.setAttribute('aria-live','polite');root.append(live);host.append(root);paint(true);return root;},
+      destroy(){destroyed=true;cancel();running=false;host=root=null;},
+      getState(){return {finished,running,elapsed,duration,revealedRanks:[...revealed].sort((a,b)=>b-a)};}
+    };
+  }
+  window.SWLShuffleShowcase=Object.freeze({levels:LEVELS,poolFor,difficultyView,createPodium});
+})();
+
 (() => {
   'use strict';
   if (window.SWLSkillShuffle?.version === 3 && window.SWLLetterDuel?.version === 3) return;
@@ -62,7 +130,8 @@
     let options = supplied || {}, skills = catalogue(options.skills);
     const duel = mode === 'letter', title = duel ? 'Letter Duel' : 'Skill Shuffle';
     const duration = duel ? LETTER_MS : REEL_MS;
-    let pool = duel ? letterPool(skills) : skills, bag = [], previous = '';
+    let difficulty = 'hard', pool = duel ? letterPool(skills) : window.SWLShuffleShowcase.poolFor(skills,difficulty), bag = [], previous = '';
+    let podium = null;
     let active = true, destroyed = false, phase = 'setup', names = DEFAULTS.slice(), teams = [];
     let teamCount = 2, sizes = DEFAULTS.map(() => String(DEFAULT_SIZE)), turnOrder = [];
     let turn = 0, selected = null, awardValue = 0, awardTeam = null, skipped = false, hints = false;
@@ -85,10 +154,10 @@
       catch (_) { return true; }
     };
     const sound = payload => { try { options.playSound?.(payload); } catch (_) {} };
-    function complete() {
+    function complete(details = {}) {
       if (completionSent || !sessionId || phase !== 'finished') return;
       completionSent = true;
-      try { options.onComplete?.({ gameId: duel ? 'letters' : 'shuffle', sessionId, ...(!duel ? { participantCount: turnOrder.length } : {}) }); } catch (_) {}
+      try { options.onComplete?.({ gameId: duel ? 'letters' : 'shuffle', sessionId, ...(details.promptRating===false?{promptRating:false}:{}), ...(!duel ? { participantCount: turnOrder.length } : {}) }); } catch (_) {}
     }
     const immersive = () => !duel && active && !destroyed && phase !== 'setup';
     const showStage = () => { if (!immersive()) stage?.scrollIntoView?.({ block: 'start', behavior: motionOff() ? 'instant' : 'smooth' }); };
@@ -188,6 +257,7 @@
     }
     function startGame(replay = false) {
       if (!pool.length || (phase !== 'setup' && !(replay && phase === 'finished'))) return;
+      podium?.finish(true);podium?.destroy();podium=null;
       if (!replay) {
         const chosen = names.slice(0, teamCount).map((name, index) => cleanName(name) || DEFAULTS[index]);
         if (new Set(chosen.map(name => name.toLocaleLowerCase())).size !== chosen.length) { errorText = 'Give each team a different name so the scores stay clear.'; render(); return; }
@@ -235,7 +305,7 @@
       hints = false; phase = 'shuffling'; remainingMs = duration; lastTick = now();
       if (!duel) buildReel();
       if (motionOff()) { reveal(); showStage(); return; }
-      statusText = duel ? 'Choosing your letter…' : 'Shuffling all Skill League skills…';
+      statusText = duel ? 'Choosing your letter…' : `Shuffling ${difficulty[0].toUpperCase()+difficulty.slice(1)} skills…`;
       render(true); showStage(); sound({ kind: duel ? 'wheel-start' : 'reel-start' }); scheduleFrame();
     }
     function resume() {
@@ -257,6 +327,7 @@
     }
     function undoAward() {
       if (!['awarded', 'finished'].includes(phase) || (!awardValue && !skipped)) return;
+      podium?.finish(true);podium?.destroy();podium=null;
       if (awardValue && awardTeam !== null) { teams[awardTeam].score -= awardValue; teams[awardTeam].turns--; }
       awardTeam = null; awardValue = 0; skipped = false; phase = 'revealed';
       statusText = 'Last award undone. Coach, choose again.'; render(true);
@@ -264,12 +335,15 @@
     function nextTurn() {
       if (phase !== 'awarded') return;
       if (!duel && turn + 1 >= turnOrder.length) {
-        phase = 'finished'; statusText = 'Everyone has had one turn. Results use average stars per gymnast.'; render(true); showStage(); sound({ kind: 'finish', perfect: true }); complete(); return;
+        phase = 'finished'; statusText = 'Everyone has had one turn. Results use average stars per gymnast.';
+        const entries=teams.map((team,index)=>({id:String(index),name:team.name,color:team.color,value:team.score/team.size,unit:'stars per gymnast',detail:`${team.score} total stars`,rank:1+teams.filter(other=>other.score*team.size>team.score*other.size).length}));
+        podium=window.SWLShuffleShowcase.createPodium(entries,{motionOff,sound,onDone:details=>{render(true);complete(details);}});render(true);podium.start();return;
       }
       turn++; prepareTurn(); render(true); showStage();
       if (duel) draw();
     }
     function reset() {
+      podium?.finish(true);podium?.destroy();podium=null;
       cancelTimer(); phase = 'setup'; teams = []; turnOrder = []; turn = 0; selected = preview = null; awardValue = 0; awardTeam = null;
       skipped = hints = resetPrompt = false; errorText = statusText = ''; remainingMs = duration; reelCards = []; sessionId = null; completionSent = false; render(true);
     }
@@ -281,6 +355,7 @@
         return;
       }
       if (!duel && phase === 'setup') {
+        if(action.startsWith('difficulty-')){const value=action.slice(11);if(window.SWLShuffleShowcase.levels.some(level=>level.id===value)){difficulty=value;pool=window.SWLShuffleShowcase.poolFor(skills,difficulty);bag=[];previous='';errorText='';render();container.querySelector(`[data-difficulty="${value}"]`)?.focus();}return;}
         if (action === 'teams-2' || action === 'teams-3') { teamCount = Number(action.slice(6)); errorText = ''; render(false, action); return; }
         const change = action.match(/^size-(\d)-(less|more)$/);
         if (change && Number(change[1]) < teamCount) {
@@ -307,11 +382,12 @@
     }
     function setupView(root) {
       const panel = node('section', 'swl-skill-setup');
-      panel.append(node('p', 'swl-skill-kicker', duel ? `${pool.length} LETTERS · FIRST TO ${TARGET}` : `${skills.length} SKILLS · ONE TURN PER GYMNAST`), node('h3', '', duel ? 'Two teams. Everyone in.' : 'Your teams. Everyone in.'), node('p', 'swl-skill-muted', duel ? 'Draw a letter. Think of a gymnastics skill beginning with it, then show the coach.' : 'Choose two or three teams and count the gymnasts in each. Everyone gets one turn.'));
+      panel.append(node('p', 'swl-skill-kicker', duel ? `${pool.length} LETTERS · FIRST TO ${TARGET}` : `${pool.length} SKILLS · ONE TURN PER GYMNAST`), node('h3', '', duel ? 'Two teams. Everyone in.' : 'Your teams. Everyone in.'), node('p', 'swl-skill-muted', duel ? 'Draw a letter. Think of a gymnastics skill beginning with it, then show the coach.' : 'Choose two or three teams and count the gymnasts in each. Everyone gets one turn.'));
       if (!duel) {
         const choices = node('div', 'swl-skill-team-count'); choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', 'Number of Skill Shuffle teams');
         [2, 3].forEach(count => { const choice = button(`${count} teams`, `teams-${count}`, 'swl-skill-team-choice'); choice.setAttribute('aria-pressed', String(teamCount === count)); choices.append(choice); }); panel.append(choices);
       }
+      if(!duel){const generation=renderGeneration;panel.append(window.SWLShuffleShowcase.difficultyView(difficulty,skills,value=>{if(generation===renderGeneration)perform('difficulty-'+value);}));}
       const fields = node('div', 'swl-skill-names');
       names.slice(0, teamCount).forEach((name, index) => {
         const label = node('label', 'swl-skill-name'); label.style.setProperty('--squad-color', COLORS[index]); label.append(node('span', '', `Team ${index + 1}`));
@@ -363,7 +439,7 @@
     }
     function playView(root) {
       const progress = node('div', 'swl-skill-progress');
-      progress.append(node('span', '', duel ? `LETTER ${turn + 1}` : `${completedGymnasts()} / ${turnOrder.length} GYMNASTS COMPLETE`), node('span', '', duel ? 'BOTH TEAMS PLAY' : `${teams.length} TEAMS`)); root.append(progress);
+      progress.append(node('span', '', duel ? `LETTER ${turn + 1}` : `${completedGymnasts()} / ${turnOrder.length} GYMNASTS COMPLETE`), node('span', '', duel ? 'BOTH TEAMS PLAY' : `${difficulty.toUpperCase()} · ${teams.length} TEAMS`)); root.append(progress);
       if (!duel) {
         const track = node('div', 'swl-skill-total-progress'), fill = node('span'); track.setAttribute('role', 'progressbar'); track.setAttribute('aria-label', 'Gymnasts who have completed their turn'); track.setAttribute('aria-valuemin', '0'); track.setAttribute('aria-valuemax', String(turnOrder.length)); track.setAttribute('aria-valuenow', String(completedGymnasts())); fill.style.width = `${completedGymnasts() / turnOrder.length * 100}%`; track.append(fill); root.append(track);
       }
@@ -412,6 +488,7 @@
       root.append(stage);
     }
     function finishView(root) {
+      if(!duel&&podium){stage=node('section','swl-skill-finish swl-skill-podium-finish');stage.tabIndex=-1;podium.render(stage);if(podium.getState().finished){const controls=node('div','swl-skill-controls');controls.append(button('Play again ↝','replay','swl-skill-button swl-skill-primary'),button('Change teams','reset'),button('Undo last rating','undo','swl-skill-text-button'));stage.append(controls);}root.append(stage);return;}
       const winners = resultWinners(), best = winners[0];
       stage = node('section', 'swl-skill-finish'); stage.tabIndex = -1;
       stage.append(node('span', 'swl-skill-trophy', '✦'), node('p', 'swl-skill-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : duel ? 'LETTER DUEL WINNERS' : 'SKILL SHUFFLE WINNERS'), node('h3', '', winners.map(team => team.name).join(' + ')), node('p', 'swl-skill-result-points', duel ? `${best.score} points` : `${averageText(best)} stars per gymnast`), node('p', 'swl-skill-muted', winners.length > 1 ? `A tie! ${winners.length === 2 ? 'Both' : 'All three'} teams share the celebration.` : 'A team effort worth celebrating.'));
@@ -424,7 +501,7 @@
       const root = node('div', `swl-skill-game swl-skill-${mode}-game${immersive() ? ' is-immersive' : ''}`); gameRoot = root; root.dataset.static = String(motionOff()); root.dataset.phase = phase;
       const heading = node('div', 'swl-skill-heading'), titles = node('div'); titles.append(node('p', 'swl-skill-kicker', duel ? 'ONE LETTER · TWO TEAMS · FIRST TO SEVEN' : 'SHUFFLE · SHOW IT · SCORE'), node('h2', '', title)); heading.append(titles);
       if (phase !== 'setup') heading.append(button('New game', 'reset', 'swl-skill-text-button')); root.append(heading);
-      if (phase === 'setup') setupView(root); else { scoreboard(root); if (phase === 'finished') finishView(root); else playView(root); }
+      if (phase === 'setup') setupView(root); else { if(phase!=='finished'||duel)scoreboard(root); if (phase === 'finished') finishView(root); else playView(root); }
       const live = node('p', 'swl-skill-live', statusText); live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite'); root.append(live);
       if (resetPrompt) {
         const prompt = node('div', 'swl-skill-reset-prompt'); prompt.setAttribute('role', 'alertdialog'); prompt.setAttribute('aria-label', `Start a new ${title} game?`);
@@ -446,8 +523,8 @@
         try { target?.focus({ preventScroll: true }); } catch (_) {}
       }
     }
-    function deactivate() { if (destroyed) return; pause(); active = false; cancelTimer(); render(); }
-    function onVisibility() { if (document.hidden) { pause(); cancelTimer(); render(); } }
+    function deactivate() { if (destroyed) return; podium?.finish(true); pause(); active = false; cancelTimer(); render(); }
+    function onVisibility() { if (document.hidden) { podium?.finish(true);pause(); cancelTimer(); render(); } }
     function onResize() { if (active && !destroyed && !document.hidden) { updateLayout(); updateReel(); } }
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener?.('resize', onResize);
@@ -461,12 +538,12 @@
         options = { ...options, ...(next || {}) };
         if (phase === 'setup' && Array.isArray(next?.skills)) {
           const incoming = catalogue(next.skills);
-          if (JSON.stringify(incoming) !== JSON.stringify(skills)) { skills = incoming; pool = duel ? letterPool(skills) : skills; bag = []; previous = ''; }
+          if (JSON.stringify(incoming) !== JSON.stringify(skills)) { skills = incoming; pool = duel ? letterPool(skills) : window.SWLShuffleShowcase.poolFor(skills,difficulty); bag = []; previous = ''; }
         }
       },
-      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); updateLayout(); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener?.('resize', onResize); window.visualViewport?.removeEventListener?.('resize', onResize); window.visualViewport?.removeEventListener?.('scroll', onResize); container.replaceChildren(); gameRoot = null; },
+      destroy() { if (destroyed) return;podium?.finish(true);podium?.destroy();podium=null; destroyed = true; active = false; cancelTimer(); updateLayout(); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener?.('resize', onResize); window.visualViewport?.removeEventListener?.('resize', onResize); window.visualViewport?.removeEventListener?.('scroll', onResize); container.replaceChildren(); gameRoot = null; },
       getState() {
-        return { mode, phase, active, sessionId, completionSent, turn, teamCount, round: teams.length ? duel ? Math.floor(turn / 2) + 1 : currentGymnast() : 0, currentTeam: !duel && teams.length ? currentTeamIndex() : null, currentGymnast: currentGymnast(), totalGymnasts: turnOrder.length, completedGymnasts: duel ? 0 : completedGymnasts(), teams: teams.map(team => ({ ...team, ...(!duel ? { average: team.turns ? team.score / team.turns : null } : {}) })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, reel: !duel && reelCards.length ? { position: reelPosition(), targetIndex: REEL_TARGET, targetId: reelCards[REEL_TARGET].id, width: reelWidth, cardWidth: reelCardWidth, gap: REEL_GAP, offset: reelOffset } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
+        return { mode, phase, active, difficulty, podium:podium?.getState()||null, sessionId, completionSent, turn, teamCount, round: teams.length ? duel ? Math.floor(turn / 2) + 1 : currentGymnast() : 0, currentTeam: !duel && teams.length ? currentTeamIndex() : null, currentGymnast: currentGymnast(), totalGymnasts: turnOrder.length, completedGymnasts: duel ? 0 : completedGymnasts(), teams: teams.map(team => ({ ...team, ...(!duel ? { average: team.turns ? team.score / team.turns : null } : {}) })), selected: selected ? { ...selected, ...(selected.matches ? { matches: selected.matches.map(skill => ({ ...skill })) } : {}) } : null, reel: !duel && reelCards.length ? { position: reelPosition(), targetIndex: REEL_TARGET, targetId: reelCards[REEL_TARGET].id, width: reelWidth, cardWidth: reelCardWidth, gap: REEL_GAP, offset: reelOffset } : null, poolSize: pool.length, skillCount: skills.length, remainingMs, awardValue, awardTeam, skipped, hints, resetPrompt };
       }
     };
     render(); return controller;
