@@ -1570,18 +1570,18 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css?v=20261015a">
+<link rel="stylesheet" href="./celebration.css?v=20261015b">
 <link rel="stylesheet" href="./placement.css">
-<link rel="stylesheet" href="./games.css?v=20261015a">
-<link rel="stylesheet" href="./games-wheel.css?v=20261015a">
-<link rel="stylesheet" href="./games-team.css?v=20261015a">
-<link rel="stylesheet" href="./games-skill.css?v=20261015a">
-<link rel="stylesheet" href="./games-timing.css?v=20261015a">
-<link rel="stylesheet" href="./games-addon.css?v=20261015a">
-<link rel="stylesheet" href="./games-ratings.css?v=20261015a">
-<link rel="stylesheet" href="./v2.css?v=20261015a">
+<link rel="stylesheet" href="./games.css?v=20261015b">
+<link rel="stylesheet" href="./games-wheel.css?v=20261015b">
+<link rel="stylesheet" href="./games-team.css?v=20261015b">
+<link rel="stylesheet" href="./games-skill.css?v=20261015b">
+<link rel="stylesheet" href="./games-timing.css?v=20261015b">
+<link rel="stylesheet" href="./games-addon.css?v=20261015b">
+<link rel="stylesheet" href="./games-ratings.css?v=20261015b">
+<link rel="stylesheet" href="./v2.css?v=20261015b">
 <link rel="stylesheet" href="./welcome.css">
-<link rel="stylesheet" href="./skills-catalogue.css?v=20261015a">
+<link rel="stylesheet" href="./skills-catalogue.css?v=20261015b">
 </head>
 
 <body>
@@ -1805,20 +1805,20 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261015a"></script>
-<script src="./lock.js?v=20261015a"></script>
-<script src="./celebration.js?v=20261015a"></script>
-<script src="./placement.js?v=20261015a"></script>
-<script src="./games-wheel.js?v=20261015a"></script>
-<script src="./games-team.js?v=20261015a"></script>
-<script src="./games-skill.js?v=20261015a"></script>
-<script src="./games-draft.js?v=20261015a"></script>
-<script src="./games-timing.js?v=20261015a"></script>
-<script src="./games-addon.js?v=20261015a"></script>
-<script src="./games-ratings.js?v=20261015a"></script>
-<script src="./games.js?v=20261015a"></script>
-<script src="./skills-catalogue.js?v=20261015a"></script>
-<script src="./v2.js?v=20261015a"></script>
+<script src="./startup.js?v=20261015b"></script>
+<script src="./lock.js?v=20261015b"></script>
+<script src="./celebration.js?v=20261015b"></script>
+<script src="./placement.js?v=20261015b"></script>
+<script src="./games-wheel.js?v=20261015b"></script>
+<script src="./games-team.js?v=20261015b"></script>
+<script src="./games-skill.js?v=20261015b"></script>
+<script src="./games-draft.js?v=20261015b"></script>
+<script src="./games-timing.js?v=20261015b"></script>
+<script src="./games-addon.js?v=20261015b"></script>
+<script src="./games-ratings.js?v=20261015b"></script>
+<script src="./games.js?v=20261015b"></script>
+<script src="./skills-catalogue.js?v=20261015b"></script>
+<script src="./v2.js?v=20261015b"></script>
 <script src="./welcome.js"></script>
 <script>
 (() => {
@@ -2203,6 +2203,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   let importing = false;
   let queuedOps = [];
   let inFlight = null;
+  const prizeBaselines = new Map();
+  const announcedPrizes = new Set();
   let retryNeeded = false;
   let recoveredPending = false;
   let damagedRecovery = null;
@@ -2424,6 +2426,52 @@ html:has(body.no-motion){scroll-behavior:auto}
     history = history.filter(item => GYMNAST_IDS.has(item.gymnast));
   }
 
+  function batchPrizeGymnasts(batch) {
+    return new Set(batch.operations.filter(operation =>
+      operation.type === 'set_mark' || operation.type === 'set_link')
+      .map(operation => operation.gymnastId));
+  }
+
+  function cleanPrizeBaseline(value, batch) {
+    if (!isObject(value)) return null;
+    const allowed = batchPrizeGymnasts(batch), clean = {};
+    for (const [id, awards] of Object.entries(value)) {
+      if (!allowed.has(id) || !isObject(awards)) continue;
+      clean[id] = {};
+      for (const threshold of [200, 250]) {
+        const stamp = awards[threshold];
+        if (typeof stamp === 'string' && stamp.length <= 50 && Number.isFinite(Date.parse(stamp))) {
+          clean[id][threshold] = stamp;
+        }
+      }
+    }
+    return clean;
+  }
+
+  function capturePrizeBaseline(batch) {
+    if (prizeBaselines.has(batch.requestId)) return;
+    const baseline = {};
+    for (const id of batchPrizeGymnasts(batch)) baseline[id] = {...(confirmedState.prizes?.[id] || {})};
+    prizeBaselines.set(batch.requestId, cleanPrizeBaseline(baseline, batch));
+  }
+
+  function confirmedBatchPrizes(batch, result) {
+    const baseline = prizeBaselines.get(batch.requestId), milestones = [];
+    if (!baseline) return milestones;
+    for (const gymnast of result.state.gymnasts) {
+      if (!Object.hasOwn(baseline, gymnast.id)) continue;
+      const thresholds = [200, 250].filter(threshold => {
+        const stamp = result.state.prizes?.[gymnast.id]?.[threshold];
+        const key = gymnast.id + ':' + threshold;
+        if (!stamp || baseline[gymnast.id][threshold] || announcedPrizes.has(key)) return false;
+        announcedPrizes.add(key);
+        return true;
+      });
+      if (thresholds.length) milestones.push({gymnastName: gymnast.name, thresholds});
+    }
+    return milestones;
+  }
+
   function makeBatch(operations, requestId = crypto.randomUUID()) {
     if (typeof requestId !== 'string' || !/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) {
       throw Error('The saved request identifier is invalid.');
@@ -2443,7 +2491,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function recoverySnapshot() {
     return {version: 3, owner: recoveryOwner, savedAt: new Date().toISOString(),
-      base: confirmedState, revision: remoteRevision, inFlight, waitingBatches, queuedOps, selectedId};
+      base: confirmedState, revision: remoteRevision, inFlight, waitingBatches, queuedOps, selectedId,
+      prizeBaselines: Object.fromEntries([inFlight, ...waitingBatches].filter(Boolean)
+        .filter(batch => prizeBaselines.has(batch.requestId))
+        .map(batch => [batch.requestId, prizeBaselines.get(batch.requestId)]))};
   }
 
   function recoveryDownloadText() {
@@ -2499,10 +2550,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     for (let index = 0; index < operations.length; index += 200) {
       batches.push(makeBatch(operations.slice(index, index + 200)));
     }
+    // Optional presentation metadata never changes the immutable scoring payload.
+    // Preserve each pending request's original baseline through reload and handoff.
+    const baselines = {};
+    if (isObject(saved.prizeBaselines)) for (const batch of batches) {
+      if (!Object.hasOwn(saved.prizeBaselines, batch.requestId)) continue;
+      const baseline = cleanPrizeBaseline(saved.prizeBaselines[batch.requestId], batch);
+      if (baseline) baselines[batch.requestId] = baseline;
+    }
     return {base, revision: typeof saved.revision === 'string' ? saved.revision : null,
-      batches, selectedId: validGymnastId(saved.selectedId) ? saved.selectedId : null,
+      batches, prizeBaselines: baselines, selectedId: validGymnastId(saved.selectedId) ? saved.selectedId : null,
       sealed: {...saved, version: 3, inFlight: batches[0] || null,
-        waitingBatches: batches.slice(1), queuedOps: []}};
+        waitingBatches: batches.slice(1), queuedOps: [], prizeBaselines: baselines}};
   }
 
   function adoptRecovery(key) {
@@ -2529,6 +2588,9 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (!previous) {
         waitingBatches.push(batch);
         seen.set(batch.requestId, JSON.stringify(batch.operations));
+      }
+      if (!prizeBaselines.has(batch.requestId) && Object.hasOwn(saved.prizeBaselines, batch.requestId)) {
+        prizeBaselines.set(batch.requestId, saved.prizeBaselines[batch.requestId]);
       }
     }
     const counter = revision => Number((revision || '').split(':')[0]) || 0;
@@ -2779,15 +2841,6 @@ html:has(body.no-motion){scroll-behavior:auto}
     // Keep Undo after our own ordinary acknowledgement; otherwise fail closed.
     if (remoteRevision && result.revision !== remoteRevision &&
         (!ownScoreSave || incoming > current + 1)) history = [];
-    // Award celebrations only follow a confirmed save, never page loads or background reads.
-    if (hasLoaded && ownScoreSave) {
-      const milestones=[];
-      for (const gymnast of result.state.gymnasts) {
-        const thresholds=[200,250].filter(value=>result.state.prizes?.[gymnast.id]?.[value]&&!confirmedState.prizes?.[gymnast.id]?.[value]);
-        if(thresholds.length) milestones.push({gymnastName:gymnast.name,thresholds});
-      }
-      if(milestones.length) try { window.SWLCelebration?.prizes?.(milestones); } catch {}
-    }
     confirmedState = result.state;
     remoteRevision = result.revision;
     baseEpoch++;
@@ -2873,6 +2926,9 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
     }
     const batch = inFlight;
+    // A read may observe this save before its acknowledgement arrives. Keep the
+    // pre-request prize snapshot across retries instead of comparing with that read.
+    capturePrizeBaseline(batch);
     const startedEpoch = baseEpoch;
     sending = true;
     retryNeeded = false;
@@ -2895,8 +2951,10 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
       const result = await scoresRequest({ action: 'patch',
         requestId: batch.requestId, operations: batch.operations });
+      const milestones = confirmedBatchPrizes(batch, result);
       acceptConfirmed(result, startedEpoch, true);
       inFlight = null;
+      prizeBaselines.delete(batch.requestId);
       retryNeeded = false;
       saveError = '';
       connected = true;
@@ -2905,6 +2963,9 @@ html:has(body.no-motion){scroll-behavior:auto}
       readError = '';
       rebuildState();
       persistRecovery();
+      // A successful receipt owns its announcement even when a newer read has
+      // already supplied the same marks. Presentation cannot fail the saved batch.
+      if (milestones.length) try { window.SWLCelebration?.prizes?.(milestones); } catch {}
       return true;
     } catch (error) {
       connected = false;
@@ -4372,6 +4433,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     cancelFlushTimers();
     inFlight = null;
     waitingBatches = [];
+    prizeBaselines.clear();
     queuedOps = [];
     for (const key of damagedRecoveryKeys) { try { localStorage.removeItem(key); } catch {} }
     damagedRecoveryKeys.clear();
