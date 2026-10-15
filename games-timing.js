@@ -23,6 +23,7 @@
     const info=INFO[kind],isRelay=kind==='relayrace',isSense=kind==='timesense',factor=isSense?10:100;
     let host=null,root=null,options={},active=false,destroyed=true,view=0,timer=null,timerToken=0;
     let clockNode=null,lapNode=null,state=null,confirming='',error='',undoRecord=null,lastLapAt=-Infinity;
+    let ownsLayout=false;
     let names=NAMES.slice(),sizes=['5','5','5'],count=2,mode='normal',format='individual',rounds=2,taskId='burpees',previousTarget=0;
     const fresh=()=>({phase:'setup',teams:[],order:[],turn:0,elapsedMs:0,runningSince:0,laps:[],penalty:0,fell:false,neat:false,balanceLost:false,target:0,results:[],sessionId:null,notified:false,message:''});
     const canAct=()=>active&&!destroyed&&!document.hidden&&Boolean(root?.isConnected);
@@ -46,6 +47,25 @@
     function pause(){if(state?.phase!=='running')return;state.elapsedMs=elapsed();state.runningSince=0;state.phase='paused';stopTick();state.message='Clock paused. Resume when everyone is ready, or discard this attempt.';if(isRelay)state.message='Team clock paused. Resume from this exact time, or redo this team.';render();}
     function drawTarget(){let value=8+random(8);if(value===previousTarget)value=8+(value-7)%8;previousTarget=value;return value;}
     function clearAttempt(){state.elapsedMs=0;state.runningSince=0;state.laps=[];state.penalty=0;state.fell=false;state.neat=false;state.balanceLost=false;state.phase='ready';undoRecord=null;lastLapAt=-Infinity;if(isSense)state.target=drawTarget();state.message=isGroup()?(currentTeam().remaining===1?'The last gymnast goes now. Stop when they come down.':`${currentTeam().remaining} gymnasts go together. Stop when the last gymnast comes down.`):isRelay?'Everyone ready? The clock stays running through every changeover.':'Next gymnast up. Coach starts and stops the clock.';}
+    function updateLayout(){
+      if(kind!=='handstand')return;
+      const playing=active&&!destroyed&&state?.phase!=='setup',body=document.body;
+      if(root)root.dataset.focused=String(playing);
+      if(!playing){if(ownsLayout){body?.classList?.remove?.('swl-handstand-playing');body?.style?.removeProperty?.('--swl-handstand-header-bottom');ownsLayout=false;}return;}
+      body?.classList?.add('swl-handstand-playing');ownsLayout=true;
+      const viewport=window.visualViewport,topOffset=Math.max(0,Number(viewport?.offsetTop)||0),height=Number(viewport?.height)||window.innerHeight||768;
+      const header=document.querySelector?.('.header')?.getBoundingClientRect?.(),headerBottom=Math.max(topOffset,Number(header?.bottom)||76),nav=document.querySelector?.('.nav')?.getBoundingClientRect?.();
+      const bottomNav=nav&&nav.height>0&&nav.top>headerBottom+48&&nav.top>topOffset+height/2;
+      const bottom=Math.min(topOffset+height-10,bottomNav?nav.top-8:topOffset+height-10),top=headerBottom+48,available=Math.max(100,bottom-top);
+      body?.style?.setProperty('--swl-handstand-header-bottom',`${headerBottom}px`);
+      root?.style.setProperty('--swl-handstand-top',`${top}px`);root?.style.setProperty('--swl-handstand-height',`${available}px`);
+      if(root)root.dataset.fit=available<500?'compact':'roomy';
+    }
+    function retry(){
+      if(kind!=='handstand'||!['paused','review','confirmed','finished'].includes(state.phase))return;
+      if(['confirmed','finished'].includes(state.phase)){if(!undoRecord)return;undo();}
+      discard();state.message=isGroup()?'Ready to retry this round. The same gymnasts stay in; other times are unchanged.':'Ready to retry. Same gymnast, fresh clock; other times are unchanged.';render({focus:'go'});
+    }
     function start(replay=false){
       if(replay?state.phase!=='finished':state.phase!=='setup')return;
       const chosen=names.slice(0,count).map((value,index)=>nameOf(value)||NAMES[index]),numbers=sizes.slice(0,count).map(validSize);
@@ -106,7 +126,7 @@
       if(!canAct())return;
       if(action==='cancel-dialog'){if(confirming){confirming='';render({focus:state.phase==='paused'?'resume':'reset'});}return;}
       if(action==='confirm-dialog'){acceptDialog();return;}if(confirming)return;
-      if(action==='start')start();else if(action==='replay')start(true);else if(action==='go')go();else if(action==='stop')stop();else if(action==='resume')resume();else if(action==='pause')pause();else if(action==='lap')recordLap(false);else if(action==='finish')recordLap(true);else if(action==='confirm')confirm();else if(action==='undo')undo();else if(action==='next')next();else if(action==='discard')discard();else if(action==='reset'||action==='redo')ask(action);else if(action==='penalty-plus')adjustPenalty(1);else if(action==='penalty-minus')adjustPenalty(-1);else if(['fell','neat','balance-lost'].includes(action))toggle(action);
+      if(action==='start')start();else if(action==='replay')start(true);else if(action==='go')go();else if(action==='stop')stop();else if(action==='resume')resume();else if(action==='pause')pause();else if(action==='lap')recordLap(false);else if(action==='finish')recordLap(true);else if(action==='confirm')confirm();else if(action==='undo')undo();else if(action==='next')next();else if(action==='discard')discard();else if(action==='retry')retry();else if(action==='reset'||action==='redo')ask(action);else if(action==='penalty-plus')adjustPenalty(1);else if(action==='penalty-minus')adjustPenalty(-1);else if(['fell','neat','balance-lost'].includes(action))toggle(action);
       else if(/^count-[23]$/.test(action)&&state.phase==='setup'){count=Number(action.slice(-1));error='';render({focus:action});}
       else if(['mode-normal','mode-pro'].includes(action)&&state.phase==='setup'){mode=action.slice(5);render({focus:action});}
       else if(['format-individual','format-group'].includes(action)&&kind==='handstand'&&state.phase==='setup'){format=action.slice(7);error='';render({focus:action});}
@@ -115,7 +135,7 @@
     }
     function button(action,text,style='secondary',disabled=false){const el=node('button','swlt-button swlt-'+style,text),generation=view;el.type='button';el.dataset.timingAction=action;el.disabled=disabled||!active;el.addEventListener('click',()=>{if(generation===view&&!el.disabled)perform(action);});return el;}
     function choice(action,text,pressed){const el=button(action,text);el.setAttribute('aria-pressed',String(pressed));return el;}
-    function header(){const el=node('header','swlt-header'),copy=node('div');copy.append(node('p','swlt-kicker','SWL GAMES · '+info.name.toUpperCase()),node('h2','',info.title),node('p','swlt-intro',info.intro));el.append(copy,node('span','swlt-tag',info.tag));return el;}
+    function header(){const el=node('header','swlt-header'),copy=node('div');copy.append(node('p','swlt-kicker','SWL GAMES · '+info.name.toUpperCase()),node('h2','',kind==='handstand'&&state.phase!=='setup'?'Handstand Timer':info.title),node('p','swlt-intro',info.intro));el.append(copy,node('span','swlt-tag',info.tag));return el;}
     function setup(){
       const layout=node('div','swlt-setup'),form=node('section','swlt-panel'),rules=node('aside','swlt-rules');form.append(node('p','swlt-kicker','BUILD YOUR TEAMS'),node('h3','','Two or three. Everyone gets a turn.'));
       if(kind==='handstand'){
@@ -180,7 +200,7 @@
           else controls.append(button('stop',isGroup()?'Last gymnast down ■':isSense?'Stop · reveal time ■':'Stop handstand ■','primary'));
           controls.append(button('pause','Pause clock','secondary'));
         }
-        if(state.phase==='paused')controls.append(button('resume','Resume clock ↗','primary'),isRelay?button('redo','Redo this team','secondary'):button('discard','Discard attempt','secondary'));
+        if(state.phase==='paused'){controls.append(button('resume','Resume clock ↗','primary'));if(kind!=='handstand')controls.append(isRelay?button('redo','Redo this team','secondary'):button('discard','Discard attempt','secondary'));}
         el.append(controls);
       }
       splits(el);return el;
@@ -199,20 +219,21 @@
       if(state.phase==='setup')root.append(setup());
       else {root.append(scoreboard(),state.phase==='finished'?finishView():stage());const tools=node('div','swlt-toolbar');
         if(isRelay)tools.append(button('redo','↻ Redo this team','secondary',state.phase==='ready'));
-        else tools.append(button('undo','↶ Undo last score','secondary',!undoRecord||!['confirmed','finished'].includes(state.phase)));
+        else {if(kind==='handstand')tools.append(button('retry',isGroup()?'↻ Retry round':'↻ Retry attempt','secondary',!['paused','review','confirmed','finished'].includes(state.phase)));tools.append(button('undo','↶ Undo last score','secondary',!undoRecord||!['confirmed','finished'].includes(state.phase)));}
         tools.append(button('reset','Restart game','text'));root.append(tools);const past=history();if(past)root.append(past);
       }
       const live=node('p','swlt-live',state.message);live.setAttribute('role','status');live.setAttribute('aria-live','polite');root.append(live,node('p','swlt-session-note','Session-only game scores · your Skill League scores stay unchanged'));
       if(confirming){const box=node('div','swlt-dialog');box.setAttribute('role','group');box.setAttribute('aria-label',confirming==='redo'?'Confirm team redo':'Confirm game restart');box.append(node('h3','',confirming==='redo'?'Redo this team’s relay?':'Restart this game?'),node('p','',confirming==='redo'?'This team’s current time, splits and penalty will be cleared. Other team results stay.':'All game scores return to zero. Team names and sizes stay ready.'),button('cancel-dialog','Keep playing','primary'),button('confirm-dialog',confirming==='redo'?'Redo team':'Restart','secondary'));root.append(box);root.querySelectorAll('[data-timing-action]').forEach(control=>{if(!['cancel-dialog','confirm-dialog'].includes(control.dataset.timingAction))control.disabled=true;});}
+      updateLayout();
       if(active&&(focus||previous)){const target=root.querySelector(`[data-timing-action="${focus||previous}"]`);if(target&&!target.disabled)target.focus?.({preventScroll:true});}
     }
     function visibility(){if(document.hidden)pause();}
     function deactivate(){if(destroyed)return;pause();active=false;confirming='';render();}
-    function destroy(){stopTick();document.removeEventListener('visibilitychange',visibility);active=false;destroyed=true;view++;root?.remove();root=host=null;state=null;clockNode=lapNode=null;options={};names=NAMES.slice();sizes=['5','5','5'];count=2;mode='normal';format='individual';rounds=2;taskId='burpees';undoRecord=null;confirming='';error='';previousTarget=0;}
+    function destroy(){stopTick();document.removeEventListener('visibilitychange',visibility);active=false;destroyed=true;updateLayout();window.removeEventListener?.('resize',updateLayout);window.visualViewport?.removeEventListener?.('resize',updateLayout);window.visualViewport?.removeEventListener?.('scroll',updateLayout);view++;root?.remove();root=host=null;state=null;clockNode=lapNode=null;options={};names=NAMES.slice();sizes=['5','5','5'];count=2;mode='normal';format='individual';rounds=2;taskId='burpees';undoRecord=null;confirming='';error='';previousTarget=0;}
     function mount(container,config={}){
       if(!container||typeof container.append!=='function')throw TypeError(info.name+' needs a container.');
       if(host===container&&root?.isConnected){options=config;active=true;render();return api;}
-      destroy();host=container;options=config;active=true;destroyed=false;state=fresh();root=node('section','swl-timing-game');root.addEventListener('keydown',event=>{if(event.key==='Escape'&&confirming&&canAct()){event.preventDefault();event.stopPropagation();perform('cancel-dialog');}});document.addEventListener('visibilitychange',visibility);container.append(root);render();return api;
+      destroy();host=container;options=config;active=true;destroyed=false;state=fresh();root=node('section','swl-timing-game');root.addEventListener('keydown',event=>{if(event.key==='Escape'&&confirming&&canAct()){event.preventDefault();event.stopPropagation();perform('cancel-dialog');}});document.addEventListener('visibilitychange',visibility);if(kind==='handstand'){window.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('scroll',updateLayout);}container.append(root);render();return api;
     }
     const api=Object.freeze({version:1,mount,deactivate,destroy,getState(){if(!state)return null;return{...clone(state),active,confirming,mode,format,rounds,taskId,gameId:kind,currentTeam:teamIndex(),currentGymnast:isGroup()?null:Math.min(gymnastIndex()+1,currentTeam()?.size??1),currentRound:isGroup()?groupRound():null,elapsedMs:elapsed(),draftScore:draftUnits()/factor,canUndo:!isRelay&&Boolean(undoRecord)&&['confirmed','finished'].includes(state.phase),participantCount:state.teams.reduce((sum,team)=>sum+team.size,0),winners:state.phase==='finished'?winnerIndices():[],teams:state.teams.map(team=>({...team,score:team.totalUnits/factor,average:team.turns?team.totalUnits/factor/team.turns:0}))};}});
     return api;

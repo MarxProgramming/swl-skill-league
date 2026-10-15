@@ -120,3 +120,7 @@ The backend keeps durable score and lock request receipts in an additive Request
 Release checks use isolated local fixture data with the production Sheet connection blocked. They cover phone/iPad layouts, catalogue/profile navigation, all nine game interfaces, failed saves and two-tab recovery; production leaderboard marks are not changed for testing.
 
 GitHub Pages hosts the app, and Google Sheets remains the shared data store. The shared manual lock has no timer; network failures preserve unsaved edits for retry.
+
+### Handstand timing controls
+
+Handstand Timer uses a centred play screen with oversized Start, Stop and Resume buttons. Retry attempt (or Retry round) resets the current or just-confirmed time for the same gymnast/group, preserving all other results and restoring any sat-out gymnast. Retry is available after stopping or pausing; advancing to the next turn closes the previous attempt.
