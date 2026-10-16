@@ -1731,7 +1731,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         <details class="scoring">
           <summary>How scoring works</summary>
           <p>
-            Base skills, leaps and handstand holds: 10 points.
+            Base skills and leaps: 10 points. Handstand holds: 5 points.
             Upgrades: 5. Pro upgrades: 2.5.
             A perfect mark earns double, replacing the achieved score.
           </p>
@@ -1779,7 +1779,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </div>
   <ul>
     <li><strong>The top five are on show.</strong> Each board has a blurred glimpse of sixth place. Press a visible name to open their skills.</li>
-    <li><strong>Good foundations earn more.</strong> Base skills, leaps and handstand holds earn <strong>10 points</strong>, upgrades <strong>5</strong>, and pro upgrades <strong>2.5</strong>.<span class="guide-why">Harder skills add smaller gains. This rewards strong basics and gives gymnasts building their foundations a chance to keep up with more advanced gymnasts.</span></li>
+    <li><strong>Good foundations earn more.</strong> Base skills and leaps earn <strong>10 points</strong>, handstand holds and upgrades <strong>5</strong>, and pro upgrades <strong>2.5</strong>.<span class="guide-why">Harder skills add smaller gains. This rewards strong basics and gives gymnasts building their foundations a chance to keep up with more advanced gymnasts.</span></li>
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+1</strong>. All three Perfect earn <strong>+5 instead</strong>. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Controlled linking and presentation earn extra.</strong> In each Rolls or Acro complex, choose Good <strong>+1</strong>, Excellent <strong>+2</strong>, or Perfect <strong>+3</strong>. Judge smooth transitions, balance and presentation. Leaps have no linking rating.</li>
@@ -1953,6 +1953,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   ];
 
   const POINTS = { base: 10, upgrade: 5, pro: 2.5 };
+  const skillPoints = (category, tier) => category === 'handstands' ? 5 : POINTS[tier];
 
   const SKILLS = CATEGORIES.flatMap(category =>
     category.tiers.flatMap(([tier, label, names]) =>
@@ -1961,7 +1962,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         name,
         category: category.id,
         tier,
-        points: POINTS[tier]
+        points: skillPoints(category.id, tier)
       }))
     )
   );
@@ -3663,7 +3664,7 @@ html:has(body.no-motion){scroll-behavior:auto}
                 <span class="tier-label">${label}</span>
 
                 <span>
-                  ${POINTS[tier]} pts · perfect ${POINTS[tier] * 2}
+                  ${skillPoints(category.id, tier)} pts · perfect ${skillPoints(category.id, tier) * 2}
                 </span>
 
                 <span
