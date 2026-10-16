@@ -34,14 +34,14 @@
     const heat = !peek ? options.heatClass(gymnast.id) : '';
     const details = `<span class="swlp-row-position"><span class="sr">Position </span>${position}</span>
       <span class="swlp-row-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-      <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)}</strong>
-        <small class="heat-meta"><span class="heat-meta-text">${selected ? 'Your selected gymnast' : escapeHTML(options.groupLabel(gymnast.coach || ''))}</span>${options.fireBadge(gymnast.id)}</small></span>
+      <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)} ${options.coachBadge(gymnast)}</strong>
+        <small class="heat-meta"><span class="heat-meta-text">${selected ? (options.isCoachParticipant(gymnast) ? 'Your selected coach' : 'Your selected gymnast') : escapeHTML(options.groupLabel(gymnast.coach || ''))}</span>${options.fireBadge(gymnast.id)}</small></span>
       <span class="swlp-row-score"><strong>${displayNumber(row.points)}</strong><small>pts</small></span>`;
     if (peek) {
       return `<li class="swlp-row swlp-peek" data-placement-position="${position}" data-placement-peek="${distance < 0 ? 'above' : 'below'}" aria-hidden="true">
         <div class="swlp-peek-content">${details}</div><span class="swlp-peek-label">${distance < 0 ? 'Just above' : 'Just below'}</span></li>`;
     }
-    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${heat ? ' '+heat : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
+    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${heat ? ' '+heat : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + (options.isCoachParticipant(gymnast) ? ', coach' : '') + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
   }
 
   function boardHTML(board, gymnast, options) {
@@ -57,11 +57,11 @@
     </article>`;
   }
 
-  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
+  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
     const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':level==='hot'?'is-hot':'';};
-    const options = { fireBadge, heatClass, groupLabel };
+    const options = { fireBadge, coachBadge, isCoachParticipant, heatClass, groupLabel };
     const overall = boards.find(board => board.id === 'overall');
     const overallRows = Array.isArray(overall?.rows) ? overall.rows : [];
     const overallWindow = placementWindow(overallRows, gymnast.id);
@@ -71,7 +71,7 @@
       <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to gymnast</button>
       <header class="swlp-hero${heatClass(gymnast.id) ? ' '+heatClass(gymnast.id) : ''}">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-          <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)}</h2>
+          <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)} ${coachBadge(gymnast)}</h2>
             <p class="swlp-coach heat-meta"><span class="heat-meta-text">${escapeHTML(groupLabel(gymnast.coach || 'Your league'))}</span>${fireBadge(gymnast.id)}</p></div></div>
         <div class="swlp-overall"><p>${escapeHTML(scope)} position</p><strong>${overallWindow.position ? `<span aria-hidden="true">#</span>${overallWindow.position}` : '—'}</strong>
           <small>${overallWindow.position ? `of ${overallWindow.total} ${escapeHTML(participantLabel)}` : 'Scores are loading'}</small></div>

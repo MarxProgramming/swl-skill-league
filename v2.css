@@ -114,3 +114,6 @@ body.no-motion .is-on-fire::before,[data-placement-motion="off"] .is-on-fire::be
 .board-filter-controls .board-squad-filter{flex:1 1 300px;max-width:500px}
 .board-filter-controls .board-age-filter{min-width:0}
 @media(max-width:600px){.board-filter-controls .board-squad-filter{max-width:none;flex:1 1 100%}}
+
+/* Coach identity stays distinct from scoring and heat indicators. */
+.coach-badge.coach-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;vertical-align:middle;white-space:nowrap;margin:0 0 0 5px;padding:4px 6px;border:1px solid #bd9bff60;border-radius:5px;background:#8c5de02e;color:#d9c3ff;font-size:8px;font-weight:850;letter-spacing:.08em;line-height:1;text-shadow:none}

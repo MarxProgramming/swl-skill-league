@@ -385,7 +385,9 @@
     const gymnastName = String(details.gymnastName || 'What a performance!').slice(0, 120);
     const tierName = isLeaps ? '' : details.tierName || ({base:'Base complex',upgrade:'Upgrades',pro:'Pro upgrades'}[details.tier]) || '';
     const detail = isPrize ? `${details.thresholds.join(' & ')} POINT${details.thresholds.length>1?' MILESTONES':'S'}` : [details.categoryName, tierName].filter(Boolean).map(value => String(value).slice(0,100)).join(' · ');
-    banner.append(medals, title, make('swl-celebration-name', gymnastName, 'p'),
+    const person = make('swl-celebration-name', gymnastName, 'p');
+    if (details.isCoach === true) person.append(make('coach-badge', 'COACH', 'span'));
+    banner.append(medals, title, person,
       make('swl-celebration-detail', detail, 'p'), make('swl-celebration-caption', isPrize?'You’ve won a prize. Brilliant foundations!':'Three skills. All perfect.', 'p'));
     overlay.append(veil, banner);
     document.body.append(overlay);
@@ -408,7 +410,7 @@
   function prizes(milestones) {
     for (const item of milestones||[]) {
       const thresholds=(item.thresholds||[]).filter(value=>value===200||value===250);
-      if(thresholds.length) prizeQueue.push({kind:'prize',gymnastName:String(item.gymnastName||''),thresholds});
+      if(thresholds.length) prizeQueue.push({kind:'prize',gymnastName:String(item.gymnastName||''),thresholds,...(item.isCoach===true?{isCoach:true}:{})});
     }
     if(prizeTimer) return;
     const next=()=>{
