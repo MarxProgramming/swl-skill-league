@@ -17,7 +17,7 @@
   }
   function shuffle(items) { const result = items.slice(); for (let i = result.length - 1; i > 0; i--) { const j = randomBelow(i + 1); [result[i],result[j]] = [result[j],result[i]]; } return result; }
   function session() { try { if (window.crypto?.randomUUID) return 'draft-' + window.crypto.randomUUID(); } catch (_) {} return `draft-${Date.now().toString(36)}-${++sequence}-${randomBelow(0x100000000).toString(36)}`; }
-  function meta(skill) { return [({rolls:'Rolls',acro:'Acro & spins',leaps:'Leaps'})[skill.category] || skill.category, ({base:'Base',upgrade:'Upgrade',pro:'Pro'})[skill.tier] || skill.tier].filter(Boolean).join(' · '); }
+  function meta(skill) { return [({rolls:'Rolls',acro:'Acro & spins',leaps:'Leaps',handstands:'Handstands'})[skill.category] || skill.category, ({base:'Base',upgrade:'Upgrade',pro:'Pro'})[skill.tier] || skill.tier].filter(Boolean).join(' · '); }
   function create(container, config) {
     let options = config, skills = catalogue(config.skills), difficulty='hard', pool=window.SWLShuffleShowcase.poolFor(skills,difficulty), bag = [], previous = '', podium=null;
     let phase = 'setup', active = true, destroyed = false, teamCount = 2, size = '5', names = DEFAULTS.slice(), teams = [];

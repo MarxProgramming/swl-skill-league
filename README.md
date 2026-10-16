@@ -6,17 +6,17 @@ After the opening screen, the main page goes directly to the leaderboards, with 
 
 Completing all three skills at Perfect in any Rolls or Acro complex, or all three leaps, starts a green-and-gold confetti overlay, a result card, and a victory sound. The page stays still and interactive while the overlay animates, and background saving continues. New Achieved and Perfect marks use very high bell tones, while completion adds soft complementary high harmonies. The app respects the device’s reduced-motion setting; reduced motion shows a static result card without confetti. The Sound control remains available for each device. The former Data and Motion controls are no longer in the interface.
 
-Basics and leaps earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each skill value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six non-leap complexes. Linking bonuses are not doubled.
+Basics, leaps and timed handstand holds earn 10 points per achieved skill, upgrades 5, and pro upgrades 2.5. Perfect doubles each skill value. Existing marks are retained and totals use these values, including fractional points. Linking and presentation earn a separate Good / Excellent / Perfect bonus of 1 / 2 / 3 points for each of the six Rolls and Acro complexes. Linking bonuses are not doubled.
 
 Each three-skill Rolls or Acro complex, and the three-leap collection, also earns an automatic completion bonus: 1 point when all three skills are at least Achieved, or 5 when all three are Perfect. The 5-point bonus replaces the 1-point bonus. A mix of Achieved and Perfect earns 1; lowering or clearing a mark recalculates the bonus immediately. Completion bonuses are derived from the existing marks and require no separate saved field.
 
-The maximum is 323 points: 270 for skills, 18 for linking, and 35 for completing all seven groups at Perfect. Category maxima are Rolls 129, Acro 129, and Leaps 65. Existing gymnasts are recalculated immediately from unchanged skill marks; no score migration or additional award is saved.
+The maximum is 388 points: 330 for skills, 18 for linking, and 40 for completing all eight groups at Perfect. Category maxima are Rolls 129, Acro 129, and Leaps 65, and Handstands 65. Existing gymnasts are recalculated immediately from unchanged skill marks; no score migration or additional award is saved.
 
 Each gymnast profile shows their placement in Overall, Rolls, Acro and Leaps, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending, then names alphabetically to resolve equal scores.
 
 ## Version 2.5
 
-Team Skill Draft is a separate game for two or three equal-sized teams. Shuffle one shared skill, let each team choose an unused gymnast, and award one point to the best attempt. Every performer uses a turn; play ends when everyone has had one go. Both shuffle games offer Easy (9 base skills and leaps), Medium (15 skills including first upgrades), and Hard (all 21 skills). Anonymous class ratings and completed plays use the same Google Sheets tracking as the other games. The wheel uses conditioning in place of the former funny/silly entries.
+Team Skill Draft is a separate game for two or three equal-sized teams. Shuffle one shared skill, let each team choose an unused gymnast, and award one point to the best attempt. Every performer uses a turn; play ends when everyone has had one go. Both shuffle games offer Easy (12 base skills, leaps and handstand holds), Medium (18 skills including first upgrades), and Hard (all 24 skills). Anonymous class ratings and completed plays use the same Google Sheets tracking as the other games. The wheel uses conditioning in place of the former funny/silly entries.
 
 Coaches have their own group: Marx, Dan and Hannah. Marx retains his existing skill record and score. The default All squads view excludes coaches; choose Coaches to compare coaches, or the final Overall · all squads + coaches option to include everyone. The same distinction applies to directory and analytics views. No coach birth dates or ages are inferred.
 
@@ -40,7 +40,7 @@ Each achieved or perfect skill lasts 30 days at its current level. At expiry it 
 
 Google Sheets stores server-authoritative renewal and latest-gain dates, a ledger of net league points, and a separate ledger of qualifying heat progress. The league ledger still includes every skill point, linking rating and +1/+5 completion bonus. Weekly analytics uses that league history, not the smaller heat total, and labels incomplete or untracked windows. Earlier points are never guessed.
 
-Hot starts at 10 qualifying points over the last seven London calendar days and On fire at 15. Basic Rolls contribute no heat: their skills, completion bonuses and linking are all excluded. For Acro basics and leaps, Achieved marks and the +1 Achieved-complex bonus contribute no heat; each Perfect skill contributes only its +10 perfection increment, and an all-Perfect group contributes +5. Upgrade and pro skills, their completion bonuses, and linking outside basic Rolls qualify at their normal point values. League scores and rankings are unchanged by these heat exclusions.
+Hot starts at 10 qualifying points over the last seven London calendar days and On fire at 15. Basic Rolls contribute no heat: their skills, completion bonuses and linking are all excluded. For Acro basics, leaps and handstand holds, Achieved marks and the +1 Achieved-complex bonus contribute no heat; each Perfect skill contributes only its +10 perfection increment, and an all-Perfect group contributes +5. Upgrade and pro skills, their completion bonuses, and linking outside basic Rolls qualify at their normal point values. League scores and rankings are unchanged by these heat exclusions.
 
 Earned highlights last seven days. Renewals add no points, while manual reductions and undo reduce the corresponding net totals and can reverse unearned heat. Automatic expiry does not affect momentum. Pending edits update the highlights immediately; a save acknowledgement replaces the baseline without counting an edit twice. Filters do not change the heat thresholds.
 
@@ -105,7 +105,7 @@ Retry saving is always available in the footer. It reconnects if needed and retr
 
 ## Skill catalogue and IGA reference
 
-The subtle All skills header button opens a read-only catalogue of all seven complexes and 21 skills, including the existing skill points and completion bonuses. It never assigns or changes gymnast marks. Filters narrow the catalogue by category, and Back restores the previous view.
+The subtle All skills header button opens a read-only catalogue of all eight groups and 24 skills, including the existing skill points and completion bonuses. It never assigns or changes gymnast marks. Filters narrow the catalogue by category, and Back restores the previous view.
 
 Seventeen clear floor-skill matches show difficulty letters from the official [IGA 2026 Women’s Artistic Code of Points](https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-CODE-OF-POINTS-2026.pdf#page=9). These A–G letters are separate from competition levels or Gems grades. Unspecified combinations, the half-turn jump and the unspecified front somersault are left ungraded. Handstand roll to pike stand is identified as Regional pathway only. Qualifications for straight jumps, turns on one foot and change-leg leaps remain visible without information pop-ups.
 
@@ -124,3 +124,5 @@ GitHub Pages hosts the app, and Google Sheets remains the shared data store. The
 ### Handstand timing controls
 
 Handstand Timer uses a centred play screen with oversized Start, Stop and Resume buttons. Retry attempt (or Retry round) resets the current or just-confirmed time for the same gymnast/group, preserving all other results and restoring any sat-out gymnast. Retry is available after stopping or pausing; advancing to the next turn closes the previous attempt.
+
+Handstands adds separate 5-second, 10-second and 30-second holds, each worth 10 Achieved / 20 Perfect. The three holds use the usual +1 / +5 completion bonus and 30-day renewal, without linking points. Each hold is ticked separately; longer holds never auto-award shorter holds. The category is included in leaderboards, profiles, quick marking, analytics and the shared game skill pool.

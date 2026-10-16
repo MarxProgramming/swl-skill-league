@@ -2,8 +2,8 @@
 (() => {
   'use strict';
   const LEVELS = [
-    {id:'easy',name:'Easy',detail:'Base complexes + leaps'},
-    {id:'medium',name:'Medium',detail:'Base + upgrades + leaps'},
+    {id:'easy',name:'Easy',detail:'Base skills, leaps + handstands'},
+    {id:'medium',name:'Medium',detail:'Base skills + first upgrades'},
     {id:'hard',name:'Hard',detail:'Every skill, including pro'}
   ];
   const node = (tag, className = '', text = '') => { const el=document.createElement(tag);el.className=className;el.textContent=text;return el; };
@@ -433,7 +433,7 @@
       if (!duel) root.append(node('p', 'swl-skill-fair-note', 'Highest average wins · totals shown for every team.'));
     }
     function metaText(skill) {
-      const category = ({ rolls: 'Rolls', acro: 'Acro & spins', leaps: 'Leaps' })[skill.category] || skill.category;
+      const category = ({ rolls: 'Rolls', acro: 'Acro & spins', leaps: 'Leaps', handstands: 'Handstands' })[skill.category] || skill.category;
       const tier = ({ base: 'Base', upgrade: 'Upgrade', pro: 'Pro' })[skill.tier] || skill.tier;
       return [category, tier].filter(Boolean).join(' · ');
     }

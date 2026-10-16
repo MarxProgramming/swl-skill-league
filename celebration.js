@@ -381,7 +381,7 @@
     for (let i = 0; i < (isPrize?1:3); i++) medals.append(make('swl-celebration-medal', isPrize?'🏆':'✓', 'span'));
     const title = make('swl-celebration-title', undefined, 'p');
     const isLeaps = details.kind === 'leaps';
-    title.append(make('', isPrize?'PRIZE':'PERFECT', 'span'), make('', isPrize?'WON!':isLeaps ? 'LEAPS' : 'COMPLEX', 'span'));
+    title.append(make('', isPrize?'PRIZE':'PERFECT', 'span'), make('', isPrize?'WON!':isLeaps ? 'LEAPS' : details.kind === 'handstands' ? 'HOLDS' : 'COMPLEX', 'span'));
     const gymnastName = String(details.gymnastName || 'What a performance!').slice(0, 120);
     const tierName = isLeaps ? '' : details.tierName || ({base:'Base complex',upgrade:'Upgrades',pro:'Pro upgrades'}[details.tier]) || '';
     const detail = isPrize ? `${details.thresholds.join(' & ')} POINT${details.thresholds.length>1?' MILESTONES':'S'}` : [details.categoryName, tierName].filter(Boolean).map(value => String(value).slice(0,100)).join(' · ');
