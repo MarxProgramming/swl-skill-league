@@ -1,6 +1,6 @@
-# SWL Squad Training 3.0
+# SWL Squad Training 3.1
 
-A static gymnastics training app with three main views: Leaderboards, Gymnasts and Games, plus focused Analytics and All skills pages. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The nine games run independently on the current device, with anonymous game ratings saved to Google Sheets.
+A static gymnastics training app with three main views: Leaderboards, Gymnasts and Games, plus focused Analytics, All skills and Challenge Tracker pages. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The nine games run independently on the current device, with anonymous game ratings saved to Google Sheets.
 
 After the opening screen, the main page goes directly to the leaderboards, with a small Scoring guide button. Squad filters switch every board between All squads, All senior squad (Marx and Dan together), Dan’s senior squad, Marx’s senior squad, Marx’s floor and vault, Hannah’s floor and vault, and Saturday Floor and Vault. Each board names its active squad and age filters. The top five gymnasts are shown, followed by a blurred sixth-place preview; selecting a gymnast opens their skills. Equal scores are ordered alphabetically. Every gymnast has an individual place (1, 2, 3, 4), with one gymnast per podium place. The podium medals gleam in a staggered gold, silver, then bronze sequence.
 
@@ -13,6 +13,20 @@ Each three-skill group, including basic leaps, upgraded leaps and handstands, al
 The maximum is 339 points: 330 for skills and 9 for completing all nine groups at Perfect. Category maxima are Rolls 108, Acro 108, Leaps 92 and Handstands 31. All totals are derived from the current marks and the current catalogue.
 
 Each gymnast profile shows their placement in Overall, Rolls, Acro, Leaps and Handstands, with up to two clear neighboring gymnasts above and below and an obscured third preview on each side. The fixed window keeps the selected gymnast in place at the top and bottom of a board. Rankings use points descending. Equal scores sort alphabetically, with an individual numbered place for each gymnast.
+
+## Version 3.1
+
+A small Challenge Tracker button below the main leaderboards opens a new race: the first gymnast to reach 200 points wins a prize. Current league points carry over, but old 200/250-point prize receipts do not count towards this race. All noncoach gymnasts appear, regardless of the main leaderboard's squad or age filters, ordered by current points descending and then alphabetically. Each row shows progress towards 200 and points remaining, and opens the gymnast's existing profile.
+
+The backend starts a separate challenge record for version 3.1 and saves qualifying finishes durably in Google Sheets. Only a confirmed finish can award the prize; unsaved scores at or above 200 show that confirmation is pending. The earliest confirmed finish wins. Equal finish timestamps share first place, and a confirmed result remains recorded if the gymnast's league score later falls. Retries, refreshes and reopening the app do not restart the race or duplicate a finish. Existing individual prize milestones remain separate.
+
+Analytics opens with **Squad foundations**, a full-width comparison of every squad. Switch between foundation progress, average points per gymnast and the percentage of skills retained. Foundation progress uses base skills, basic leaps and handstand holds, with Achieved counting halfway and Perfect fully. Percentage and average measures avoid giving larger squads an advantage. Selecting a squad filters the detail charts below while the comparison keeps its whole-squad context; the age filter also applies to the comparison. Coaches remain excluded unless their group or the combined squads-and-coaches option is selected.
+
+**Across the skills** uses stacked Achieved/Perfect bars for Rolls, Acro, Leaps and Handstands. Selecting a category opens its full standings below. **Building momentum** charts eight seven-day windows of signed net league points, with a comparison to the previous window when records are available. **Progress by age** is a vertical list of stacked progress bars and average points for each age group in the selected squad; selecting a row filters the other charts. **Every place. Every point.** lists every eligible gymnast, with bars and scores for Overall or any skill category, and can instead rank by net points over the last seven days. Selecting a name opens that gymnast's analytics; the adjacent arrow opens their skills.
+
+Squad, age and gymnast filters remain available. The leaderboard's Analytics button resets to All squads, All ages and All gymnasts, while personal Progress insights keeps the selected gymnast. The former skill-mix donut, renewal horizon, renewal list and squad skill map are removed from Analytics. Renewal controls remain in gymnast profiles and quick marking.
+
+Gymnast heat is now visual only: the existing amber and moving lava glows remain, with no Hot/On fire label or flame emoji on gymnast cards. The qualifying points and seven-day duration are unchanged. The separate Hottest game label and rating sort remain. The SWL logo is slightly larger on desktop and mobile.
 
 ## Version 3.0
 
@@ -30,13 +44,13 @@ Heat uses qualifying net progress over the last seven London calendar days: 10 p
 
 First confirmed score milestones at 200 and 250 points earn a prize celebration. Durable milestone records prevent repeat awards after refresh, retry or later score reductions. Existing qualifying totals are registered quietly at migration. Perfect-complex celebrations finish before a queued prize appears.
 
-Unchanged refreshes retain leaderboard, directory, analytics and game-card elements. Changed analytics content preserves its open legend, map scroll and focused control. Scoring starts locked and every successful unlock has a shared 30-minute expiry.
+Unchanged refreshes retain leaderboard, directory, analytics, challenge and game-card elements. Changed analytics and challenge content preserves the focused control without scrolling it into view. Scoring starts locked and every successful unlock has a shared 30-minute expiry.
 
 ## First visit
 
 A personal welcome note from Marx explains the app as a small experiment alongside normal squad training: tracking foundational floor skills, celebrating progress and adding friendly competition within each squad. It appears after the startup screen on the first visit in a browser. Dismissing it is remembered on that device/browser; About this app in the footer opens it again. It stores no personal information.
 
-The leaderboard’s Analytics button always opens All squads and All gymnasts. Personal Progress insights still opens the selected gymnast.
+The leaderboard’s Analytics button always opens All squads, All ages and All gymnasts. Personal Progress insights still opens the selected gymnast.
 
 ## Skill renewal and insights
 
@@ -50,7 +64,7 @@ Earned highlights last seven days. Renewals add no points, while manual reductio
 
 Leaderboard Age and squad filters combine, with counts for each selection and a clear empty state. Analytics uses the same age categories. The official [IGA January 2026 Women’s Artistic National Pathway handbook, printed page 5](https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6) defines age as the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. The current year follows London time. Public roster data contains only competition age, category and year; no dates of birth or email addresses are sent to the website. Missing age information, ages below five, and a cached previous-year category appear under No current age category until fresh information is loaded.
 
-The searchable Gymnasts directory groups every gymnast by squad. Analytics shows retained and perfect skills, category completion, renewal deadlines, recent gains, squad comparisons and a skill map, scoped to all squads, a squad or one gymnast. It uses current marks and their latest dates, rather than claiming a complete historical event log. Placement profiles default to their own squad with an All squads switch.
+The searchable Gymnasts directory groups every gymnast by squad. Analytics compares squad foundations, retained and perfect skills, skill categories, age groups, weekly progress and full standings, scoped to all squads, a squad or one gymnast. Current progress charts use current marks. Weekly charts use the saved net-points ledger and clearly identify incomplete or unavailable history; they do not claim a complete historical event log. Placement profiles default to their own squad with an All squads switch.
 
 ## Squad games
 

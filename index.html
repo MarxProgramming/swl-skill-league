@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Squad Training 3.0</title>
+<title>SWL · Squad Training 3.1</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
@@ -1583,6 +1583,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
+<link rel="stylesheet" href="./analytics-31.css?v=20261019v31">
+<link rel="stylesheet" href="./challenge.css?v=20261019v31">
 </head>
 
 <body>
@@ -1594,7 +1596,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>SQUAD TRAINING <span class="version-tag">3.0</span></small>
+        <small>SQUAD TRAINING <span class="version-tag">3.1</span></small>
       </div>
     </div>
 
@@ -1656,6 +1658,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <p class="note">
       The top five gymnasts are shown. Equal scores are ordered alphabetically.
     </p>
+    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge">Challenge Tracker <span aria-hidden="true">↗</span></button></div>
   </section>
 
   <section id="tracker" aria-label="Gymnast profile" hidden>
@@ -1726,6 +1729,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
   <section id="allSkills" aria-labelledby="allSkillsTitle" hidden><div id="allSkillsRoot"></div></section>
   <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
+  <section id="challenge" aria-label="200-point challenge" hidden><div id="challengeRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
@@ -1753,7 +1757,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. Hot needs 10 qualifying points in seven days; On fire needs 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
+    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. A warm glow starts at 10 qualifying points in seven days; the stronger animated glow starts at 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
   </ul>
 </dialog>
@@ -1774,7 +1778,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261019v3"></script>
+<script src="./startup.js?v=20261019v31"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261019v3"></script>
@@ -1789,7 +1793,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-ratings.js?v=20261019v3"></script>
 <script src="./games.js?v=20261019v3"></script>
 <script src="./skills-catalogue.js?v=20261019perfect1"></script>
-<script src="./v2.js?v=20261019perfect1"></script>
+<script src="./v2.js?v=20261019v31"></script>
+<script src="./challenge.js?v=20261019v31"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
 (() => {
@@ -2023,7 +2028,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     expiryStartedAt: null,
     dailyProgress: null,
     weeklyProgress: null,
-    prizes: {}
+    prizes: {},
+    challenge: null
   });
 
   const isObject = value =>
@@ -2187,6 +2193,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         }
       }
     }
+    if (data.challenge != null) clean.challenge = window.SWLChallenge.parseChallenge(data.challenge, clean.gymnasts);
     clean.expiryStartedAt = typeof data.expiryStartedAt === 'string' && Number.isFinite(Date.parse(data.expiryStartedAt)) ? data.expiryStartedAt : null;
     return clean;
   }
@@ -2374,13 +2381,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
   const isOnFire = (id, at = Date.now()) => heatLevel(id, at) === 'fire';
   const heatClass = id => heatLevel(id) === 'fire' ? ' is-on-fire' : heatLevel(id) === 'hot' ? ' is-hot' : '';
-  function fireBadge(id, at = Date.now()) {
-    const level = heatLevel(id, at);
-    if (level === 'none') return '';
-    const label = level === 'fire' ? 'On fire' : 'Hot';
-    return `<span class="fire-badge heat-${level}" title="${weeklyHeatPoints(id,at)} qualifying points in the last seven days. Basic Rolls and basic Achieved marks earn no heat. Hot from 10 points; On fire from 15. Earned heat stays for seven days."><span aria-hidden="true">🔥</span> ${label}</span>`;
-  }
+  // Heat remains a visual treatment; it no longer adds a text/emoji badge.
+  function fireBadge() { return ''; }
   function renderV2() {
+    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
     v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
@@ -2820,7 +2824,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
     conflict: 'This save can no longer be confirmed safely. Review the latest Google Sheet and download an unsaved backup before discarding or re-entering these edits.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
-    update_required: 'Version 3.0 is ready. Reload this page to use the updated skills and scoring.',
+    update_required: 'Version 3.1 is ready. Reload this page to use the updated skills and scoring.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
     invalid_state: 'The scores include an unknown gymnast, skill or status.',
     duplicate_gymnast: 'A gymnast with that name already exists. Refresh the roster before adding them again.',
@@ -2911,7 +2915,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   let scoreViewSignature='';
   function refreshScoreViews() {
-    const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,londonDay()]);
+    const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,confirmedState.challenge,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,londonDay()]);
     if(signature===scoreViewSignature){renderSaveStatus();return;}
     scoreViewSignature=signature;
     renderBoards();
@@ -3762,7 +3766,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function setView(view, scroll = true) {
-    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue'].includes(view)) return;
+    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue', 'challenge'].includes(view)) return;
     if (currentView === 'directory' && view !== 'directory') directoryScroll = window.scrollY;
     currentView = view;
     const tracker = view === 'tracker';
@@ -3774,6 +3778,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('games').hidden = view !== 'games';
     if ($('directory')) $('directory').hidden = view !== 'directory';
     if ($('analytics')) $('analytics').hidden = view !== 'analytics';
+    if ($('challenge')) $('challenge').hidden = view !== 'challenge';
     if ($('allSkills')) $('allSkills').hidden = view !== 'catalogue';
     $('allSkillsButton')?.setAttribute('aria-pressed',String(view === 'catalogue'));
     $('nav').style.setProperty('--nav-index', view === 'games' ? '2' : view === 'directory' || tracker || placement ? '1' : '0');
@@ -3783,7 +3788,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
         'aria-pressed',
-        String(button.dataset.view === (tracker || placement ? 'directory' : view === 'analytics' || view === 'catalogue' ? 'dashboard' : view))
+        String(button.dataset.view === (tracker || placement ? 'directory' : view === 'analytics' || view === 'catalogue' || view === 'challenge' ? 'dashboard' : view))
       );
     });
 
