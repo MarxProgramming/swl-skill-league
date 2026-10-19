@@ -1704,7 +1704,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         <details class="scoring">
           <summary>How scoring works</summary>
           <p>
-            Base skills and leaps: 10 points. Handstand holds: 5 points.
+            Base skills and basic leaps: 10 points. Handstand holds: 5 points.
             Upgrades: 5. Pro upgrades: 2.5.
             A perfect mark earns double, replacing the achieved score.
           </p>
@@ -1712,11 +1712,8 @@ html:has(body.no-motion){scroll-behavior:auto}
             Strong basics earn the most; advanced skills add smaller gains.
             Skills score independently.
             Upgrades do not tick earlier skills,
-            and each completed three-skill group earns a bonus:
-            +1 when all three are Achieved or better, rising to +5 when all three are Perfect.
-            The +5 replaces the +1; they do not stack. This includes the three leaps and the three handstand holds.
-            Linking and presentation earn a separate bonus in each Rolls and Acro complex:
-            Good +1, Excellent +2, Perfect +3. Choose one rating; these bonuses do not double.
+            and a three-skill group earns +1 bonus point only when all three are Perfect.
+            Achieved and mixed groups earn no bonus. This includes both leap groups and the three handstand holds.
             Bonuses follow the current marks, so resetting a skill can remove a completion bonus.
             All three perfect skills also unlock a celebration.
             The ring shows your share of the available points.
@@ -1754,7 +1751,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>The top five gymnasts are on show.</strong> Each board has a blurred glimpse of the next place. Press a visible name to open their skills.</li>
     <li><strong>Good foundations earn more.</strong> Base complexes and basic leaps earn <strong>10 points</strong>, handstand holds and all upgrades (including upgraded leaps) <strong>5</strong>, and pro upgrades <strong>2.5</strong>.<span class="guide-why">Harder skills add smaller gains. This rewards strong basics and gives gymnasts building their foundations a chance to keep up with more advanced gymnasts.</span></li>
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
-    <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+1</strong>. All three Perfect earn <strong>+5 instead</strong>. This includes leaps and handstand holds. The bonus follows the current marks.</li>
+    <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
     <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. Hot needs 10 qualifying points in seven days; On fire needs 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
@@ -1791,8 +1788,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-addon.js?v=20261019v3"></script>
 <script src="./games-ratings.js?v=20261019v3"></script>
 <script src="./games.js?v=20261019v3"></script>
-<script src="./skills-catalogue.js?v=20261019v3"></script>
-<script src="./v2.js?v=20261019v3"></script>
+<script src="./skills-catalogue.js?v=20261019perfect1"></script>
+<script src="./v2.js?v=20261019perfect1"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
 (() => {
@@ -2283,8 +2280,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function completionBonus(id, category, tier, source = state) {
     const skills = SKILLS.filter(skill => skill.category === category && skill.tier === tier);
     if (skills.length !== 3) return 0;
-    if (skills.every(skill => (source.marks[id]?.[skill.id] ?? 0) === 2)) return 5;
-    return skills.every(skill => (source.marks[id]?.[skill.id] ?? 0) > 0) ? 1 : 0;
+    return skills.every(skill => (source.marks[id]?.[skill.id] ?? 0) === 2) ? 1 : 0;
   }
 
   function summary(id, category = 'overall', source = state) {
@@ -2311,7 +2307,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     const groups = SKILL_GROUPS.filter(group => category === 'overall' || group.category === category);
     total.completion = groups.reduce((points, group) => points + completionBonus(id, group.category, group.tier, source), 0);
     total.points += total.completion;
-    total.max += groups.length * 5;
+    total.max += groups.length;
     return total;
   }
 
@@ -2326,7 +2322,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }, 0);
     points += SKILL_GROUPS.filter(group => !excluded(group)).reduce((sum, group) => {
       const bonus = completionBonus(id, group.category, group.tier, source);
-      return sum + (group.tier === 'base' && bonus !== 5 ? 0 : bonus);
+      return sum + bonus;
     }, 0);
     return points;
   }
@@ -3663,9 +3659,9 @@ html:has(body.no-motion){scroll-behavior:auto}
         $('athletePanel').querySelector(
           `[data-tier-status="${category.id}-${tier}"]`
         ).textContent = perfect
-          ? '✦ All perfect · +5 bonus'
+          ? '✦ All perfect · +1 bonus'
           : done === skills.length
-            ? '✓ All achieved · +1 bonus'
+            ? '✓ All achieved'
             : `${done}/${skills.length} achieved`;
       }
     }
