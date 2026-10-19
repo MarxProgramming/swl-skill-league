@@ -5,16 +5,10 @@
   const points = value => Number.isFinite(value) ? value : 0;
   const ordinal = rank => rank === 1 ? 'First' : rank === 2 ? 'Second' : rank === 3 ? 'Third' : String(rank);
 
-  // Competition ranking: tied scores share a place and consume the same number
-  // of following places. Input order is already score-descending, then by name.
+  // Input is sorted by points descending, then alphabetically by name.
+  // Every gymnast has their own numbered place, including equal scores.
   function rankRows(rows) {
-    let previous, rank = 0;
-    return rows.map((row, index) => {
-      const score = points(row.points);
-      if (index === 0 || score !== previous) rank = index + 1;
-      previous = score;
-      return {...row, rank};
-    });
+    return rows.map((row, index) => ({...row, rank: index + 1}));
   }
 
   function visibleRows(rows) {
@@ -53,9 +47,9 @@
     let content;
     if (overall) {
       const podium = [1,2,3].map(rank => {
-        const tied = shown.filter(row => row.rank === rank);
-        if (!tied.length) return '';
-        return `<div class="v3-podium-column v3-podium-place-${rank}${tied.length > 1 ? ' v3-podium-tied' : ''}" data-podium-rank="${rank}" role="group" aria-label="${tied.length > 1 ? 'Joint ' : ''}${ordinal(rank).toLowerCase()} place"><div class="v3-podium-label">${ordinal(rank)}${tied.length > 1 ? `<span>${tied.length} tied</span>` : ''}</div><div class="v3-podium-stack">${tied.map(card).join('')}</div></div>`;
+        const row = shown.find(row => row.rank === rank);
+        if (!row) return '';
+        return `<div class="v3-podium-column v3-podium-place-${rank}" data-podium-rank="${rank}" role="group" aria-label="${ordinal(rank).toLowerCase()} place"><div class="v3-podium-label">${ordinal(rank)}</div><div class="v3-podium-stack">${card(row)}</div></div>`;
       }).join('');
       content = `${podium ? `<div class="v3-podium">${podium}</div>` : ''}<div class="v3-ranking-tail">${shown.filter(row => row.rank > 3).map(card).join('')}${mystery}</div>`;
     } else content = `<div class="v3-category-rows">${shown.map(card).join('')}${mystery}</div>`;

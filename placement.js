@@ -12,25 +12,17 @@
     .map(word => Array.from(word)[0]).join('');
 
   function placementWindow(rows, gymnastId) {
-    // Keep the neighbouring people in their supplied order, while equal scores
-    // share the same competition rank (for example 1, 2, 2, 4).
-    let previous, rank = 0;
-    const ranks = rows.map((row, index) => {
-      const score = number(row.points);
-      if (index === 0 || score !== previous) rank = index + 1;
-      previous = score;
-      return rank;
-    });
+    // Standings arrive sorted by score, then alphabetically for equal scores.
     const index = rows.findIndex(row => row?.gymnast?.id === gymnastId);
     if (index < 0) return { position: 0, total: rows.length, entries: [] };
     // Fixed offsets keep two clear neighbours and one outer glimpse per side.
     // At either boundary the view becomes shorter; it never shifts its centre.
     return {
-      position: ranks[index],
+      position: index + 1,
       total: rows.length,
       entries: rows.slice(Math.max(0, index - 3), index + 4).map((row, offset) => {
         const rowIndex = Math.max(0, index - 3) + offset;
-        return { row, position: ranks[rowIndex], distance: rowIndex - index };
+        return { row, position: rowIndex + 1, distance: rowIndex - index };
       })
     };
   }
@@ -98,7 +90,7 @@
       <div class="swlp-section-head"><div><p class="swlp-eyebrow">Your place in the league</p><h3>A closer look at every board</h3></div>
         <p>Two people above and below.<br> The next person is a little glimpse.</p></div>
       <div class="swlp-grid">${boards.map(board => boardHTML(board, gymnast, options)).join('')}</div>
-      <p class="swlp-order-note">Equal scores share the same place, with tied names listed alphabetically. The next place accounts for everyone ahead: for example, 1st, 2nd, 2nd, 4th. At the top or bottom of a board, fewer neighbours are shown.</p>
+      <p class="swlp-order-note">Equal scores are ordered alphabetically, with a separate place for each gymnast. At the top or bottom of a board, fewer neighbours are shown.</p>
     </div>`;
     return document.getElementById('placementTitle');
   }
