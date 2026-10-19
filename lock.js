@@ -133,7 +133,7 @@
     const title = make('h2', 'swl-lock-title', 'Unlock scoring');
     title.id = 'swlLockTitle';
     heading.append(icon, title);
-    const description = make('p', 'swl-lock-description', 'Enter the 4-digit code to enable scoring for everyone.');
+    const description = make('p', 'swl-lock-description', 'Enter the 4-digit code to enable scoring for everyone for 30 minutes.');
     description.id = 'swlLockDescription';
     const display = make('div', 'swl-lock-dots');
     display.setAttribute('aria-hidden', 'true');

@@ -2,8 +2,8 @@
 (() => {
   'use strict';
   const LEVELS = [
-    {id:'easy',name:'Easy',detail:'Base skills, leaps + handstands'},
-    {id:'medium',name:'Medium',detail:'Base skills + first upgrades'},
+    {id:'easy',name:'Easy',detail:'Base skills, basic leaps + handstands'},
+    {id:'medium',name:'Medium',detail:'Base skills + first upgrades, including leaps'},
     {id:'hard',name:'Hard',detail:'Every skill, including pro'}
   ];
   const node = (tag, className = '', text = '') => { const el=document.createElement(tag);el.className=className;el.textContent=text;return el; };

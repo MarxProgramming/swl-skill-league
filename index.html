@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Squad Training 2.5</title>
+<title>SWL · Squad Training 3.0</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
@@ -1570,18 +1570,19 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css?v=20261016a">
-<link rel="stylesheet" href="./placement.css">
-<link rel="stylesheet" href="./games.css?v=20261016a">
-<link rel="stylesheet" href="./games-wheel.css?v=20261016a">
-<link rel="stylesheet" href="./games-team.css?v=20261016a">
-<link rel="stylesheet" href="./games-skill.css?v=20261016a">
+<link rel="stylesheet" href="./celebration.css?v=20261019v3">
+<link rel="stylesheet" href="./placement.css?v=20261019v3">
+<link rel="stylesheet" href="./games.css?v=20261019v3">
+<link rel="stylesheet" href="./games-wheel.css?v=20261019v3">
+<link rel="stylesheet" href="./games-team.css?v=20261019v3">
+<link rel="stylesheet" href="./games-skill.css?v=20261019v3">
 <link rel="stylesheet" href="./games-timing.css?v=20261015e">
-<link rel="stylesheet" href="./games-addon.css?v=20261016a">
-<link rel="stylesheet" href="./games-ratings.css?v=20261016a">
-<link rel="stylesheet" href="./v2.css?v=20261016b">
+<link rel="stylesheet" href="./games-addon.css?v=20261019v3">
+<link rel="stylesheet" href="./games-ratings.css?v=20261019v3">
+<link rel="stylesheet" href="./v2.css?v=20261019v3">
 <link rel="stylesheet" href="./welcome.css">
-<link rel="stylesheet" href="./skills-catalogue.css?v=20261016a">
+<link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
+<link rel="stylesheet" href="./v3-rankings.css?v=20261019v3">
 </head>
 
 <body>
@@ -1593,7 +1594,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>SQUAD TRAINING <span class="version-tag">2.5</span></small>
+        <small>SQUAD TRAINING <span class="version-tag">3.0</span></small>
       </div>
     </div>
 
@@ -1639,32 +1640,6 @@ html:has(body.no-motion){scroll-behavior:auto}
       <label class="board-age-filter" for="leaderboardAge"><span>Age</span><select id="leaderboardAge" aria-describedby="leaderboardScope"><option value="all">All ages</option></select></label>
     </div>
     <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
-    <div class="stats">
-      <div class="stat">
-        <span class="stat-icon" aria-hidden="true">↗</span>
-        <div>
-          <strong id="squadPoints">0</strong>
-          <small>Squad points</small>
-        </div>
-      </div>
-
-      <div class="stat">
-        <span class="stat-icon" aria-hidden="true">✓</span>
-        <div>
-          <strong id="achievedCount">0</strong>
-          <small>Skills achieved</small>
-        </div>
-      </div>
-
-      <div class="stat">
-        <span class="stat-icon" aria-hidden="true">✦</span>
-        <div>
-          <strong id="perfectCount">0</strong>
-          <small>Perfect marks</small>
-        </div>
-      </div>
-    </div>
-
     <div class="section-head">
       <h2>The standings</h2>
       <button class="insights-button" data-view="analytics" type="button">◈ Analytics <span aria-hidden="true">↗</span></button>
@@ -1679,9 +1654,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     <div class="boards" id="boards"></div>
 
     <p class="note">
-      Top five, plus a glimpse of sixth.
-      Equal scores are ordered alphabetically;
-      numbers show board positions.
+      Top five places, including everyone tied. Equal scores share a place.
+      The next place counts everyone ahead: 1st, 2nd, 2nd, 4th.
     </p>
   </section>
 
@@ -1778,14 +1752,13 @@ html:has(body.no-motion){scroll-behavior:auto}
     <button class="score-guide-close" type="button" data-close-guide aria-label="Close scoring guide" autofocus>×</button>
   </div>
   <ul>
-    <li><strong>The top five are on show.</strong> Each board has a blurred glimpse of sixth place. Press a visible name to open their skills.</li>
-    <li><strong>Good foundations earn more.</strong> Base skills and leaps earn <strong>10 points</strong>, handstand holds and upgrades <strong>5</strong>, and pro upgrades <strong>2.5</strong>.<span class="guide-why">Harder skills add smaller gains. This rewards strong basics and gives gymnasts building their foundations a chance to keep up with more advanced gymnasts.</span></li>
+    <li><strong>The top five places are on show, including ties.</strong> Each board has a blurred glimpse of the next place. Press a visible name to open their skills.</li>
+    <li><strong>Good foundations earn more.</strong> Base complexes and basic leaps earn <strong>10 points</strong>, handstand holds and all upgrades (including upgraded leaps) <strong>5</strong>, and pro upgrades <strong>2.5</strong>.<span class="guide-why">Harder skills add smaller gains. This rewards strong basics and gives gymnasts building their foundations a chance to keep up with more advanced gymnasts.</span></li>
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>Complete the group for a bonus.</strong> All three skills Achieved or better earn <strong>+1</strong>. All three Perfect earn <strong>+5 instead</strong>. This includes leaps and handstand holds. The bonus follows the current marks.</li>
-    <li><strong>Controlled linking and presentation earn extra.</strong> In each Rolls or Acro complex, choose Good <strong>+1</strong>, Excellent <strong>+2</strong>, or Perfect <strong>+3</strong>. Judge smooth transitions, balance and presentation. Leaps have no linking rating.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Keep skills fresh.</strong> Each level lasts 30 days. Renew after practising to keep it. With 7 days left, the skill turns red and joins the unticked list. Expiry drops one level; renewals do not add points. Hot needs 10 qualifying points in seven days; On fire needs 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades, pro upgrades and linking outside basic Rolls still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
-    <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically.</li>
+    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. Hot needs 10 qualifying points in seven days; On fire needs 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
+    <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores share a place; names within a tie are ordered alphabetically.</li>
   </ul>
 </dialog>
 
@@ -1805,21 +1778,23 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261016a"></script>
-<script src="./lock.js?v=20261016a"></script>
-<script src="./celebration.js?v=20261016b"></script>
-<script src="./placement.js?v=20261016b"></script>
-<script src="./games-wheel.js?v=20261016a"></script>
-<script src="./games-team.js?v=20261016a"></script>
-<script src="./games-skill.js?v=20261016a"></script>
-<script src="./games-draft.js?v=20261016a"></script>
+<script src="./startup.js?v=20261019v3"></script>
+<script src="./scoring-lease.js?v=20261019v3"></script>
+<script src="./lock.js?v=20261019v3"></script>
+<script src="./celebration.js?v=20261019v3"></script>
+<script src="./v3-rankings.js?v=20261019v3"></script>
+<script src="./placement.js?v=20261019v3"></script>
+<script src="./games-wheel.js?v=20261019v3"></script>
+<script src="./games-team.js?v=20261019v3"></script>
+<script src="./games-skill.js?v=20261019v3"></script>
+<script src="./games-draft.js?v=20261019v3"></script>
 <script src="./games-timing.js?v=20261015e"></script>
-<script src="./games-addon.js?v=20261016a"></script>
-<script src="./games-ratings.js?v=20261016a"></script>
-<script src="./games.js?v=20261016a"></script>
-<script src="./skills-catalogue.js?v=20261016a"></script>
-<script src="./v2.js?v=20261016b"></script>
-<script src="./welcome.js"></script>
+<script src="./games-addon.js?v=20261019v3"></script>
+<script src="./games-ratings.js?v=20261019v3"></script>
+<script src="./games.js?v=20261019v3"></script>
+<script src="./skills-catalogue.js?v=20261019v3"></script>
+<script src="./v2.js?v=20261019v3"></script>
+<script src="./welcome.js?v=20261019v3"></script>
 <script>
 (() => {
   'use strict';
@@ -1861,7 +1836,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           'Base complex',
           [
             'Handstand forwards roll',
-            'Half turn jump',
+            'Full turn jump',
             'Backwards roll front support'
           ]
         ],
@@ -1878,8 +1853,8 @@ html:has(body.no-motion){scroll-behavior:auto}
           'pro',
           'Pro upgrades',
           [
-            'Handstand pirouette to handstand forwards roll pike stand',
-            '1/1 split jump',
+            'Handstand pirouette to handstand forwards roll',
+            'Split jump',
             'Backwards roll to handstand into handstand pirouette'
           ]
         ]
@@ -1896,7 +1871,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           'Base complex',
           [
             'Backwards walkover',
-            'Half spin',
+            'Full spin',
             'Forwards walkover'
           ]
         ],
@@ -1928,12 +1903,13 @@ html:has(body.no-motion){scroll-behavior:auto}
       tiers: [
         [
           'base',
-          'Leap collection',
-          [
-            'Split leap',
-            'Cat leap full turn',
-            'Split change'
-          ]
+          'Basic leaps',
+          ['Split leap', 'Cat leap', 'Scissor kick']
+        ],
+        [
+          'upgrade',
+          'Upgraded leaps',
+          ['Split change', 'Cat leap full turn', 'W hop']
         ]
       ]
     },
@@ -1955,10 +1931,21 @@ html:has(body.no-motion){scroll-behavior:auto}
   const POINTS = { base: 10, upgrade: 5, pro: 2.5 };
   const skillPoints = (category, tier) => category === 'handstands' ? 5 : POINTS[tier];
 
+  // IDs identify the actual skill, even when it moves to a different tier.
+  const SKILL_ID_OVERRIDES = {
+    'Full turn jump': 'rolls-base-full-turn',
+    'Full spin': 'acro-base-full-spin',
+    'Cat leap': 'leaps-base-cat',
+    'Scissor kick': 'leaps-base-scissor',
+    'Split change': 'leaps-base-2',
+    'Cat leap full turn': 'leaps-base-1',
+    'W hop': 'leaps-upgrade-w-hop'
+  };
+  const RETIRED_SKILL_IDS = new Set(['rolls-base-1', 'acro-base-1']);
   const SKILLS = CATEGORIES.flatMap(category =>
     category.tiers.flatMap(([tier, label, names]) =>
       names.map((name, index) => ({
-        id: `${category.id}-${tier}-${index}`,
+        id: SKILL_ID_OVERRIDES[name] || `${category.id}-${tier}-${index}`,
         name,
         category: category.id,
         tier,
@@ -1974,7 +1961,6 @@ html:has(body.no-motion){scroll-behavior:auto}
   );
   const COMPLEX_IDS = new Set(COMPLEXES.map(complex => complex.id));
   const SKILL_GROUPS = CATEGORIES.flatMap(category => category.tiers.map(([tier]) => ({ category: category.id, tier })));
-  const LINK_STATUS = ['Not rated', 'Good', 'Excellent', 'Perfect'];
 
   const STATUS = ['Not yet', 'Achieved', 'Perfect'];
   const SYMBOL = ['○', '✓', '✓✓'];
@@ -2031,6 +2017,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   const freshState = () => ({
     app: APP_ID,
     version: 1,
+    catalogVersion: 3,
     updatedAt: null,
     gymnasts: SEED_GYMNASTS.map(gymnast => ({ ...gymnast })),
     marks: {},
@@ -2096,6 +2083,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (!ids.has(id) || !isObject(marks)) throw Error('Unrecognised gymnast in these scores.');
       clean.marks[id] = {};
       for (const [skill, value] of Object.entries(marks)) {
+        if (RETIRED_SKILL_IDS.has(skill)) continue;
         if (!SKILL_IDS.has(skill) || !Number.isInteger(value) || value < 0 || value > 2) {
           throw Error('Invalid skill or mark in these scores.');
         }
@@ -2121,6 +2109,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         if (!ids.has(id) || !isObject(dates)) throw Error('Invalid gymnast renewal dates.');
         clean.skillDates[id] = {};
         for (const [skill, detail] of Object.entries(dates)) {
+          if (RETIRED_SKILL_IDS.has(skill)) continue;
           if (!SKILL_IDS.has(skill) || !isObject(detail)) throw Error('Invalid skill renewal dates.');
           const validDate = value => value == null || value === '' || (typeof value === 'string' && Number.isFinite(Date.parse(value)));
           if (!validDate(detail.renewedAt) || !validDate(detail.earnedAt)) throw Error('Invalid renewal timestamp.');
@@ -2248,7 +2237,9 @@ html:has(body.no-motion){scroll-behavior:auto}
   let recoveryWarning = '';
   let flushTimer;
   let maxFlushTimer;
-  let scoringLock = {locked:true,version:-1};
+  const scoringLease = window.SWLScoringLease.create();
+  let scoringLock = scoringLease.get();
+  let leaseTimer = null;
   let lockKnown=false,lockChanging=false,checkingLock=false;
 
 
@@ -2317,10 +2308,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         perfect: 0,
         max: 0
       });
-    const complexes = COMPLEXES.filter(complex => category === 'overall' || complex.category === category);
-    total.linking = complexes.reduce((points, complex) => points + (source.linking?.[id]?.[complex.id] ?? 0), 0);
-    total.points += total.linking;
-    total.max += complexes.length * 3;
+    total.linking = 0; // Historical linking records no longer earn points.
     const groups = SKILL_GROUPS.filter(group => category === 'overall' || group.category === category);
     total.completion = groups.reduce((points, group) => points + completionBonus(id, group.category, group.tier, source), 0);
     total.points += total.completion;
@@ -2337,7 +2325,6 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (excluded(skill)) return sum;
       return sum + (skill.tier === 'base' ? Math.max(0, level - 1) : level) * skill.points;
     }, 0);
-    points += COMPLEXES.filter(complex => !excluded(complex)).reduce((sum, complex) => sum + (source.linking?.[id]?.[complex.id] || 0), 0);
     points += SKILL_GROUPS.filter(group => !excluded(group)).reduce((sum, group) => {
       const bonus = completionBonus(id, group.category, group.tier, source);
       return sum + (group.tier === 'base' && bonus !== 5 ? 0 : bonus);
@@ -2347,9 +2334,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function skillFreshness(id, skill, at = Date.now()) {
     const level = mark(id, skill), renewedAt = state.skillDates?.[id]?.[skill]?.renewedAt;
-    const expiry = renewedAt ? Date.parse(renewedAt) + 30 * 86400000 : null;
+    const expiry = level === 2 && renewedAt ? Date.parse(renewedAt) + 30 * 86400000 : null;
     const remaining = expiry === null ? null : expiry - at;
-    return {level, expiry, days: remaining === null ? null : Math.max(0, Math.ceil(remaining / 86400000)), due:level > 0 && remaining !== null && remaining <= 7 * 86400000};
+    return {level, expiry, days: remaining === null ? null : Math.max(0, Math.ceil(remaining / 86400000)), due:level === 2 && remaining !== null && remaining <= 7 * 86400000};
   }
   // Retained-skill count remains available for the momentum chart; heat is points-based.
   function fireCount(id, at = Date.now()) {
@@ -2408,7 +2395,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     return GYMNASTS.filter(g => isCoachParticipant(g) === isCoachParticipant(gymnast));
   }
   function standings(category, group = 'all', age = 'all') {
-    return GYMNASTS
+    return window.SWLRankings.rankRows(GYMNASTS
       .filter(gymnast => inLeaderboardGroup(gymnast, group) && inLeaderboardAge(gymnast, age))
       .map(gymnast => ({
         gymnast,
@@ -2417,11 +2404,11 @@ html:has(body.no-motion){scroll-behavior:auto}
       .sort((a, b) =>
         b.points - a.points ||
         a.gymnast.name.localeCompare(b.gymnast.name, 'en-GB')
-      );
+      ));
   }
 
   const hasPending = () => Boolean(inFlight || waitingBatches.length || queuedOps.length);
-  const canEdit = () => recoveryReady && hasLoaded && damagedRecovery === null && lockKnown && !scoringLock.locked && !lockChanging;
+  const canEdit = () => recoveryReady && hasLoaded && damagedRecovery === null && lockKnown && !scoringLease.get().locked && !lockChanging;
   const cloneState = value => JSON.parse(JSON.stringify(value));
   const normalizeName = value => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-GB');
 
@@ -2432,11 +2419,11 @@ html:has(body.no-motion){scroll-behavior:auto}
       return { type: 'add_gymnast', ...gymnast };
     }
     if (value.type === 'set_mark' && validGymnastId(value.gymnastId) &&
-        SKILL_IDS.has(value.skillId) && Number.isInteger(value.value) &&
+        (SKILL_IDS.has(value.skillId) || RETIRED_SKILL_IDS.has(value.skillId)) && Number.isInteger(value.value) &&
         value.value >= 0 && value.value <= 2) {
       return { type: 'set_mark', gymnastId: value.gymnastId, skillId: value.skillId, value: value.value, clientAt: typeof value.clientAt === 'string' && Number.isFinite(Date.parse(value.clientAt)) ? value.clientAt : new Date().toISOString() };
     }
-    if (value.type === 'renew_mark' && validGymnastId(value.gymnastId) && SKILL_IDS.has(value.skillId)) {
+    if (value.type === 'renew_mark' && validGymnastId(value.gymnastId) && (SKILL_IDS.has(value.skillId) || RETIRED_SKILL_IDS.has(value.skillId))) {
       return {type:'renew_mark',gymnastId:value.gymnastId,skillId:value.skillId,clientAt:typeof value.clientAt === 'string' && Number.isFinite(Date.parse(value.clientAt)) ? value.clientAt : new Date().toISOString()};
     }
     if (value.type === 'set_link' && validGymnastId(value.gymnastId) &&
@@ -2452,6 +2439,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     next.skillDates ??= {};
     const ids = new Set(next.gymnasts.map(g => g.id));
     for (const operation of operations) {
+      if (operation.type === 'set_link' || RETIRED_SKILL_IDS.has(operation.skillId)) continue;
       if (operation.type === 'add_gymnast') {
         if (!ids.has(operation.id)) {
           next.gymnasts.push({ id: operation.id, name: operation.name, coach: operation.coach });
@@ -2466,7 +2454,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         next.skillDates[id][skill] ??= {renewedAt:null,earnedAt:null};
         const dates=next.skillDates[id][skill];
         if (operation.type === 'renew_mark') {
-          if (before > 0) dates.renewedAt = operation.clientAt;
+          if (before === 2) dates.renewedAt = operation.clientAt;
         } else {
           next.marks[id] ??= {};
           next.marks[id][skill] = operation.value;
@@ -2679,7 +2667,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         const locks = typeof navigator !== 'undefined' ? navigator.locks : null;
         if (locks?.request) {
           // A lifetime lock distinguishes an abandoned queue from an open tab.
-          // No timer/lease can expire while an open tab is merely suspended.
+          // Recovery ownership lasts while this tab exists, even when suspended.
           await new Promise((resolve, reject) => {
             locks.request(recoveryRecordKey, () => new Promise(release => {
               recoveryRelease = release;
@@ -2837,6 +2825,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
     conflict: 'This save can no longer be confirmed safely. Review the latest Google Sheet and download an unsaved backup before discarding or re-entering these edits.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
+    update_required: 'Version 3.0 is ready. Reload this page to use the updated skills and scoring.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
     invalid_state: 'The scores include an unknown gymnast, skill or status.',
     duplicate_gymnast: 'A gymnast with that name already exists. Refresh the roster before adding them again.',
@@ -2861,13 +2850,14 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   async function scoresRequest(body) {
+    const requestedAt = Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 40000);
     try {
       const response = await fetch(scoresEndpoint(), {
         method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 2 }),
+        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 3 }),
         signal: controller.signal
       });
       let payload;
@@ -2877,11 +2867,11 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (!response.ok || !payload.ok) {
         const error = new Error(API_MESSAGES[payload.code] || payload.message || 'Google Sheets could not be reached.');
         error.code = payload.code || 'REQUEST_FAILED';
-        if(payload.lock && !['read_game_ratings','rate_game','record_game_play'].includes(body.action)) acceptLock(payload.lock);
+        if(payload.lock && !['read_game_ratings','rate_game','record_game_play'].includes(body.action)) acceptLock({...payload.lock, requestedAt});
         throw error;
       }
       if (['read_game_ratings','rate_game','record_game_play'].includes(body.action)) return payload;
-      const lock=parseLock(payload.lock);
+      const lock=parseLock({...payload.lock, requestedAt});
       if(body.action==='status') return {lock};
       if (typeof payload.revision !== 'string' || !payload.revision) {
         throw new Error('The scores service did not return a valid revision.');
@@ -2979,7 +2969,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   async function flushQueue(force = false) {
-    if (sending || importing || !recoveryReady || !hasLoaded || damagedRecovery !== null || !lockKnown || scoringLock.locked ||
+    if (sending || importing || !recoveryReady || !hasLoaded || damagedRecovery !== null || !lockKnown || scoringLease.get().locked ||
         (!sessionReadDone && !force) || (retryNeeded && !force) || !hasPending()) return false;
     cancelFlushTimers();
     if (!inFlight) {
@@ -3074,18 +3064,34 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function parseLock(value) {
     if(!isObject(value)||typeof value.locked!=='boolean'||!Number.isSafeInteger(value.version)||value.version<0) return null;
-    return {locked:value.locked,version:value.version,expiresAt:null};
+    return {locked:value.locked,version:value.version,expiresAt:value.expiresAt || null,serverTime:value.serverTime || null,requestedAt:value.requestedAt};
+  }
+  function enforceLease() {
+    const wasLocked = scoringLock.locked;
+    scoringLock = scoringLease.get();
+    if (scoringLock.locked && !wasLocked) {
+      cancelFlushTimers();
+      if (hasPending() && !sending) {
+        retryNeeded=true;
+        saveError='Scoring has locked automatically. Unsaved edits are kept here; unlock scoring and retry saving.';
+        persistRecovery();
+      }
+      refreshScoreViews();
+    }
+    return scoringLock.locked;
   }
   function acceptLock(value) {
     const incoming=parseLock(value);
-    if(!incoming||incoming.version<scoringLock.version)return false;
-    scoringLock=incoming;lockKnown=true;
-    if(incoming.locked){cancelFlushTimers();if(hasPending()&&!sending){retryNeeded=true;saveError='Your unsaved edits are kept on this device. Unlock scoring, then use Retry save.';persistRecovery();}}
+    if(!incoming || !scoringLease.accept(incoming,incoming.requestedAt)) return false;
+    scoringLock=scoringLease.get();lockKnown=true;
+    clearTimeout(leaseTimer);
+    if (!scoringLock.locked) leaseTimer=setTimeout(enforceLease,scoringLease.remaining()+20);
+    if(scoringLock.locked){cancelFlushTimers();if(hasPending()&&!sending){retryNeeded=true;saveError='Your unsaved edits are kept on this device. Unlock scoring, then use Retry save.';persistRecovery();}}
     return true;
   }
   function renderLockStatus() {
     const button = $('lockButton');
-    const locked = scoringLock.locked;
+    const locked = scoringLease.get().locked;
     button.disabled = lockChanging || !lockKnown;
     $('lockButtonLabel').textContent = lockChanging ? 'Updating…'
       : !lockKnown ? 'Checking lock…' : locked ? 'Unlock scoring' : 'Lock scoring';
@@ -3095,7 +3101,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('lockStatus').textContent = lockChanging ? 'Updating scoring access for everyone…'
       : !lockKnown ? 'Scoring paused · checking access. You can still browse.'
         : locked ? 'Scoring locked · leaderboards and profiles are open to view.'
-          : 'Scoring unlocked · stays unlocked until you lock it.';
+          : 'Scoring unlocked · locks automatically after 30 minutes.';
     document.body.classList.toggle('scoring-locked', !lockKnown || locked || lockChanging);
   }
 
@@ -3220,137 +3226,25 @@ html:has(body.no-motion){scroll-behavior:auto}
     const all = filteredGymnasts.map(g => summary(g.id));
 
     if (!hasLoaded) {
-      ['squadPoints', 'achievedCount', 'perfectCount'].forEach(id => {
-        $(id).textContent = '—';
-      });
       $('emptyNote').hidden = true;
-      $('boards').innerHTML = `
-        <p class="note" role="status">${reading
-          ? 'Loading the standings from Google Sheets…'
-          : 'Connect Google Sheets to load the standings.'}</p>
-      `;
+      stableHTML($('boards'), `<p class="note" role="status">${reading
+        ? 'Loading the standings from Google Sheets…'
+        : 'Connect Google Sheets to load the standings.'}</p>`);
       return;
     }
-
-    [
-      ['squadPoints', 'points'],
-      ['achievedCount', 'achieved'],
-      ['perfectCount', 'perfect']
-    ].forEach(([id, key]) => {
-      animateNumber(
-        $(id),
-        all.reduce((sum, gymnast) => sum + gymnast[key], 0)
-      );
-    });
-
     $('emptyNote').hidden = all.some(g => g.points > 0);
     $('emptyNote').textContent = !all.length
       ? 'No gymnasts match this squad and age group. Choose All ages or another squad.'
-      : 'No points in this selection yet. Achieve a skill to start climbing the leaderboards.';
-
-    const boards = [
-      {
-        id: 'overall',
-        name: 'Overall league',
-        icon: 'ϟ',
-        color: '#f3ce86'
-      },
-      ...CATEGORIES
-    ];
-
-    const boardHTML = boards.map((board, boardIndex) => `
-      <article
-        class="board ${board.id === 'overall' ? 'overall' : ''}"
-        style="--accent:${board.color};--delay:${boardIndex * 70}ms"
-      >
-        <div class="board-head">
-          <span class="board-icon" aria-hidden="true">
-            ${board.icon}
-          </span>
-
-          <div>
-            <h3>${escapeHTML(board.name)}</h3>
-            <p>${
-              board.id === 'overall'
-                ? 'The complete picture'
-                : 'Perfect earns double'
-            }</p>
-          </div>
-
-          <span class="max">
-            MAX
-            <b>${summary('g01', board.id).max} pts</b>
-          </span>
-        </div>
-
-        <ol class="ranking">
-          ${standings(board.id, leaderboardGroup, leaderboardAge).slice(0, 6).map((entry, index) => {
-            const gymnast = entry.gymnast;
-
-            const person = `
-              <span class="avatar" aria-hidden="true">
-                ${initials(gymnast.name)}
-              </span>
-
-              <span class="person">
-                <strong>${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} ${fireBadge(gymnast.id)}</strong>
-                <small>${escapeHTML(groupLabel(gymnast.coach))}</small>
-              </span>
-
-              <span class="score">
-                <b>${entry.points}</b>
-                <small>pts</small>
-              </span>
-            `;
-
-            if (index === 5) {
-              return `
-                <li>
-                  <div class="rank-row mystery">
-                    <span class="place" aria-hidden="true">06</span>
-
-                    <div class="ghost" aria-hidden="true">
-                      ${person}
-                    </div>
-
-                    <span class="sr">
-                      Position six. Name and score concealed.
-                    </span>
-                  </div>
-
-                  <p class="mystery-note" aria-hidden="true">
-                    Just outside the top five…
-                  </p>
-                </li>
-              `;
-            }
-
-            const medal = index < 3
-              ? 'medal ' + ['gold', 'silver', 'bronze'][index]
-              : '';
-
-            return `
-              <li>
-                <button
-                  class="rank-row ${medal}${heatClass(gymnast.id)}"
-                  data-gymnast="${gymnast.id}"
-                  aria-label="Position ${index + 1}: ${
-                    escapeHTML(gymnast.name)
-                  }${isCoachParticipant(gymnast) ? ', coach' : ''}, ${entry.points} points. Open gymnast profile."
-                >
-                  <span class="place" aria-hidden="true">
-                    ${String(index + 1).padStart(2, '0')}
-                  </span>
-                  ${person}
-                </button>
-              </li>
-            `;
-          }).join('')}
-        </ol>
-      </article>
-    `).join('');
-    stableHTML($('boards'),boardHTML);
+      : 'No points in this selection yet. Everyone shares first place until scores are recorded.';
+    const boards = [{id:'overall', name:'Overall league', icon:'ϟ', color:'#f3ce86'}, ...CATEGORIES];
+    const boardHTML = boards.map((board, index) => window.SWLRankings.renderBoard({
+      board, index, rows:standings(board.id, leaderboardGroup, leaderboardAge),
+      max:summary('g01',board.id).max, squad:squadLabel, age:ageCategoryLabel(leaderboardAge),
+      groupLabel, initials, coachBadge, fireBadge, heatClass, isCoachParticipant
+    })).join('');
+    window.SWLRankings.commit($('boards'),boardHTML);
   }
+
 
   function renderRoster() {
     const query = $('search')
@@ -3423,7 +3317,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         aria-label="${escapeHTML(skill.name)}: Not yet. Click to mark achieved.">
         <span class="skill-top">
           <span class="skill-index">
-            ${['rolls', 'acro'].includes(skill.category) ? 'LINK' : 'SKILL'}
+            SKILL
             0${index + 1}
           </span>
 
@@ -3442,20 +3336,6 @@ html:has(body.no-motion){scroll-behavior:auto}
       </button>
       <div class="skill-renewal" data-renewal="${skill.id}" hidden><span class="renewal-date"></span><button type="button" data-renew-skill="${skill.id}">↻ Renew</button></div></div>
     `;
-  }
-
-  function linkingHTML(id, categoryName, tierName) {
-    return `<div class="linking-panel" data-link-panel="${id}">
-      <div class="linking-heading"><strong>Linking &amp; presentation</strong><span class="linking-result">Not rated</span></div>
-      <div class="linking-options" role="group" aria-label="${escapeHTML(categoryName)} · ${escapeHTML(tierName)} linking and presentation">
-        ${[1, 2, 3].map(value => `<button type="button" data-link-complex="${id}" data-link-value="${value}" aria-pressed="false">${LINK_STATUS[value]} <small>+${value} ${value === 1 ? 'pt' : 'pts'}</small></button>`).join('')}
-      </div>
-      <details class="linking-info"><summary>ⓘ How to rate the links</summary>
-        <p>Judge how the three skills flow together: balance between skills, controlled starts and finishes, posture and confident presentation. Watch for wobbles, extra steps or pauses during transitions.</p>
-        <p><strong>Good:</strong> recognisable links and clear presentation, with some wobbles or pauses.<br><strong>Excellent:</strong> smooth, controlled links and confident presentation, with only small interruptions.<br><strong>Perfect:</strong> seamless links, steady balance and polished presentation throughout, with no visible wobbles or unnecessary pauses.</p>
-        <p>Choose one rating. Tap the selected rating again to clear it. This bonus is separate from the skill marks.</p>
-      </details>
-    </div>`;
   }
 
   function renderAthlete() {
@@ -3601,7 +3481,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         <span id="visibleCount"></span>
       </div>
 
-      <p class="renewal-guide">Skills last 30 days per level. Renew after practising to keep the level. Red means 7 days or less remain; expiry drops Perfect to Achieved, then Achieved to unticked after another 30 days.</p>
+      <p class="renewal-guide">Achieved stays until unticked. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. Red means 7 days or less remain.</p>
       <details class="marking-guide">
         <summary>ⓘ What counts as achieved or perfect?</summary>
         <p><strong>Achieved ✓</strong> — the intended skill would count in competition without being downgraded, with no more than <strong>0.5 total deductions</strong>.</p>
@@ -3645,7 +3525,7 @@ html:has(body.no-motion){scroll-behavior:auto}
                 category.id === 'leaps'
                   ? 'Make room to fly'
                   : category.id === 'handstands' ? 'Hold steady. Build control.'
-                  : 'Build it. Link it. Refine it.'
+                  : 'Build it. Refine it. Keep progressing.'
               }</p>
             </div>
 
@@ -3682,7 +3562,6 @@ html:has(body.no-motion){scroll-behavior:auto}
                   .map(skillHTML)
                   .join('')}
               </div>
-              ${['rolls', 'acro'].includes(category.id) ? linkingHTML(`${category.id}-${tier}`, category.name, label) : ''}
             </div>
           `).join('')}
         </section>
@@ -3746,11 +3625,11 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (cell) {
         cell.dataset.due = String(fresh.due);
         const renewal=cell.querySelector('.skill-renewal');
-        renewal.hidden=value===0;
-        renewal.querySelector('.renewal-date').textContent=fresh.days===null ? 'Renewal starts with v2' : fresh.days===0 ? 'Renewal due now' : `${fresh.days} ${fresh.days===1?'day':'days'} left`;
+        renewal.hidden=value!==2;
+        renewal.querySelector('.renewal-date').textContent=fresh.days===null ? 'Perfect renewal pending' : fresh.days===0 ? 'Renewal due now' : `${fresh.days} ${fresh.days===1?'day':'days'} left`;
         renewal.querySelector('.renewal-date').title=fresh.expiry ? 'Renews by '+new Date(fresh.expiry).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
         const renew=renewal.querySelector('button');
-        renew.disabled=!canEdit(); renew.setAttribute('aria-label','Renew '+skill.name+' for 30 days');
+        renew.disabled=!canEdit(); renew.setAttribute('aria-label','Renew Perfect for '+skill.name+' for 30 days');
       }
 
       card.querySelector('.skill-status').textContent = SYMBOL[value];
@@ -3792,17 +3671,6 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
     }
 
-    for (const complex of COMPLEXES) {
-      const value = linkRating(selectedId, complex.id);
-      const panel = $('athletePanel').querySelector(`[data-link-panel="${complex.id}"]`);
-      panel.querySelector('.linking-result').textContent = value ? `${LINK_STATUS[value]} · +${value} ${value === 1 ? 'pt' : 'pts'}` : 'Not rated';
-      panel.querySelectorAll('button[data-link-value]').forEach(button => {
-        const selected = Number(button.dataset.linkValue) === value;
-        button.setAttribute('aria-pressed', String(selected));
-        button.disabled = !canEdit();
-        button.title = selected ? 'Tap again to clear this rating' : `Set linking and presentation to ${LINK_STATUS[Number(button.dataset.linkValue)]}`;
-      });
-    }
     applyFilters();
   }
 
@@ -4172,7 +4040,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           gymnastName: gymnast.name,
           ...(isCoachParticipant(gymnast) ? {isCoach:true} : {}),
           categoryName: category.name,
-          tierName: skill.category === 'handstands' ? 'All three handstand holds' : skill.category === 'leaps' ? 'All three leaps' : { base: 'Base complex', upgrade: 'Upgraded complex', pro: 'Pro upgraded complex' }[skill.tier],
+          tierName: skill.category === 'handstands' ? 'All three handstand holds' : skill.category === 'leaps' ? (skill.tier === 'base' ? 'All three basic leaps' : 'All three upgraded leaps') : { base: 'Base complex', upgrade: 'Upgraded complex', pro: 'Pro upgraded complex' }[skill.tier],
           tier: skill.tier,
           kind: ['leaps', 'handstands'].includes(skill.category) ? skill.category : 'complex'
         });
@@ -4185,32 +4053,11 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function renewSkill(skillId, button, gymnastId = selectedId) {
-    if (!canEdit() || !GYMNAST_IDS.has(gymnastId) || !SKILL_IDS.has(skillId) || mark(gymnastId,skillId) === 0) return;
+    if (!canEdit() || !GYMNAST_IDS.has(gymnastId) || !SKILL_IDS.has(skillId) || mark(gymnastId,skillId) !== 2) return;
     enqueueOperation({type:'renew_mark',gymnastId,skillId});
     updateAthlete(false); renderBoards(); renderRoster(); renderSaveStatus();
     restoreControlFocus(button);
     toast('Renewed for 30 days · level and points kept.');
-  }
-
-  function changeLink(complexId, button, chosen) {
-    if (!canEdit() || !selectedId || !COMPLEX_IDS.has(complexId)) return;
-    const before = linkRating(selectedId, complexId);
-    const value = Number(chosen);
-    if (!Number.isInteger(value) || value < 1 || value > 3) return;
-    const after = before === value ? 0 : value;
-    enqueueOperation({ type: 'set_link', gymnastId: selectedId, complexId, value: after });
-    history.push({ type: 'set_link', gymnast: selectedId, complex: complexId, before, after });
-    if (history.length > 50) history.shift();
-    updateAthlete();
-    renderRoster();
-    renderBoards();
-    renderSaveStatus();
-    restoreControlFocus(button);
-    const delta = after - before;
-    toast(`Linking & presentation · ${LINK_STATUS[after]} · ${delta > 0 ? '+' : '−'}${Math.abs(delta)} pts`, true);
-    if (after > before) {
-      try { window.SWLCelebration?.ding({ perfect: after === 3 }); } catch {}
-    }
   }
 
   function undo() {
@@ -4311,9 +4158,6 @@ html:has(body.no-motion){scroll-behavior:auto}
           button.dataset.skill,
           button
         );
-
-      } else if (button.dataset.linkComplex) {
-        changeLink(button.dataset.linkComplex, button, button.dataset.linkValue);
 
       } else if (button.hasAttribute('data-choose')) {
         chooseGymnast();
@@ -4523,13 +4367,15 @@ html:has(body.no-motion){scroll-behavior:auto}
   });
   $('lockButton').addEventListener('click',()=>{
     if(!lockKnown||lockChanging)return;
+    enforceLease();
     if(scoringLock.locked)window.SWLLock.open({onSubmit:pin=>changeScoringLock('unlock',pin)});
     else changeScoringLock('lock');
   });
   setInterval(checkScoringLock,30000);
+  setInterval(enforceLease,1000);
   setInterval(() => { if (!document.hidden && !hasPending() && !sending) readScores(); }, 60000);
   $('refreshButton').addEventListener('click', () => readScores());
-  window.addEventListener('focus', () => readScores());
+  window.addEventListener('focus', () => { enforceLease(); readScores(); });
   window.addEventListener('online', () => {
     readScores();
   });
@@ -4542,6 +4388,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   });
   window.addEventListener('pagehide', persistRecovery);
   document.addEventListener('visibilitychange', () => {
+    enforceLease();
     if (document.hidden && hasPending() && !retryNeeded) flushQueue();
     if (!document.hidden) readScores();
   });

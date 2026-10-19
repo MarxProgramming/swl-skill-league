@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   // IGA tags are populated only for individually verified entries in the official code.
+  // IDs follow skills, not screen positions: the two upgraded leaps retain their tags.
+  // Replaced spins/jumps and new skills have no tag until their exact entry is verified.
   const IGA = {
   "rolls-base-0": {
     "grade": "A"
@@ -19,15 +21,8 @@
   "rolls-upgrade-2": {
     "grade": "C"
   },
-  "rolls-pro-1": {
-    "grade": "E"
-  },
   "acro-base-0": {
     "grade": "B"
-  },
-  "acro-base-1": {
-    "grade": "A",
-    "note": "Turn on one foot"
   },
   "acro-base-2": {
     "grade": "B"

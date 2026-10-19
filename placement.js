@@ -12,16 +12,25 @@
     .map(word => Array.from(word)[0]).join('');
 
   function placementWindow(rows, gymnastId) {
+    // Keep the neighbouring people in their supplied order, while equal scores
+    // share the same competition rank (for example 1, 2, 2, 4).
+    let previous, rank = 0;
+    const ranks = rows.map((row, index) => {
+      const score = number(row.points);
+      if (index === 0 || score !== previous) rank = index + 1;
+      previous = score;
+      return rank;
+    });
     const index = rows.findIndex(row => row?.gymnast?.id === gymnastId);
     if (index < 0) return { position: 0, total: rows.length, entries: [] };
     // Fixed offsets keep two clear neighbours and one outer glimpse per side.
     // At either boundary the view becomes shorter; it never shifts its centre.
     return {
-      position: index + 1,
+      position: ranks[index],
       total: rows.length,
       entries: rows.slice(Math.max(0, index - 3), index + 4).map((row, offset) => {
         const rowIndex = Math.max(0, index - 3) + offset;
-        return { row, position: rowIndex + 1, distance: rowIndex - index };
+        return { row, position: ranks[rowIndex], distance: rowIndex - index };
       })
     };
   }
@@ -52,6 +61,7 @@
       <header class="swlp-board-head"><span class="swlp-board-icon" aria-hidden="true">${escapeHTML(board.icon || '✦')}</span>
         <div><h3 id="placement-board-${safeId}">${escapeHTML(board.name)}</h3><p>${window.position ? 'The positions around you' : 'Waiting for scores'}</p></div>
         ${window.position ? `<span class="swlp-board-position"><span class="sr">Position </span><strong>${window.position}</strong><small>of ${window.total}</small></span>` : ''}</header>
+      <p class="swlp-board-scope">${escapeHTML(options.scope)} <span>· All ages</span></p>
       ${window.position ? `<ol class="swlp-rows" aria-label="Nearby ${escapeHTML(board.name)} positions">${window.entries.map(entry => rowHTML(entry, gymnast.name, options)).join('')}</ol>`
         : '<p class="swlp-empty">This placement will appear when the scores are ready.</p>'}
     </article>`;
@@ -61,7 +71,7 @@
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
     const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':level==='hot'?'is-hot':'';};
-    const options = { fireBadge, coachBadge, isCoachParticipant, heatClass, groupLabel };
+    const options = { fireBadge, coachBadge, isCoachParticipant, heatClass, groupLabel, scope };
     const overall = boards.find(board => board.id === 'overall');
     const overallRows = Array.isArray(overall?.rows) ? overall.rows : [];
     const overallWindow = placementWindow(overallRows, gymnast.id);
@@ -86,9 +96,9 @@
         <span>${escapeHTML(scope)}</span>
       </div>
       <div class="swlp-section-head"><div><p class="swlp-eyebrow">Your place in the league</p><h3>A closer look at every board</h3></div>
-        <p>Two places above and below.<br> The next place is a little glimpse.</p></div>
+        <p>Two people above and below.<br> The next person is a little glimpse.</p></div>
       <div class="swlp-grid">${boards.map(board => boardHTML(board, gymnast, options)).join('')}</div>
-      <p class="swlp-order-note">Equal points are listed alphabetically by name; the position follows that order. At the top or bottom of a board, fewer neighbours are shown.</p>
+      <p class="swlp-order-note">Equal scores share the same place, with tied names listed alphabetically. The next place accounts for everyone ahead: for example, 1st, 2nd, 2nd, 4th. At the top or bottom of a board, fewer neighbours are shown.</p>
     </div>`;
     return document.getElementById('placementTitle');
   }

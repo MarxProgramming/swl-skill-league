@@ -109,7 +109,7 @@
     const intro = make('p', 'swl-welcome-intro', 'I put this together as a small experiment alongside our usual squad training. Our normal training remains the main programme.');
     intro.id = 'swlWelcomeIntro';
     const purpose = make('p', '', 'I’d like it to help gymnasts keep on top of the foundational floor skills, see their current level and know what to aim for next. A bit of accountability and friendly competition within each squad can make those small achievements feel good.');
-    const explore = make('p', '', 'There are some games for training too. Gymnasts and families are welcome to have a look around; coaches update the records when scoring is unlocked.');
+    const explore = make('p', '', 'There are some games for training too. Gymnasts and families are welcome to have a look around; coaches unlock scoring for a 30-minute session to update the records. Achieved skills stay ticked. Perfect marks are renewed every 30 days and return to Achieved if they expire.');
     const highlights = make('div', 'swl-welcome-highlights'); highlights.setAttribute('aria-hidden', 'true');
     [['◇', 'Build the basics'], ['↗', 'See your progress'], ['✧', 'Train together']].forEach(([symbol, label]) => {
       const point = make('span'); point.append(make('i', '', symbol), make('b', '', label)); highlights.append(point);
