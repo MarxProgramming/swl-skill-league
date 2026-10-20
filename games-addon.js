@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   if (window.SWLAddOn?.version === 1) return;
-  const NAMES = ['Mint', 'Purple', 'Gold'], COLORS = ['#d5fa70', '#bd9bff', '#ffd782'];
+  const NAMES = ['Mint', 'Purple', 'Gold', 'Sky', 'Rose'], COLORS = ['#d5fa70', '#bd9bff', '#ffd782', '#83d9ff', '#ffafcb'];
   const BASICS = ['Forward roll', 'Backward roll', 'Cartwheel', 'Handstand', 'Straight jump', 'Star jump', 'Tuck jump', 'Pike jump', 'Straddle jump', 'Split jump', 'Half turn jump', 'Arabesque balance', 'Pike shape', 'Straddle shape', 'V-sit balance', 'Chassé'];
   let instance = null, mounted = null, sessionSequence = 0;
   const el = (tag, className = '', text = '') => { const node = document.createElement(tag); node.className = className; node.textContent = text; return node; };
@@ -34,9 +34,9 @@
   }
   function create(container, supplied) {
     let options = supplied || {}, pool = catalogue(options.skills), active = true, destroyed = false, phase = 'setup';
-    let names = NAMES.slice(), sizes = ['5', '5', '5'], teamCount = 2, teams = [], order = [], turn = 0;
+    let names = NAMES.slice(), sizes = NAMES.map(()=>'5'), teamCount = 2, teams = [], order = [], turn = 0;
     let choices = [], previousChoices = [], awardValue = 0, awardedTeam = null, resetPrompt = false, error = '', status = '', generation = 0, stage = null;
-    let session = null, completionSent = false;
+    let session = null, completionSent = false, podium = null;
     const teamIndex = () => order[turn] ?? 0;
     const gymnast = () => teams.length ? teams[teamIndex()].turns + (['awarded', 'finished'].includes(phase) ? 0 : 1) : 0;
     const completed = () => teams.reduce((n, team) => n + team.turns, 0);
@@ -47,10 +47,10 @@
       const node = el('button', className, text), token = generation; node.type = 'button'; node.dataset.addonAction = action;
       node.addEventListener('click', () => { if (token === generation) perform(action); }); return node;
     }
-    function notifyComplete() {
+    function notifyComplete(details={}) {
       if (phase !== 'finished' || completionSent || !session) return;
       completionSent = true;
-      try { options.onComplete?.({ gameId: 'addon', sessionId: session, participantCount: order.length }); } catch (_) {}
+      try { options.onComplete?.({ gameId: 'addon', sessionId: session, participantCount: order.length, ...(details.promptRating===false?{promptRating:false}:{}) }); } catch (_) {}
     }
     function drawChoices() {
       const team = teams[teamIndex()], count = team.chain.length ? 3 : 1;
@@ -68,6 +68,7 @@
     }
     function start(replay = false) {
       if (phase !== 'setup' && !(phase === 'finished' && replay)) return;
+      podium?.destroy();podium=null;
       if (!replay) {
         const chosen = names.slice(0, teamCount).map((name, index) => safeName(name) || NAMES[index]);
         if (new Set(chosen.map(name => name.toLocaleLowerCase())).size !== teamCount) { error = 'Give each team a different name.'; render(); return; }
@@ -91,24 +92,28 @@
     }
     function undo() {
       if (!['awarded', 'finished'].includes(phase) || !awardValue || awardedTeam === null) return;
+      podium?.finish(true);podium?.destroy();podium=null;
       const team = teams[awardedTeam]; team.score -= awardValue; team.turns--; awardValue = 0; awardedTeam = null; phase = 'perform';
       status = 'Last grade undone. The same gymnast can perform the same routine again.'; render(true);
     }
     function next() {
       if (phase !== 'awarded') return;
       if (turn + 1 >= order.length) {
-        phase = 'finished'; status = 'Everyone has had one turn. Highest average stars per gymnast wins.'; render(true); showStage(); sound({ kind: 'finish', perfect: true }); notifyComplete(); return;
+        phase = 'finished'; status = 'Everyone has had one turn. Highest average stars per gymnast wins.';
+        const entries=teams.map((team,index)=>({id:String(index),name:team.name,color:team.color,value:team.score/team.size,unit:'stars per gymnast',detail:`${team.score} total stars`,rank:1+teams.filter(other=>other.score*team.size>team.score*other.size).length}));
+        podium=window.SWLShuffleShowcase.createPodium(entries,{motionOff:reduced,sound,onDone:details=>{render(true);notifyComplete(details);}});render(true);showStage();podium.start();return;
       }
       turn++; prepareTurn(); render(true); showStage();
     }
     function reset() {
+      podium?.finish(true);podium?.destroy();podium=null;
       phase = 'setup'; teams = []; order = []; turn = 0; choices = previousChoices = []; awardValue = 0; awardedTeam = null; resetPrompt = false; error = status = ''; session = null; completionSent = false; render(true);
     }
     function perform(action) {
       if (destroyed || !active || document.hidden) return;
       if (resetPrompt) { if (action === 'confirm-reset') reset(); else if (action === 'cancel-reset') { resetPrompt = false; render(true); } return; }
       if (phase === 'setup') {
-        if (['teams-2', 'teams-3'].includes(action)) { teamCount = Number(action.slice(6)); error = ''; render(false, action); return; }
+        if (/^teams-[2-5]$/.test(action)) { teamCount = Number(action.slice(6)); error = ''; render(false, action); return; }
         const step = action.match(/^size-(\d)-(less|more)$/);
         if (step && Number(step[1]) < teamCount) { const index = Number(step[1]), n = sizeOf(sizes[index]); sizes[index] = String(n === null ? 5 : Math.min(20, Math.max(1, n + (step[2] === 'more' ? 1 : -1)))); error = ''; render(false, action); return; }
       }
@@ -124,8 +129,7 @@
     function setup(root) {
       const panel = el('section', 'swl-addon-setup');
       panel.append(el('p', 'swl-addon-kicker', 'ONE MORE SKILL · EVERY GYMNAST'), el('h3', '', 'Build it together.'), el('p', 'swl-addon-muted', 'Each team builds its own routine. Every gymnast adds a skill, then performs the whole chain.'));
-      const counts = el('div', 'swl-addon-count'); counts.setAttribute('role', 'group'); counts.setAttribute('aria-label', 'Number of Add-On teams');
-      [2, 3].forEach(n => { const control = button(`${n} teams`, `teams-${n}`, 'swl-addon-count-button'); control.setAttribute('aria-pressed', String(teamCount === n)); counts.append(control); }); panel.append(counts);
+      panel.append(window.SWLShuffleShowcase.teamCountView(teamCount,5,value=>{perform(`teams-${value}`);container.querySelector('[data-game-team-count]')?.focus();},'Number of Add-On teams'));
       const fields = el('div', 'swl-addon-fields');
       for (let index = 0; index < teamCount; index++) {
         const row = el('div', 'swl-addon-field-row'); row.style.setProperty('--squad-color', COLORS[index]);
@@ -140,7 +144,7 @@
       const grid = el('div', 'swl-addon-setup-grid'); grid.append(panel, guide); root.append(grid);
     }
     function scoreboard(root) {
-      const board = el('div', 'swl-addon-board'); board.dataset.teamCount = String(teams.length); board.setAttribute('aria-label', 'Add-On team scoreboard');
+      const board = el('div', 'swl-addon-board'); board.dataset.teamCount = String(teams.length);board.style.setProperty('--game-teams',String(teams.length)); board.setAttribute('aria-label', 'Add-On team scoreboard');
       teams.forEach((team, index) => {
         const card = el('div', `swl-addon-score${phase !== 'finished' && index === teamIndex() ? ' is-current' : ''}`); card.style.setProperty('--squad-color', team.color);
         card.append(el('span', 'swl-addon-score-name', team.name), el('strong', '', average(team)), el('span', 'swl-addon-score-unit', `avg stars / gymnast${phase === 'finished' ? '' : ' so far'}`), el('span', 'swl-addon-score-detail', `${team.score} total ${team.score === 1 ? 'star' : 'stars'} · ${team.turns}/${team.size} gymnasts`)); board.append(card);
@@ -179,6 +183,7 @@
       root.append(stage);
     }
     function results(root) {
+      if(podium){stage=el('section','swl-addon-results swl-game-podium-finish');stage.tabIndex=-1;podium.render(stage);if(podium.getState().finished){const controls=el('div','swl-addon-controls');controls.append(button('Build again +','replay','swl-addon-button swl-addon-primary'),button('Change teams','reset'),button('Undo last grade','undo','swl-addon-text-button'));stage.append(controls);}root.append(stage);return;}
       const compare = (a, b) => a.score * b.size - b.score * a.size, best = teams.reduce((a, b) => compare(b, a) > 0 ? b : a, teams[0]), winners = teams.filter(team => compare(team, best) === 0);
       stage = el('section', 'swl-addon-results'); stage.tabIndex = -1;
       stage.append(el('span', 'swl-addon-trophy', '✦'), el('p', 'swl-addon-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : 'ADD-ON WINNERS'), el('h3', '', winners.map(team => team.name).join(' + ')), el('p', 'swl-addon-result-average', `${average(best)} stars per gymnast`), el('p', 'swl-addon-muted', `All ${order.length} gymnasts had one turn. Teams ranked by total stars ÷ gymnasts.`));
@@ -188,7 +193,7 @@
       if (destroyed) return; generation++; stage = null;
       const root = el('div', 'swl-addon'); root.dataset.phase = phase; root.dataset.static = String(reduced());
       const heading = el('div', 'swl-addon-heading'), titles = el('div'); titles.append(el('p', 'swl-addon-kicker', 'A ROUTINE THAT GROWS WITH YOUR TEAM'), el('h2', '', 'Add-On')); heading.append(titles); if (phase !== 'setup') heading.append(button('New game', 'reset', 'swl-addon-text-button')); root.append(heading);
-      if (phase === 'setup') setup(root); else { scoreboard(root); if (phase === 'finished') results(root); else gameView(root); }
+      if (phase === 'setup') setup(root); else { if(phase!=='finished')scoreboard(root); if (phase === 'finished') results(root); else gameView(root); }
       const live = el('p', 'swl-addon-live', status); live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite'); root.append(live);
       if (resetPrompt) {
         const prompt = el('div', 'swl-addon-reset-prompt'); prompt.setAttribute('role', 'alertdialog'); prompt.setAttribute('aria-label', 'Start a new Add-On game?');
@@ -201,10 +206,10 @@
     const controller = {
       get destroyed() { return destroyed; },
       activate() { if (!destroyed) { active = true; render(); } },
-      deactivate() { if (!destroyed) { active = false; render(); } },
+      deactivate() { if (!destroyed) { podium?.finish(true);active = false; render(); } },
       updateOptions(next) { options = { ...options, ...(next || {}) }; if (phase === 'setup' && Array.isArray(next?.skills)) pool = catalogue(next.skills); },
-      destroy() { if (destroyed) return; destroyed = true; active = false; container.replaceChildren(); },
-      getState() { return { phase, active, teamCount, turn, currentTeam: teams.length ? teamIndex() : null, currentGymnast: gymnast(), totalGymnasts: order.length, completedGymnasts: completed(), teams: teams.map(team => ({ ...team, average: team.turns ? team.score / team.turns : null, chain: team.chain.map(skill => ({ ...skill })) })), choices: choices.map(skill => ({ ...skill })), poolSize: pool.length, awardValue, resetPrompt, sessionId: session, completionSent }; }
+      destroy() { if (destroyed) return; podium?.finish(true);podium?.destroy();podium=null;destroyed = true; active = false; container.replaceChildren(); },
+      getState() { return { podium:podium?.getState()||null,phase, active, teamCount, turn, currentTeam: teams.length ? teamIndex() : null, currentGymnast: gymnast(), totalGymnasts: order.length, completedGymnasts: completed(), teams: teams.map(team => ({ ...team, average: team.turns ? team.score / team.turns : null, chain: team.chain.map(skill => ({ ...skill })) })), choices: choices.map(skill => ({ ...skill })), poolSize: pool.length, awardValue, resetPrompt, sessionId: session, completionSent }; }
     }; render(); return controller;
   }
   window.SWLAddOn = Object.freeze({

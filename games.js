@@ -6,14 +6,14 @@
   const mounted = new Map();
   const descriptions = [
     {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
-    {id:'team',name:'Team Challenge',tag:'2–4 teams',description:'Four rounds of floor shapes, jumps to stick, conditioning and coaching impressions. Ten seconds to meet each challenge.',module:'SWLTeam',art:'team'},
-    {id:'shuffle',name:'Skill Shuffle',tag:'2–3 teams · skill quality',description:'Set your team sizes so everyone gets a turn. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
-    {id:'draft',name:'Team Skill Draft',tag:'2–3 teams · choose your gymnast',description:'One shared skill. Every team chooses an unused gymnast to attempt it. The best attempt wins a point; every performer steps out until everyone has had a turn.',module:'SWLTeamSkillDraft',art:'draft'},
-    {id:'letters',name:'Letter Duel',tag:'2 teams · quick thinking',description:'One big letter. Find a gymnastics skill that starts with it and perform it to win a point.',module:'SWLLetterDuel',art:'letters'},
-    {id:'handstand',name:'Handstand Timer',tag:'2–3 teams · against the clock',description:'Individual turns or whole-group rounds. Bank your team’s seconds; in Group mode, the last gymnast down sits out the next round.',module:'SWLHandstand',art:'handstand'},
-    {id:'addon',name:'Add-On',tag:'2–3 teams · build a routine',description:'Start with one skill. Shuffle three choices, pick the next addition and grow your team’s routine. Earn stars for how well it flows.',module:'SWLAddOn',art:'relay'},
-    {id:'relayrace',name:'Conditioning Relay',tag:'2–3 teams · pace & teamwork',description:'One team, one clock, everyone through the line. Tap each handover; the screen tracks every split and the team’s average time.',module:'SWLConditioningRelay',art:'relayrace'},
-    {id:'timesense',name:'Time Sense',tag:'2–3 teams · trust your timing',description:'Hold a balance and judge the target time with the clock hidden. Stop when you think you’ve hit it. Closest estimates win.',module:'SWLTimeSense',art:'timesense'}
+    {id:'team',name:'Team Challenge',tag:'2–5 teams',description:'Four rounds of floor shapes, jumps to stick, conditioning and coaching impressions. Ten seconds to meet each challenge.',module:'SWLTeam',art:'team'},
+    {id:'shuffle',name:'Skill Shuffle',tag:'2–5 teams · skill quality',description:'Set your team sizes so everyone gets a turn. Shuffle an app skill, perform it, then earn one, two or three stars.',module:'SWLSkillShuffle',art:'shuffle'},
+    {id:'draft',name:'Team Skill Draft',tag:'2–4 teams · choose your gymnast',description:'One shared skill. Every team chooses an unused gymnast to attempt it. The best attempt wins a point; every performer steps out until everyone has had a turn.',module:'SWLTeamSkillDraft',art:'draft'},
+    {id:'letters',name:'Letter Duel',tag:'2–5 teams · quick thinking',description:'One big letter. Find a gymnastics skill that starts with it and perform it to win a point.',module:'SWLLetterDuel',art:'letters'},
+    {id:'handstand',name:'Handstand Timer',tag:'2–5 teams · against the clock',description:'Individual turns or whole-group rounds. Bank your team’s seconds; in Group mode, the last gymnast down sits out the next round.',module:'SWLHandstand',art:'handstand'},
+    {id:'addon',name:'Add-On',tag:'2–5 teams · build a routine',description:'Start with one skill. Shuffle three choices, pick the next addition and grow your team’s routine. Earn stars for how well it flows.',module:'SWLAddOn',art:'relay'},
+    {id:'relayrace',name:'Conditioning Relay',tag:'2–5 teams · pace & teamwork',description:'One team, one clock, everyone through the line. Tap each handover; the screen tracks every split and the team’s average time.',module:'SWLConditioningRelay',art:'relayrace'},
+    {id:'timesense',name:'Time Sense',tag:'2–5 teams · trust your timing',description:'Hold a balance and judge the target time with the clock hidden. Stop when you think you’ve hit it. Closest estimates win.',module:'SWLTimeSense',art:'timesense'}
   ];
   function node(tag, className, text) { const el=document.createElement(tag); if(className)el.className=className; if(text!==undefined)el.textContent=text; return el; }
   function art(type) {

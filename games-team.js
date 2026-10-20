@@ -1,8 +1,8 @@
 (() => {
   'use strict';
   if (window.SWLTeam?.version === 3) return;
-  const DEFAULTS = ['Mint', 'Purple', 'Gold', 'Coral'];
-  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782', '#ffab9e'];
+  const DEFAULTS = ['Mint', 'Purple', 'Gold', 'Coral', 'Sky'];
+  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782', '#ffab9e', '#83d9ff'];
   const ROUNDS = 4;
   const ROUND_MS = 10000;
   const CARDS = [
@@ -425,7 +425,7 @@
   function createGame(container, initialOptions) {
     let options = initialOptions || {}, active = true, destroyed = false;
     let phase = 'setup', teamCount = 2, names = DEFAULTS.slice();
-    let sessionId = '', completionSent = false;
+    let renderGeneration=0;let sessionId = '', completionSent = false, podium=null,sizes=DEFAULTS.map(()=>'5');
     let teams = [], turn = 0, card = null, awardedStars = 0;
     let remainingMs = 0, timer = null, lastTick = 0, observedSeconds = 10, timerGeneration = 0;
     let statusText = '', errorText = '', resetPrompt = false, wasPlayingBeforePrompt = false;
@@ -444,10 +444,10 @@
       return element;
     }
     function button(label, action, className = 'swl-team-button', disabled = false) {
-      const element = node('button', className, label);
+      const element = node('button', className, label),token=renderGeneration;
       element.type = 'button'; element.disabled = disabled;
       element.dataset.teamAction = action;
-      element.addEventListener('click', () => perform(action));
+      element.addEventListener('click', () => {if(token===renderGeneration)perform(action);});
       return element;
     }
     function sound(payload) { try { options.playSound?.(payload); } catch (_) {} }
@@ -496,12 +496,14 @@
     }
     function startGame(replay = false) {
       if (destroyed || !active || (phase !== 'setup' && !(replay && phase === 'finished'))) return;
+      podium?.destroy();podium=null;
       if (!replay) {
         const chosen = names.slice(0, teamCount).map((name, index) => cleanName(name) || DEFAULTS[index]);
         if (new Set(chosen.map(name => name.toLocaleLowerCase())).size !== chosen.length) {
           errorText = 'Give each team a different name so the scoreboard stays clear.'; render(); return;
         }
-        teams = chosen.map((name, index) => ({ name, color: COLORS[index], score: 0, turns: 0 }));
+        const counts=sizes.slice(0,teamCount).map(Number);if(counts.some(value=>!Number.isInteger(value)||value<1||value>20)){errorText='Enter a whole number from 1 to 20 gymnasts per team.';render();return;}
+        teams = chosen.map((name, index) => ({ name, color: COLORS[index],size:counts[index], score: 0, turns: 0 }));
       } else teams = teams.map(team => ({ ...team, score: 0, turns: 0 }));
       sessionId='team_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2).padEnd(16,'0');completionSent=false;
       turn = 0; resetPrompt = false; errorText = ''; prepareTurn(); render(true); showStage();
@@ -524,7 +526,7 @@
     }
     function nextTurn() {
       if (!active || phase !== 'awarded' || resetPrompt) return;
-      if (turn + 1 >= teams.length * ROUNDS) { phase = 'finished'; statusText = 'Four rounds complete. Celebrate the teamwork.'; render(true); showStage(); sound({ kind: 'finish', perfect: true }); if(!completionSent){completionSent=true;options.onComplete?.({gameId:'team',sessionId});} return; }
+      if (turn + 1 >= teams.length * ROUNDS) {phase='finished';statusText='Four rounds complete. Celebrate the teamwork.';const entries=teams.map((team,index)=>({id:String(index),name:team.name,color:team.color,value:team.score,unit:'stars',detail:`${ROUNDS} challenges complete`,rank:1+teams.filter(other=>other.score>team.score).length}));podium=window.SWLShuffleShowcase.createPodium(entries,{motionOff,sound,onDone:details=>{render(true);if(!completionSent){completionSent=true;try{options.onComplete?.({gameId:'team',sessionId,participantCount:teams.reduce((sum,team)=>sum+team.size,0),...(details.promptRating===false?{promptRating:false}:{})});}catch(_){}}}});render(true);showStage();podium.start();return;}
       turn++; prepareTurn(); render(true); showStage();
     }
     function undoAward() {
@@ -539,14 +541,16 @@
       wasPlayingBeforePrompt = pause() && phase === 'paused'; resetPrompt = true; render(true);
     }
     function reset() {
+      podium?.finish(true);podium?.destroy();podium=null;
       cancelTimer(); phase = 'setup'; teams = []; turn = 0; card = null; awardedStars = 0; remainingMs = 0;
       resetPrompt = false; wasPlayingBeforePrompt = false; statusText = ''; errorText = ''; render(true);
     }
     function perform(action) {
       if (destroyed || !active || document.hidden) return;
       if (action.startsWith('count-') && phase === 'setup') {
-        const count = Number(action.slice(6)); if ([2, 3, 4].includes(count)) { teamCount = count; errorText = ''; render(); } return;
+        const count = Number(action.slice(6)); if ([2, 3, 4, 5].includes(count)) { teamCount = count; errorText = ''; render(); } return;
       }
+      const sizeStep=action.match(/^size-(\d)-(less|more)$/);if(sizeStep&&phase==='setup'&&Number(sizeStep[1])<teamCount){const index=Number(sizeStep[1]),value=Number(sizes[index]);sizes[index]=String(Math.min(20,Math.max(1,(Number.isInteger(value)&&value>0?value:5)+(sizeStep[2]==='more'?1:-1))));errorText='';render();container.querySelector(`[data-team-action="${action}"]`)?.focus();return;}
       if (action.startsWith('award-')) { award(Number(action.slice(6))); return; }
       if (action === 'start-game') startGame();
       else if (action === 'start-turn') startTurn();
@@ -566,15 +570,14 @@
     function setupView(root) {
       const panel = node('section', 'swl-team-setup');
       panel.append(node('p', 'swl-team-kicker', `${CARDS.length} CARDS · ONE TEAM SPIRIT`), node('h3', '', 'Choose your squads'), node('p', 'swl-team-muted', 'Read the card together. Press Go. You have ten seconds to make it happen.'));
-      const count = node('div', 'swl-team-count'); count.setAttribute('role', 'group'); count.setAttribute('aria-label', 'Number of teams');
-      [2, 3, 4].forEach(value => { const control = button(`${value} teams`, `count-${value}`, 'swl-team-choice'); control.setAttribute('aria-pressed', String(teamCount === value)); count.append(control); });
+      const count=window.SWLShuffleShowcase.teamCountView(teamCount,5,value=>{perform(`count-${value}`);container.querySelector('[data-game-team-count]')?.focus();},'Number of teams');
       const fields = node('div', 'swl-team-names');
       for (let index = 0; index < teamCount; index++) {
-        const label = node('label', 'swl-team-name'); label.style.setProperty('--team-color', COLORS[index]);
+        const label = node('div', 'swl-team-name'); label.style.setProperty('--team-color', COLORS[index]);
         label.append(node('span', '', `Team ${index + 1}`));
         const input = node('input'); input.type = 'text'; input.value = names[index]; input.maxLength = 24; input.autocomplete = 'off'; input.dataset.teamName = String(index);
         input.setAttribute('aria-label', `Team ${index + 1} name`);
-        input.addEventListener('input', () => { names[index] = input.value; }); label.append(input); fields.append(label);
+        input.addEventListener('input', () => {if(active&&!destroyed&&phase==='setup')names[index] = input.value; }); label.append(input);const sizeLabel=node('span','swl-team-size-label','Gymnasts'),stepper=node('div','swl-game-stepper'),number=node('input');number.type='number';number.min='1';number.max='20';number.step='1';number.inputMode='numeric';number.value=sizes[index];number.dataset.teamSize=String(index);number.setAttribute('aria-label',`Number of gymnasts in team ${index+1}`);number.addEventListener('input',()=>{if(active&&!destroyed&&phase==='setup')sizes[index]=number.value;});const less=button('−',`size-${index}-less`,'swl-team-choice'),more=button('+',`size-${index}-more`,'swl-team-choice');less.setAttribute('aria-label',`Fewer gymnasts in team ${index+1}`);more.setAttribute('aria-label',`More gymnasts in team ${index+1}`);stepper.append(less,number,more);label.append(sizeLabel,stepper);fields.append(label);
       }
       const error = node('p', 'swl-team-error', errorText); error.setAttribute('role', 'alert');
       panel.append(count, fields, error, button('Draw the first challenge ↗', 'start-game', 'swl-team-button swl-team-primary'));
@@ -582,7 +585,7 @@
       const grid = node('div', 'swl-team-setup-grid'); grid.append(panel, rules); root.append(grid);
     }
     function scoreboard(root) {
-      const board = node('div', 'swl-team-board'); board.setAttribute('aria-label', 'Team scoreboard');
+      const board = node('div', 'swl-team-board');board.dataset.teamCount=String(teams.length);board.style.setProperty('--game-teams',String(teams.length)); board.setAttribute('aria-label', 'Team scoreboard');
       teams.forEach((team, index) => {
         const item = node('div', `swl-team-score${phase !== 'finished' && index === turn % teams.length ? ' is-current' : ''}`); item.style.setProperty('--team-color', team.color);
         item.append(node('span', 'swl-team-score-name', team.name), node('strong', '', String(team.score)), node('span', 'swl-team-score-unit', `${team.score === 1 ? 'star' : 'stars'} · ${team.turns}/${ROUNDS} rounds`)); board.append(item);
@@ -617,19 +620,21 @@
       stage.append(node('p', 'swl-team-awards-label', 'COACH’S STARS · CONTROL + TIMING + ENCOURAGEMENT'), award); root.append(stage);
     }
     function finishView(root) {
+      if(podium){stage=node('section','swl-team-finish swl-game-podium-finish');stage.tabIndex=-1;podium.render(stage);if(podium.getState().finished){const actions=node('div','swl-team-finish-actions');actions.append(button('Play again ↻','replay','swl-team-button swl-team-primary'),button('Change teams','reset','swl-team-button swl-team-secondary'));stage.append(actions);}root.append(stage);return;}
       const high = Math.max(...teams.map(team => team.score)); const winners = teams.filter(team => team.score === high);
       const result = node('section', 'swl-team-finish'); result.tabIndex = -1; stage = result;
       result.append(node('div', 'swl-team-trophy', '✦'), node('p', 'swl-team-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : 'TEAM CHALLENGE CHAMPIONS'), node('h3', '', winners.map(team => team.name).join(' + ')), node('p', 'swl-team-winner-points', `${high} ${high === 1 ? 'star' : 'stars'}`), node('p', 'swl-team-muted', winners.length === teams.length ? 'A team effort all round. Everyone finishes together.' : winners.length > 1 ? 'A brilliant tie. Celebrate both the effort and the teamwork.' : 'Control, rhythm and encouragement — that is a winning team.'));
       const actions = node('div', 'swl-team-finish-actions'); actions.append(button('Play again ↻', 'replay', 'swl-team-button swl-team-primary'), button('Change teams', 'reset', 'swl-team-button swl-team-secondary')); result.append(actions); root.append(result);
     }
     function render(focus = false) {
+      renderGeneration++;
       if (destroyed) return;
       clockNumber = null; clockText = null; clockFace = null; stage = null;
       const root = node('div', 'swl-team'); root.dataset.static = String(motionOff()); root.dataset.phase = phase;
       const head = node('div', 'swl-team-heading'); const titles = node('div'); titles.append(node('p', 'swl-team-kicker', 'ONE CARD · TEN SECONDS · TOGETHER'), node('h2', '', 'Team Challenge'));
       head.append(titles); if (phase !== 'setup') head.append(button('New game', 'reset', 'swl-team-text-button')); root.append(head);
       if (phase === 'setup') setupView(root);
-      else { scoreboard(root); if (phase === 'finished') finishView(root); else playView(root); }
+      else { if(phase!=='finished')scoreboard(root); if (phase === 'finished') finishView(root); else playView(root); }
       const live = node('p', 'swl-team-live', statusText); live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite'); root.append(live);
       if (resetPrompt) {
         const confirm = node('div', 'swl-team-reset-prompt'); confirm.setAttribute('role', 'alertdialog'); confirm.setAttribute('aria-label', 'Start a new team game?');
@@ -640,17 +645,17 @@
     }
     function deactivate() {
       if (destroyed) return;
-      pause(); active = false; cancelTimer(); render();
+      podium?.finish(true);pause(); active = false; cancelTimer(); render();
     }
     function activate() { if (destroyed) return; active = true; render(); }
-    function onVisibility() { if (document.hidden) { pause(); cancelTimer(); render(); } }
+    function onVisibility() { if (document.hidden) {podium?.finish(true); pause(); cancelTimer(); render(); } }
     document.addEventListener('visibilitychange', onVisibility);
     const controller = {
       deactivate, activate,
       get destroyed() { return destroyed; },
       updateOptions(next) { options = next || {}; },
-      destroy() { if (destroyed) return; destroyed = true; active = false; cancelTimer(); document.removeEventListener('visibilitychange', onVisibility); container.replaceChildren(); },
-      getState() { return { phase, active, teamCount, timerSeconds: ROUND_MS / 1000, cardCount: CARDS.length, turn, round: teams.length ? Math.min(ROUNDS, Math.floor(turn / teams.length) + 1) : 0, teams: teams.map(team => ({ ...team })), card: card ? { ...card } : null, remainingMs, awardedStars, resetPrompt }; }
+      destroy() { if (destroyed) return;podium?.finish(true);podium?.destroy();podium=null; destroyed = true; active = false; cancelTimer(); document.removeEventListener('visibilitychange', onVisibility); container.replaceChildren(); },
+      getState() { return {podium:podium?.getState()||null,completionSent,sessionId,phase, active, teamCount, timerSeconds: ROUND_MS / 1000, cardCount: CARDS.length, turn, round: teams.length ? Math.min(ROUNDS, Math.floor(turn / teams.length) + 1) : 0, teams: teams.map(team => ({ ...team })), card: card ? { ...card } : null, remainingMs, awardedStars, resetPrompt }; }
     };
     render(); return controller;
   }

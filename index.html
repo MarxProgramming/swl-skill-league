@@ -1574,9 +1574,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./placement.css?v=20261019v3">
 <link rel="stylesheet" href="./games.css?v=20261019v3">
 <link rel="stylesheet" href="./games-wheel.css?v=20261019v3">
-<link rel="stylesheet" href="./games-team.css?v=20261019v3">
-<link rel="stylesheet" href="./games-skill.css?v=20261019v3">
-<link rel="stylesheet" href="./games-timing.css?v=20261015e">
+<link rel="stylesheet" href="./games-team.css?v=20261020">
+<link rel="stylesheet" href="./games-skill.css?v=20261020">
+<link rel="stylesheet" href="./games-timing.css?v=20261020">
 <link rel="stylesheet" href="./games-addon.css?v=20261019v3">
 <link rel="stylesheet" href="./games-ratings.css?v=20261019v3">
 <link rel="stylesheet" href="./v2.css?v=20261019v3">
@@ -1584,7 +1584,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
 <link rel="stylesheet" href="./analytics-31.css?v=20261019v31">
-<link rel="stylesheet" href="./challenge.css?v=20261019v31">
+<link rel="stylesheet" href="./challenge.css?v=20261020"><link rel="stylesheet" href="./squads.css?v=20261020">
 </head>
 
 <body>
@@ -1619,7 +1619,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 </header>
 
 <main class="wrap" id="main" tabindex="-1">
-  <div class="scoring-lock-status" id="lockStatus" role="status">Checking scoring access…</div>
+  <div class="scoring-lock-status sr-only" id="lockStatus" role="status">Checking scoring access…</div>
+  <div class="squad-family-switch" id="squadFamilySwitch" role="group" aria-label="Choose training programme"><button type="button" data-board-family="floor" aria-pressed="false"><span>Floor &amp; vault</span><small>All floor &amp; vault squads</small></button><button type="button" data-board-family="senior" aria-pressed="false"><span>Senior squad</span><small>Marx’s &amp; Dan’s groups</small></button></div>
   <div
     id="storageWarning"
     class="warning"
@@ -1658,7 +1659,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <p class="note">
       The top five gymnasts are shown. Equal scores are ordered alphabetically.
     </p>
-    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge">Challenge Tracker <span aria-hidden="true">↗</span></button></div>
+    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge"><span class="challenge-entry-copy"><strong>The 250 Challenge</strong><small>See who is closest to the prize</small></span><span aria-hidden="true">↗</span></button></div>
   </section>
 
   <section id="tracker" aria-label="Gymnast profile" hidden>
@@ -1729,7 +1730,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
   <section id="allSkills" aria-labelledby="allSkillsTitle" hidden><div id="allSkillsRoot"></div></section>
   <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
-  <section id="challenge" aria-label="200-point challenge" hidden><div id="challengeRoot"></div></section>
+  <section id="challenge" aria-label="250-point challenge" hidden><div id="challengeRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
@@ -1781,20 +1782,20 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./startup.js?v=20261019v31"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
-<script src="./celebration.js?v=20261019v3"></script>
+<script src="./celebration.js?v=20261020"></script>
 <script src="./v3-rankings.js?v=20261019podium"></script>
 <script src="./placement.js?v=20261019alphabetical"></script>
 <script src="./games-wheel.js?v=20261019v3"></script>
-<script src="./games-team.js?v=20261019v3"></script>
-<script src="./games-skill.js?v=20261019v3"></script>
-<script src="./games-draft.js?v=20261019v3"></script>
-<script src="./games-timing.js?v=20261015e"></script>
-<script src="./games-addon.js?v=20261019v3"></script>
+<script src="./games-team.js?v=20261020"></script>
+<script src="./games-skill.js?v=20261020"></script>
+<script src="./games-draft.js?v=20261020"></script>
+<script src="./games-timing.js?v=20261020"></script>
+<script src="./games-addon.js?v=20261020"></script>
 <script src="./games-ratings.js?v=20261019v3"></script>
-<script src="./games.js?v=20261019v3"></script>
+<script src="./games.js?v=20261020"></script>
 <script src="./skills-catalogue.js?v=20261019perfect1"></script>
-<script src="./v2.js?v=20261019v31"></script>
-<script src="./challenge.js?v=20261019v31"></script>
+<script src="./v2.js?v=20261020"></script>
+<script src="./challenge.js?v=20261020"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
 (() => {
@@ -2053,7 +2054,12 @@ html:has(body.no-motion){scroll-behavior:auto}
         /^[=+@-]/.test(name) || /^[=+@-]/.test(coach)) {
       throw Error('Use 1–100 characters for the name and coach, without special characters at the start.');
     }
-    return { id: value.id, name, coach };
+    let squads;
+    if (value.squads !== undefined) {
+      if (!Array.isArray(value.squads) || value.squads.length > 20 || value.squads.some(v => typeof v !== 'string' || !v.trim() || v.length > 100 || /[\u0000-\u001f\u007f]/.test(v) || /^[=+@-]/.test(v.trim()))) throw Error('A gymnast’s squad memberships could not be read.');
+      squads = [...new Set([coach, ...value.squads.map(v => v.trim())])];
+    }
+    return { id: value.id, name, coach, ...(squads ? {squads} : {}) };
   }
 
   function parseState(text) {
@@ -2114,8 +2120,8 @@ html:has(body.no-motion){scroll-behavior:auto}
           if (RETIRED_SKILL_IDS.has(skill)) continue;
           if (!SKILL_IDS.has(skill) || !isObject(detail)) throw Error('Invalid skill renewal dates.');
           const validDate = value => value == null || value === '' || (typeof value === 'string' && Number.isFinite(Date.parse(value)));
-          if (!validDate(detail.renewedAt) || !validDate(detail.earnedAt)) throw Error('Invalid renewal timestamp.');
-          clean.skillDates[id][skill] = {renewedAt:detail.renewedAt || null,earnedAt:detail.earnedAt || null};
+          if (!validDate(detail.renewedAt) || !validDate(detail.earnedAt) || !validDate(detail.firstAchievedAt)) throw Error('Invalid renewal timestamp.');
+          clean.skillDates[id][skill] = {renewedAt:detail.renewedAt || null,earnedAt:detail.earnedAt || null,...(detail.firstAchievedAt ? {firstAchievedAt:detail.firstAchievedAt} : {})};
         }
       }
     }
@@ -2193,16 +2199,20 @@ html:has(body.no-motion){scroll-behavior:auto}
         }
       }
     }
-    if (data.challenge != null) clean.challenge = window.SWLChallenge.parseChallenge(data.challenge, clean.gymnasts);
+    if (data.challenge250 != null || data.challenge != null) clean.challenge = window.SWLChallenge.parseChallenge(data.challenge250 || data.challenge, clean.gymnasts);
     clean.expiryStartedAt = typeof data.expiryStartedAt === 'string' && Number.isFinite(Date.parse(data.expiryStartedAt)) ? data.expiryStartedAt : null;
     return clean;
   }
 
   const coachingGroupKey = coach => String(coach || '').trim().toLowerCase() === 'coaches' ? 'coaches' : coach;
-  const isCoachParticipant = gymnast => coachingGroupKey(gymnast?.coach) === 'coaches';
-  const coachBadge = gymnast => isCoachParticipant(gymnast) ? '<span class="coach-badge">COACH</span>' : '';
-  const groupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach;
-  const shortGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /marx.*floor.*vault/i.test(coach) ? 'Marx · floor & vault' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : coach;
+  const squadMemberships = gymnast => [...new Set([gymnast?.coach, ...(Array.isArray(gymnast?.squads) ? gymnast.squads : [])].filter(Boolean).map(coachingGroupKey))];
+  const isCoachParticipant = gymnast => squadMemberships(gymnast).includes('coaches');
+  const isFloorGroup = group => /floor.*vault/i.test(group);
+  const groupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'floor' ? 'All floor & vault squads' : coach === 'senior' ? 'All senior squad' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach === 'Saturday Floor and Vault' ? 'Saturday Afternoon Floor and Vault' : coach;
+  const shortGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /Saturday Morning/i.test(coach) ? 'Marx · Saturday morning floor & vault' : /Saturday Afternoon/i.test(coach) ? coach.replace('’s Saturday Afternoon Floor and Vault',' · Saturday afternoon floor & vault').replace('Saturday Afternoon Floor and Vault','Saturday afternoon · unassigned') : groupLabel(coach);
+  const gymnastSquadLabel = gymnast => squadMemberships(gymnast).map(groupLabel).join(' + ');
+  const coachBadge = gymnast => isCoachParticipant(gymnast) ? '<span class="coach-badge">COACH</span>' : squadMemberships(gymnast).length > 1 ? `<span class="multi-squad-badge" title="${escapeHTML(gymnastSquadLabel(gymnast))}" aria-label="Member of ${escapeHTML(gymnastSquadLabel(gymnast))}">${squadMemberships(gymnast).length} SQUADS</span>` : '';
+  const rosterGroupOptions = () => [...new Set(GYMNASTS.flatMap(squadMemberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));
   const v2Api = () => typeof window === 'undefined' ? null : window.SWLV2;
 
   const RECOVERY_KEY = 'swl-skill-league-pending-v2'; // Read-only compatibility until a safe handoff.
@@ -2384,11 +2394,11 @@ html:has(body.no-motion){scroll-behavior:auto}
   // Heat remains a visual treatment; it no longer adds a text/emoji badge.
   function fireBadge() { return ''; }
   function renderV2() {
-    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
-    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
+    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
+    v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
-    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'senior' ? ['Marx', 'Dan'].includes(gymnast.coach) : coachingGroupKey(gymnast.coach) === coachingGroupKey(group));
+    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
   }
   function profileGymnasts(gymnast = GYMNASTS.find(g => g.id === selectedId)) {
     return GYMNASTS.filter(g => isCoachParticipant(g) === isCoachParticipant(gymnast));
@@ -2441,7 +2451,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (operation.type === 'set_link' || RETIRED_SKILL_IDS.has(operation.skillId)) continue;
       if (operation.type === 'add_gymnast') {
         if (!ids.has(operation.id)) {
-          next.gymnasts.push({ id: operation.id, name: operation.name, coach: operation.coach });
+          next.gymnasts.push({ id: operation.id, name: operation.name, coach: operation.coach, ...(operation.squads ? {squads:operation.squads} : {}) });
           ids.add(operation.id);
         }
       } else if (operation.type === 'set_link' && ids.has(operation.gymnastId)) {
@@ -2458,6 +2468,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           next.marks[id] ??= {};
           next.marks[id][skill] = operation.value;
           if (operation.value !== before) {
+            if (!before && operation.value > 0 && !dates.firstAchievedAt) dates.firstAchievedAt = operation.clientAt;
             dates.renewedAt = operation.value > 0 ? operation.clientAt : null;
             dates.earnedAt = operation.value > before ? operation.clientAt : null;
           }
@@ -3202,10 +3213,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderBoards() {
     renderV2();
     if (currentView === 'placement') renderPlacementProfile();
-    const groups = [...new Set(GYMNASTS.map(g => coachingGroupKey(g.coach)))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));
-    if (!['all','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
+    const groups = rosterGroupOptions();
+    if (!['all','floor','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
     if ($('leaderboardGroup')) {
-      const options=[['all','Overall · all squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
+      const options=[['all','Overall · all squads'],['floor','All floor & vault squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
       stableHTML($('leaderboardGroup'),options);
       $('leaderboardGroup').value=leaderboardGroup;
       $('leaderboardGroup').disabled=!hasLoaded;
@@ -3220,6 +3231,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       stableHTML($('leaderboardAge'),ageOptions);
     }
     const filteredGymnasts = groupGymnasts.filter(g=>inLeaderboardAge(g,leaderboardAge));
+    document.querySelectorAll('[data-board-family]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.boardFamily === leaderboardGroup || (button.dataset.boardFamily === 'floor' && isFloorGroup(leaderboardGroup)) || (button.dataset.boardFamily === 'senior' && ['Marx','Dan'].includes(leaderboardGroup)))));
     const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : leaderboardGroup === 'overall' ? 'Overall · all squads + coaches' : groupLabel(leaderboardGroup);
     if ($('leaderboardScope')) $('leaderboardScope').textContent = `${squadLabel} · ${ageCategoryLabel(leaderboardAge)}${hasLoaded ? ` · ${filteredGymnasts.length} ${leaderboardGroup==='coaches'?(filteredGymnasts.length===1?'coach':'coaches'):(leaderboardGroup==='overall'?'participant':'gymnast')+(filteredGymnasts.length===1?'':'s')}` : ''}${leaderboardGroup==='coaches'?'':` · age reached in ${londonYear()}`}`;
     const all = filteredGymnasts.map(g => summary(g.id));
@@ -3251,7 +3263,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       .trim()
       .toLocaleLowerCase('en-GB');
 
-    const coaches = [...new Set(GYMNASTS.map(gymnast => coachingGroupKey(gymnast.coach)))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));
+    const coaches = rosterGroupOptions();
     if (!['all','overall'].includes(coachFilter) && !coaches.includes(coachFilter.slice(6))) coachFilter = 'all';
     $('coachChips').innerHTML = [['all', 'All squads'], ...coaches.map(coach => ['group:' + coach, shortGroupLabel(coach)]), ['overall', 'Overall · all squads + coaches']]
       .map(([value, label]) => `<button class="chip" data-coach="${escapeHTML(value)}" aria-pressed="${coachFilter === value}">${escapeHTML(label)}</button>`).join('');
@@ -3371,7 +3383,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('athletePanel').innerHTML = `
       <section class="athlete-summary${heatClass(gymnast.id)}" id="athleteSummary">
         <div class="athlete-info">
-          <p class="eyebrow">${escapeHTML(groupLabel(gymnast.coach))}</p>
+          <p class="eyebrow">${escapeHTML(gymnastSquadLabel(gymnast))}</p>
 
           <h2 id="athleteTitle" tabindex="-1">
             ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)}
@@ -3773,6 +3785,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     const placement = view === 'placement';
 
     $('dashboard').hidden = view !== 'dashboard';
+    if ($('squadFamilySwitch')) $('squadFamilySwitch').hidden = view !== 'dashboard';
     $('tracker').hidden = !tracker;
     $('placementProfile').hidden = !placement;
     $('games').hidden = view !== 'games';
@@ -3816,8 +3829,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     const placementScope = placementGroup === 'own' ? coachingGroupKey(gymnast.coach) : placementGroup;
     window.SWLPlacement.render({
       gymnast,
-      fireBadge, coachBadge, isCoachParticipant, fireCount, isOnFire, heatLevel, dailyPoints, ageCategories:AGE_CATEGORIES, ageCategory, ageCategoryLabel, londonYear, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : placementGroup === 'overall' ? 'Overall · all squads + coaches' : 'All squads', ownGroup:placementGroup === 'own',
-      selectedScope:placementGroup, scopeOptions:[{id:'own',label:coach?'Coaches':'Own squad'},...(!coach?[{id:'all',label:'All squads'}]:[]),{id:'overall',label:'Overall · all squads + coaches'}], participantLabel:placementGroup==='overall'?'participants':coach?'coaches':'gymnasts',
+      fireBadge, coachBadge, isCoachParticipant, fireCount, isOnFire, heatLevel, dailyPoints, ageCategories:AGE_CATEGORIES, ageCategory, ageCategoryLabel, londonYear, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : placementGroup === 'overall' ? 'Overall · all squads + coaches' : placementGroup === 'all' ? 'All squads' : groupLabel(placementGroup), ownGroup:placementGroup === 'own',
+      selectedScope:placementGroup, scopeOptions:[{id:'own',label:coach?'Coaches':'Own squad'},...(!coach?[...squadMemberships(gymnast).filter(g=>g!==coachingGroupKey(gymnast.coach)).map(g=>({id:g,label:groupLabel(g)})),{id:'floor',label:'All floor & vault squads'},{id:'all',label:'All squads'}]:[]),{id:'overall',label:'Overall · all squads + coaches'}], participantLabel:placementGroup==='overall'?'participants':coach?'coaches':'gymnasts',
       boards: [{id:'overall',name:'Overall league',icon:'ϟ',color:'#f3ce86'}, ...CATEGORIES]
         .map(board => ({...board, rows:standings(board.id, placementScope)})),
       motionOff: reducedMotion() || !animate
@@ -4130,6 +4143,8 @@ html:has(body.no-motion){scroll-behavior:auto}
         changeSkill(button.dataset.quickSkill,button,undefined,button.dataset.quickGymnast);
       } else if (button.hasAttribute('data-quick-renew')) {
         renewSkill(button.dataset.quickRenew,button,button.dataset.quickGymnast);
+      } else if (button.hasAttribute('data-board-family')) {
+        leaderboardGroup=button.dataset.boardFamily;leaderboardAge='all';setView('dashboard',false);renderBoards();
       } else if (button.hasAttribute('data-board-group')) {
         leaderboardGroup=button.dataset.boardGroup;if(leaderboardGroup==='coaches')leaderboardAge='all';renderBoards();
       } else if (button.hasAttribute('data-renew-skill')) {

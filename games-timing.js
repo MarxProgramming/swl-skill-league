@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const COLORS=['#d5fa70','#bd9bff','#ffd782'],NAMES=['Mint','Purple','Gold'];
+  const COLORS=['#d5fa70','#bd9bff','#ffd782','#83d9ff','#ffafcb'],NAMES=['Mint','Purple','Gold','Sky','Rose'];
   const TASKS=[
     {id:'burpees',name:'5 burpees',cue:'Five controlled burpees, using the version your coach has chosen.'},
     {id:'pressups',name:'5 press-ups',cue:'Five press-ups with the same coach-approved version for everyone.'},
@@ -23,8 +23,8 @@
     const info=INFO[kind],isRelay=kind==='relayrace',isSense=kind==='timesense',factor=isSense?10:100;
     let host=null,root=null,options={},active=false,destroyed=true,view=0,timer=null,timerToken=0;
     let clockNode=null,lapNode=null,state=null,confirming='',error='',undoRecord=null,lastLapAt=-Infinity;
-    let ownsLayout=false;
-    let names=NAMES.slice(),sizes=['5','5','5'],count=2,mode='normal',format='individual',rounds=2,taskId='burpees',previousTarget=0;
+    let ownsLayout=false,podium=null;
+    let names=NAMES.slice(),sizes=NAMES.map(()=>'5'),count=2,mode='normal',format='individual',rounds=2,taskId='burpees',previousTarget=0;
     const fresh=()=>({phase:'setup',teams:[],order:[],turn:0,elapsedMs:0,runningSince:0,laps:[],penalty:0,fell:false,neat:false,balanceLost:false,target:0,results:[],sessionId:null,notified:false,message:''});
     const canAct=()=>active&&!destroyed&&!document.hidden&&Boolean(root?.isConnected);
     const teamIndex=()=>state?.order[state.turn]??0;
@@ -72,7 +72,7 @@
       if(numbers.some(value=>value===null)){error='Enter a whole number from 1 to 20 gymnasts for each team.';render();return;}
       if(new Set(chosen.map(value=>value.toLocaleLowerCase())).size!==count){error='Give each team a different name so every score is clear.';render();return;}
       chosen.forEach((value,index)=>{names[index]=value;sizes[index]=String(numbers[index]);});
-      stopTick();state=fresh();state.sessionId=sessionId(kind);state.teams=chosen.map((name,index)=>({name,color:COLORS[index],size:numbers[index],totalUnits:0,turns:0,...(isGroup()?{remaining:numbers[index],roundLimit:Math.min(rounds,numbers[index])}:{})}));
+      podium?.destroy();podium=null;stopTick();state=fresh();state.sessionId=sessionId(kind);state.teams=chosen.map((name,index)=>({name,color:COLORS[index],size:numbers[index],totalUnits:0,turns:0,...(isGroup()?{remaining:numbers[index],roundLimit:Math.min(rounds,numbers[index])}:{})}));
       state.order=isRelay?chosen.map((_,index)=>index):Array.from({length:isGroup()?Math.min(rounds,Math.max(...numbers)):Math.max(...numbers)},(_,turn)=>numbers.flatMap((size,index)=>turn<size?[index]:[])).flat();
       confirming='';error='';clearAttempt();render({focus:'go'});
     }
@@ -101,21 +101,21 @@
       state.message=`Ready to confirm ${scoreText(draftUnits())} ${info.unit}.`;render({focus:action});
     }
     function adjustPenalty(delta){if(!isRelay||state.phase!=='review')return;state.penalty=Math.min(20,Math.max(0,state.penalty+delta));state.message=`${state.penalty} missed repetitions: ${state.penalty*2} seconds added.`;render({focus:delta>0?'penalty-plus':'penalty-minus'});}
-    function complete(){if(state.notified)return;state.notified=true;const event={gameId:kind,sessionId:state.sessionId,participantCount:state.teams.reduce((sum,team)=>sum+team.size,0)};try{options.onComplete?.(event);}catch(_) {}}
+    function complete(details={}){if(state.notified)return;state.notified=true;const event={gameId:kind,sessionId:state.sessionId,participantCount:state.teams.reduce((sum,team)=>sum+team.size,0),...(details.promptRating===false?{promptRating:false}:{})};try{options.onComplete?.(event);}catch(_) {}}
     function confirm(){
       if(state.phase!=='review')return;
       const team=teamIndex(),units=draftUnits(),participants=isGroup()?currentTeam().remaining:isRelay?currentTeam().size:1,turnIncrement=isGroup()?1:participants;
       const record={team,gymnast:currentTeam().turns+1,units,elapsedMs:state.elapsedMs,target:state.target,penalty:state.penalty,laps:state.laps.slice(),fell:state.fell,neat:state.neat,balanceLost:state.balanceLost,participants,turnIncrement,...(isGroup()?{round:groupRound(),remainingBefore:currentTeam().remaining,remainingAfter:currentTeam().remaining-1}:{})};
       state.results.push(record);undoRecord=record;state.teams[team].totalUnits+=units;state.teams[team].turns+=turnIncrement;if(isGroup())state.teams[team].remaining--;
       state.phase=state.turn===state.order.length-1?'finished':'confirmed';state.message=`${state.teams[team].name}: ${scoreText(units)} ${info.unit} confirmed.`+(isGroup()?` Last gymnast sits out. ${state.teams[team].remaining} remaining.`:'');
-      render({focus:state.phase==='finished'?'replay':'next'});sound({kind:state.phase==='finished'?'finish':'award'});if(state.phase==='finished')complete();
+      if(state.phase==='finished'){const compare=(a,b)=>kind==='handstand'?a.totalUnits-b.totalUnits:a.totalUnits*Math.max(1,b.turns)-b.totalUnits*Math.max(1,a.turns);const entries=state.teams.map((entry,index)=>({id:String(index),name:entry.name,color:entry.color,value:kind==='handstand'?entry.totalUnits/factor:entry.totalUnits/factor/entry.turns,decimals:isSense?1:2,unit:kind==='handstand'?'s total':isSense?'points per gymnast':'s per gymnast',detail:isGroup()?`${entry.turns} ${entry.turns===1?'round':'rounds'}`:isRelay?`${scoreText(entry.totalUnits)} s total · ${entry.size} gymnasts`:`${entry.size} ${entry.size===1?'gymnast':'gymnasts'}`,rank:1+state.teams.filter(other=>isRelay?compare(other,entry)<0:compare(other,entry)>0).length}));podium=window.SWLShuffleShowcase.createPodium(entries,{motionOff,sound,onDone:details=>{render({focus:'replay'});complete(details);}});render();podium.start();}else{render({focus:'next'});sound({kind:'award'});}
     }
-    function undo(){if(!undoRecord||!['confirmed','finished'].includes(state.phase)||isRelay)return;const record=undoRecord;state.teams[record.team].totalUnits-=record.units;state.teams[record.team].turns-=record.turnIncrement;if(isGroup())state.teams[record.team].remaining=record.remainingBefore;state.results.pop();undoRecord=null;state.phase='review';state.message=isGroup()?'Last time undone. The last gymnast is back in. Review this same round and confirm again.':'Last score undone. Review the same attempt and confirm again.';render({focus:'confirm'});}
+    function undo(){if(!undoRecord||!['confirmed','finished'].includes(state.phase)||isRelay)return;podium?.finish(true);podium?.destroy();podium=null;const record=undoRecord;state.teams[record.team].totalUnits-=record.units;state.teams[record.team].turns-=record.turnIncrement;if(isGroup())state.teams[record.team].remaining=record.remainingBefore;state.results.pop();undoRecord=null;state.phase='review';state.message=isGroup()?'Last time undone. The last gymnast is back in. Review this same round and confirm again.':'Last score undone. Review the same attempt and confirm again.';render({focus:'confirm'});}
     function next(){if(state.phase!=='confirmed')return;state.turn++;clearAttempt();render({focus:'go'});}
     function discard(){if(!['paused','review'].includes(state.phase)||isRelay)return;const target=state.target;clearAttempt();state.target=target;state.message=isGroup()?'Round discarded. The same gymnasts can start again; nobody has been sat out.':'Attempt discarded. The same gymnast can start again.';render({focus:'go'});}
     function ask(action){if(state.phase==='setup'||confirming)return;if(action==='redo'&&!isRelay)return;pause();confirming=action;render({focus:'cancel-dialog'});}
     function acceptDialog(){
-      const action=confirming;if(!action)return;confirming='';stopTick();
+      const action=confirming;if(!action)return;confirming='';podium?.finish(true);podium?.destroy();podium=null;stopTick();
       if(action==='reset'){state=fresh();undoRecord=null;error='';render({focus:'start'});return;}
       if(action==='redo'){
         if(undoRecord&&['confirmed','finished'].includes(state.phase)){const last=undoRecord;state.teams[last.team].totalUnits-=last.units;state.teams[last.team].turns-=last.participants;state.results.pop();}
@@ -127,7 +127,8 @@
       if(action==='cancel-dialog'){if(confirming){confirming='';render({focus:state.phase==='paused'?'resume':'reset'});}return;}
       if(action==='confirm-dialog'){acceptDialog();return;}if(confirming)return;
       if(action==='start')start();else if(action==='replay')start(true);else if(action==='go')go();else if(action==='stop')stop();else if(action==='resume')resume();else if(action==='pause')pause();else if(action==='lap')recordLap(false);else if(action==='finish')recordLap(true);else if(action==='confirm')confirm();else if(action==='undo')undo();else if(action==='next')next();else if(action==='discard')discard();else if(action==='retry')retry();else if(action==='reset'||action==='redo')ask(action);else if(action==='penalty-plus')adjustPenalty(1);else if(action==='penalty-minus')adjustPenalty(-1);else if(['fell','neat','balance-lost'].includes(action))toggle(action);
-      else if(/^count-[23]$/.test(action)&&state.phase==='setup'){count=Number(action.slice(-1));error='';render({focus:action});}
+      else if(/^count-[2-5]$/.test(action)&&state.phase==='setup'){count=Number(action.slice(-1));error='';render({focus:action});}
+      else if(/^size-[0-4]-(less|more)$/.test(action)&&state.phase==='setup'){const parts=action.split('-'),index=Number(parts[1]);if(index<count){const current=validSize(sizes[index])||5;sizes[index]=String(Math.max(1,Math.min(20,current+(parts[2]==='more'?1:-1))));error='';render({focus:action});}}
       else if(['mode-normal','mode-pro'].includes(action)&&state.phase==='setup'){mode=action.slice(5);render({focus:action});}
       else if(['format-individual','format-group'].includes(action)&&kind==='handstand'&&state.phase==='setup'){format=action.slice(7);error='';render({focus:action});}
       else if(['rounds-minus','rounds-plus'].includes(action)&&isGroup()&&state.phase==='setup'){rounds=Math.min(10,Math.max(1,rounds+(action==='rounds-plus'?1:-1)));render({focus:rounds===1?'rounds-plus':rounds===10?'rounds-minus':action});}
@@ -137,16 +138,16 @@
     function choice(action,text,pressed){const el=button(action,text);el.setAttribute('aria-pressed',String(pressed));return el;}
     function header(){const el=node('header','swlt-header'),copy=node('div');copy.append(node('p','swlt-kicker','SWL GAMES · '+info.name.toUpperCase()),node('h2','',kind==='handstand'&&state.phase!=='setup'?'Handstand Timer':info.title),node('p','swlt-intro',info.intro));el.append(copy,node('span','swlt-tag',info.tag));return el;}
     function setup(){
-      const layout=node('div','swlt-setup'),form=node('section','swlt-panel'),rules=node('aside','swlt-rules');form.append(node('p','swlt-kicker','BUILD YOUR TEAMS'),node('h3','','Two or three. Everyone gets a turn.'));
+      const layout=node('div','swlt-setup'),form=node('section','swlt-panel'),rules=node('aside','swlt-rules');form.append(node('p','swlt-kicker','BUILD YOUR TEAMS'),node('h3','','Up to five teams. Everyone gets a turn.'));
       if(kind==='handstand'){
         const formats=node('div','swlt-formats');formats.setAttribute('aria-label','Handstand timing format');const individual=choice('format-individual','Individual',format==='individual'),group=choice('format-group','Group',format==='group');individual.append(node('small','','One gymnast at a time'));group.append(node('small','','Whole team together'));formats.append(individual,group);form.append(formats);
       }
-      const counts=node('div','swlt-options');counts.setAttribute('aria-label','Number of teams');counts.append(choice('count-2','2 teams',count===2),choice('count-3','3 teams',count===3));form.append(counts);
+      form.append(window.SWLShuffleShowcase.teamCountView(count,5,value=>{perform(`count-${value}`);root.querySelector('[data-game-team-count]')?.focus();},'Number of teams'));
       const rows=node('div','swlt-team-inputs');for(let index=0;index<count;index++){
         const row=node('div','swlt-team-input');row.style.setProperty('--timing-color',COLORS[index]);
         const nameLabel=node('label','',`Team ${index+1}`),input=node('input');input.type='text';input.value=names[index];input.maxLength=24;input.autocomplete='off';input.dataset.timingName=String(index);input.setAttribute('aria-label',`Team ${index+1} name`);
         const sizeLabel=node('label','','Gymnasts'),size=node('input');size.type='number';size.min='1';size.max='20';size.step='1';size.inputMode='numeric';size.value=sizes[index];size.dataset.timingSize=String(index);size.setAttribute('aria-label',`Number of gymnasts in team ${index+1}`);
-        const generation=view;input.addEventListener('input',()=>{if(canAct()&&generation===view)names[index]=input.value;});size.addEventListener('input',()=>{if(canAct()&&generation===view)sizes[index]=size.value;});nameLabel.append(input);sizeLabel.append(size);row.append(nameLabel,sizeLabel);rows.append(row);
+        const generation=view;input.addEventListener('input',()=>{if(canAct()&&generation===view)names[index]=input.value;});size.addEventListener('input',()=>{if(canAct()&&generation===view)sizes[index]=size.value;});nameLabel.append(input);const stepper=node('div','swl-game-stepper'),less=button(`size-${index}-less`,'−'),more=button(`size-${index}-more`,'+');less.setAttribute('aria-label',`Fewer gymnasts in team ${index+1}`);more.setAttribute('aria-label',`More gymnasts in team ${index+1}`);stepper.append(less,size,more);sizeLabel.append(stepper);row.append(nameLabel,sizeLabel);rows.append(row);
       }form.append(rows,node('p','swlt-muted','1–20 gymnasts per team · no individual names needed'));
       if(kind==='handstand'&&!isGroup()){const modes=node('div','swlt-options');modes.setAttribute('aria-label','Handstand mode');modes.append(choice('mode-normal','Normal · time only',mode==='normal'),choice('mode-pro','Pro · time + judgement',mode==='pro'));form.append(node('h4','','Choose your challenge'),modes,node('p','swlt-muted',mode==='pro'?'Pro: Fell over = zero, or Extra neat = +1 second.':'Normal: every confirmed second counts.'));}
       if(isGroup()){
@@ -156,7 +157,7 @@
       const issue=node('p','swlt-error',error);issue.setAttribute('role','alert');form.append(issue,button('start','Get teams ready ↗','primary'));
       rules.append(node('div','swlt-rule-mark',isSense?'≈':isRelay?'→ → →':'00.00'),node('h3','',info.tag.toLowerCase().replace(/^./,c=>c.toUpperCase())));const list=node('ol'),instructions=isGroup()?['All remaining gymnasts in one team start their handstands together. Teams take turns.','Stop when the LAST gymnast comes down. Confirm the time, then that gymnast sits out their team’s later rounds.','The coach remembers who is sitting out. Each later round starts with one fewer gymnast. Empty teams are skipped.','Play the selected rounds, or until nobody remains. Add each round’s time: highest combined seconds wins.']:info.rules;instructions.forEach(text=>list.append(node('li','',text)));rules.append(list,node('p','swlt-coach-note',isRelay?'Coach chooses familiar versions and checks every changeover.':isGroup()?'Give everyone enough space. Use familiar, coach-approved handstands. Coach controls the clock and keeps track of who is sitting out.':'Use a familiar, coach-approved skill or shape. Coach controls the timer and the result.'));layout.append(form,rules);return layout;
     }
-    function scoreboard(){const board=node('div','swlt-scoreboard');board.style.setProperty('--timing-teams',String(state.teams.length));state.teams.forEach((team,index)=>{
+    function scoreboard(){const board=node('div','swlt-scoreboard');board.dataset.teamCount=String(state.teams.length);board.style.setProperty('--timing-teams',String(state.teams.length));state.teams.forEach((team,index)=>{
       const card=node('div','swlt-score');card.style.setProperty('--timing-color',team.color);card.dataset.current=String(state.phase!=='finished'&&teamIndex()===index);card.append(node('span','swlt-score-name',team.name));
       const value=node('strong','',kind==='handstand'?scoreText(team.totalUnits):team.turns?(team.totalUnits/factor/team.turns).toFixed(isSense?1:2):'—');value.append(node('small','',isSense?' pts / gymnast':kind==='handstand'?' s total':' s / gymnast'));card.append(value,node('small','',isGroup()?`${team.turns} / ${team.roundLimit} rounds complete`:`${team.turns} / ${team.size} gymnasts complete`));
       if(isGroup())card.append(node('span','swlt-remaining',`${team.remaining} of ${team.size} still in`));
@@ -206,7 +207,7 @@
       splits(el);return el;
     }
     function winnerIndices(){if(!state.teams.length)return[];let best=0;const comparison=(a,b)=>kind==='handstand'?a.totalUnits-b.totalUnits:a.totalUnits*Math.max(1,b.turns)-b.totalUnits*Math.max(1,a.turns);for(let i=1;i<state.teams.length;i++){const delta=comparison(state.teams[i],state.teams[best]);if(isRelay?delta<0:delta>0)best=i;}return state.teams.flatMap((team,index)=>comparison(team,state.teams[best])===0?[index]:[]);}
-    function finishView(){const panel=node('section','swlt-finish'),winners=winnerIndices(),names=winners.map(index=>state.teams[index].name),all=winners.length===state.teams.length;panel.append(node('p','swlt-kicker',isGroup()?'GROUP ROUNDS COMPLETE':'EVERY GYMNAST COMPLETE'),node('div','swlt-trophy',winners.length===1?'✦':'═'),node('h3','',winners.length===1?`${names[0]} wins`:all?'It’s a tie':names.join(' & ')+' share the win'),node('p','swlt-finish-rule',info.tag.toLowerCase()),node('p','swlt-muted',isGroup()?'Each round’s time adds to the team total. The selected rounds are complete; empty teams finished earlier.':isRelay?'Every lap counts. The result compares adjusted time per gymnast.':isSense?'A little stillness. A good sense of time. Everyone has had one go.':'Every confirmed second contributes to the team’s total.'),button('replay','Play again ↗','primary'));return panel;}
+    function finishView(){if(podium){const panel=node('section','swlt-finish swl-game-podium-finish');panel.append(node('p','swlt-kicker',isGroup()?'GROUP ROUNDS COMPLETE':'EVERY GYMNAST COMPLETE'));podium.render(panel);if(podium.getState().finished)panel.append(button('replay','Play again ↗','primary'));return panel;}const panel=node('section','swlt-finish'),winners=winnerIndices(),names=winners.map(index=>state.teams[index].name),all=winners.length===state.teams.length;panel.append(node('p','swlt-kicker',isGroup()?'GROUP ROUNDS COMPLETE':'EVERY GYMNAST COMPLETE'),node('div','swlt-trophy',winners.length===1?'✦':'═'),node('h3','',winners.length===1?`${names[0]} wins`:all?'It’s a tie':names.join(' & ')+' share the win'),node('p','swlt-finish-rule',info.tag.toLowerCase()),node('p','swlt-muted',isGroup()?'Each round’s time adds to the team total. The selected rounds are complete; empty teams finished earlier.':isRelay?'Every lap counts. The result compares adjusted time per gymnast.':isSense?'A little stillness. A good sense of time. Everyone has had one go.':'Every confirmed second contributes to the team’s total.'),button('replay','Play again ↗','primary'));return panel;}
     function history(){if(!state.results.length)return null;const details=node('details','swlt-history');details.append(node('summary','',isGroup()?'Group round times':isRelay?'Team times & lap splits':'Confirmed attempts'));state.results.forEach(result=>{
       const row=node('div','swlt-history-row'),label=state.teams[result.team].name+(isGroup()?` · round ${result.round}`:isRelay?'':` · gymnast ${result.gymnast}`);row.append(node('b','',label),node('strong','',scoreText(result.units)+' '+info.unit));
       if(isGroup())row.append(node('small','',`${result.remainingBefore} started · last gymnast sits out · ${result.remainingAfter} remaining`));
@@ -217,7 +218,7 @@
     function render({focus=null}={}){
       if(!root||!state)return;const previous=root.contains(document.activeElement)?document.activeElement?.dataset.timingAction:null;view++;clockNode=lapNode=null;root.replaceChildren();root.dataset.game=kind;root.dataset.phase=state.phase;root.dataset.format=kind==='handstand'?format:'individual';root.dataset.active=String(active);root.dataset.static=String(motionOff());root.append(header());
       if(state.phase==='setup')root.append(setup());
-      else {root.append(scoreboard(),state.phase==='finished'?finishView():stage());const tools=node('div','swlt-toolbar');
+      else {if(state.phase!=='finished')root.append(scoreboard());root.append(state.phase==='finished'?finishView():stage());const tools=node('div','swlt-toolbar');
         if(isRelay)tools.append(button('redo','↻ Redo this team','secondary',state.phase==='ready'));
         else {if(kind==='handstand')tools.append(button('retry',isGroup()?'↻ Retry round':'↻ Retry attempt','secondary',!['paused','review','confirmed','finished'].includes(state.phase)));tools.append(button('undo','↶ Undo last score','secondary',!undoRecord||!['confirmed','finished'].includes(state.phase)));}
         tools.append(button('reset','Restart game','text'));root.append(tools);const past=history();if(past)root.append(past);
@@ -227,15 +228,15 @@
       updateLayout();
       if(active&&(focus||previous)){const target=root.querySelector(`[data-timing-action="${focus||previous}"]`);if(target&&!target.disabled)target.focus?.({preventScroll:true});}
     }
-    function visibility(){if(document.hidden)pause();}
-    function deactivate(){if(destroyed)return;pause();active=false;confirming='';render();}
-    function destroy(){stopTick();document.removeEventListener('visibilitychange',visibility);active=false;destroyed=true;updateLayout();window.removeEventListener?.('resize',updateLayout);window.visualViewport?.removeEventListener?.('resize',updateLayout);window.visualViewport?.removeEventListener?.('scroll',updateLayout);view++;root?.remove();root=host=null;state=null;clockNode=lapNode=null;options={};names=NAMES.slice();sizes=['5','5','5'];count=2;mode='normal';format='individual';rounds=2;taskId='burpees';undoRecord=null;confirming='';error='';previousTarget=0;}
+    function visibility(){if(document.hidden){podium?.finish(true);pause();}}
+    function deactivate(){if(destroyed)return;podium?.finish(true);pause();active=false;confirming='';render();}
+    function destroy(){podium?.finish(true);podium?.destroy();podium=null;stopTick();document.removeEventListener('visibilitychange',visibility);active=false;destroyed=true;updateLayout();window.removeEventListener?.('resize',updateLayout);window.visualViewport?.removeEventListener?.('resize',updateLayout);window.visualViewport?.removeEventListener?.('scroll',updateLayout);view++;root?.remove();root=host=null;state=null;clockNode=lapNode=null;options={};names=NAMES.slice();sizes=NAMES.map(()=>'5');count=2;mode='normal';format='individual';rounds=2;taskId='burpees';undoRecord=null;confirming='';error='';previousTarget=0;}
     function mount(container,config={}){
       if(!container||typeof container.append!=='function')throw TypeError(info.name+' needs a container.');
       if(host===container&&root?.isConnected){options=config;active=true;render();return api;}
       destroy();host=container;options=config;active=true;destroyed=false;state=fresh();root=node('section','swl-timing-game');root.addEventListener('keydown',event=>{if(event.key==='Escape'&&confirming&&canAct()){event.preventDefault();event.stopPropagation();perform('cancel-dialog');}});document.addEventListener('visibilitychange',visibility);if(kind==='handstand'){window.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('scroll',updateLayout);}container.append(root);render();return api;
     }
-    const api=Object.freeze({version:1,mount,deactivate,destroy,getState(){if(!state)return null;return{...clone(state),active,confirming,mode,format,rounds,taskId,gameId:kind,currentTeam:teamIndex(),currentGymnast:isGroup()?null:Math.min(gymnastIndex()+1,currentTeam()?.size??1),currentRound:isGroup()?groupRound():null,elapsedMs:elapsed(),draftScore:draftUnits()/factor,canUndo:!isRelay&&Boolean(undoRecord)&&['confirmed','finished'].includes(state.phase),participantCount:state.teams.reduce((sum,team)=>sum+team.size,0),winners:state.phase==='finished'?winnerIndices():[],teams:state.teams.map(team=>({...team,score:team.totalUnits/factor,average:team.turns?team.totalUnits/factor/team.turns:0}))};}});
+    const api=Object.freeze({version:1,mount,deactivate,destroy,getState(){if(!state)return null;return{...clone(state),podium:podium?.getState()||null,teamCount:count,active,confirming,mode,format,rounds,taskId,gameId:kind,currentTeam:teamIndex(),currentGymnast:isGroup()?null:Math.min(gymnastIndex()+1,currentTeam()?.size??1),currentRound:isGroup()?groupRound():null,elapsedMs:elapsed(),draftScore:draftUnits()/factor,canUndo:!isRelay&&Boolean(undoRecord)&&['confirmed','finished'].includes(state.phase),participantCount:state.teams.reduce((sum,team)=>sum+team.size,0),winners:state.phase==='finished'?winnerIndices():[],teams:state.teams.map(team=>({...team,score:team.totalUnits/factor,average:team.turns?team.totalUnits/factor/team.turns:0}))};}});
     return api;
   }
   if(!window.SWLHandstand)window.SWLHandstand=createGame('handstand');

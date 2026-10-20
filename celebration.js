@@ -8,7 +8,8 @@
   const animations = new Set(), voices = new Set(), retiringVoices = new Set();
   let overlay = null, cleanupTimer = null, generation = 0, fadeStartsAt = 0;
   let audioContext = null, masterGain = null, roomInput = null, soundButton = null, motionObserver = null;
-  let audioGeneration = 0;
+  let audioGeneration = 0, resumeAttempt = null, audioGestureSeen = false;
+  const audioGraph = new Set(), pendingAudio = new Map();
   const prizeQueue=[];
   let prizeTimer=null;
   let soundEnabled = true;
@@ -76,6 +77,7 @@
 
   function silence() {
     audioGeneration++;
+    pendingAudio.clear();
     const now = audioContext?.currentTime || 0;
     // Fade the final mix as well, so muting also silences delayed reflections.
     try {
@@ -97,38 +99,86 @@
     } catch (_) {}
   }
 
-  function unlockAudio() {
-    if (!soundEnabled) return null;
+  function clearAudioNodes() {
+    for (const voice of [...voices, ...retiringVoices]) {
+      for (const oscillator of voice.oscillators) { try { oscillator.stop(); } catch (_) {} }
+      releaseVoice(voice);
+    }
+  }
+
+  function resetAudioGraph() {
+    clearAudioNodes();
+    for (const node of audioGraph) { try { node.disconnect(); } catch (_) {} }
+    audioGraph.clear();
+    masterGain = null; roomInput = null; resumeAttempt = null;
+    pendingAudio.clear();
+  }
+
+  function flushAudio() {
+    const context = audioContext;
+    if (!context || context.state !== 'running') return;
+    const queued = [...pendingAudio.values()];
+    pendingAudio.clear();
+    for (const item of queued) {
+      if (document.hidden || !soundEnabled || item.context !== context ||
+          item.audioToken !== audioGeneration || Date.now() - item.createdAt > item.maxAge ||
+          (item.visualToken !== null && item.visualToken !== generation)) continue;
+      try { item.callback(context, context.currentTime + .012); } catch (_) { silence(); }
+    }
+  }
+
+  function resumeAudio(context) {
+    if (context.state === 'running') { flushAudio(); return; }
+    // Safari can report "interrupted" after the iPad locks or switches apps.
+    // Keep one pending attempt; a later tap may retry a browser-stalled promise.
+    if (resumeAttempt?.context === context && Date.now() - resumeAttempt.at < 1000) return;
+    const attempt = { context, at: Date.now() };
+    resumeAttempt = attempt;
+    try {
+      const ready = () => {
+        if (resumeAttempt === attempt) resumeAttempt = null;
+        if (audioContext === context) flushAudio();
+      };
+      const resumed = context.resume();
+      if (resumed?.then) resumed.then(ready, () => { if (resumeAttempt === attempt) resumeAttempt = null; });
+      else ready();
+    } catch (_) { if (resumeAttempt === attempt) resumeAttempt = null; }
+  }
+
+  function unlockAudio(event) {
+    if (event?.isTrusted) audioGestureSeen = true;
+    // No context is created by a background save or an initial page render.
+    if (window.navigator?.userActivation?.hasBeenActive) audioGestureSeen = true;
+    if (!soundEnabled || document.hidden || !audioGestureSeen) return null;
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;
       if (!audioContext || audioContext.state === 'closed') {
-        audioContext = new AudioContextClass();
-        masterGain = audioContext.createGain();
+        resetAudioGraph();
+        const context = new AudioContextClass();
+        audioContext = context;
+        const retain = node => { audioGraph.add(node); return node; };
+        masterGain = retain(context.createGain());
         masterGain.gain.value = MASTER_LEVEL;
-        // A gentle safety limiter is normally idle; it catches rapid overlapping
-        // strikes without flattening their bright initial attack.
-        if (audioContext.createDynamicsCompressor) {
-          const limiter = audioContext.createDynamicsCompressor();
+        // A gentle safety limiter catches rapid overlapping strikes.
+        if (context.createDynamicsCompressor) {
+          const limiter = retain(context.createDynamicsCompressor());
           limiter.threshold.value = -12;
           limiter.knee.value = 12;
           limiter.ratio.value = 5;
           limiter.attack.value = 0.003;
           limiter.release.value = 0.16;
           masterGain.connect(limiter);
-          limiter.connect(audioContext.destination);
-        } else masterGain.connect(audioContext.destination);
+          limiter.connect(context.destination);
+        } else masterGain.connect(context.destination);
 
-        roomInput = null;
-        if (audioContext.createBiquadFilter && audioContext.createDelay) {
-          // Three quiet, filtered reflections give the bell a small real room.
-          // There is no feedback loop, convolution asset, or unbounded tail.
-          roomInput = audioContext.createBiquadFilter();
+        if (context.createBiquadFilter && context.createDelay) {
+          roomInput = retain(context.createBiquadFilter());
           roomInput.type = 'lowpass';
           roomInput.frequency.value = 5800;
           roomInput.Q.value = 0.25;
           [[0.043, 0.12], [0.097, 0.065], [0.173, 0.03]].forEach(([time, level]) => {
-            const delay = audioContext.createDelay(0.25), reflection = audioContext.createGain();
+            const delay = retain(context.createDelay(0.25)), reflection = retain(context.createGain());
             delay.delayTime.value = time;
             reflection.gain.value = level;
             roomInput.connect(delay);
@@ -136,12 +186,27 @@
             reflection.connect(masterGain);
           });
         }
+        context.onstatechange = () => {
+          if (audioContext !== context) return;
+          if (context.state === 'running') flushAudio();
+          else {
+            // Drop scheduled notes when the OS interrupts audio. They must not
+            // all ring out later when the coach comes back to the app.
+            audioGeneration++; pendingAudio.clear(); clearAudioNodes();
+          }
+        };
       }
       masterGain.gain.cancelScheduledValues(audioContext.currentTime);
       masterGain.gain.setTargetAtTime(MASTER_LEVEL, audioContext.currentTime, 0.012);
-      if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+      if (audioContext.state !== 'running') resumeAudio(audioContext);
       return audioContext;
-    } catch (_) { return null; }
+    } catch (_) {
+      // A partial graph must not prevent the next tap from trying again.
+      const failed = audioContext;
+      resetAudioGraph(); audioContext = null;
+      try { Promise.resolve(failed?.close?.()).catch(() => {}); } catch (_) {}
+      return null;
+    }
   }
 
   function bell(context, frequency, start, duration, volume, full = false, harmony = [5, 9]) {
@@ -193,17 +258,18 @@
     }
   }
 
-  function withAudio(callback, visualToken = null) {
+  function withAudio(callback, visualToken = null, options = {}) {
     const context = unlockAudio();
     if (!context) return;
-    const soundToken = audioGeneration;
-    const start = () => {
-      if (!soundEnabled || soundToken !== audioGeneration || context.state !== 'running' ||
-          (visualToken !== null && visualToken !== generation)) return;
-      try { callback(context, context.currentTime + 0.012); } catch (_) { silence(); }
-    };
-    if (context.state === 'running') start();
-    else { try { context.resume().then(start).catch(() => {}); } catch (_) {} }
+    const item = { context, callback, visualToken, audioToken: audioGeneration,
+      createdAt: Date.now(), maxAge: options.maxAge ?? 500 };
+    if (context.state === 'running') {
+      try { callback(context, context.currentTime + .012); } catch (_) { silence(); }
+    } else if (options.queue !== false) {
+      // Only the latest mark, celebration and meaningful game cue can wait.
+      // A quick resume keeps the cue; a delayed resume discards stale sounds.
+      pendingAudio.set(options.key || (visualToken === null ? 'mark' : 'celebration'), item);
+    }
   }
 
   function ding(details = {}) {
@@ -244,49 +310,48 @@
   function gameSound(details = {}) {
     if (document.hidden || !soundEnabled) return;
     const kind = typeof details === 'string' ? details : details.kind;
-    const context = unlockAudio();
-    // Never queue ticks or timer cues behind a suspended audio context.
-    if (!context || context.state !== 'running') return;
-    const start = context.currentTime + .008;
-    // Game cues need to carry across the floor; skill-check bells keep their softer mix.
-    if (kind === 'reel-start') {
-      gameTone(context,start,440,1760,.35,.52,'triangle');
-      gameTone(context,start+.09,880,3520,.3,.25);
-    } else if (kind === 'reel-tick') {
-      const progress=Math.max(0,Math.min(1,Number(details.progress)||0));
-      gameTone(context,start,2200+progress*800,1200+progress*300,.047,.72,'triangle');
-      gameTone(context,start,4400,3500,.024,.16);
-    } else if (kind === 'reel-reveal') {
-      [2093,2637.02,3135.96,4186].forEach((frequency,index)=>gameTone(context,start+index*.085,frequency,frequency,.5,.65,'triangle'));
-      gameTone(context,start+.26,3135.96,3135.96,.8,.2);
-    } else if (kind === 'podium-place') {
-      const frequency = {3:2093,2:2637.02,1:3135.96}[details.rank] || 2637.02;
-      gameTone(context,start,frequency,frequency,.38,.64,'triangle');
-      gameTone(context,start+.07,frequency*1.5,frequency*1.5,.4,.24);
-    } else if (kind === 'podium-count') {
-      const progress = Math.max(0,Math.min(1,Number(details.progress)||0));
-      const frequency = ({3:2093,2:2637.02,1:3135.96}[details.rank] || 2637.02) * [1,1.125,1.25,1.333333,1.5,2][Math.round(progress*5)];
-      gameTone(context,start,frequency,frequency,.12,.48,'triangle');
-      gameTone(context,start,frequency*1.25,frequency*1.25,.1,.13);
-    } else if (kind === 'podium-win') {
-      [2637.02,3135.96,3951.07,5274.04].forEach((frequency,index)=>gameTone(context,start+index*.14,frequency,frequency,.65,.7,'triangle'));
-      gameTone(context,start+.42,3951.07,3951.07,.9,.24);
-    } else if (kind === 'choice') {
-      gameTone(context,start,2637.02,3135.96,.13,.48,'triangle');
-    } else if (kind === 'wheel-start') gameTone(context, start, 900, 2400, .2, .7, 'triangle');
-    else if (kind === 'wheel-tick') gameTone(context, start, 2900, 1250, .042, .78, 'triangle');
-    else if (kind === 'countdown' && [3, 2, 1].includes(details.remaining)) {
-      const frequency = {3:1567.98, 2:1760, 1:1975.53}[details.remaining];
-      gameTone(context, start, frequency, frequency, .32, .95, 'triangle');
-      gameTone(context, start, frequency * 1.5, frequency * 1.5, .26, .25);
-    } else if (kind === 'timer-end') {
-      gameTone(context, start, 1567.98, 1567.98, .22, .95, 'triangle');
-      gameTone(context, start + .26, 2349.32, 2349.32, .38, .95, 'triangle');
-      gameTone(context, start + .26, 3135.96, 3135.96, .34, .25);
-    } else if (['wheel-finish', 'award', 'finish'].includes(kind)) {
-      const notes = kind === 'award' && !details.perfect ? [2637.02,3135.96] : [2637.02,3135.96,3951.07];
-      notes.forEach((frequency,index) => gameTone(context,start + index * .12,frequency,frequency,.4,.72,'triangle'));
-    }
+    withAudio((context, start) => {
+      // Game cues need to carry across the floor; skill-check bells keep their softer mix.
+      if (kind === 'reel-start') {
+        gameTone(context,start,440,1760,.35,.52,'triangle');
+        gameTone(context,start+.09,880,3520,.3,.25);
+      } else if (kind === 'reel-tick') {
+        const progress=Math.max(0,Math.min(1,Number(details.progress)||0));
+        gameTone(context,start,2200+progress*800,1200+progress*300,.047,.72,'triangle');
+        gameTone(context,start,4400,3500,.024,.16);
+      } else if (kind === 'reel-reveal') {
+        [2093,2637.02,3135.96,4186].forEach((frequency,index)=>gameTone(context,start+index*.085,frequency,frequency,.5,.65,'triangle'));
+        gameTone(context,start+.26,3135.96,3135.96,.8,.2);
+      } else if (kind === 'podium-place') {
+        const frequency = {3:2093,2:2637.02,1:3135.96}[details.rank] || 2637.02;
+        gameTone(context,start,frequency,frequency,.38,.64,'triangle');
+        gameTone(context,start+.07,frequency*1.5,frequency*1.5,.4,.24);
+      } else if (kind === 'podium-count') {
+        const progress = Math.max(0,Math.min(1,Number(details.progress)||0));
+        const frequency = ({3:2093,2:2637.02,1:3135.96}[details.rank] || 2637.02) * [1,1.125,1.25,1.333333,1.5,2][Math.round(progress*5)];
+        gameTone(context,start,frequency,frequency,.12,.48,'triangle');
+        gameTone(context,start,frequency*1.25,frequency*1.25,.1,.13);
+      } else if (kind === 'podium-win') {
+        [2637.02,3135.96,3951.07,5274.04].forEach((frequency,index)=>gameTone(context,start+index*.14,frequency,frequency,.65,.7,'triangle'));
+        gameTone(context,start+.42,3951.07,3951.07,.9,.24);
+      } else if (kind === 'choice') {
+        gameTone(context,start,2637.02,3135.96,.13,.48,'triangle');
+      } else if (kind === 'wheel-start') gameTone(context, start, 900, 2400, .2, .7, 'triangle');
+      else if (kind === 'wheel-tick') gameTone(context, start, 2900, 1250, .042, .78, 'triangle');
+      else if (kind === 'countdown' && [3, 2, 1].includes(details.remaining)) {
+        const frequency = {3:1567.98, 2:1760, 1:1975.53}[details.remaining];
+        gameTone(context, start, frequency, frequency, .32, .95, 'triangle');
+        gameTone(context, start, frequency * 1.5, frequency * 1.5, .26, .25);
+      } else if (kind === 'timer-end') {
+        gameTone(context, start, 1567.98, 1567.98, .22, .95, 'triangle');
+        gameTone(context, start + .26, 2349.32, 2349.32, .38, .95, 'triangle');
+        gameTone(context, start + .26, 3135.96, 3135.96, .34, .25);
+      } else if (['wheel-finish', 'award', 'finish'].includes(kind)) {
+        const notes = kind === 'award' && !details.perfect ? [2637.02,3135.96] : [2637.02,3135.96,3951.07];
+        notes.forEach((frequency,index) => gameTone(context,start + index * .12,frequency,frequency,.4,.72,'triangle'));
+      }
+    }, null, { key: 'game', maxAge: 250,
+      queue: !['wheel-tick', 'reel-tick', 'podium-count'].includes(kind) });
   }
 
   function flourish(token) {
@@ -440,11 +505,20 @@
       motionObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
     }
     motionQuery?.addEventListener?.('change',settleMotion);
-    document.addEventListener('pointerdown',unlockAudio,{capture:true,passive:true});
-    document.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ') unlockAudio();},{capture:true});
+    // pointerup / touchend / click also cover iOS activation and assistive input.
+    for (const type of ['pointerdown','pointerup','touchend','click']) {
+      document.addEventListener(type,unlockAudio,{capture:true,passive:true});
+    }
+    document.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ') unlockAudio(event);},{capture:true});
+    document.addEventListener('visibilitychange',()=>{
+      if (document.hidden) { silence(); clearAudioNodes(); }
+      else unlockAudio();
+    });
+    window.addEventListener('pageshow',()=>unlockAudio());
+    window.addEventListener('focus',()=>unlockAudio());
     window.addEventListener('storage',event=>{
       if(event.key==='swl-motion-paused') settleMotion();
-      if(event.key===SOUND_KEY) { soundEnabled=event.newValue!=='off'; updateSoundButton(); if(!soundEnabled) silence(); }
+      if(event.key===SOUND_KEY) { soundEnabled=event.newValue!=='off'; updateSoundButton(); if(soundEnabled) unlockAudio(); else silence(); }
     });
     window.addEventListener('pagehide',()=>{stop();prizeQueue.length=0;clearTimeout(prizeTimer);prizeTimer=null;});
   }

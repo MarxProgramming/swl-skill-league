@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   if (window.SWLTeamSkillDraft?.version === 1) return;
-  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782'], DEFAULTS = ['Mint', 'Purple', 'Gold'];
+  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782', '#83d9ff'], DEFAULTS = ['Mint', 'Purple', 'Gold', 'Sky'];
   const DURATION = 4000, START = 2, TARGET = 26, GAP = 12;
   let sequence = 0;
   const node = (tag, className = '', text = '') => { const el = document.createElement(tag); el.className = className; el.textContent = text; return el; };
@@ -115,7 +115,7 @@
       if (resetPrompt) { if (action === 'confirm-reset') reset(); else if (action === 'cancel-reset') { resetPrompt = false; render(true); } return; }
       if (phase === 'setup') {
         if(action.startsWith('difficulty-')){const value=action.slice(11);if(window.SWLShuffleShowcase.levels.some(level=>level.id===value)){difficulty=value;pool=window.SWLShuffleShowcase.poolFor(skills,difficulty);bag=[];previous='';error='';render();container.querySelector(`[data-difficulty="${value}"]`)?.focus();}return;}
-        if (action === 'teams-2' || action === 'teams-3') { teamCount = Number(action.slice(-1)); error = ''; render(false,action); return; }
+        if (/^teams-[2-4]$/.test(action)) { teamCount = Number(action.slice(-1)); error = ''; render(false,action); return; }
         if (action === 'size-less' || action === 'size-more') { size = String(Math.min(20,Math.max(1,(count(size) || 5)+(action === 'size-less' ? -1 : 1)))); error = ''; render(false,action); return; }
       }
       if (action === 'start-game') start(); else if (action === 'draw') draw(); else if (action === 'redraw' && phase === 'revealed') { phase = 'ready'; draw(); }
@@ -125,9 +125,8 @@
     }
     function setupView() {
       const grid = node('div','swl-skill-setup-grid'), panel = node('section','swl-skill-setup');
-      panel.append(node('p','swl-skill-kicker',`${pool.length} SKILLS · ONE SHARED SHUFFLE`),node('h3','','Choose your teams'),node('p','swl-skill-muted','Two or three equal-sized teams. Each round, choose one gymnast who has not had a turn. No individual names needed.'));
-      const choices = node('div','swl-skill-team-count'); choices.setAttribute('role','group'); choices.setAttribute('aria-label','Number of Team Skill Draft teams');
-      [2,3].forEach(value => { const control = button(`${value} teams`,`teams-${value}`,'swl-skill-team-choice'); control.setAttribute('aria-pressed',String(value === teamCount)); choices.append(control); }); panel.append(choices);
+      panel.append(node('p','swl-skill-kicker',`${pool.length} SKILLS · ONE SHARED SHUFFLE`),node('h3','','Choose your teams'),node('p','swl-skill-muted','Two to four equal-sized teams. Each round, choose one gymnast who has not had a turn. No individual names needed.'));
+      panel.append(window.SWLShuffleShowcase.teamCountView(teamCount,4,value=>{perform(`teams-${value}`);container.querySelector('[data-game-team-count]')?.focus();},'Number of Team Skill Draft teams'));
       {const generation=renderGeneration;panel.append(window.SWLShuffleShowcase.difficultyView(difficulty,skills,value=>{if(generation===renderGeneration)perform('difficulty-'+value);}));}
       const fields = node('div','swl-skill-names'); names.slice(0,teamCount).forEach((name,index) => {
         const label = node('label','swl-skill-name'); label.style.setProperty('--squad-color',COLORS[index]); label.append(node('span','',`Team ${index+1}`));
@@ -143,7 +142,7 @@
       rules.append(list,node('p','swl-skill-muted','Keep the unused gymnasts on one side and move performers to the other side. Coach can redraw a skill before any attempts.'),node('p','swl-skill-session-note','Game points stay here. Skill League marks and points stay the same.')); grid.append(panel,rules); root.append(grid);
     }
     function scoreboard() {
-      const board = node('div','swl-skill-board'); board.dataset.teamCount = String(teams.length); board.setAttribute('aria-label','Team Skill Draft scoreboard');
+      const board = node('div','swl-skill-board'); board.dataset.teamCount = String(teams.length);board.style.setProperty('--game-teams',String(teams.length)); board.setAttribute('aria-label','Team Skill Draft scoreboard');
       teams.forEach(team => { const item = node('div','swl-skill-score'); item.style.setProperty('--squad-color',team.color); item.append(node('span','swl-skill-score-name',team.name),node('strong','',String(team.score)),node('span','swl-skill-score-unit','points'),node('span','swl-skill-score-compact',`${team.size-team.turns} left · ${team.turns}/${team.size} done`)); board.append(item); }); root.append(board);
     }
     function reelView(face) {

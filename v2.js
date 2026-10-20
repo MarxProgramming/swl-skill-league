@@ -15,7 +15,9 @@
   const inGroup=(g,group)=>data.inGroup?.(g,group)??(group==='overall'||(group==='all'?!isCoach(g):group==='senior'?['Marx','Dan'].includes(g.coach):groupKey(g.coach)===groupKey(group)));
   const groupName=group=>group==='coaches'?'Coaches':data.groupLabel(group);
   const countNoun=(group,n)=>group==='coaches'?(n===1?'coach':'coaches'):group==='overall'?(n===1?'participant':'participants'):(n===1?'gymnast':'gymnasts');
-  function groupOptions() {return [...new Set(data.gymnasts.map(g=>groupKey(g.coach)))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
+  const memberships=g=>data.squadMemberships?.(g)||[groupKey(g.coach)];
+  const personGroups=g=>data.gymnastSquadLabel?.(g)||data.groupLabel(g.coach);
+  function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
   const focusControls='button,input,select,summary,a,[tabindex]';
   const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson'];
@@ -88,7 +90,7 @@
   }
   function renderDirectory() {
     if(!data)return;const key=focusKey(directory),groups=groupOptions();
-    if(!['all','overall'].includes(directoryGroup)&&!groups.includes(directoryGroup))directoryGroup='all';
+    if(!['all','floor','senior','overall'].includes(directoryGroup)&&!groups.includes(directoryGroup))directoryGroup='all';
     const complexes=complexOptions(),select=directory.querySelector('#directoryComplex');
     if(directoryComplex&&!complexes.some(c=>c.id===directoryComplex))directoryComplex='';
     const options='<option value="">No complex · names only</option>'+complexes.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
@@ -96,11 +98,11 @@
     select.value=directoryComplex;select.disabled=!data.hasLoaded;
     const complex=complexes.find(c=>c.id===directoryComplex);
     directory.querySelector('#directoryComplexHint').textContent=complex?(data.canEdit===false?'Scoring is locked. You can view the three marks below each name.':'✓ Achieved · ✓✓ Perfect. HS = handstand · CW = cartwheel.'): 'One complex at a time. Your choice appears below every gymnast.';
-    commitHTML(directory.querySelector('#directoryGroups'),[['all','All squads'],...groups.map(g=>[g,g==='coaches'?'Coaches':data.shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,name])=>`<button type="button" data-directory-group="${esc(id)}" aria-pressed="${id===directoryGroup}">${esc(name)}</button>`).join(''));
+    commitHTML(directory.querySelector('#directoryGroups'),[['all','All squads'],['floor','All floor & vault'],['senior','All senior squad'],...groups.map(g=>[g,g==='coaches'?'Coaches':data.shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,name])=>`<button type="button" data-directory-group="${esc(id)}" aria-pressed="${id===directoryGroup}">${esc(name)}</button>`).join(''));
     const query=directory.querySelector('#directorySearch').value.trim().toLocaleLowerCase('en-GB');
-    const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&(g.name+' '+data.groupLabel(g.coach)).toLocaleLowerCase('en-GB').includes(query));
+    const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&(g.name+' '+personGroups(g)).toLocaleLowerCase('en-GB').includes(query));
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
-      const gymnasts=people.filter(g=>groupKey(g.coach)===group).sort((a,b)=>a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
+      const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
       return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id),due=data.skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)}</strong><small class="heat-meta"><span class="heat-meta-text">${s.achieved}/${data.skills.length} skills · ${s.perfect} perfect</span>${data.fireBadge(g.id)}</small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>pts ↗</small></span></button>${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
     restore(directory,key);
@@ -139,7 +141,7 @@
   function squadComparisons(groups) {
     const baseSkills=data.skills.filter(k=>k.tier==='base');
     return groups.map(group=>{
-      const members=data.gymnasts.filter(g=>groupKey(g.coach)===group&&(analyticsAge==='all'||ageOf(g)===analyticsAge));
+      const members=data.gymnasts.filter(g=>inGroup(g,group)&&(analyticsAge==='all'||ageOf(g)===analyticsAge));
       const all=cohortStats(members),base=cohortStats(members,baseSkills);
       const value=analyticsComparison==='average'?all.average:analyticsComparison==='retained'?(all.total?all.retained/all.total*100:0):base.foundation;
       return {group,members,all,base,value};
@@ -224,12 +226,12 @@
     return `<section class="analytics-panel analytics-wide a31-standings" id="analyticsStandings"><div class="analytics-panel-head"><div><p class="eyebrow">The whole field</p><h2>Every place. Every point.</h2></div><span class="a31-panel-index" aria-hidden="true">05 / STANDINGS</span></div>
       <div class="a31-standing-controls"><div class="a31-segments" role="group" aria-label="Standings category">${[{id:'overall',name:'Overall'},...data.categories].map(c=>`<button type="button" data-analytics-category="${esc(c.id)}" data-v2-focus="standings" aria-pressed="${!weekly&&analyticsRankCategory===c.id}">${esc(c.name)}</button>`).join('')}</div><label>Order by<select id="analyticsRankMetric"><option value="points"${!weekly?' selected':''}>League points</option><option value="weekly"${weekly?' selected':''}${tracked?'':' disabled'}>Last 7 days · net points</option></select></label></div>
       <p class="a31-chart-scope">${esc(scope)} · ${weekly?'Net league points in the last 7 days':esc(categoryName)} · highest to lowest</p>
-      ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)}</strong><small>${esc(groupName(groupKey(r.g.coach)))}</small></button><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match these filters. Try All ages or another squad.</p>'}
+      ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)}</strong><small>${esc(personGroups(r.g))}</small></button><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match these filters. Try All ages or another squad.</p>'}
       <p class="chart-note">${weekly?'Includes gains and reductions across all skills. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
   }
   function renderAnalytics() {
     if(!data)return;
-    const groups=groupOptions();if(!['all','senior','overall'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
+    const groups=groupOptions();if(!['all','floor','senior','overall'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
     const squadPeople=data.gymnasts.filter(g=>inGroup(g,analyticsGroup));
     const comparisonGroups=groups.filter(group=>group!=='coaches'||['coaches','overall'].includes(analyticsGroup));
@@ -240,7 +242,7 @@
     if(ageSelect){commitHTML(ageSelect,ageHTML);ageSelect.value=analyticsAge;}
     const ageNote=analytics.querySelector('#analyticsAgeNote');if(ageNote)ageNote.textContent=`Age is the age a gymnast turns during ${data.londonYear?.()||new Date().getFullYear()} (London calendar year). ${analyticsAge==='all'?'All ages includes gymnasts whose age is not available.':'This age filter excludes gymnasts whose current-year age is not available.'} Full dates of birth are never shown.`;
     const groupSelect=analytics.querySelector('#analyticsGroup'),personSelect=analytics.querySelector('#analyticsGymnast');
-    const gHTML='<option value="all">All squads</option><option value="senior">All senior squad</option>'+groups.map(g=>`<option value="${esc(g)}">${esc(groupName(g))}</option>`).join('')+'<option value="overall">Overall · all squads + coaches</option>';
+    const gHTML='<option value="all">All squads</option><option value="floor">All floor &amp; vault squads</option><option value="senior">All senior squad</option>'+groups.map(g=>`<option value="${esc(g)}">${esc(groupName(g))}</option>`).join('')+'<option value="overall">Overall · all squads + coaches</option>';
     const pHTML='<option value="all">All gymnasts</option>'+candidates.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${isCoach(g)?' · Coach':''}</option>`).join('');
     commitHTML(groupSelect,gHTML);commitHTML(personSelect,pHTML);
     groupSelect.value=analyticsGroup;personSelect.value=analyticsGymnast;

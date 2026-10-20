@@ -13,12 +13,19 @@
     const choices=node('div','swl-shuffle-difficulty-options');
     LEVELS.forEach(level=>{const button=node('button','swl-shuffle-difficulty-button');button.type='button';button.dataset.difficulty=level.id;button.setAttribute('aria-pressed',String(selected===level.id));button.append(node('b','',level.name),node('span','',level.detail),node('small','',`${poolFor(skills,level.id).length} skills`));button.addEventListener('click',()=>onSelect(level.id));choices.append(button);});wrap.append(choices);return wrap;
   }
+  function teamCountView(selected,maximum,onChange,label='Number of teams'){
+    const wrap=node('label','swl-game-team-picker'),select=node('select');wrap.append(node('span','',label));select.setAttribute('aria-label',label);select.dataset.gameTeamCount='true';
+    for(let value=2;value<=maximum;value++){const option=node('option','',`${value} teams`);option.value=String(value);option.selected=value===selected;select.append(option);}select.value=String(selected);
+    select.addEventListener('change',()=>{const value=Number(select.value);if(Number.isInteger(value)&&value>=2&&value<=maximum)onChange(value);});wrap.append(select);return wrap;
+  }
+  const ordinal=rank=>`${rank}${rank===1?'st':rank===2?'nd':rank===3?'rd':'th'}`;
+  const placeName=rank=>({1:'First',2:'Second',3:'Third',4:'Fourth',5:'Fifth'}[rank]||ordinal(rank));
   function createPodium(entries,{motionOff=()=>false,sound=()=>{},onDone=()=>{}}={}){
     const groups=[...new Set(entries.map(entry=>entry.rank))].sort((a,b)=>b-a),lead=500,stageMs=1700,countMs=950;
     const duration=lead+(groups.length-1)*stageMs+countMs;
     let elapsed=0,last=0,timer=null,generation=0,running=false,finished=false,destroyed=false,host=null,root=null,caption=null,live=null,burst=null;
     let seenRank=-1,lastChime=-1,burstUntil=0,revealed=new Set();const labels=new Map(),scores=new Map(),details=new Map(),cardNodes=new Map();
-    const format=value=>Number(value.toFixed(3)).toLocaleString('en-GB');
+    const format=(value,decimals)=>Number(value.toFixed(decimals??3)).toLocaleString('en-GB',decimals==null?{}:{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
     const emit=cue=>{try{sound(cue);}catch(_) {}};
     function cancel(){generation++;clearTimeout(timer);timer=null;}
     function position(){return Math.max(-1,Math.min(groups.length-1,Math.floor((elapsed-lead)/stageMs)));}
@@ -33,14 +40,14 @@
       if(current>=0){for(let i=0;i<=current;i++)revealed.add(groups[i]);}
       entries.forEach(entry=>{
         const card=cardNodes.get(entry.id),visible=revealed.has(entry.rank),index=groups.indexOf(entry.rank),progress=finished?1:countProgress(index);
-        card.dataset.revealed=String(visible);card.dataset.winner=String(visible&&entry.rank===1);labels.get(entry.id).textContent=visible?entry.name:'Waiting…';scores.get(entry.id).textContent=visible?format(entry.value*(1-Math.pow(1-progress,3))):'—';details.get(entry.id).textContent=visible?entry.detail||'':'';
+        card.dataset.revealed=String(visible);card.dataset.winner=String(visible&&entry.rank===1);labels.get(entry.id).textContent=visible?entry.name:'Waiting…';scores.get(entry.id).textContent=visible?format(entry.value*(1-Math.pow(1-progress,3)),entry.decimals):'—';details.get(entry.id).textContent=visible?entry.detail||'':'';
       });
       const winners=entries.filter(entry=>entry.rank===1).map(entry=>entry.name);
-      if(caption)caption.textContent=finished?(winners.length>1?'Shared win: '+winners.join(' + ')+'!':winners[0]+' wins!'):current<0?'The results are in…':groups[current]===1?'And the winner'+(entries.filter(e=>e.rank===1).length>1?'s are…':' is…'):groups[current]===2?'Second place':'Third place';
-      if(live)live.textContent=finished?entries.filter(e=>e.rank===1).map(e=>e.name).join(' + ')+' take the top spot.':current<0?'Preparing the podium.':(groups[current]===1?'First':groups[current]===2?'Second':'Third')+' place: '+entries.filter(e=>e.rank===groups[current]).map(e=>e.name).join(' + ');
+      if(caption)caption.textContent=finished?(winners.length>1?'Shared win: '+winners.join(' + ')+'!':winners[0]+' wins!'):current<0?'The results are in…':groups[current]===1?'And the winner'+(entries.filter(e=>e.rank===1).length>1?'s are…':' is…'):placeName(groups[current])+' place';
+      if(live)live.textContent=finished?entries.filter(e=>e.rank===1).map(e=>e.name).join(' + ')+' take the top spot.':current<0?'Preparing the podium.':placeName(groups[current])+' place: '+entries.filter(e=>e.rank===groups[current]).map(e=>e.name).join(' + ');
       if(!quiet&&current!==seenRank&&current>=0){seenRank=current;lastChime=-1;emit({kind:'podium-place',rank:groups[current]});}
       if(!quiet&&current>=0&&!finished){const step=Math.floor(countProgress(current)*6);if(step>lastChime&&step<6){lastChime=step;emit({kind:'podium-count',rank:groups[current],progress:countProgress(current)});}}
-      root.dataset.finished=String(finished);
+      root.dataset.finished=String(finished);const skip=root.querySelector('[data-podium-skip]');if(skip)skip.hidden=finished;
       if(finished)confetti();
     }
     function finish(silent=false){
@@ -57,20 +64,20 @@
       finish,
       render(target){host=target;if(root){root.dataset.static=String(motionOff());host.append(root);paint(true);return root;}root=node('section','swl-podium');root.dataset.teams=String(entries.length);root.dataset.static=String(motionOff());root.setAttribute('aria-label','Team results podium');labels.clear();scores.clear();details.clear();cardNodes.clear();burst=null;
         caption=node('p','swl-podium-caption');root.append(caption);const row=node('div','swl-podium-row');
-        const order=entries.slice().sort((a,b)=>({2:0,1:1,3:2}[a.rank]-{2:0,1:1,3:2}[b.rank])||a.id.localeCompare(b.id));
-        order.forEach(entry=>{const card=node('article','swl-podium-place');card.dataset.place=String(entry.rank);card.style.setProperty('--squad-color',entry.color);card.append(node('span','swl-podium-medal',entry.rank===1?'♛':entry.rank===2?'✦':'◇'));const name=node('h3','swl-podium-name'),value=node('b','swl-podium-value'),detail=node('span','swl-podium-detail');labels.set(entry.id,name);scores.set(entry.id,value);details.set(entry.id,detail);cardNodes.set(entry.id,card);card.append(name,value,node('span','swl-podium-unit',entry.unit),detail,node('span','swl-podium-rank',`${entry.rank}${entry.rank===1?'st':entry.rank===2?'nd':'rd'}`));row.append(card);});root.append(row);live=node('p','swl-podium-live');live.setAttribute('role','status');live.setAttribute('aria-live','polite');root.append(live);host.append(root);paint(true);return root;},
+        const placement=entries.length>3?{4:0,2:1,1:2,3:3,5:4}:{2:0,1:1,3:2};const order=entries.slice().sort((a,b)=>(placement[a.rank]-placement[b.rank])||a.id.localeCompare(b.id));
+        order.forEach(entry=>{const card=node('article','swl-podium-place');card.dataset.place=String(entry.rank);card.style.setProperty('--squad-color',entry.color);card.append(node('span','swl-podium-medal',entry.rank===1?'♛':entry.rank===2?'✦':'◇'));const name=node('h3','swl-podium-name'),value=node('b','swl-podium-value'),detail=node('span','swl-podium-detail');labels.set(entry.id,name);scores.set(entry.id,value);details.set(entry.id,detail);cardNodes.set(entry.id,card);card.append(name,value,node('span','swl-podium-unit',entry.unit),detail,node('span','swl-podium-rank',ordinal(entry.rank)));row.append(card);});root.append(row);const skip=node('button','swl-podium-skip','Show results now');skip.type='button';skip.dataset.podiumSkip='true';skip.addEventListener('click',()=>finish());root.append(skip);live=node('p','swl-podium-live');live.setAttribute('role','status');live.setAttribute('aria-live','polite');root.append(live);host.append(root);paint(true);return root;},
       destroy(){destroyed=true;cancel();running=false;host=root=null;},
       getState(){return {finished,running,elapsed,duration,revealedRanks:[...revealed].sort((a,b)=>b-a)};}
     };
   }
-  window.SWLShuffleShowcase=Object.freeze({levels:LEVELS,poolFor,difficultyView,createPodium});
+  window.SWLShuffleShowcase=Object.freeze({levels:LEVELS,poolFor,difficultyView,teamCountView,createPodium});
 })();
 
 (() => {
   'use strict';
   if (window.SWLSkillShuffle?.version === 3 && window.SWLLetterDuel?.version === 3) return;
-  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782'];
-  const DEFAULTS = ['Mint', 'Purple', 'Gold'];
+  const COLORS = ['#d5fa70', '#bd9bff', '#ffd782', '#83d9ff', '#ffafcb'];
+  const DEFAULTS = ['Mint', 'Purple', 'Gold', 'Sky', 'Rose'];
   const DEFAULT_SIZE = 5, TARGET = 7, LETTER_MS = 1250, REEL_MS = 4000;
   const REEL_START = 2, REEL_TARGET = 26, REEL_GAP = 12;
   let sessionSequence = 0;
@@ -253,7 +260,7 @@
     function prepareTurn() {
       cancelTimer(); phase = 'ready'; selected = null; preview = null; awardValue = 0; awardTeam = null; skipped = false; hints = false;
       remainingMs = duration; reelCards = [];
-      statusText = duel ? 'Both teams ready? Draw the next letter.' : `${teams[currentTeamIndex()].name}, gymnast ${currentGymnast()} of ${teams[currentTeamIndex()].size}. Ready to shuffle your skill?`;
+      statusText = duel ? 'All teams ready? Draw the next letter.' : `${teams[currentTeamIndex()].name}, gymnast ${currentGymnast()} of ${teams[currentTeamIndex()].size}. Ready to shuffle your skill?`;
     }
     function startGame(replay = false) {
       if (!pool.length || (phase !== 'setup' && !(replay && phase === 'finished'))) return;
@@ -272,7 +279,7 @@
     }
     function reveal() {
       cancelTimer(); remainingMs = 0; phase = 'revealed'; preview = selected;
-      statusText = duel ? `Letter ${selected.label}. Both teams, show a gymnastics skill beginning with ${selected.label}.` : `${teams[currentTeamIndex()].name}: ${selected.label}. Coach, rate the attempt.`;
+      statusText = duel ? `Letter ${selected.label}. All teams, show a gymnastics skill beginning with ${selected.label}.` : `${teams[currentTeamIndex()].name}: ${selected.label}. Coach, rate the attempt.`;
       render(true); sound({ kind: duel ? 'wheel-finish' : 'reel-reveal' });
     }
     function syncTime() {
@@ -316,7 +323,7 @@
     }
     function award(value, teamIndex) {
       if (phase !== 'revealed') return;
-      if (duel ? value !== 1 || ![0, 1].includes(teamIndex) : ![1, 2, 3].includes(value)) return;
+      if (duel ? value !== 1 || (!Number.isInteger(teamIndex) || teamIndex < 0 || teamIndex >= teams.length) : ![1, 2, 3].includes(value)) return;
       const index = duel ? teamIndex : currentTeamIndex();
       teams[index].score += value; teams[index].turns++; awardTeam = index; awardValue = value; skipped = false;
       phase = duel && teams[index].score >= TARGET ? 'finished' : 'awarded';
@@ -354,9 +361,9 @@
         else if (action === 'cancel-reset') { resetPrompt = false; render(true); }
         return;
       }
-      if (!duel && phase === 'setup') {
+      if (phase === 'setup') {
         if(action.startsWith('difficulty-')){const value=action.slice(11);if(window.SWLShuffleShowcase.levels.some(level=>level.id===value)){difficulty=value;pool=window.SWLShuffleShowcase.poolFor(skills,difficulty);bag=[];previous='';errorText='';render();container.querySelector(`[data-difficulty="${value}"]`)?.focus();}return;}
-        if (action === 'teams-2' || action === 'teams-3') { teamCount = Number(action.slice(6)); errorText = ''; render(false, action); return; }
+        if (/^teams-[2-5]$/.test(action)) { teamCount = Number(action.slice(6)); errorText = ''; render(false, action); return; }
         const change = action.match(/^size-(\d)-(less|more)$/);
         if (change && Number(change[1]) < teamCount) {
           const index = Number(change[1]), size = teamSize(sizes[index]);
@@ -382,10 +389,9 @@
     }
     function setupView(root) {
       const panel = node('section', 'swl-skill-setup');
-      panel.append(node('p', 'swl-skill-kicker', duel ? `${pool.length} LETTERS · FIRST TO ${TARGET}` : `${pool.length} SKILLS · ONE TURN PER GYMNAST`), node('h3', '', duel ? 'Two teams. Everyone in.' : 'Your teams. Everyone in.'), node('p', 'swl-skill-muted', duel ? 'Draw a letter. Think of a gymnastics skill beginning with it, then show the coach.' : 'Choose two or three teams and count the gymnasts in each. Everyone gets one turn.'));
+      panel.append(node('p', 'swl-skill-kicker', duel ? `${pool.length} LETTERS · FIRST TO ${TARGET}` : `${pool.length} SKILLS · ONE TURN PER GYMNAST`), node('h3', '', duel ? 'Your teams. Everyone in.' : 'Your teams. Everyone in.'), node('p', 'swl-skill-muted', duel ? 'Draw a letter. Think of a gymnastics skill beginning with it, then show the coach.' : 'Choose up to five teams and count the gymnasts in each. Everyone gets one turn.'));
+      panel.append(window.SWLShuffleShowcase.teamCountView(teamCount,5,value=>{perform(`teams-${value}`);container.querySelector('[data-game-team-count]')?.focus();},`Number of ${title} teams`));
       if (!duel) {
-        const choices = node('div', 'swl-skill-team-count'); choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', 'Number of Skill Shuffle teams');
-        [2, 3].forEach(count => { const choice = button(`${count} teams`, `teams-${count}`, 'swl-skill-team-choice'); choice.setAttribute('aria-pressed', String(teamCount === count)); choices.append(choice); }); panel.append(choices);
       }
       if(!duel){const generation=renderGeneration;panel.append(window.SWLShuffleShowcase.difficultyView(difficulty,skills,value=>{if(generation===renderGeneration)perform('difficulty-'+value);}));}
       const fields = node('div', 'swl-skill-names');
@@ -409,7 +415,7 @@
       const error = node('p', 'swl-skill-error', pool.length ? errorText : 'The skill list is not available yet. Return to this game once it has loaded.'); error.setAttribute('role', 'alert');
       panel.append(fields, error, button('Let’s play ↗', 'start-game', 'swl-skill-button swl-skill-primary', !pool.length));
       const rules = node('aside', 'swl-skill-rules'); rules.append(node('span', 'swl-skill-rule-icon', duel ? 'A↗' : '↝'), node('h3', '', duel ? 'Quick thinking. Real skills.' : 'Your skill. Your moment.'));
-      if (duel) rules.append(node('p', '', 'Both teams play every letter. The coach awards 1 point to either team, or skips. First to 7 wins.'), node('p', 'swl-skill-muted', 'Use a familiar gymnastics floor skill or shape approved by the coach. Hints include the skill list and other floor basics. For numbered skills, use the first word.'));
+      if (duel) rules.append(node('p', '', 'All teams play every letter. The coach awards 1 point to one team, or skips. First to 7 wins.'), node('p', 'swl-skill-muted', 'Use a familiar gymnastics floor skill or shape approved by the coach. Hints include the skill list and other floor basics. For numbered skills, use the first word.'));
       else {
         const list = node('ul', 'swl-skill-rating-guide');
         [[1, 'Does not count'], [2, 'Did it, messy'], [3, 'Almost perfect']].forEach(([stars, label]) => { const item = node('li'); item.append(node('b', '', '★'.repeat(stars)), node('span', '', label)); list.append(item); });
@@ -419,7 +425,7 @@
       const grid = node('div', 'swl-skill-setup-grid'); grid.append(panel, rules); root.append(grid);
     }
     function scoreboard(root) {
-      const board = node('div', 'swl-skill-board'); board.setAttribute('aria-label', `${title} scoreboard`); board.dataset.teamCount = String(teams.length);
+      const board = node('div', 'swl-skill-board'); board.setAttribute('aria-label', `${title} scoreboard`); board.dataset.teamCount = String(teams.length); board.style.setProperty('--game-teams',String(teams.length));
       teams.forEach((team, index) => {
         const item = node('div', `swl-skill-score${!duel && phase !== 'finished' && index === currentTeamIndex() ? ' is-current' : ''}`); item.style.setProperty('--squad-color', team.color);
         item.append(node('span', 'swl-skill-score-name', team.name), node('strong', '', duel ? String(team.score) : averageText(team)), node('span', 'swl-skill-score-unit', duel ? `points · first to ${TARGET}` : `avg stars / gymnast${phase === 'finished' ? '' : ' so far'}`));
@@ -439,7 +445,7 @@
     }
     function playView(root) {
       const progress = node('div', 'swl-skill-progress');
-      progress.append(node('span', '', duel ? `LETTER ${turn + 1}` : `${completedGymnasts()} / ${turnOrder.length} GYMNASTS COMPLETE`), node('span', '', duel ? 'BOTH TEAMS PLAY' : `${difficulty.toUpperCase()} · ${teams.length} TEAMS`)); root.append(progress);
+      progress.append(node('span', '', duel ? `LETTER ${turn + 1}` : `${completedGymnasts()} / ${turnOrder.length} GYMNASTS COMPLETE`), node('span', '', duel ? 'ALL TEAMS PLAY' : `${difficulty.toUpperCase()} · ${teams.length} TEAMS`)); root.append(progress);
       if (!duel) {
         const track = node('div', 'swl-skill-total-progress'), fill = node('span'); track.setAttribute('role', 'progressbar'); track.setAttribute('aria-label', 'Gymnasts who have completed their turn'); track.setAttribute('aria-valuemin', '0'); track.setAttribute('aria-valuemax', String(turnOrder.length)); track.setAttribute('aria-valuenow', String(completedGymnasts())); fill.style.width = `${completedGymnasts() / turnOrder.length * 100}%`; track.append(fill); root.append(track);
       }
@@ -491,7 +497,7 @@
       if(!duel&&podium){stage=node('section','swl-skill-finish swl-skill-podium-finish');stage.tabIndex=-1;podium.render(stage);if(podium.getState().finished){const controls=node('div','swl-skill-controls');controls.append(button('Play again ↝','replay','swl-skill-button swl-skill-primary'),button('Change teams','reset'),button('Undo last rating','undo','swl-skill-text-button'));stage.append(controls);}root.append(stage);return;}
       const winners = resultWinners(), best = winners[0];
       stage = node('section', 'swl-skill-finish'); stage.tabIndex = -1;
-      stage.append(node('span', 'swl-skill-trophy', '✦'), node('p', 'swl-skill-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : duel ? 'LETTER DUEL WINNERS' : 'SKILL SHUFFLE WINNERS'), node('h3', '', winners.map(team => team.name).join(' + ')), node('p', 'swl-skill-result-points', duel ? `${best.score} points` : `${averageText(best)} stars per gymnast`), node('p', 'swl-skill-muted', winners.length > 1 ? `A tie! ${winners.length === 2 ? 'Both' : 'All three'} teams share the celebration.` : 'A team effort worth celebrating.'));
+      stage.append(node('span', 'swl-skill-trophy', '✦'), node('p', 'swl-skill-kicker', winners.length > 1 ? 'SHARED TOP SPOT' : duel ? 'LETTER DUEL WINNERS' : 'SKILL SHUFFLE WINNERS'), node('h3', '', winners.map(team => team.name).join(' + ')), node('p', 'swl-skill-result-points', duel ? `${best.score} points` : `${averageText(best)} stars per gymnast`), node('p', 'swl-skill-muted', winners.length > 1 ? `A tie! ${winners.length === 2 ? 'Both' : 'All '+winners.length} teams share the celebration.` : 'A team effort worth celebrating.'));
       if (!duel) stage.append(node('p', 'swl-skill-fair-note', `All ${turnOrder.length} gymnasts had one turn. Teams ranked by total stars ÷ gymnasts.`));
       const controls = node('div', 'swl-skill-controls'); controls.append(button('Play again ↝', 'replay', 'swl-skill-button swl-skill-primary'), button('Change teams', 'reset'), button('Undo last rating', 'undo', 'swl-skill-text-button')); stage.append(controls); root.append(stage);
     }
@@ -499,7 +505,7 @@
       if (destroyed) return;
       renderGeneration++; stage = null; reelViewport = reelTrack = null;
       const root = node('div', `swl-skill-game swl-skill-${mode}-game${immersive() ? ' is-immersive' : ''}`); gameRoot = root; root.dataset.static = String(motionOff()); root.dataset.phase = phase;
-      const heading = node('div', 'swl-skill-heading'), titles = node('div'); titles.append(node('p', 'swl-skill-kicker', duel ? 'ONE LETTER · TWO TEAMS · FIRST TO SEVEN' : 'SHUFFLE · SHOW IT · SCORE'), node('h2', '', title)); heading.append(titles);
+      const heading = node('div', 'swl-skill-heading'), titles = node('div'); titles.append(node('p', 'swl-skill-kicker', duel ? 'ONE LETTER · YOUR TEAMS · FIRST TO SEVEN' : 'SHUFFLE · SHOW IT · SCORE'), node('h2', '', title)); heading.append(titles);
       if (phase !== 'setup') heading.append(button('New game', 'reset', 'swl-skill-text-button')); root.append(heading);
       if (phase === 'setup') setupView(root); else { if(phase!=='finished'||duel)scoreboard(root); if (phase === 'finished') finishView(root); else playView(root); }
       const live = node('p', 'swl-skill-live', statusText); live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite'); root.append(live);
