@@ -18,15 +18,8 @@
 .challenge-target{align-self:center;justify-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;width:190px;height:190px;max-width:100%;border-radius:50%;border:1px solid #d6b66c40;outline:1px solid #d6b66c13;outline-offset:9px;background:radial-gradient(circle,#d0a84412,transparent 75%);box-shadow:0 0 70px #d8b9680b}
 .challenge-target>span{font-size:9px;font-weight:800;letter-spacing:.22em;color:#cbb68d}
 .challenge-target>strong{font-size:73px;font-weight:900;letter-spacing:-.075em;line-height:1.2;color:#f5d797}
-.challenge-front-runner{grid-column:1/-1;padding-top:23px;border-top:1px solid #ffffff10}
-.challenge-front-runner>span{display:block;font-size:10px;color:#b9a9c9;letter-spacing:.05em;margin-bottom:8px}
-.challenge-front-runner>button{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;text-align:left;background:none;padding:0 0 10px}
-.challenge-front-runner strong{font-size:22px;letter-spacing:-.03em;overflow-wrap:anywhere}
-.challenge-front-runner b{font-size:28px;color:#edd8a1;white-space:nowrap}
-.challenge-front-runner b small{font-size:11px;color:#a69baf;font-weight:600}
-.challenge-front-runner>small{display:block;font-size:10px;color:#b5a98e;margin-top:8px}
-.challenge-progress,.challenge-row-progress{display:block;overflow:hidden;border-radius:10px;background:#ffffff09;height:7px}
-.challenge-progress>i,.challenge-row-progress>i{display:block;height:100%;max-width:100%;border-radius:inherit;background:linear-gradient(90deg,#ad8c4b,#edcf8b)}
+.challenge-row-progress{display:block;overflow:hidden;border-radius:10px;background:#ffffff09;height:7px}
+.challenge-row-progress>i{display:block;height:100%;max-width:100%;border-radius:inherit;background:linear-gradient(90deg,#ad8c4b,#edcf8b)}
 .challenge-list-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:35px 0 19px}
 .challenge-list-head h2{font-size:22px;letter-spacing:-.04em}
 .challenge-list-head p{font-size:11px;color:#9f96aa;margin-top:6px}
@@ -46,5 +39,5 @@
 .challenge-empty,.challenge-notice{padding:22px;border:1px solid #bd9bff22;border-radius:13px;color:#c9bbd7;font-size:12px;line-height:1.7;margin:15px 0;background:#bd9bff05}
 @keyframes challenge-heat{to{box-shadow:inset 3px 0 #e9a159b0,inset 0 0 45px #cf74221a}}
 @media(max-width:850px){.challenge-hero{padding:30px;gap:24px}.challenge-target{width:150px;height:150px}.challenge-target>strong{font-size:62px}.challenge-row{grid-template-columns:27px minmax(130px,1fr) minmax(55px,.7fr) 75px 15px;gap:12px;padding:15px}}
-@media(max-width:600px){.logo{width:58px;height:40px}.header-inner{gap:8px}.challenge-hero{grid-template-columns:minmax(0,1fr);padding:24px 21px}.challenge-target{display:none}.challenge-copy h2{font-size:43px}.challenge-copy>p{font-size:12px}.challenge-front-runner strong{font-size:19px}.challenge-front-runner b{font-size:25px}.challenge-list-head{align-items:flex-start}.challenge-list-head h2{font-size:20px}.challenge-list-head>span{display:none}.challenge-row{grid-template-columns:24px minmax(0,1fr) 68px;gap:9px 11px;padding:15px 13px}.challenge-row-progress{grid-row:2;grid-column:2/-1;height:4px}.challenge-points{grid-column:3;grid-row:1}.challenge-arrow{display:none}.challenge-person strong{font-size:13px}.challenge-person small{font-size:9px}.challenge-points b{font-size:22px}.challenge-page-head h1{font-size:34px}.challenge-page-head .eyebrow{font-size:9px}.challenge-page-head{gap:15px}}
+@media(max-width:600px){.logo{width:58px;height:40px}.header-inner{gap:8px}.challenge-hero{grid-template-columns:minmax(0,1fr);padding:24px 21px}.challenge-target{display:none}.challenge-copy h2{font-size:43px}.challenge-copy>p{font-size:12px}.challenge-list-head{align-items:flex-start}.challenge-list-head h2{font-size:20px}.challenge-list-head>span{display:none}.challenge-row{grid-template-columns:24px minmax(0,1fr) 68px;gap:9px 11px;padding:15px 13px}.challenge-row-progress{grid-row:2;grid-column:2/-1;height:4px}.challenge-points{grid-column:3;grid-row:1}.challenge-arrow{display:none}.challenge-person strong{font-size:13px}.challenge-person small{font-size:9px}.challenge-points b{font-size:22px}.challenge-page-head h1{font-size:34px}.challenge-page-head .eyebrow{font-size:9px}.challenge-page-head{gap:15px}}
 @media(prefers-reduced-motion:reduce){.challenge-row{animation:none!important}}body.no-motion .challenge-row{animation:none!important}
