@@ -1579,7 +1579,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-timing.css?v=20261020">
 <link rel="stylesheet" href="./games-addon.css?v=20261019v3">
 <link rel="stylesheet" href="./games-ratings.css?v=20261019v3">
-<link rel="stylesheet" href="./v2.css?v=20261019v3">
+<link rel="stylesheet" href="./v2.css?v=20261021-renewal">
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
@@ -1794,7 +1794,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-ratings.js?v=20261019v3"></script>
 <script src="./games.js?v=20261020"></script>
 <script src="./skills-catalogue.js?v=20261019perfect1"></script>
-<script src="./v2.js?v=20261020-dropdown"></script>
+<script src="./v2.js?v=20261021-renewal"></script>
 <script src="./challenge.js?v=20261020"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
@@ -3634,6 +3634,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       card.dataset.status = value;
       const fresh = skillFreshness(selectedId,skill.id), cell=card.closest('.skill-cell');
       if (cell) {
+        cell.dataset.status = String(value);
         cell.dataset.due = String(fresh.due);
         const renewal=cell.querySelector('.skill-renewal');
         renewal.hidden=value!==2;
