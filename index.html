@@ -1570,7 +1570,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css">
-<link rel="stylesheet" href="./celebration.css?v=20261019v3">
+<link rel="stylesheet" href="./celebration.css?v=20261021-brief">
 <link rel="stylesheet" href="./placement.css?v=20261019v3">
 <link rel="stylesheet" href="./games.css?v=20261019v3">
 <link rel="stylesheet" href="./games-wheel.css?v=20261019v3">
@@ -1579,7 +1579,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-timing.css?v=20261020">
 <link rel="stylesheet" href="./games-addon.css?v=20261019v3">
 <link rel="stylesheet" href="./games-ratings.css?v=20261019v3">
-<link rel="stylesheet" href="./v2.css?v=20261021-fixed-cards">
+<link rel="stylesheet" href="./v2.css?v=20261021-renew-spacing">
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
@@ -1782,7 +1782,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./startup.js?v=20261019v31"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
-<script src="./celebration.js?v=20261020"></script>
+<script src="./celebration.js?v=20261021-brief"></script>
 <script src="./v3-rankings.js?v=20261019podium"></script>
 <script src="./placement.js?v=20261019alphabetical"></script>
 <script src="./games-wheel.js?v=20261019v3"></script>
@@ -2522,7 +2522,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!baseline) return milestones;
     for (const gymnast of result.state.gymnasts) {
       if (!Object.hasOwn(baseline, gymnast.id)) continue;
-      const thresholds = [200, 250].filter(threshold => {
+      const thresholds = [250].filter(threshold => {
         const stamp = result.state.prizes?.[gymnast.id]?.[threshold];
         const key = gymnast.id + ':' + threshold;
         if (!stamp || baseline[gymnast.id][threshold] || announcedPrizes.has(key)) return false;
@@ -4042,7 +4042,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       true
     );
 
-    // Only a new, locally completed three-skill complex earns the full celebration.
+    // Only a new, locally completed three-skill complex gets the brief message.
     // Loading, refreshing, importing and undoing scores never replay it.
     const complex = SKILLS.filter(item => item.category === skill.category && item.tier === skill.tier);
     const completed = after === 2 && complex.length === 3 && complex.every(item => mark(gymnastId, item.id) === 2);

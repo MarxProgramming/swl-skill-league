@@ -2,7 +2,7 @@
   'use strict';
   if (window.SWLCelebration?.version === 1) return;
   const SOUND_KEY = 'swl-celebration-sound';
-  const CELEBRATION_MS = 5800;
+  const COMPLEX_MESSAGE_MS = 1600;
   const MAX_BELLS = 6, MASTER_LEVEL = 0.23;
   const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const animations = new Set(), voices = new Set(), retiringVoices = new Set();
@@ -388,8 +388,7 @@
     overlay.querySelector('.swl-celebration-confetti')?.remove();
     cancelAnimations();
     overlay.classList.add('is-static');
-    // Keep the original cleanup deadline: a late motion toggle must not extend
-    // the celebration beyond its 5.8-second maximum.
+    // Keep the original cleanup deadline when the motion preference changes.
   }
 
   function confettiShower(parent) {
@@ -428,14 +427,38 @@
   }
 
   function play(details = {}) {
+    if (details.kind === 'prize' && !(details.thresholds || []).includes(250)) return;
+    if (details.kind === 'prize') details = {...details, thresholds: [250]};
     stop();
+    if (details.kind !== 'prize') {
+      // Brief feedback for the coach's tap; no curtain, confetti or page motion.
+      ding({perfect:true});
+      if (!document.body) return;
+      const quiet = motionOff() || typeof document.body.animate !== 'function';
+      fadeStartsAt = quiet ? Infinity : Date.now() + 1200;
+      overlay = make(`swl-celebration is-compact${quiet ? ' is-static' : ''}`);
+      const banner = make('swl-celebration-banner');
+      banner.setAttribute('role', 'status'); banner.setAttribute('aria-live', 'polite'); banner.setAttribute('aria-atomic', 'true');
+      const label = details.kind === 'leaps' ? 'Perfect leaps' : details.kind === 'handstands' ? 'Perfect holds' : 'Perfect complex';
+      banner.append(make('swl-celebration-title', label, 'p'));
+      overlay.append(banner);
+      document.body.append(overlay);
+      if (!quiet) animate(banner, [
+        {opacity:0,transform:'translateY(6px)',offset:0},
+        {opacity:1,transform:'translateY(0)',offset:.12},
+        {opacity:1,transform:'translateY(0)',offset:.75},
+        {opacity:0,transform:'translateY(-4px)',offset:1}
+      ], {duration:COMPLEX_MESSAGE_MS-40,easing:'ease-out'});
+      cleanupTimer = setTimeout(clearVisuals, COMPLEX_MESSAGE_MS);
+      return;
+    }
     const token = generation;
     // This is deliberately called before asynchronous work to use the click's
     // user activation. Audio availability never controls the scoring action.
     flourish(token);
     if (!document.body) return;
     const quiet = motionOff() || typeof document.body.animate !== 'function';
-    const isPrize=details.kind==='prize', duration=isPrize?7600:CELEBRATION_MS;
+    const isPrize=true, duration=7600;
     fadeStartsAt = quiet ? Infinity : Date.now() + duration*.8;
     overlay = make(`swl-celebration${quiet ? ' is-static' : ''}${isPrize?' is-prize':''}`);
     const veil = make('swl-celebration-veil');
@@ -474,7 +497,7 @@
 
   function prizes(milestones) {
     for (const item of milestones||[]) {
-      const thresholds=(item.thresholds||[]).filter(value=>value===200||value===250);
+      const thresholds=(item.thresholds||[]).includes(250) ? [250] : [];
       if(thresholds.length) prizeQueue.push({kind:'prize',gymnastName:String(item.gymnastName||''),thresholds,...(item.isCoach===true?{isCoach:true}:{})});
     }
     if(prizeTimer) return;

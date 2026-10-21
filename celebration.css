@@ -78,3 +78,16 @@ body.no-motion .swl-celebration-confetti{display:none}
 .swl-celebration.is-prize .swl-celebration-medal{width:66px;height:66px;font-size:37px;background:linear-gradient(145deg,#fff1b1,#c78e29);border-color:#ffe397}
 .swl-celebration.is-prize .swl-celebration-detail{font-size:18px;font-weight:800;color:#ffe2a2;letter-spacing:.08em}
 .swl-celebration.is-prize .swl-celebration-caption{line-height:1.7;letter-spacing:.06em}
+
+/* Complex completion stays brief and leaves the app fully visible and usable. */
+.swl-celebration.is-compact{align-items:center;padding:0 16px}
+.swl-celebration.is-compact .swl-celebration-banner{
+  width:auto;max-width:100%;padding:22px 28px;border-radius:20px;
+  border-color:#d5fa7066;background:#20251df5;
+  box-shadow:0 12px 38px #0005,inset 0 1px 0 #ffffff12;
+}
+.swl-celebration.is-compact .swl-celebration-banner:before{content:none}
+.swl-celebration.is-compact .swl-celebration-title{
+  margin:0;color:var(--celebration-lime);font-size:clamp(26px,5vw,42px);
+  line-height:1.12;letter-spacing:-.035em;font-weight:850;
+}
