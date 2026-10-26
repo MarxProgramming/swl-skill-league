@@ -12,7 +12,7 @@
     root.setAttribute('data-theme', mode);
     root.style.colorScheme = mode;
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', mode === 'light' ? '#f6f4fa' : '#0d0e13');
+    if (meta) meta.setAttribute('content', mode === 'light' ? '#f7f6fa' : '#0d0e13');
     var button = document.getElementById('themeToggle');
     if (button) {
       button.setAttribute('aria-pressed', mode === 'light' ? 'true' : 'false');
