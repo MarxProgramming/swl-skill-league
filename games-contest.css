@@ -36,3 +36,10 @@
  .swl-contest-game.is-immersive[data-fit=short] .swl-stick-count{font-size:19px}
  .swl-contest-game.is-immersive[data-fit=short] .swl-stick-awards .swl-contest-person{display:none}
 }
+/* Fixed-line games need one full-width scoring target per team on phones. */
+@media(max-width:600px){
+ .swl-contest-game.is-immersive:is([data-mode=stickit],[data-mode=letters]) .swl-contest-team{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(44px,1fr);min-width:0;gap:3px;padding:4px 3px}
+ .swl-contest-game.is-immersive:is([data-mode=stickit],[data-mode=letters]) .swl-contest-team-name{grid-column:1;min-width:0;font-size:11px;line-height:1.2}
+ .swl-contest-game.is-immersive:is([data-mode=stickit],[data-mode=letters]) .swl-contest-person{grid-column:1;min-width:0;min-height:24px;font-size:10px;line-height:1.2;overflow-wrap:anywhere}
+ .swl-contest-game.is-immersive:is([data-mode=stickit],[data-mode=letters]) .swl-contest-win{grid-column:1;min-width:40px;width:100%;min-height:44px;padding:3px 1px;font-size:12px;line-height:1.15;white-space:normal;overflow-wrap:anywhere}
+}

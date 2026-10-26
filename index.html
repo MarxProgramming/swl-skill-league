@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0d0e13">
 <title>SWL · Squad Training 3.1</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
+<script src="./theme.js?v=20261026"></script>
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
 
@@ -1576,7 +1577,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./games-wheel.css?v=20261019v3">
 <link rel="stylesheet" href="./games-team.css?v=20261020">
 <link rel="stylesheet" href="./games-skill.css?v=20261020">
-<link rel="stylesheet" href="./games-contest.css?v=20261022-contest">
+<link rel="stylesheet" href="./games-contest.css?v=20261026-line-order">
 <link rel="stylesheet" href="./games-timing.css?v=20261020">
 <link rel="stylesheet" href="./games-addon.css?v=20261019v3">
 <link rel="stylesheet" href="./games-ratings.css?v=20261019v3">
@@ -1586,6 +1587,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
 <link rel="stylesheet" href="./analytics-31.css?v=20261019v31">
 <link rel="stylesheet" href="./challenge.css?v=20261021-reset"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
+<link rel="stylesheet" href="./theme.css?v=20261026">
 </head>
 
 <body>
@@ -1613,6 +1615,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     <div class="utilities">
       <button class="quiet all-skills-button" id="allSkillsButton" type="button" data-open-skills aria-controls="allSkills">All skills</button>
+      <button class="quiet theme-toggle" id="themeToggle" type="button" aria-label="Switch to light mode" title="Switch to light mode" aria-pressed="false"><span aria-hidden="true">☀</span></button>
       <button class="quiet scoring-lock-button" id="lockButton" type="button" disabled aria-describedby="lockStatus"><span aria-hidden="true">◇</span> <span id="lockButtonLabel">Checking lock…</span></button>
     </div>
 
@@ -1789,12 +1792,12 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-wheel.js?v=20261019v3"></script>
 <script src="./games-team.js?v=20261020"></script>
 <script src="./games-skill.js?v=20261022-contest"></script>
-<script src="./games-contest.js?v=20261022-nominees"></script>
+<script src="./games-contest.js?v=20261026-line-order"></script>
 <script src="./games-draft.js?v=20261020"></script>
 <script src="./games-timing.js?v=20261020"></script>
 <script src="./games-addon.js?v=20261020"></script>
 <script src="./games-ratings.js?v=20261022-contest"></script>
-<script src="./games.js?v=20261022-nominees"></script>
+<script src="./games.js?v=20261026-line-order"></script>
 <script src="./skills-catalogue.js?v=20261019perfect1"></script>
 <script src="./v2.js?v=20261021-fixed-cards"></script>
 <script src="./challenge.js?v=20261021-reset"></script>
@@ -2210,7 +2213,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   const squadMemberships = gymnast => [...new Set([gymnast?.coach, ...(Array.isArray(gymnast?.squads) ? gymnast.squads : [])].filter(Boolean).map(coachingGroupKey))];
   const isCoachParticipant = gymnast => squadMemberships(gymnast).includes('coaches');
   const isFloorGroup = group => /floor.*vault/i.test(group);
-  const groupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'floor' ? 'All floor & vault squads' : coach === 'senior' ? 'All senior squad' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach === 'Saturday Floor and Vault' ? 'Saturday Afternoon Floor and Vault' : coach;
+  const isAfternoonFloorGroup = group => isFloorGroup(group) && (/Saturday Afternoon/i.test(group) || group === 'Saturday Floor and Vault');
+  const groupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'floor' ? 'All floor & vault squads' : coach === 'afternoon' ? 'All Saturday afternoon floor & vault' : coach === 'senior' ? 'All senior squad' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach === 'Saturday Floor and Vault' ? 'Saturday Afternoon Floor and Vault' : coach;
   const shortGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /Saturday Morning/i.test(coach) ? 'Marx · Saturday morning floor & vault' : /Saturday Afternoon/i.test(coach) ? coach.replace('’s Saturday Afternoon Floor and Vault',' · Saturday afternoon floor & vault').replace('Saturday Afternoon Floor and Vault','Saturday afternoon · unassigned') : groupLabel(coach);
   const gymnastSquadLabel = gymnast => squadMemberships(gymnast).map(groupLabel).join(' + ');
   const coachBadge = gymnast => isCoachParticipant(gymnast) ? '<span class="coach-badge">COACH</span>' : squadMemberships(gymnast).length > 1 ? `<span class="multi-squad-badge" title="${escapeHTML(gymnastSquadLabel(gymnast))}" aria-label="Member of ${escapeHTML(gymnastSquadLabel(gymnast))}">${squadMemberships(gymnast).length} SQUADS</span>` : '';
@@ -2400,7 +2404,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
-    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
+    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
   }
   function profileGymnasts(gymnast = GYMNASTS.find(g => g.id === selectedId)) {
     return GYMNASTS.filter(g => isCoachParticipant(g) === isCoachParticipant(gymnast));
@@ -3216,9 +3220,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderV2();
     if (currentView === 'placement') renderPlacementProfile();
     const groups = rosterGroupOptions();
-    if (!['all','floor','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
+    if (!['all','floor','afternoon','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
     if ($('leaderboardGroup')) {
-      const options=[['all','Overall · all squads'],['floor','All floor & vault squads'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
+      const options=[['all','Overall · all squads'],['floor','All floor & vault squads'],['afternoon','All Saturday afternoon floor & vault'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
       stableHTML($('leaderboardGroup'),options);
       $('leaderboardGroup').value=leaderboardGroup;
       $('leaderboardGroup').disabled=!hasLoaded;
@@ -3233,7 +3237,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       stableHTML($('leaderboardAge'),ageOptions);
     }
     const filteredGymnasts = groupGymnasts.filter(g=>inLeaderboardAge(g,leaderboardAge));
-    document.querySelectorAll('[data-board-family]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.boardFamily === leaderboardGroup || (button.dataset.boardFamily === 'floor' && isFloorGroup(leaderboardGroup)) || (button.dataset.boardFamily === 'senior' && ['Marx','Dan'].includes(leaderboardGroup)))));
+    document.querySelectorAll('[data-board-family]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.boardFamily === leaderboardGroup || (button.dataset.boardFamily === 'floor' && (leaderboardGroup === 'afternoon' || isFloorGroup(leaderboardGroup))) || (button.dataset.boardFamily === 'senior' && ['Marx','Dan'].includes(leaderboardGroup)))));
     const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : leaderboardGroup === 'overall' ? 'Overall · all squads + coaches' : groupLabel(leaderboardGroup);
     if ($('leaderboardScope')) $('leaderboardScope').textContent = `${squadLabel} · ${ageCategoryLabel(leaderboardAge)}${hasLoaded ? ` · ${filteredGymnasts.length} ${leaderboardGroup==='coaches'?(filteredGymnasts.length===1?'coach':'coaches'):(leaderboardGroup==='overall'?'participant':'gymnast')+(filteredGymnasts.length===1?'':'s')}` : ''}${leaderboardGroup==='coaches'?'':` · age reached in ${londonYear()}`}`;
     const all = filteredGymnasts.map(g => summary(g.id));
