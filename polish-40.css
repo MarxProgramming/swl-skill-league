@@ -3,7 +3,7 @@
    retain their own meaning. These tokens deliberately differ in daylight mode. */
 html[data-theme="dark"]{
   --bg:#0d0e15;--panel:#181922;--text:#f6f3fc;--muted:#aaa5ba;
-  --line:#d5c4ff1c;--purple:#c5a4ff;--mint:#a0efd3;
+  --line:#d5c4ff1c;--purple:#c5a4ff;--mint:#d5fa70;
   --p40-surface:linear-gradient(145deg,#ffffff04,transparent 65%),#181922;
   --p40-raised:linear-gradient(145deg,#ffffff06,transparent 65%),#20202d;
   --p40-field:#11121b;--p40-subtle:#ffffff04;--p40-edge:#d3bfff25;
@@ -17,7 +17,7 @@ html[data-theme="dark"]{
 }
 html[data-theme="light"]{
   --bg:#f7f6fa;--panel:#fff;--text:#292338;--muted:#6d657d;
-  --line:#dfd8e8;--purple:#684398;--mint:#236d59;
+  --line:#dfd8e8;--purple:#684398;--mint:#17695c;
   --p40-surface:linear-gradient(145deg,#fff,#fdfcfe);
   --p40-raised:linear-gradient(145deg,#fff,#f6f2fa);
   --p40-field:#faf8fc;--p40-subtle:#6c479604;--p40-edge:#ded5e8;
@@ -76,23 +76,12 @@ html[data-theme] .v4-search-arrow{color:var(--purple)}
 
 /* Uniform skill cells: an inset highlight makes their boundaries easier to read.
    State colours are explicit so category accents cannot recolour any tick. */
-html[data-theme="dark"] :is(.skill-cell,.directory-quick-cell){background:linear-gradient(145deg,#22212d,#1b1b25);border-color:#d3bfff32;box-shadow:inset 0 1px #ffffff07}
+html[data-theme="dark"] :is(.skill-cell,.directory-quick-cell):where(:not([data-status="2"]):not(.level-2)){background:linear-gradient(145deg,#22212d,#1b1b25);border-color:#d3bfff32;box-shadow:inset 0 1px #ffffff07}
 html[data-theme="dark"] :is(.skill-cell[data-status="1"],.directory-quick-cell.level-1){background:linear-gradient(145deg,#3b2c4c,#282033);border-color:#bc93f092;box-shadow:inset 0 1px #e1c1ff17}
-html[data-theme="dark"] :is(.skill-cell[data-status="2"],.directory-quick-cell.level-2){background:linear-gradient(145deg,#223d35,#1a2927);border-color:#8bdab885;box-shadow:inset 0 1px #baffdf17}
 html[data-theme="dark"] :is(.skill[data-status="1"] .skill-status,.directory-quick-skill.level-1){color:#d5b8ff}
 html[data-theme="dark"] .skill[data-status="1"] .skill-status{background:#c29bff18;border-color:#bc93f078}
-html[data-theme="dark"] :is(.skill[data-status="2"] .skill-status,.directory-quick-skill.level-2){color:#b6f8df}
-html[data-theme="dark"] .skill[data-status="2"] .skill-status{background:#9ce8cf16;border-color:#8bdab86b}
-html[data-theme="dark"] :is(.skill[data-status="2"] .skill-points,.skill[data-status="2"] .skill-bottom,.tier-status){color:#a0efd3}
-html[data-theme="dark"] .skill-renewal button{background:#9ce8cf18;border-color:#9ce8cf65;color:#c2f8e6}
-html[data-theme="dark"] .renewal-date{color:#b0d8ca}
-html[data-theme="dark"] :is(.skill-cell[data-due=true],.directory-quick-cell.is-due){border-color:#f59b8b99;box-shadow:inset 0 1px #ffd7c90d,inset 0 -12px 25px #f276650b}
-html[data-theme="dark"] .skill-cell[data-due=true] .skill-renewal button{color:#ffe6df;border-color:#f58b81a0;background:#f58b8128}
-html[data-theme="dark"] .skill-cell[data-due=true] .renewal-date{color:#ffd4ca}
-html[data-theme="light"] :is(.skill-cell,.directory-quick-cell){background:linear-gradient(145deg,#f7f4fa,#f0ebf5);border-color:#d4c9e0;box-shadow:inset 0 1px #fff}
+html[data-theme="light"] :is(.skill-cell,.directory-quick-cell):where(:not([data-status="2"]):not(.level-2)){background:linear-gradient(145deg,#f7f4fa,#f0ebf5);border-color:#d4c9e0;box-shadow:inset 0 1px #fff}
 html[data-theme="light"] :is(.skill-cell[data-status="1"],.directory-quick-cell.level-1){background:linear-gradient(145deg,#ece0f6,#f5eefb);border-color:#ae8bce}
-html[data-theme="light"] :is(.skill-cell[data-status="2"],.directory-quick-cell.level-2){background:linear-gradient(145deg,#dceee5,#edf6f1);border-color:#85b39d}
-html[data-theme="light"] :is(.skill-cell[data-due=true],.directory-quick-cell.is-due){border-color:#c78b7c;box-shadow:inset 0 1px #fff,inset 0 -12px 25px #da8d6c0b}
 
 /* Analytics keep the data vivid and the surrounding furniture restrained. */
 html[data-theme] #analyticsRoot :is(.analytics-panel,.a31-priorities,.a31-squad-panel,.a31-stats article){background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
@@ -106,7 +95,6 @@ html[data-theme] .a31-disclosure-icon{color:var(--purple);background:var(--p40-s
 html[data-theme] #analyticsRoot :is(.a31-squad-row,.a31-age-row){background:var(--p40-subtle);border-color:var(--p40-edge)}
 html[data-theme] .a31-standing-row:not(.is-hot):not(.is-on-fire){background:var(--p40-subtle);border-color:var(--p40-edge)}
 html[data-theme] :is(.a31-comparison-track,.a31-stack,.a31-standing-bar){background:var(--p40-track)}
-html[data-theme="dark"] .a31-perfect{background:#a0efd3!important}
 html[data-theme="dark"] .a31-achieved{background:#c5a4ff!important}
 html[data-theme] .v4-priority-expand{color:var(--purple);background:var(--p40-soft-action);border-radius:8px;box-shadow:0 0 0 1px var(--p40-soft-edge),inset 0 1px var(--p40-highlight)}
 
@@ -164,3 +152,15 @@ html[data-theme] .swlp-board[data-placement-board]{--placement-accent:var(--purp
 html[data-theme] .swl-skill-reel-card[data-tier]{background:var(--p40-raised);border-color:var(--p40-soft-edge);border-bottom-color:var(--purple)}
 /* Bound the placement caption so long squad names cannot squeeze the person’s name. */
 @media(max-width:620px){.swlp-hero{grid-template-columns:minmax(0,1fr) 86px}.swlp-overall{width:86px;min-width:0}.swlp-overall p{overflow-wrap:normal;line-height:1.5}}
+
+/* The original Perfect green is supplied by the established skill/theme rules. */
+/* Clearer category headings; the existing card layout stays intact. */
+html[data-theme] .board:not(.overall) .board-head h3{font-size:24px;line-height:1.15;letter-spacing:-.035em}
+html[data-theme] .complex-head h3{font-size:26px;line-height:1.15;letter-spacing:-.035em}
+html[data-theme] .swlp-board-head h3{font-size:22px;line-height:1.2}
+html[data-theme] .catalogue-complex-head p{font-size:18px;line-height:1.3;font-weight:800;letter-spacing:-.025em}
+@media(max-width:600px){
+ html[data-theme] .board:not(.overall) .board-head h3{font-size:22px}
+ html[data-theme] .complex-head h3{font-size:23px}
+ html[data-theme] .swlp-board-head h3{font-size:21px}
+}

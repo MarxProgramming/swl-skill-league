@@ -177,6 +177,8 @@ Stick It uses a fixed line order with no gymnast picker. Team sizes, rounds, red
 
 ### 4.0 visual refinement — 29 October 2026
 
-The existing layout now uses shared category styling, without decorative complex icons. Purple continues to mean Achieved; mint means Perfect. Dark and light modes have coordinated surface, control and focus treatments. Podium metals have staggered sweeps and softer halos; weekly heat uses faster amber/gold motion. System reduced-motion and app motion-off remain supported.
+The existing layout now uses shared category styling, without decorative complex icons. Purple continues to mean Achieved; mint means Perfect. Dark and light modes have coordinated surface, control and focus treatments. Podium metals have staggered sweeps and softer halos; weekly heat uses varied orange/red flame motion. System reduced-motion and app motion-off remain supported.
 
 Training priorities show the skill, category/tier, available points, achievement counts/progress and a clearer View gymnasts disclosure. The ranking formula, complex bonus calculation, marks and Google Sheets synchronisation are unchanged.
+
+The 4.0 follow-up restores the exact pre-polish Perfect green in each theme, enlarges the complex/category headings, and separates orange/red heat from the podium metals. Heat uses differently phased plume movement and a slower independent drift; reduced-motion settings stop both.

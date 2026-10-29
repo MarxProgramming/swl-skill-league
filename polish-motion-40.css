@@ -1,24 +1,41 @@
 /* Version 4.0 motion polish. Only decorative layers move; card geometry stays put. */
 html:root {
-  --swl-heat-hot: linear-gradient(125deg, #3a2b20, #282124 56%, #1c1c25);
-  --swl-heat-fire: linear-gradient(125deg, #492d1d, #2d231f 54%, #211d25);
-  --swl-heat-edge: #e9a54b9c;
-  --swl-heat-shadow: #f6a6322c;
-  --swl-heat-flame-one: #ffba46b8;
-  --swl-heat-flame-two: #f27a2482;
-  --swl-heat-flame-three: #ffe29bc2;
-  --swl-heat-wash: #f5a73442;
+  --swl-heat-hot: linear-gradient(125deg, #3c2525, #282025 56%, #1e1b25);
+  --swl-heat-fire: linear-gradient(125deg, #4c261f, #302026 54%, #251c26);
+  --swl-heat-edge: #f178509e;
+  --swl-heat-shadow: #f8643d30;
+  --swl-heat-flame-one: #ff7839b8;
+  --swl-heat-flame-two: #f13f3b8c;
+  --swl-heat-flame-three: #ffa985bb;
+  --swl-heat-wash: #f2583547;
+  --swl-heat-ink: #ffe1d6;
+  --swl-heat-avatar-ink: #ffc9b8;
+  --swl-heat-avatar: linear-gradient(145deg, #a842345c, #ff8b4d1c);
+  --swl-heat-avatar-edge: #fa96777d;
+  --swl-heat-action: #241e2e;
+  --swl-heat-action-ink: #e5ceff;
+  --swl-heat-action-edge: #a27dc17d;
 }
 html[data-theme="light"] {
-  --swl-heat-hot: linear-gradient(125deg, #fff0cc, #fff8e8 56%, #fffdf6);
-  --swl-heat-fire: linear-gradient(125deg, #ffe5aa, #fff2d5 54%, #fffaf0);
-  --swl-heat-edge: #cf902fc7;
-  --swl-heat-shadow: #e4a42c3c;
-  --swl-heat-flame-one: #e8a22591;
-  --swl-heat-flame-two: #d97b2580;
-  --swl-heat-flame-three: #ffd575ba;
-  --swl-heat-wash: #edb64338;
+  --swl-heat-hot: linear-gradient(125deg, #ffede4, #fff6f1 56%, #fffbf8);
+  --swl-heat-fire: linear-gradient(125deg, #ffe0cf, #fff0e7 54%, #fff8f3);
+  --swl-heat-edge: #d96b43c7;
+  --swl-heat-shadow: #f16d3c32;
+  --swl-heat-flame-one: #f2784385;
+  --swl-heat-flame-two: #df4d4a70;
+  --swl-heat-flame-three: #ffa179a6;
+  --swl-heat-wash: #ef694038;
+  --swl-heat-ink: #78351f;
+  --swl-heat-avatar-ink: #91391f;
+  --swl-heat-avatar: linear-gradient(145deg, #ffd7c3, #fff0e7);
+  --swl-heat-avatar-edge: #dc8865;
+  --swl-heat-action: #fffbf8;
+  --swl-heat-action-ink: #693990;
+  --swl-heat-action-edge: #bca0ce;
 }
+
+/* This independent drift changes where the plumes rise without moving a card. */
+@property --swl40-ember-shift { syntax: "<percentage>"; initial-value: 0%; inherits: false; }
 
 /* A warm rim and luminous floor keep heat visible without colouring the marks. */
 html:root :is(.is-hot, .is-on-fire):is(.rank-row, .gymnast, .athlete-summary, .chooser, .directory-card, .swlp-hero, .swlp-row, .analytics-scope, .a31-standing-row, .challenge-row, .revisit-grid>button, .skill-map th button) {
@@ -27,11 +44,27 @@ html:root :is(.is-hot, .is-on-fire):is(.rank-row, .gymnast, .athlete-summary, .c
   overflow: hidden;
   background: var(--swl-heat-hot) !important;
   border-color: var(--swl-heat-edge) !important;
-  box-shadow: inset 0 1px 0 #ffdca52b, 0 0 17px var(--swl-heat-shadow) !important;
+  box-shadow: inset 0 1px 0 #ffb69c2b, 0 0 17px var(--swl-heat-shadow) !important;
 }
 html:root .is-on-fire:is(.rank-row, .gymnast, .athlete-summary, .chooser, .directory-card, .swlp-hero, .swlp-row, .analytics-scope, .a31-standing-row, .challenge-row, .revisit-grid>button, .skill-map th button) {
   background: var(--swl-heat-fire) !important;
-  box-shadow: inset 0 1px 0 #ffe7a94d, inset 0 -1px 0 #f6b74b61, 0 0 25px var(--swl-heat-shadow) !important;
+  box-shadow: inset 0 1px 0 #ffc4aa4d, inset 0 -1px 0 #f37d5861, 0 0 25px var(--swl-heat-shadow) !important;
+}
+/* Heat identities follow coral; medals keep their separate metal finish. */
+html:root :is(.is-hot, .is-on-fire):not(.medal) :is(.person strong, .gymnast-name, .chooser-copy strong, .directory-person strong, .swlp-row-person strong, .a31-standing-person strong, .a31-standing-value, .challenge-person strong, .challenge-points b, .athlete-info h2) {
+  color: var(--swl-heat-ink);
+  text-shadow: none;
+}
+html:root :is(.is-hot, .is-on-fire):not(.medal) :is(.directory-avatar, .avatar, .swlp-row-avatar, .swlp-avatar) {
+  color: var(--swl-heat-avatar-ink);
+  background: var(--swl-heat-avatar);
+  border-color: var(--swl-heat-avatar-edge);
+  box-shadow: inset 0 1px 0 #ffddd22b, 0 0 15px var(--swl-heat-shadow);
+}
+html:root .athlete-summary:is(.is-hot, .is-on-fire) :is(.profile-insights, .reveal-placement) {
+  background: var(--swl-heat-action);
+  color: var(--swl-heat-action-ink);
+  border-color: var(--swl-heat-action-edge);
 }
 html:root .is-on-fire:is(.rank-row, .gymnast, .athlete-summary, .chooser, .directory-card, .swlp-hero, .swlp-row, .analytics-scope, .a31-standing-row, .challenge-row, .revisit-grid>button, .skill-map th button)::before {
   content: "" !important;
@@ -44,28 +77,47 @@ html:root .is-on-fire:is(.rank-row, .gymnast, .athlete-summary, .chooser, .direc
   border: 0 !important;
   border-radius: inherit;
   background:
-    radial-gradient(ellipse at 7% 104%, var(--swl-heat-flame-one) 4%, transparent 42%),
-    radial-gradient(ellipse at 88% 102%, var(--swl-heat-flame-two) 6%, transparent 41%),
-    radial-gradient(ellipse at 49% 120%, var(--swl-heat-flame-three) 6%, transparent 44%),
+    radial-gradient(ellipse at 12% 102%, var(--swl-heat-flame-one) 4%, transparent 40%),
+    radial-gradient(ellipse at 86% 100%, var(--swl-heat-flame-two) 6%, transparent 42%),
+    radial-gradient(ellipse at 46% 116%, var(--swl-heat-flame-three) 6%, transparent 42%),
     linear-gradient(155deg, transparent 38%, var(--swl-heat-wash) 61%, transparent 80%) !important;
+  background-size: 137% 106%, 145% 103%, 151% 108%, 100% 100% !important;
+  background-position: var(--swl40-ember-shift) 100%, calc(100% - var(--swl40-ember-shift)) 100%, var(--swl40-ember-shift) 100%, 50% 50% !important;
+  background-repeat: no-repeat !important;
   transform-origin: 50% 100%;
   opacity: .94;
-  animation: swl40-ember-flow 2.6s ease-in-out infinite alternate !important;
-  animation-delay: -.7s !important;
+  animation: swl40-ember-flow 4.7s ease-in-out infinite, swl40-ember-drift 13.1s ease-in-out infinite alternate !important;
+  animation-delay: -.7s, -4.3s !important;
 }
 html:root .is-on-fire:is(.directory-card, .swlp-row, .a31-standing-row, .challenge-row):nth-child(2n)::before {
-  animation-delay: -2.1s !important;
+  animation-duration: 5.3s, 15.7s !important;
+  animation-delay: -2.1s, -9.7s !important;
 }
 html:root .is-on-fire:is(.directory-card, .swlp-row, .a31-standing-row, .challenge-row):nth-child(3n)::before {
-  animation-delay: -1.3s !important;
+  animation-duration: 4.3s, 11.3s !important;
+  animation-delay: -1.3s, -6.8s !important;
+}
+html:root .is-on-fire:is(.directory-card, .swlp-row, .a31-standing-row, .challenge-row):nth-child(5n)::before {
+  animation-duration: 5.9s, 17.3s !important;
+  animation-delay: -3.8s, -12.1s !important;
 }
 html:root .is-on-fire:is(.athlete-summary, .swlp-hero)::before {
-  animation-duration: 3.1s !important;
+  animation-duration: 5.7s, 17.9s !important;
+  background-size: 131% 100%, 137% 100%, 145% 103%, 100% 100% !important;
 }
 @keyframes swl40-ember-flow {
-  0% { transform: translate3d(-5%, 5%, 0) scale(1.04, 1); opacity: .82; }
-  48% { transform: translate3d(3%, -6%, 0) scale(1.1, 1.12); opacity: 1; }
-  100% { transform: translate3d(6%, 2%, 0) scale(1.03, 1.06); opacity: .91; }
+  0%, 100% { transform: translate3d(-3%, 3%, 0) scale(1.04, 1.02); opacity: .86; }
+  17% { transform: translate3d(2%, -6%, 0) scale(1.08, 1.12); opacity: .97; }
+  36% { transform: translate3d(5%, -1%, 0) scale(1.03, 1.06); opacity: .88; }
+  54% { transform: translate3d(-2%, -8%, 0) scale(1.09, 1.15); opacity: 1; }
+  73% { transform: translate3d(-6%, -2%, 0) scale(1.05, 1.08); opacity: .91; }
+  88% { transform: translate3d(1%, -5%, 0) scale(1.07, 1.11); opacity: .95; }
+}
+@keyframes swl40-ember-drift {
+  0% { --swl40-ember-shift: 8%; }
+  32% { --swl40-ember-shift: 74%; }
+  67% { --swl40-ember-shift: 27%; }
+  100% { --swl40-ember-shift: 94%; }
 }
 
 /* Gold / silver / bronze take turns sweeping, with 0.6s between bright passes. */
