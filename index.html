@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Squad Training 3.1</title>
+<title>SWL · Squad Training 4.0</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
 <script src="./theme.js?v=20261026b"></script>
 <script src="./config.js"></script>
@@ -1585,9 +1585,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
-<link rel="stylesheet" href="./analytics-31.css?v=20261029-next-points">
+<link rel="stylesheet" href="./analytics-31.css?v=20261029-v4">
 <link rel="stylesheet" href="./challenge.css?v=20261021-reset"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
+<link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
 </head>
 
 <body>
@@ -1599,7 +1600,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>SQUAD TRAINING <span class="version-tag">3.1</span></small>
+        <small>SQUAD TRAINING <span class="version-tag">4.0</span></small>
       </div>
     </div>
 
@@ -1783,7 +1784,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261019v31"></script>
+<script src="./startup.js?v=20261029-v4"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261021-brief"></script>
@@ -1799,7 +1800,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-ratings.js?v=20261022-contest"></script>
 <script src="./games.js?v=20261026-line-order"></script>
 <script src="./skills-catalogue.js?v=20261019perfect1"></script>
-<script src="./v2.js?v=20261029-next-points"></script>
+<script src="./v4-search.js?v=20261029-v4"></script>
+<script src="./v2.js?v=20261029-v4"></script>
 <script src="./challenge.js?v=20261021-reset"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
@@ -2829,7 +2831,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('exportButton').textContent = damagedRecovery !== null ? 'Download recovery data' : 'Download unsaved backup';
     $('addGymnastButton').disabled = !canEdit();
     $('toastUndo').disabled = !canEdit() || !history.length;
-    document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew]').forEach(button => {
+    document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew], button[data-priority-mark]').forEach(button => {
       button.disabled = !canEdit();
     });
     if ($('undoButton')) $('undoButton').disabled = !canEdit() || !history.length;
@@ -2841,7 +2843,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
     conflict: 'This save can no longer be confirmed safely. Review the latest Google Sheet and download an unsaved backup before discarding or re-entering these edits.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
-    update_required: 'Version 3.1 is ready. Reload this page to use the updated skills and scoring.',
+    update_required: 'Version 4.0 is ready. Reload this page to use the updated skills and scoring.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
     invalid_state: 'The scores include an unknown gymnast, skill or status.',
     duplicate_gymnast: 'A gymnast with that name already exists. Refresh the roster before adding them again.',
@@ -4143,9 +4145,14 @@ html:has(body.no-motion){scroll-behavior:auto}
       } else if (button.hasAttribute('data-close-skills')) {
         closeAllSkills();
       } else if (button.dataset.view) {
-        if (button.dataset.view === 'analytics') v2Api()?.resetAnalytics();
+        if (button.dataset.view === 'analytics') {
+          if (currentView === 'directory') v2Api()?.analyticsFromDirectory();
+          else v2Api()?.resetAnalytics();
+        }
         setView(button.dataset.view);
 
+      } else if (button.hasAttribute('data-priority-mark')) {
+        changeSkill(button.dataset.prioritySkill,button,Number(button.dataset.priorityMark),button.dataset.priorityGymnast);
       } else if (button.hasAttribute('data-quick-skill')) {
         changeSkill(button.dataset.quickSkill,button,undefined,button.dataset.quickGymnast);
       } else if (button.hasAttribute('data-quick-renew')) {

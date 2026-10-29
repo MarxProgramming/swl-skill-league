@@ -1,0 +1,24 @@
+/* Name suggestions sit in the page flow, so they never cover squad controls. */
+#directorySearch,.directory-search,.v4-search-list button{scroll-margin-top:calc(var(--header-height,76px) + 16px);scroll-margin-bottom:18px}
+.v4-search-suggestions{margin:-7px 0 18px;min-width:0;border:1px solid #bd9bff35;border-radius:13px;background:#101018;overflow:hidden;box-shadow:0 8px 24px #0002}
+.v4-search-status{margin:0;padding:11px 14px;border-bottom:1px solid #ffffff0d;color:#b8b0c8;font-size:11px;line-height:1.5}
+.v4-search-list{position:relative;max-height:300px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#66507e transparent}
+.v4-search-list button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:58px;padding:12px 14px;border:0;border-radius:0;border-bottom:1px solid #ffffff09;background:transparent;color:#f5f0ff;text-align:left;cursor:pointer;transition:background .15s ease}
+.v4-search-list button:last-child{border-bottom:0}
+.v4-search-list button:is(:hover,[aria-selected="true"]){background:#bd9bff18}
+.v4-search-list button:focus-visible{outline:2px solid #bd9bff;outline-offset:-3px}
+.v4-search-person{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+.v4-search-person strong{font-size:14px;line-height:1.35;font-weight:750;overflow-wrap:anywhere}
+.v4-search-person small{color:#b0a6c0;font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.v4-search-person .coach-badge{vertical-align:middle}
+.v4-search-arrow{color:#bd9bff;flex:0 0 auto;font-size:19px}
+html[data-theme="light"] .v4-search-suggestions{background:#fff;border-color:#d7c9e6;box-shadow:0 8px 24px #30204609}
+html[data-theme="light"] .v4-search-status{color:#706a7d;border-color:#e9e4ee}
+html[data-theme="light"] .v4-search-list{scrollbar-color:#c9bddb transparent}
+html[data-theme="light"] .v4-search-list button{background:#fff;color:#272238;border-color:#f0ebf5}
+html[data-theme="light"] .v4-search-list button:is(:hover,[aria-selected="true"]){background:#f1ebf8}
+html[data-theme="light"] .v4-search-list button:focus-visible{outline-color:#8154b7}
+html[data-theme="light"] .v4-search-person small{color:#706a7d}
+html[data-theme="light"] .v4-search-arrow{color:#6945a0}
+@media(max-width:480px){.v4-search-list{max-height:250px}.v4-search-list button{padding:11px 12px}.v4-search-status{padding:10px 12px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.v4-search-list button{transition:none}}

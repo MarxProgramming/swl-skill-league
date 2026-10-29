@@ -2,6 +2,7 @@
   'use strict';
   const DAY=86400000, esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all',analyticsAge='all',analyticsComparison='foundation',analyticsRankCategory='overall',analyticsRankMetric='points';
+  let priorityPinned=null,priorityScope='',priorityRenderedIds=[];
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
   const initials=name=>name.trim().split(/\s+/).filter((_,i,a)=>i===0||i===a.length-1).map(s=>Array.from(s)[0]).join('');
@@ -20,7 +21,7 @@
   function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
   const focusControls='button,input,select,summary,a,[tabindex]';
-  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson'];
+  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','priorityMark','prioritySkill','priorityGymnast'];
   function focusKey(root) {
     const e=document.activeElement;if(!e||!root.contains(e))return null;
     const dataset=Object.fromEntries(focusData.filter(key=>e.dataset?.[key]!==undefined).map(key=>[key,e.dataset[key]]));
@@ -54,14 +55,21 @@
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
     directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Find a gymnast, or add a complex to mark the whole squad at a glance.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad <span aria-hidden="true">⌄</span></label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex <span>⌄</span></label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div></div><div id="directoryResults"></div>`;
+    window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
     directory.querySelector('#directorySearch').addEventListener('input',renderDirectory);
     directory.querySelector('#directoryComplex').addEventListener('change',e=>{directoryComplex=e.target.value;renderDirectory();});
     directory.querySelector('#directoryGroups').addEventListener('change',e=>{directoryGroup=e.target.value;renderDirectory();});
-    analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 3.1</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
+    analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 4.0</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
     analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;if(analyticsGroup==='coaches')analyticsAge='all';analyticsGymnast='all';renderAnalytics();});
     analytics.querySelector('#analyticsAge')?.addEventListener('change',e=>{analyticsAge=e.target.value;analyticsGymnast='all';renderAnalytics();});
     analytics.querySelector('#analyticsGymnast').addEventListener('change',e=>{analyticsGymnast=e.target.value;renderAnalytics();});
     analytics.addEventListener('change',e=>{if(e.target.id==='analyticsRankMetric'){analyticsRankMetric=e.target.value;renderAnalytics();}});
+    analytics.addEventListener('toggle',e=>{
+      if(!e.target.isConnected||!e.target.matches?.('details[data-priority-detail]'))return;
+      if([...analytics.querySelectorAll('details[data-priority-detail]')].some(el=>el.open)){
+        if(!priorityPinned)priorityPinned={scope:priorityScope,ids:[...priorityRenderedIds]};
+      }else if(priorityPinned){priorityPinned=null;renderAnalytics();}
+    },true);
     analytics.addEventListener('click',e=>{
       const comparison=e.target.closest('[data-analytics-comparison]');if(comparison){analyticsComparison=comparison.dataset.analyticsComparison;renderAnalytics();return;}
       const category=e.target.closest('[data-analytics-category]');if(category){analyticsRankCategory=category.dataset.analyticsCategory;analyticsRankMetric='points';renderAnalytics();if(category.dataset.v2Focus==='category-chart')analytics.querySelector('#analyticsStandings')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
@@ -110,6 +118,7 @@
       const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
       return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id),due=data.skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)}</strong><small class="heat-meta"><span class="heat-meta-text">${s.achieved}/${data.skills.length} skills · ${s.perfect} perfect</span>${data.fireBadge(g.id)}</small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>pts ↗</small></span></button>${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
+    window.SWLSearch?.render(data,{group:directoryGroup});
     restore(directory,key);
   }
   function aggregate(people,at=Date.now()) {
@@ -234,7 +243,7 @@
       ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)}</strong><small>${esc(personGroups(r.g))}</small></button><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match these filters. Try All ages or another squad.</p>'}
       <p class="chart-note">${weekly?'Includes gains and reductions across all skills. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
   }
-  function skillPriorities(people) {
+  function skillPriorities(people,{includeComplete=false,limit=5}={}) {
     if(!people.length)return [];
     return data.skills.filter(skill=>['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier)).map(skill=>{
       const complex=data.skills.filter(k=>k.category===skill.category&&k.tier===skill.tier);
@@ -246,17 +255,28 @@
         nextPoints=Math.max(nextPoints,gain);minNextPoints=Math.min(minNextPoints,gain);availablePoints+=gain;bonusCount+=bonus;
       });
       return {skill,achieved,perfect,total:people.length,target:achieved===people.length?'perfect':'achieved',nextPoints,minNextPoints:perfect===people.length?0:minNextPoints,availablePoints,bonusCount,toAchieve:people.length-achieved,toPerfect:achieved-perfect};
-    }).filter(row=>row.perfect<row.total).sort((a,b)=>b.availablePoints-a.availablePoints||b.nextPoints-a.nextPoints||String(a.skill.name||a.skill.id).localeCompare(String(b.skill.name||b.skill.id),'en-GB')||a.skill.id.localeCompare(b.skill.id)).slice(0,5);
+    }).filter(row=>includeComplete||row.perfect<row.total).sort((a,b)=>b.availablePoints-a.availablePoints||b.nextPoints-a.nextPoints||String(a.skill.name||a.skill.id).localeCompare(String(b.skill.name||b.skill.id),'en-GB')||a.skill.id.localeCompare(b.skill.id)).slice(0,limit);
+  }
+  function priorityMembers(people,skill) {
+    const status=['Unticked','Achieved','Perfect'],symbols=['○','✓','✓✓'];
+    return `<div class="v4-priority-members"><p class="v4-priority-help">${data.canEdit===false?'Scoring is locked. Unlock scoring at the top to update marks.':'Choose ○ Unticked, ✓ Achieved or ✓✓ Perfect. Changes save automatically.'} Order stays put until you close the skills.</p><ul class="v4-mark-list">${people.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>{
+      const level=data.mark(g.id,skill.id),fresh=data.skillFreshness(g.id,skill.id);
+      return `<li class="v4-mark-row level-${level}"><div class="v4-mark-person"><button type="button" data-gymnast="${esc(g.id)}" data-v2-focus="priority-${esc(skill.id)}" aria-label="Open skills for ${esc(g.name)}">${esc(g.name)} ${coachBadge(g)}</button><small>${status[level]}${level===2&&fresh.due?' · renewal due':''}</small></div><div class="v4-mark-controls" role="group" aria-label="${esc(skill.name||skill.id)} for ${esc(g.name)}">${status.map((label,value)=>`<button type="button" id="priority-mark-${esc(g.id)}-${esc(skill.id)}-${value}" class="v4-mark-button mark-${value}" data-priority-mark="${value}" data-priority-skill="${esc(skill.id)}" data-priority-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(skill.name||skill.id)}: ${label}" aria-pressed="${level===value}" title="${label}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${symbols[value]}</span><span class="sr">${label}</span></button>`).join('')}</div></li>`;
+    }).join('')}</ul></div>`;
   }
   function renderPriorities(people,scope) {
-    const rows=skillPriorities(people);
+    priorityScope=JSON.stringify([analyticsGroup,analyticsAge,analyticsGymnast,people.map(g=>g.id).sort()]);
+    if(priorityPinned?.scope!==priorityScope)priorityPinned=null;
+    const allRows=priorityPinned?skillPriorities(people,{includeComplete:true,limit:Infinity}):null;
+    const rows=priorityPinned?priorityPinned.ids.map(id=>allRows.find(row=>row.skill.id===id)).filter(Boolean):skillPriorities(people);
+    priorityRenderedIds=rows.map(row=>row.skill.id);
     return `<section class="analytics-panel analytics-wide a31-priorities" aria-labelledby="priorityTitle"><div class="analytics-panel-head"><div><p class="eyebrow">Your next training focus</p><h2 id="priorityTitle">Top skills to work on</h2></div><span class="a31-panel-index" aria-hidden="true">01 / FOCUS</span></div>
       <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}${people.length?` · ${people.length===1?'Biggest personal gain':'Biggest combined gain'}`:''}</p>
       ${rows.length?`<ol class="a31-priority-list">${rows.map((row,i)=>{
         const {skill,achieved,perfect,total,target,nextPoints,minNextPoints,availablePoints,bonusCount,toAchieve,toPerfect}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
         const gain=minNextPoints===nextPoints?number(nextPoints):`${number(minNextPoints)}–${number(nextPoints)}`;
         const focus=[toAchieve?`${toAchieve} to achieve`:'',toPerfect?`${toPerfect} to perfect`:''].filter(Boolean).join(' · ');
-        return `<li class="a31-priority-row${target==='perfect'?' is-polishing':''}" data-priority-skill="${esc(skill.id)}"><span class="a31-priority-rank" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">+${number(availablePoints)} pts <small>${total>1?'combined next gain':'from the next tick'}</small></span><span class="a31-priority-focus">${focus}${total>1?` · +${gain} pts each`:''}</span>${bonusCount?`<span class="a31-priority-bonus">Includes +1 complex bonus for ${bonusCount===1?'1 gymnast':`${bonusCount} gymnasts`}</span>`:''}</div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p></div></li>`;
+        return `<li class="v4-priority-entry" data-priority-skill="${esc(skill.id)}"><details data-priority-detail="${esc(skill.id)}" data-analytics-disclosure="priority-${esc(skill.id)}"><summary id="priority-summary-${esc(skill.id)}" class="a31-priority-row${target==='perfect'?' is-polishing':''}"><span class="a31-priority-rank" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">${perfect===total?'All Perfect':`+${number(availablePoints)} pts`} <small>${perfect===total?'complete':total>1?'combined next gain':'from the next tick'}</small></span><span class="a31-priority-focus">${focus}${total>1&&perfect<total?` · +${gain} pts each`:''}</span>${bonusCount?`<span class="a31-priority-bonus">Includes +1 complex bonus for ${bonusCount===1?'1 gymnast':`${bonusCount} gymnasts`}</span>`:''}</div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p><span class="v4-priority-expand"><span class="v4-closed-label">View gymnasts</span><span class="v4-open-label">Close gymnasts</span><span aria-hidden="true">⌄</span></span></div></summary>${priorityMembers(people,skill)}</details></li>`;
       }).join('')}</ol><p class="chart-note">${people.length===1?'Ranked by the points this gymnast can earn from their next tick.':'Ranked by combined points if each gymnast who can improve takes one next step on this skill.'} Unticked → Achieved and Achieved → Perfect each add the skill’s points; existing Perfect marks add none. Includes +1 when that next tick completes a Perfect complex. Equal totals favour the biggest individual gain, then alphabetical order.</p><p class="a31-priority-includes">Purple shows Achieved; mint shows Perfect. Perfect also counts as achieved.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match these filters. Try All ages or another squad.'}</p>`}
       <p class="a31-priority-includes">Includes all rolls, acro and leaps, including pro upgrades. Handstands are excluded.</p></section>`;
   }
@@ -295,11 +315,12 @@
       ${analyticsDisclosure('momentum','Building momentum','Explore point changes over eight weeks',renderMomentum(people))}
       ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',renderAgePanels(cohortPeople))}</div>`);
   }
-  function resetAnalytics() {analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='foundation';analyticsRankCategory='overall';analyticsRankMetric='points';}
-  function selectGymnast(id) {analyticsGroup=isCoach(data?.gymnasts.find(g=>g.id===id))?'coaches':'all';analyticsAge='all';analyticsGymnast=id;}
+  function resetAnalytics() {priorityPinned=null;analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='foundation';analyticsRankCategory='overall';analyticsRankMetric='points';}
+  function analyticsFromDirectory() {resetAnalytics();analyticsGroup=directoryGroup;}
+  function selectGymnast(id) {priorityPinned=null;analyticsGroup=isCoach(data?.gymnasts.find(g=>g.id===id))?'coaches':'all';analyticsAge='all';analyticsGymnast=id;}
   function showGymnastInDirectory(id) {
     const gymnast=data?.gymnasts.find(g=>g.id===id);if(!gymnast)return;
     if(!inGroup(gymnast,directoryGroup))directoryGroup=isCoach(gymnast)?'coaches':'all';
   }
-  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,showGymnastInDirectory});
+  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,showGymnastInDirectory});
 })();
