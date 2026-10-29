@@ -173,3 +173,10 @@ The leaderboard squad dropdown includes **All Saturday afternoon floor & vault**
 A compact theme button beside **All skills** switches the whole app between the original dark design and a light palette. The preference is stored on that device and applied before the page paints. It does not write to Google Sheets. Light mode preserves purple Achieved and mint Perfect marks.
 
 Stick It uses a fixed line order with no gymnast picker. Team sizes, rounds, redraw, no-point, undo, ratings and the final reveal remain available. Small-screen scoring controls stack within each team card. The Google Sheets backend, scoring rules, roster and existing scores are unchanged.
+
+
+### 4.0 visual refinement — 29 October 2026
+
+The existing layout now uses shared category styling, without decorative complex icons. Purple continues to mean Achieved; mint means Perfect. Dark and light modes have coordinated surface, control and focus treatments. Podium metals have staggered sweeps and softer halos; weekly heat uses faster amber/gold motion. System reduced-motion and app motion-off remain supported.
+
+Training priorities show the skill, category/tier, available points, achievement counts/progress and a clearer View gymnasts disclosure. The ranking formula, complex bonus calculation, marks and Google Sheets synchronisation are unchanged.

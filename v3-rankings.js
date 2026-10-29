@@ -54,8 +54,8 @@
       }).join('');
       content = `${podium ? `<div class="v3-podium">${podium}</div>` : ''}<div class="v3-ranking-tail">${shown.filter(row => row.rank > 3).map(card).join('')}${mystery}</div>`;
     } else content = `<div class="v3-category-rows">${shown.map(card).join('')}${mystery}</div>`;
-    const color = /^#[a-f\d]{3}(?:[a-f\d]{3})?$/i.test(board.color || '') ? board.color : '#bd9bff';
-    return `<article class="board v3-board${overall ? ' overall' : ''}" data-leaderboard="${escapeHTML(board.id)}" style="--accent:${color};--delay:${index * 70}ms"><div class="board-head"><span class="board-icon" aria-hidden="true">${escapeHTML(board.icon)}</span><div><h3>${escapeHTML(board.name)}</h3><p>${overall ? 'The complete picture' : 'Perfect earns double'}</p></div><span class="max">MAX<b>${points(max)} pts</b></span></div><div class="v3-board-scope" aria-label="Leaderboard filters"><span class="v3-scope-squad">${escapeHTML(squad)}</span><span class="v3-scope-age">${escapeHTML(age)}</span></div>${shown.length ? `<div class="ranking v3-ranking" role="list" aria-label="${escapeHTML(board.name)}: ${escapeHTML(squad)}, ${escapeHTML(age)}">${content}</div>` : '<p class="v3-board-empty">No gymnasts match these filters.</p>'}</article>`;
+    const color = overall ? '#f3ce86' : 'var(--purple)';
+    return `<article class="board v3-board${overall ? ' overall' : ''}" data-leaderboard="${escapeHTML(board.id)}" style="--accent:${color};--delay:${index * 70}ms"><div class="board-head"><div><h3>${escapeHTML(board.name)}</h3><p>${overall ? 'The complete picture' : 'Perfect earns double'}</p></div><span class="max">MAX<b>${points(max)} pts</b></span></div><div class="v3-board-scope" aria-label="Leaderboard filters"><span class="v3-scope-squad">${escapeHTML(squad)}</span><span class="v3-scope-age">${escapeHTML(age)}</span></div>${shown.length ? `<div class="ranking v3-ranking" role="list" aria-label="${escapeHTML(board.name)}: ${escapeHTML(squad)}, ${escapeHTML(age)}">${content}</div>` : '<p class="v3-board-empty">No gymnasts match these filters.</p>'}</article>`;
   }
 
   window.SWLRankings = Object.freeze({rankRows, visibleRows, renderBoard, commit});

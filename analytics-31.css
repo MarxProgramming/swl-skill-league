@@ -199,3 +199,7 @@ html[data-theme="light"] .v4-mark-controls .mark-1[aria-pressed="true"]{backgrou
 html[data-theme="light"] .v4-mark-controls .mark-2[aria-pressed="true"]{background:#e0f0e7;color:#285b49;border-color:#76a78d}
 @media(max-width:700px){.v4-priority-members{padding-left:35px}.v4-mark-row{align-items:flex-start;flex-wrap:wrap}.v4-mark-person{flex:1 1 120px}.v4-mark-controls{margin-left:auto}}
 @media(max-width:420px){.v4-priority-members{padding-left:0}.v4-mark-person{flex-basis:90px}.v4-mark-controls{gap:4px}}
+
+/* A visible disclosure action inside the native keyboard-accessible summary. */
+.v4-priority-expand{min-height:40px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;justify-content:center;gap:12px}
+.v4-priority-entry>details>summary:focus-visible .v4-priority-expand{outline:2px solid var(--purple);outline-offset:3px}

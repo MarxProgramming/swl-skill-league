@@ -1,0 +1,241 @@
+/* Version 4.0 motion polish. Only decorative layers move; card geometry stays put. */
+html:root {
+  --swl-heat-hot: linear-gradient(125deg, #3a2b20, #282124 56%, #1c1c25);
+  --swl-heat-fire: linear-gradient(125deg, #492d1d, #2d231f 54%, #211d25);
+  --swl-heat-edge: #e9a54b9c;
+  --swl-heat-shadow: #f6a6322c;
+  --swl-heat-flame-one: #ffba46b8;
+  --swl-heat-flame-two: #f27a2482;
+  --swl-heat-flame-three: #ffe29bc2;
+  --swl-heat-wash: #f5a73442;
+}
+html[data-theme="light"] {
+  --swl-heat-hot: linear-gradient(125deg, #fff0cc, #fff8e8 56%, #fffdf6);
+  --swl-heat-fire: linear-gradient(125deg, #ffe5aa, #fff2d5 54%, #fffaf0);
+  --swl-heat-edge: #cf902fc7;
+  --swl-heat-shadow: #e4a42c3c;
+  --swl-heat-flame-one: #e8a22591;
+  --swl-heat-flame-two: #d97b2580;
+  --swl-heat-flame-three: #ffd575ba;
+  --swl-heat-wash: #edb64338;
+}
+
+/* A warm rim and luminous floor keep heat visible without colouring the marks. */
+html:root :is(.is-hot, .is-on-fire):is(.rank-row, .gymnast, .athlete-summary, .chooser, .directory-card, .swlp-hero, .swlp-row, .analytics-scope, .a31-standing-row, .challenge-row, .revisit-grid>button, .skill-map th button) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--swl-heat-hot) !important;
+  border-color: var(--swl-heat-edge) !important;
+  box-shadow: inset 0 1px 0 #ffdca52b, 0 0 17px var(--swl-heat-shadow) !important;
+}
+html:root .is-on-fire:is(.rank-row, .gymnast, .athlete-summary, .chooser, .directory-card, .swlp-hero, .swlp-row, .analytics-scope, .a31-standing-row, .challenge-row, .revisit-grid>button, .skill-map th button) {
+  background: var(--swl-heat-fire) !important;
+  box-shadow: inset 0 1px 0 #ffe7a94d, inset 0 -1px 0 #f6b74b61, 0 0 25px var(--swl-heat-shadow) !important;
+}
+html:root .is-on-fire:is(.rank-row, .gymnast, .athlete-summary, .chooser, .directory-card, .swlp-hero, .swlp-row, .analytics-scope, .a31-standing-row, .challenge-row, .revisit-grid>button, .skill-map th button)::before {
+  content: "" !important;
+  position: absolute !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  inset: -22% -10% -22% !important;
+  width: auto !important;
+  height: auto !important;
+  border: 0 !important;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 7% 104%, var(--swl-heat-flame-one) 4%, transparent 42%),
+    radial-gradient(ellipse at 88% 102%, var(--swl-heat-flame-two) 6%, transparent 41%),
+    radial-gradient(ellipse at 49% 120%, var(--swl-heat-flame-three) 6%, transparent 44%),
+    linear-gradient(155deg, transparent 38%, var(--swl-heat-wash) 61%, transparent 80%) !important;
+  transform-origin: 50% 100%;
+  opacity: .94;
+  animation: swl40-ember-flow 2.6s ease-in-out infinite alternate !important;
+  animation-delay: -.7s !important;
+}
+html:root .is-on-fire:is(.directory-card, .swlp-row, .a31-standing-row, .challenge-row):nth-child(2n)::before {
+  animation-delay: -2.1s !important;
+}
+html:root .is-on-fire:is(.directory-card, .swlp-row, .a31-standing-row, .challenge-row):nth-child(3n)::before {
+  animation-delay: -1.3s !important;
+}
+html:root .is-on-fire:is(.athlete-summary, .swlp-hero)::before {
+  animation-duration: 3.1s !important;
+}
+@keyframes swl40-ember-flow {
+  0% { transform: translate3d(-5%, 5%, 0) scale(1.04, 1); opacity: .82; }
+  48% { transform: translate3d(3%, -6%, 0) scale(1.1, 1.12); opacity: 1; }
+  100% { transform: translate3d(6%, 2%, 0) scale(1.03, 1.06); opacity: .91; }
+}
+
+/* Gold / silver / bronze take turns sweeping, with 0.6s between bright passes. */
+.ranking .rank-row.medal.gold, .v3-podium-place-1 {
+  --swl40-metal: 242 193 92;
+  --swl40-glint: 255 238 185;
+  --swl40-sweep-phase: 0s;
+  --swl40-tide-phase: -1s;
+  --swl40-orbit: 6s;
+}
+.ranking .rank-row.medal.silver, .v3-podium-place-2 {
+  --swl40-metal: 176 198 229;
+  --swl40-glint: 241 248 255;
+  --swl40-sweep-phase: -6.4s;
+  --swl40-tide-phase: -3.7s;
+  --swl40-orbit: 8s;
+}
+.ranking .rank-row.medal.bronze, .v3-podium-place-3 {
+  --swl40-metal: 220 143 98;
+  --swl40-glint: 255 215 177;
+  --swl40-sweep-phase: -3.2s;
+  --swl40-tide-phase: -6.2s;
+  --swl40-orbit: 9s;
+}
+html[data-theme="light"] :is(.ranking .rank-row.medal.gold, .v3-podium-place-1) {
+  --swl40-metal: 198 141 37;
+  --swl40-glint: 255 247 219;
+}
+html[data-theme="light"] :is(.ranking .rank-row.medal.silver, .v3-podium-place-2) {
+  --swl40-metal: 120 143 176;
+  --swl40-glint: 255 255 255;
+}
+html[data-theme="light"] :is(.ranking .rank-row.medal.bronze, .v3-podium-place-3) {
+  --swl40-metal: 181 106 65;
+  --swl40-glint: 255 242 227;
+}
+
+/* Halos live outside the clipping card and fade completely before their edges. */
+.overall .v3-podium-column .v3-podium-stack::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  inset: -28px -22px -24px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgb(var(--swl40-metal) / .2) 12%, rgb(var(--swl40-metal) / .1) 40%, transparent 72%);
+  filter: none;
+  animation: swl40-metal-aura 3.6s ease-in-out infinite alternate;
+  animation-delay: var(--swl40-tide-phase);
+}
+.overall .v3-podium-place-1 .v3-podium-stack::before {
+  inset: -35px -27px -28px;
+  background: radial-gradient(ellipse, rgb(var(--swl40-metal) / .32) 8%, rgb(var(--swl40-metal) / .15) 42%, transparent 73%);
+}
+.overall .v3-podium .rank-row.medal:hover { transform: none; }
+.overall .v3-podium .rank-row.medal {
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.overall .v3-podium .podium-light {
+  inset: 0;
+  overflow: hidden;
+  opacity: .95;
+  background:
+    radial-gradient(ellipse at 13% 110%, rgb(var(--swl40-metal) / .32), transparent 56%),
+    radial-gradient(ellipse at 87% -15%, rgb(var(--swl40-glint) / .17), transparent 54%);
+  background-size: 160% 145%;
+  animation: swl40-metal-tide 5.8s ease-in-out infinite alternate;
+  animation-delay: var(--swl40-tide-phase);
+}
+.overall .v3-podium .podium-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(112deg, transparent 30%, rgb(var(--swl40-metal) / .07) 42%, rgb(var(--swl40-glint) / .3) 50%, rgb(var(--swl40-metal) / .08) 57%, transparent 70%);
+  transform: translateX(-145%);
+  opacity: 0;
+  animation: swl40-metal-sweep 9.6s cubic-bezier(.32, 0, .58, 1) infinite;
+  animation-delay: var(--swl40-sweep-phase);
+}
+.overall .v3-podium .podium-edge {
+  padding: 1px;
+  opacity: .92;
+  background: conic-gradient(from var(--swl-gold-angle), rgb(var(--swl40-metal) / .1) 0deg 25deg, rgb(var(--swl40-metal) / .38) 65deg, rgb(var(--swl40-glint) / .95) 90deg, rgb(var(--swl40-metal) / .1) 126deg 205deg, rgb(var(--swl40-metal) / .38) 245deg, rgb(var(--swl40-glint) / .85) 270deg, rgb(var(--swl40-metal) / .1) 306deg);
+  animation: swl-gold-circuit var(--swl40-orbit) linear infinite;
+  animation-delay: var(--swl40-tide-phase);
+}
+.overall .v3-podium-place-1 .podium-edge { padding: 2px; opacity: 1; }
+.overall .v3-podium .rank-row.medal .avatar::before {
+  background: conic-gradient(from 25deg, transparent 0deg 80deg, rgb(var(--swl40-glint) / .85) 125deg, transparent 168deg 265deg, rgb(var(--swl40-metal) / .55) 310deg, transparent 350deg);
+  border: 0;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - 1px));
+  animation: swl-podium-orbit 9s linear infinite;
+  animation-delay: var(--swl40-tide-phase);
+}
+
+/* Category medals receive the same phased light, with gentler intensity. */
+.board:not(.overall) .rank-row.medal:not(.is-on-fire)::before {
+  inset: 0;
+  opacity: .8;
+  background: radial-gradient(ellipse at 15% 110%, rgb(var(--swl40-metal) / .2), transparent 65%);
+  background-size: 160% 140%;
+  transform: none;
+  animation: swl40-metal-tide 5.8s ease-in-out infinite alternate;
+  animation-delay: var(--swl40-tide-phase);
+}
+.board:not(.overall) .rank-row.medal:not(.is-on-fire)::after {
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: inherit;
+  background: linear-gradient(112deg, transparent 32%, rgb(var(--swl40-glint) / .18) 50%, transparent 68%);
+  transform: translateX(-145%);
+  animation: swl40-metal-sweep 9.6s cubic-bezier(.32, 0, .58, 1) infinite;
+  animation-delay: var(--swl40-sweep-phase);
+}
+@keyframes swl40-metal-tide {
+  from { background-position: 0% 10%; }
+  to { background-position: 100% 85%; }
+}
+@keyframes swl40-metal-aura {
+  from { opacity: .65; transform: scale(.97); }
+  to { opacity: 1; transform: scale(1.025); }
+}
+@keyframes swl40-metal-sweep {
+  0% { transform: translateX(-145%); opacity: 0; }
+  5% { opacity: .6; }
+  13% { opacity: 1; }
+  23% { opacity: .6; }
+  27%, 100% { transform: translateX(145%); opacity: 0; }
+}
+
+/* Repeated heat classes intentionally outrank every legacy :is() target,
+   including targets with table/button type selectors. */
+html:root body.no-motion .is-on-fire.is-on-fire.is-on-fire::before,
+html:root [data-placement-motion="off"] .is-on-fire.is-on-fire.is-on-fire::before {
+  animation: none !important;
+  transform: none !important;
+  opacity: .85;
+}
+body.no-motion .v3-podium-stack::before,
+body.no-motion .podium-light,
+body.no-motion .podium-light::after,
+body.no-motion .podium-edge,
+body.no-motion .rank-row.medal::before,
+body.no-motion .rank-row.medal::after,
+body.no-motion .rank-row.medal .avatar::before {
+  animation: none !important;
+  transform: none !important;
+}
+body.no-motion .podium-light::after,
+body.no-motion .rank-row.medal::after { opacity: 0 !important; }
+@media (prefers-reduced-motion: reduce) {
+  html:root .is-on-fire.is-on-fire.is-on-fire::before {
+    animation: none !important;
+    transform: none !important;
+    opacity: .85;
+  }
+  .v3-podium-stack::before,
+  .podium-light,
+  .podium-light::after,
+  .podium-edge,
+  .rank-row.medal::before,
+  .rank-row.medal::after,
+  .rank-row.medal .avatar::before {
+    animation: none !important;
+    transform: none !important;
+  }
+  .podium-light::after,
+  .rank-row.medal::after { opacity: 0 !important; }
+}

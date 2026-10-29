@@ -1585,10 +1585,12 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
-<link rel="stylesheet" href="./analytics-31.css?v=20261029-v4">
+<link rel="stylesheet" href="./analytics-31.css?v=20261029-polish">
 <link rel="stylesheet" href="./challenge.css?v=20261021-reset"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
 <link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
+<link rel="stylesheet" href="./polish-40.css?v=20261029-polish">
+<link rel="stylesheet" href="./polish-motion-40.css?v=20261029-polish">
 </head>
 
 <body>
@@ -1788,8 +1790,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261021-brief"></script>
-<script src="./v3-rankings.js?v=20261019podium"></script>
-<script src="./placement.js?v=20261019alphabetical"></script>
+<script src="./v3-rankings.js?v=20261029-polish"></script>
+<script src="./placement.js?v=20261029-polish"></script>
 <script src="./games-wheel.js?v=20261019v3"></script>
 <script src="./games-team.js?v=20261020"></script>
 <script src="./games-skill.js?v=20261022-contest"></script>
@@ -1799,9 +1801,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-addon.js?v=20261020"></script>
 <script src="./games-ratings.js?v=20261022-contest"></script>
 <script src="./games.js?v=20261026-line-order"></script>
-<script src="./skills-catalogue.js?v=20261019perfect1"></script>
+<script src="./skills-catalogue.js?v=20261029-polish"></script>
 <script src="./v4-search.js?v=20261029-v4"></script>
-<script src="./v2.js?v=20261029-v4"></script>
+<script src="./v2.js?v=20261029-polish"></script>
 <script src="./challenge.js?v=20261021-reset"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
@@ -3530,15 +3532,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           }
         >
           <div class="complex-head">
-            <span
-              class="board-icon"
-              style="--accent:${category.color}"
-              aria-hidden="true"
-            >
-              ${category.icon}
-            </span>
-
-            <div>
+<div>
               <h3>${escapeHTML(category.name)}</h3>
               <p>${
                 category.id === 'leaps'

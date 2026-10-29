@@ -49,8 +49,8 @@
     const rows = Array.isArray(board.rows) ? board.rows : [];
     const window = placementWindow(rows, gymnast.id);
     const safeId = String(board.id || '').replace(/[^a-z0-9_-]/gi, '');
-    return `<article class="swlp-board" style="--placement-accent:${accent(board.color)}" data-placement-board="${escapeHTML(board.id)}" aria-labelledby="placement-board-${safeId}">
-      <header class="swlp-board-head"><span class="swlp-board-icon" aria-hidden="true">${escapeHTML(board.icon || '✦')}</span>
+    return `<article class="swlp-board" style="--placement-accent:var(--purple)" data-placement-board="${escapeHTML(board.id)}" aria-labelledby="placement-board-${safeId}">
+      <header class="swlp-board-head">
         <div><h3 id="placement-board-${safeId}">${escapeHTML(board.name)}</h3><p>${window.position ? 'The positions around you' : 'Waiting for scores'}</p></div>
         ${window.position ? `<span class="swlp-board-position"><span class="sr">Position </span><strong>${window.position}</strong><small>of ${window.total}</small></span>` : ''}</header>
       <p class="swlp-board-scope">${escapeHTML(options.scope)} <span>· All ages</span></p>

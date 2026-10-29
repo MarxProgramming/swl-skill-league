@@ -1,0 +1,166 @@
+/* SWL 4.0 surface refinement. Paint and feedback only; existing geometry is retained.
+   Violet identifies actions / Achieved. Mint identifies Perfect. Metals and heat
+   retain their own meaning. These tokens deliberately differ in daylight mode. */
+html[data-theme="dark"]{
+  --bg:#0d0e15;--panel:#181922;--text:#f6f3fc;--muted:#aaa5ba;
+  --line:#d5c4ff1c;--purple:#c5a4ff;--mint:#a0efd3;
+  --p40-surface:linear-gradient(145deg,#ffffff04,transparent 65%),#181922;
+  --p40-raised:linear-gradient(145deg,#ffffff06,transparent 65%),#20202d;
+  --p40-field:#11121b;--p40-subtle:#ffffff04;--p40-edge:#d3bfff25;
+  --p40-hover-edge:#b89bdd73;--p40-highlight:#e9dcff0d;
+  --p40-shadow:inset 0 1px #f4eaff08,0 8px 24px #06060c21;
+  --p40-action:linear-gradient(135deg,#d3b8ff,#b994f2);
+  --p40-action-ink:#241832;--p40-action-edge:#dac6ff;
+  --p40-action-glow:#b28af928;--p40-soft-action:#b896ef12;
+  --p40-soft-edge:#b896ef45;--p40-secondary:#c4bbd3;
+  --p40-track:#ffffff09;--p40-modal-shadow:0 32px 100px #0009,inset 0 1px #eee0ff14;
+}
+html[data-theme="light"]{
+  --bg:#f7f6fa;--panel:#fff;--text:#292338;--muted:#6d657d;
+  --line:#dfd8e8;--purple:#684398;--mint:#236d59;
+  --p40-surface:linear-gradient(145deg,#fff,#fdfcfe);
+  --p40-raised:linear-gradient(145deg,#fff,#f6f2fa);
+  --p40-field:#faf8fc;--p40-subtle:#6c479604;--p40-edge:#ded5e8;
+  --p40-hover-edge:#b9a2cf;--p40-highlight:#fff;
+  --p40-shadow:inset 0 1px #fff,0 5px 20px #30204608;
+  --p40-action:linear-gradient(135deg,#7851a5,#63418d);
+  --p40-action-ink:#fff;--p40-action-edge:#7851a5;
+  --p40-action-glow:#6945a020;--p40-soft-action:#eee6f8;
+  --p40-soft-edge:#d0bce4;--p40-secondary:#63576f;
+  --p40-track:#e9e2f0;--p40-modal-shadow:0 28px 90px #3020462b,inset 0 1px #fff;
+}
+
+/* The app chrome is quiet, with one luminous active navigation surface. */
+html[data-theme="dark"] body{background:radial-gradient(ellipse at 92% -8%,#67508a25,transparent 47%),var(--bg)}
+html[data-theme="light"] body{background:radial-gradient(ellipse at 92% -8%,#e7ddf455,transparent 47%),var(--bg)}
+html[data-theme] .header{border-bottom-color:var(--p40-edge);box-shadow:0 8px 25px #00000005}
+html[data-theme] .nav{background:var(--p40-field);border-color:var(--p40-edge);box-shadow:inset 0 1px var(--p40-highlight),0 8px 28px #0000000a}
+html[data-theme] .nav::before{background:var(--p40-action);box-shadow:inset 0 1px #ffffff35,0 3px 12px var(--p40-action-glow)}
+html[data-theme] .nav button[aria-pressed=true]{color:var(--p40-action-ink)}
+html[data-theme] .nav button:not([aria-pressed=true]){color:var(--muted)}
+html[data-theme] .version-tag{color:var(--purple);background:var(--p40-soft-action);border-color:var(--p40-soft-edge)}
+html[data-theme] :is(.quiet,.scoring-guide-button,.stepper button){color:var(--p40-secondary);background:var(--p40-subtle);border-color:var(--p40-edge);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] :is(.primary,.swl-welcome-enter,.rating-primary,.swl-skill-primary,.swl-team-primary,.swl-addon-primary,.swl-relay-primary){color:var(--p40-action-ink);background:var(--p40-action);border-color:var(--p40-action-edge);box-shadow:inset 0 1px #ffffff30,0 5px 18px var(--p40-action-glow)}
+html[data-theme] :is(.scoring-lock-button,.scoring-lock-button[data-locked=true],.insights-button,.reveal-placement,.a31-open-profile){color:var(--purple);background:var(--p40-soft-action);border-color:var(--p40-soft-edge);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] .utilities .all-skills-button[aria-pressed=true]{color:var(--purple);border-color:var(--p40-soft-edge);background:var(--p40-soft-action)}
+html[data-theme] :is(.chip,.catalogue-filters button,.a31-segments button,.games-sort-button){color:var(--p40-secondary)}
+html[data-theme] :is(.chip,.catalogue-filters button,.a31-segments button,.games-sort-button)[aria-pressed=true]{color:var(--purple);background:var(--p40-soft-action);border-color:var(--p40-soft-edge);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] :is(.a31-segments,.games-sort){background:var(--p40-field);border-color:var(--p40-edge)}
+html[data-theme] .squad-family-switch button{background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] .squad-family-switch button[aria-pressed=true]{background:var(--p40-soft-action);border-color:var(--p40-soft-edge);box-shadow:inset 0 1px var(--p40-highlight),0 3px 16px var(--p40-action-glow)}
+html[data-theme] .squad-family-switch button[aria-pressed=true]>span{color:var(--purple)}
+
+/* No category needs its own accent colour. Medal colours remain independent. */
+html[data-theme] :is(.board:not(.overall),.complex,.catalogue-complex,.swlp-board){--accent:var(--purple)!important}
+html[data-theme] :is(.tier-label,.upgrade .tier-label,.pro .tier-label,.catalogue-complex-head p){color:var(--purple)}
+html[data-theme] :is(.catalogue-points,.directory-points b){color:var(--purple)}
+html[data-theme] :is(.board:not(.overall),.complex,.roster,.directory-tools,.analytics-filters,.catalogue-complex,.swlp-board){background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] :is(.directory-card,.rank-row:not(.medal),.gymnast,.swlp-row,.challenge-row):not(.is-hot):not(.is-on-fire):not(.challenge-winner){background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:inset 0 1px var(--p40-highlight),0 3px 10px #00000005}
+html[data-theme] :is(.directory-avatar,.avatar,.swlp-avatar,.swlp-row-avatar){background:var(--p40-soft-action);color:var(--purple);border-color:var(--p40-soft-edge)}
+html[data-theme] .athlete-summary:not(.is-hot):not(.is-on-fire){background:var(--p40-raised);border-color:var(--p40-soft-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] :is(.complex-head,.directory-complex-tools,.catalogue-complex li,.v3-board-scope,.v4-search-status){border-color:var(--p40-edge)}
+html[data-theme] :is(.coach-badge.coach-badge,.multi-squad-badge,.v3-board-scope>span){background:var(--p40-soft-action);border-color:var(--p40-soft-edge);color:var(--purple)}
+html[data-theme] :is(.catalogue-head>p:not(.eyebrow),.catalogue-note,#igaSourceNote,.profile-navigation>span,.directory-quick-label){color:var(--muted)}
+html[data-theme] .iga-grade{background:var(--p40-subtle);border-color:var(--p40-edge);color:var(--p40-secondary)}
+
+/* Inputs and suggestions retain their native, easy-to-use controls. */
+html[data-theme] :is(.board-age-filter select,.directory-complex-tools select,.analytics-filters select,.a31-standing-controls select,.result-filter select,.add-gymnast input,.swl-game-team-picker select,.swl-contest-team select,.swl-skill-name input,.swl-team-name input,.swl-addon-name input,.swl-relay-name input,.swlt-team-input input){background:var(--p40-field);color:var(--text);border-color:var(--p40-edge);box-shadow:inset 0 1px 3px #00000008}
+html[data-theme] :is(.directory-search,.search){background:var(--p40-field);border-color:var(--p40-edge);box-shadow:inset 0 1px 3px #0000000a}
+html[data-theme] .directory-search:focus-within{outline-color:var(--purple);border-color:var(--p40-hover-edge)}
+html[data-theme] .directory-search input{color:var(--text)}
+html[data-theme] .v4-search-suggestions{background:var(--p40-raised);border-color:var(--p40-soft-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] .v4-search-list button{background:transparent;color:var(--text);border-color:var(--p40-edge)}
+html[data-theme] .v4-search-list button[aria-selected=true]{background:var(--p40-soft-action)}
+html[data-theme] :is(.v4-search-status,.v4-search-person small){color:var(--muted)}
+html[data-theme] .v4-search-arrow{color:var(--purple)}
+
+/* Uniform skill cells: an inset highlight makes their boundaries easier to read.
+   State colours are explicit so category accents cannot recolour any tick. */
+html[data-theme="dark"] :is(.skill-cell,.directory-quick-cell){background:linear-gradient(145deg,#22212d,#1b1b25);border-color:#d3bfff32;box-shadow:inset 0 1px #ffffff07}
+html[data-theme="dark"] :is(.skill-cell[data-status="1"],.directory-quick-cell.level-1){background:linear-gradient(145deg,#3b2c4c,#282033);border-color:#bc93f092;box-shadow:inset 0 1px #e1c1ff17}
+html[data-theme="dark"] :is(.skill-cell[data-status="2"],.directory-quick-cell.level-2){background:linear-gradient(145deg,#223d35,#1a2927);border-color:#8bdab885;box-shadow:inset 0 1px #baffdf17}
+html[data-theme="dark"] :is(.skill[data-status="1"] .skill-status,.directory-quick-skill.level-1){color:#d5b8ff}
+html[data-theme="dark"] .skill[data-status="1"] .skill-status{background:#c29bff18;border-color:#bc93f078}
+html[data-theme="dark"] :is(.skill[data-status="2"] .skill-status,.directory-quick-skill.level-2){color:#b6f8df}
+html[data-theme="dark"] .skill[data-status="2"] .skill-status{background:#9ce8cf16;border-color:#8bdab86b}
+html[data-theme="dark"] :is(.skill[data-status="2"] .skill-points,.skill[data-status="2"] .skill-bottom,.tier-status){color:#a0efd3}
+html[data-theme="dark"] .skill-renewal button{background:#9ce8cf18;border-color:#9ce8cf65;color:#c2f8e6}
+html[data-theme="dark"] .renewal-date{color:#b0d8ca}
+html[data-theme="dark"] :is(.skill-cell[data-due=true],.directory-quick-cell.is-due){border-color:#f59b8b99;box-shadow:inset 0 1px #ffd7c90d,inset 0 -12px 25px #f276650b}
+html[data-theme="dark"] .skill-cell[data-due=true] .skill-renewal button{color:#ffe6df;border-color:#f58b81a0;background:#f58b8128}
+html[data-theme="dark"] .skill-cell[data-due=true] .renewal-date{color:#ffd4ca}
+html[data-theme="light"] :is(.skill-cell,.directory-quick-cell){background:linear-gradient(145deg,#f7f4fa,#f0ebf5);border-color:#d4c9e0;box-shadow:inset 0 1px #fff}
+html[data-theme="light"] :is(.skill-cell[data-status="1"],.directory-quick-cell.level-1){background:linear-gradient(145deg,#ece0f6,#f5eefb);border-color:#ae8bce}
+html[data-theme="light"] :is(.skill-cell[data-status="2"],.directory-quick-cell.level-2){background:linear-gradient(145deg,#dceee5,#edf6f1);border-color:#85b39d}
+html[data-theme="light"] :is(.skill-cell[data-due=true],.directory-quick-cell.is-due){border-color:#c78b7c;box-shadow:inset 0 1px #fff,inset 0 -12px 25px #da8d6c0b}
+
+/* Analytics keep the data vivid and the surrounding furniture restrained. */
+html[data-theme] #analyticsRoot :is(.analytics-panel,.a31-priorities,.a31-squad-panel,.a31-stats article){background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] #analyticsRoot .a31-priorities{border-color:var(--p40-soft-edge)}
+html[data-theme] #analyticsRoot .a31-disclosure-content>.analytics-panel{background:transparent;border:0;box-shadow:none}
+html[data-theme] :is(.a31-priority-row,.v4-mark-row){border-color:var(--p40-edge)}
+html[data-theme] :is(.a31-priority-skill h3,.a31-priority-count strong,.a31-disclosure-title,.v4-mark-person>button){color:var(--text)}
+html[data-theme] :is(.a31-priority-gain,.is-polishing .a31-priority-count strong){color:var(--purple)}
+html[data-theme] :is(.a31-priority-skill p,.a31-priority-count,.a31-priority-count strong span,.a31-disclosure-description,.v4-priority-help){color:var(--muted)}
+html[data-theme] .a31-disclosure-icon{color:var(--purple);background:var(--p40-soft-action);border-color:var(--p40-soft-edge)}
+html[data-theme] #analyticsRoot :is(.a31-squad-row,.a31-age-row){background:var(--p40-subtle);border-color:var(--p40-edge)}
+html[data-theme] .a31-standing-row:not(.is-hot):not(.is-on-fire){background:var(--p40-subtle);border-color:var(--p40-edge)}
+html[data-theme] :is(.a31-comparison-track,.a31-stack,.a31-standing-bar){background:var(--p40-track)}
+html[data-theme="dark"] .a31-perfect{background:#a0efd3!important}
+html[data-theme="dark"] .a31-achieved{background:#c5a4ff!important}
+html[data-theme] .v4-priority-expand{color:var(--purple);background:var(--p40-soft-action);border-radius:8px;box-shadow:0 0 0 1px var(--p40-soft-edge),inset 0 1px var(--p40-highlight)}
+
+/* Game panels share the app's material. Team colours, reel outcomes, wheel slices,
+   rating stars and running/stop states retain their original semantic colours. */
+html[data-theme] .game-card:not(.is-hottest){background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] .game-card-play{box-shadow:inset 0 1px #ffffff2b,0 5px 15px #00000012}
+html[data-theme] :is(.swl-skill-setup,.swl-team-setup,.swl-addon-setup,.swl-relay-setup,.swlt-panel,.swl-skill-stage,.swl-team-stage,.swl-addon-stage,.swl-relay-stage,.swlt-stage,.swltr-card,.swl-skill-finish,.swl-team-finish,.swl-addon-results,.swl-relay-finish,.swlt-finish,.swltr-finish){background:var(--p40-surface);border-left-color:var(--p40-edge);border-right-color:var(--p40-edge);border-bottom-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] :is(.swl-skill-rules,.swl-team-rules,.swl-addon-guide,.swl-relay-rules,.swlt-rules,.swltr-instructions){background:var(--p40-raised);border-color:var(--p40-soft-edge);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] :is(.swl-skill-secondary,.swl-team-secondary,.swl-addon-secondary,.swl-relay-secondary,.rating-secondary,.swlw-new-game){background:var(--p40-subtle);border-color:var(--p40-edge);color:var(--p40-secondary);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] :is(.swl-skill-team-choice,.swl-team-choice,.swl-addon-count-button,.swl-shuffle-difficulty-button)[aria-pressed=true]{background:var(--p40-soft-action);border-color:var(--p40-soft-edge);color:var(--purple);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] :is(.swl-skill-stepper,.swl-addon-stepper){background:var(--p40-field);border-color:var(--p40-edge)}
+html[data-theme] :is(.swl-skill-step,.swl-addon-step){background:var(--p40-soft-action);color:var(--purple);border-color:var(--p40-soft-edge)}
+html[data-theme] :is(.swl-skill-stepper input,.swl-addon-stepper input){background:transparent;color:var(--text)}
+html[data-theme] .swlw-result:not(.has-result){background:var(--p40-surface);border-color:var(--p40-edge);box-shadow:var(--p40-shadow)}
+html[data-theme] .swlw-game .swlw-option{box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] .swl-game-team-picker select{color:var(--text)}
+
+/* Dialogs and secondary destinations use the same tonal hierarchy. */
+html[data-theme] :is(.menu,.score-guide,.game-rating-dialog,.swlw-inspector,.swl-welcome,.swl-lock){background:var(--p40-raised);border-color:var(--p40-soft-edge);box-shadow:var(--p40-modal-shadow)}
+html[data-theme] .score-guide-head{background:var(--panel)}
+html[data-theme] :is(.rating-close,.score-guide-close,.swl-welcome-close){background:var(--p40-subtle);border-color:var(--p40-edge);color:var(--p40-secondary)}
+html[data-theme] .swl-lock{color:var(--text)}
+html[data-theme] .swl-lock-icon{background:var(--p40-soft-action);color:var(--purple);border-color:var(--p40-soft-edge);box-shadow:inset 0 1px var(--p40-highlight)}
+html[data-theme] .swl-lock-description{color:var(--muted)}
+html[data-theme] .swl-lock-dot{background:var(--p40-field);border-color:var(--p40-soft-edge)}
+html[data-theme] .swl-lock-dot.is-filled{background:var(--purple);border-color:var(--purple);box-shadow:0 0 16px var(--p40-action-glow)}
+html[data-theme] .swl-lock-status:not(.is-error){color:var(--purple)}
+html[data-theme] .swl-lock .swl-lock-key{background:var(--p40-surface);border-color:var(--p40-edge);color:var(--text);box-shadow:inset 0 1px var(--p40-highlight),0 3px 0 #0000000a}
+html[data-theme] .swl-lock .swl-lock-key--action{background:var(--p40-field);color:var(--p40-secondary)}
+html[data-theme] .swl-lock .swl-lock-key:active:not(:disabled){background:var(--p40-action);color:var(--p40-action-ink);border-color:var(--p40-action-edge)}
+html[data-theme] .challenge-entry-button{color:var(--p40-secondary)}
+html[data-theme] .challenge-row-progress{background:var(--p40-track)}
+html[data-theme] .challenge-entry-button:hover{color:var(--purple)}
+
+/* Consistent feedback without moving or resizing any control. Hover only applies
+   to devices with a pointer; keyboard focus remains visible on touch keyboards. */
+html[data-theme] :is(button,select,input,summary,a):focus-visible{outline-color:var(--purple)}
+html[data-theme] :is(.quiet,.chip,.insights-button,.reveal-placement,.scoring-lock-button,.catalogue-filters button,.a31-segments button,.games-sort-button,.v4-search-list button,.v4-mark-button,.swl-lock-key){transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .2s var(--ease)}
+@media(hover:hover){
+  html[data-theme] :is(.quiet,.scoring-guide-button,.insights-button,.reveal-placement,.a31-open-profile,.catalogue-filters button,.a31-segments button,.games-sort-button):hover:not(:disabled){border-color:var(--p40-hover-edge);background:var(--p40-soft-action);color:var(--purple)}
+  html[data-theme] :is(.primary,.swl-welcome-enter,.rating-primary,.swl-skill-primary,.swl-team-primary,.swl-addon-primary,.swl-relay-primary):hover:not(:disabled){background:var(--p40-action);box-shadow:inset 0 1px #ffffff38,0 7px 24px var(--p40-action-glow)}
+  html[data-theme] .directory-card:hover:not(.is-hot):not(.is-on-fire){border-color:var(--p40-hover-edge)}
+  html[data-theme] :is(.directory-profile,.v4-search-list button,.a31-disclosure>summary):hover{background:var(--p40-soft-action)}
+  html[data-theme] #analyticsRoot :is(.a31-squad-row,.a31-age-row):hover:not(:disabled){border-color:var(--p40-hover-edge);background:var(--p40-soft-action)}
+  html[data-theme] .v4-priority-entry>details>summary:hover .v4-priority-expand{box-shadow:0 0 0 1px var(--p40-hover-edge),0 4px 14px var(--p40-action-glow)}
+  html[data-theme] .swl-lock .swl-lock-key:hover:not(:disabled){background:var(--p40-soft-action);border-color:var(--p40-hover-edge);color:var(--purple)}
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-theme] :is(.quiet,.chip,.insights-button,.reveal-placement,.scoring-lock-button,.catalogue-filters button,.a31-segments button,.games-sort-button,.v4-search-list button,.v4-mark-button,.swl-lock-key){transition:none}
+}
+html[data-theme] body.no-motion :is(.quiet,.chip,.insights-button,.reveal-placement,.scoring-lock-button,.catalogue-filters button,.a31-segments button,.games-sort-button,.v4-search-list button,.v4-mark-button,.swl-lock-key){transition:none}
+/* Shared category paint also wins over older light-theme per-category rules. */
+html[data-theme] .swlp-board[data-placement-board]{--placement-accent:var(--purple)!important}
+html[data-theme] .swl-skill-reel-card[data-tier]{background:var(--p40-raised);border-color:var(--p40-soft-edge);border-bottom-color:var(--purple)}
+/* Bound the placement caption so long squad names cannot squeeze the person’s name. */
+@media(max-width:620px){.swlp-hero{grid-template-columns:minmax(0,1fr) 86px}.swlp-overall{width:86px;min-width:0}.swlp-overall p{overflow-wrap:normal;line-height:1.5}}
