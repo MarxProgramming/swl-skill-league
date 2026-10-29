@@ -1590,7 +1590,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./theme.css?v=20261026b">
 <link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
 <link rel="stylesheet" href="./polish-40.css?v=20261029-fire-green">
-<link rel="stylesheet" href="./polish-motion-40.css?v=20261029-fire-green">
+<link rel="stylesheet" href="./polish-motion-40.css?v=20261029-weekly-flames">
 </head>
 
 <body>
@@ -1765,7 +1765,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. A warm glow starts at 10 qualifying points in seven days; the stronger animated glow starts at 15. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Highlights last seven days from earning them.</li>
+    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. One flame appears beside your name at 10 qualifying points in the last seven days, two at 20, and three at 30. At 50 points, your card also gains a slow red-orange fire effect. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Flames and the fire effect follow the qualifying points earned in the current seven-day window.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
   </ul>
 </dialog>
@@ -1791,7 +1791,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261021-brief"></script>
 <script src="./v3-rankings.js?v=20261029-polish"></script>
-<script src="./placement.js?v=20261029-polish"></script>
+<script src="./placement.js?v=20261029-weekly-flames"></script>
 <script src="./games-wheel.js?v=20261019v3"></script>
 <script src="./games-team.js?v=20261020"></script>
 <script src="./games-skill.js?v=20261022-contest"></script>
@@ -1802,9 +1802,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-ratings.js?v=20261022-contest"></script>
 <script src="./games.js?v=20261026-line-order"></script>
 <script src="./skills-catalogue.js?v=20261029-polish"></script>
-<script src="./v4-search.js?v=20261029-v4"></script>
-<script src="./v2.js?v=20261029-polish"></script>
-<script src="./challenge.js?v=20261021-reset"></script>
+<script src="./v4-search.js?v=20261029-weekly-flames"></script>
+<script src="./v2.js?v=20261029-weekly-flames"></script>
+<script src="./challenge.js?v=20261029-weekly-flames"></script>
 <script src="./welcome.js?v=20261019v3"></script>
 <script>
 (() => {
@@ -2395,16 +2395,22 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
   function heatLevel(id, at = Date.now()) {
     if (confirmedState.weeklyProgress?.heatRule !== 'foundation-perfect-v1') return 'none';
-    const points=weeklyHeatPoints(id,at), heat=confirmedState.weeklyProgress?.heat[id], now=Number(new Date(at));
-    return points>=15 || Date.parse(heat?.onFireUntil)>now ? 'fire'
-      : points>=10 || Date.parse(heat?.hotUntil)>now ? 'hot' : 'none';
+    const points = weeklyHeatPoints(id, at);
+    // Legacy glow-until timestamps use the old 10/15 thresholds. New visuals
+    // follow only qualifying points in the current seven-day window.
+    return points >= 50 ? 'fire' : points >= 10 ? 'hot' : 'none';
   }
   const isOnFire = (id, at = Date.now()) => heatLevel(id, at) === 'fire';
-  const heatClass = id => heatLevel(id) === 'fire' ? ' is-on-fire' : heatLevel(id) === 'hot' ? ' is-hot' : '';
-  // Heat remains a visual treatment; it no longer adds a text/emoji badge.
-  function fireBadge() { return ''; }
+  const heatClass = id => isOnFire(id) ? ' is-on-fire' : '';
+  function fireBadge(id, at = Date.now()) {
+    const points = weeklyHeatPoints(id, at);
+    const flames = points >= 30 ? 3 : points >= 20 ? 2 : points >= 10 ? 1 : 0;
+    if (!flames) return '';
+    const label = `${flames} ${flames === 1 ? 'flame' : 'flames'}: ${points.toLocaleString('en-GB', {maximumFractionDigits:2})} qualifying points in the last 7 days`;
+    return `<span class="weekly-flames" role="img" aria-label="${label}" title="${label}"><span aria-hidden="true">${'🔥'.repeat(flames)}</span></span>`;
+  }
   function renderV2() {
-    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
+    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
     v2Api()?.render({state,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
@@ -3396,8 +3402,8 @@ html:has(body.no-motion){scroll-behavior:auto}
           <p class="eyebrow">${escapeHTML(gymnastSquadLabel(gymnast))}</p>
 
           <h2 id="athleteTitle" tabindex="-1">
-            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)}
-          </h2><div id="athleteFire">${fireBadge(gymnast.id)}</div>
+            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteFire">${fireBadge(gymnast.id)}</span>
+          </h2>
 
           <div class="mini-stats">
             <span>
@@ -3600,9 +3606,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('athleteAchieved').textContent = total.achieved;
     $('athletePerfect').textContent = total.perfect;
     $('athleteSummary')?.classList?.toggle('is-on-fire', isOnFire(selectedId));
-    $('athleteSummary')?.classList?.toggle('is-hot', heatLevel(selectedId) === 'hot');
+    $('athleteSummary')?.classList?.remove('is-hot');
     $('gymnastChooser')?.classList?.toggle('is-on-fire', isOnFire(selectedId));
-    $('gymnastChooser')?.classList?.toggle('is-hot', heatLevel(selectedId) === 'hot');
+    $('gymnastChooser')?.classList?.remove('is-hot');
     if ($('athleteFire')) $('athleteFire').innerHTML = fireBadge(selectedId);
     if ($('chooserFire')) $('chooserFire').innerHTML = fireBadge(selectedId);
 

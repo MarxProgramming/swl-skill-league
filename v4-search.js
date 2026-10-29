@@ -43,7 +43,7 @@
     if(!data?.hasLoaded||!normalise(input.value)){matches=[];close();return;}
     const previous=matches[active]?.id;
     matches=findMatches(data.gymnasts,input.value,inGroup);
-    const html=matches.map((g,i)=>`<button type="button" role="option" tabindex="-1" id="gymnast-suggestion-${i}" data-search-index="${i}" aria-selected="false"><span class="v4-search-person"><strong>${esc(g.name)}${isCoach(g)?'<span class="coach-badge">Coach</span>':''}</strong><small>${esc(squadLabel(g))}${!inGroup(g)&&!['all','overall'].includes(group)?' · outside selected squad':''}</small></span><span class="v4-search-arrow" aria-hidden="true">↗</span></button>`).join('');
+    const html=matches.map((g,i)=>`<button type="button" role="option" tabindex="-1" id="gymnast-suggestion-${i}" data-search-index="${i}" aria-selected="false"><span class="v4-search-person"><strong>${esc(g.name)}${isCoach(g)?'<span class="coach-badge">Coach</span>':''} ${data.fireBadge?.(g.id)||''}</strong><small>${esc(squadLabel(g))}${!inGroup(g)&&!['all','overall'].includes(group)?' · outside selected squad':''}</small></span><span class="v4-search-arrow" aria-hidden="true">↗</span></button>`).join('');
     if(html!==lastHTML){list.innerHTML=html;lastHTML=html;}
     const message=matches.length?`${matches.length} ${matches.length===1?'matching name':'matching names'} · tap to open skills`:'No matching names. Try a first name or surname.';
     if(status.textContent!==message)status.textContent=message;
