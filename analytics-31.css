@@ -7,7 +7,13 @@
 .a31-priority-skill{min-width:0}
 .a31-priority-skill h3{font-size:16px;line-height:1.5;margin:0;color:#eee6f8;overflow-wrap:anywhere;font-weight:700}
 .a31-priority-skill p{font-size:10px;line-height:1.6;color:#a89ab8;margin:5px 0 10px;overflow-wrap:anywhere}
-.a31-priority-focus{font-size:10px;line-height:1.5;color:#b5a6c3}
+.a31-priority-focus{display:block;font-size:10px;line-height:1.5;color:#b5a6c3}
+.a31-priority-gain{display:block;margin:0 0 8px;font-size:16px;font-weight:750;line-height:1.6;color:#d6baff;font-variant-numeric:tabular-nums}
+.a31-priority-gain small{font-size:10px;font-weight:500;color:#b5a6c3;display:inline-block}
+.a31-priority-bonus{display:block;margin-top:4px;font-size:10px;line-height:1.6;color:#cab593}
+html[data-theme="light"] .a31-priority-gain{color:#6945a0}
+html[data-theme="light"] .a31-priority-gain small{color:#706a7d}
+html[data-theme="light"] .a31-priority-bonus{color:#856020}
 .is-polishing .a31-priority-focus{color:#d0afff}
 .a31-priority-progress{min-width:0}
 .a31-priority-count{display:flex;align-items:baseline;flex-wrap:wrap;gap:9px;margin:0 0 9px;color:#b6a7c5;font-size:11px;line-height:1.5}

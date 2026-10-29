@@ -236,21 +236,29 @@
   }
   function skillPriorities(people) {
     if(!people.length)return [];
-    return data.skills.filter(skill=>['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade'].includes(skill.tier)).map(skill=>{
-      let achieved=0,perfect=0;
-      people.forEach(g=>{const mark=data.mark(g.id,skill.id);if(mark>=1)achieved++;if(mark===2)perfect++;});
-      return {skill,achieved,perfect,total:people.length,target:achieved===people.length?'perfect':'achieved'};
-    }).filter(row=>row.perfect<row.total).sort((a,b)=>a.achieved-b.achieved||a.perfect-b.perfect||String(a.skill.name||a.skill.id).localeCompare(String(b.skill.name||b.skill.id),'en-GB')||a.skill.id.localeCompare(b.skill.id)).slice(0,5);
+    return data.skills.filter(skill=>['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier)).map(skill=>{
+      const complex=data.skills.filter(k=>k.category===skill.category&&k.tier===skill.tier);
+      let achieved=0,perfect=0,nextPoints=0,minNextPoints=Infinity,availablePoints=0,bonusCount=0;
+      people.forEach(g=>{
+        const mark=data.mark(g.id,skill.id);if(mark>=1)achieved++;if(mark===2){perfect++;return;}
+        const bonus=Number(mark===1&&complex.length===3&&complex.every(k=>k.id===skill.id||data.mark(g.id,k.id)===2));
+        const gain=Number(skill.points)+bonus;
+        nextPoints=Math.max(nextPoints,gain);minNextPoints=Math.min(minNextPoints,gain);availablePoints+=gain;bonusCount+=bonus;
+      });
+      return {skill,achieved,perfect,total:people.length,target:achieved===people.length?'perfect':'achieved',nextPoints,minNextPoints:perfect===people.length?0:minNextPoints,availablePoints,bonusCount,toAchieve:people.length-achieved,toPerfect:achieved-perfect};
+    }).filter(row=>row.perfect<row.total).sort((a,b)=>b.availablePoints-a.availablePoints||b.nextPoints-a.nextPoints||String(a.skill.name||a.skill.id).localeCompare(String(b.skill.name||b.skill.id),'en-GB')||a.skill.id.localeCompare(b.skill.id)).slice(0,5);
   }
   function renderPriorities(people,scope) {
     const rows=skillPriorities(people);
     return `<section class="analytics-panel analytics-wide a31-priorities" aria-labelledby="priorityTitle"><div class="analytics-panel-head"><div><p class="eyebrow">Your next training focus</p><h2 id="priorityTitle">Top skills to work on</h2></div><span class="a31-panel-index" aria-hidden="true">01 / FOCUS</span></div>
-      <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</p>
+      <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}${people.length?` · ${people.length===1?'Biggest personal gain':'Biggest combined gain'}`:''}</p>
       ${rows.length?`<ol class="a31-priority-list">${rows.map((row,i)=>{
-        const {skill,achieved,perfect,total,target}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
-        return `<li class="a31-priority-row${target==='perfect'?' is-polishing':''}" data-priority-skill="${esc(skill.id)}"><span class="a31-priority-rank" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-focus">${target==='perfect'?'Ready to perfect':'Build achievement'}</span></div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved · ${total-perfect} to perfect`:`${perfect} of ${total} perfected · ${total-achieved} to achieve`}</p></div></li>`;
-      }).join('')}</ol><p class="chart-note">Fewest achieved first, then fewest perfected; equal counts are alphabetical. Perfect also counts as achieved. Purple shows Achieved; mint shows Perfect.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set of foundations.':'No gymnasts match these filters. Try All ages or another squad.'}</p>`}
-      <p class="a31-priority-includes">Rolls and acro: base + upgrades. Leaps: basic + upgraded. Pro upgrades and handstands are excluded.</p></section>`;
+        const {skill,achieved,perfect,total,target,nextPoints,minNextPoints,availablePoints,bonusCount,toAchieve,toPerfect}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
+        const gain=minNextPoints===nextPoints?number(nextPoints):`${number(minNextPoints)}–${number(nextPoints)}`;
+        const focus=[toAchieve?`${toAchieve} to achieve`:'',toPerfect?`${toPerfect} to perfect`:''].filter(Boolean).join(' · ');
+        return `<li class="a31-priority-row${target==='perfect'?' is-polishing':''}" data-priority-skill="${esc(skill.id)}"><span class="a31-priority-rank" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">+${number(availablePoints)} pts <small>${total>1?'combined next gain':'from the next tick'}</small></span><span class="a31-priority-focus">${focus}${total>1?` · +${gain} pts each`:''}</span>${bonusCount?`<span class="a31-priority-bonus">Includes +1 complex bonus for ${bonusCount===1?'1 gymnast':`${bonusCount} gymnasts`}</span>`:''}</div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p></div></li>`;
+      }).join('')}</ol><p class="chart-note">${people.length===1?'Ranked by the points this gymnast can earn from their next tick.':'Ranked by combined points if each gymnast who can improve takes one next step on this skill.'} Unticked → Achieved and Achieved → Perfect each add the skill’s points; existing Perfect marks add none. Includes +1 when that next tick completes a Perfect complex. Equal totals favour the biggest individual gain, then alphabetical order.</p><p class="a31-priority-includes">Purple shows Achieved; mint shows Perfect. Perfect also counts as achieved.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match these filters. Try All ages or another squad.'}</p>`}
+      <p class="a31-priority-includes">Includes all rolls, acro and leaps, including pro upgrades. Handstands are excluded.</p></section>`;
   }
   function analyticsDisclosure(id,title,description,content) {
     if(!content)return '';
