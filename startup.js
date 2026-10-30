@@ -99,7 +99,7 @@
     finishRequested = true;
     if (status) status.textContent = options.error
       ? 'Opening squad training. You can retry the connection there.'
-      : 'Your squad dashboard is ready.';
+      : 'Your training app is ready.';
     const remaining = Math.max(0, MINIMUM_MS - (performance.now() - startedAt));
     minimumTimer = setTimeout(leave, remaining);
   }
@@ -139,7 +139,7 @@
       try { motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)'); } catch {}
       previousFocus = document.activeElement;
       overlay = document.createElement('div');
-      overlay.className = 'swl-startup';
+      overlay.className = 'swl-startup swl-startup--studio';
       overlay.tabIndex = -1;
       overlay.setAttribute('role', 'dialog');
       overlay.setAttribute('aria-modal', 'true');
@@ -151,20 +151,16 @@
         <div class="swl-startup__content">
           <p class="swl-startup__eyebrow">SWL GYMNASTICS</p>
           <div class="swl-startup__stage" aria-hidden="true">
-            <span class="swl-startup__ring swl-startup__ring--outer"></span>
-            <span class="swl-startup__ring swl-startup__ring--inner"></span>
-            <span class="swl-startup__ring swl-startup__ring--light"></span>
-            <span class="swl-startup__satellite"></span>
-            <img class="swl-startup__logo" src="./swl-logo.png" alt="" width="2000" height="1125" style="max-width:158px;height:auto;filter:invert(1)">
+            <img class="swl-startup__logo" src="./swl-logo.png" alt="" width="2000" height="1125" style="max-width:184px;height:auto;filter:invert(1)">
           </div>
-          <h2 class="swl-startup__title" id="swlStartupTitle">SWL SQUAD <span>TRAINING</span></h2>
-          <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Getting your squad ready…</p>
+          <h2 class="swl-startup__title" id="swlStartupTitle">Squad <span>training</span></h2>
+          <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Connecting your squad…</p>
           <div class="swl-startup__progress" aria-hidden="true"></div>
           <div class="swl-startup__escape">
             <button class="swl-startup__enter" type="button" hidden>Enter training ↗</button>
             <p class="swl-startup__hint" hidden>You can enter while your scores finish loading.</p>
           </div>
-          <p class="swl-startup__signature">VERSION 4.0 · SWL SQUAD TRAINING</p>
+          <p class="swl-startup__signature">VERSION 4.0</p>
         </div>`;
       status = overlay.querySelector('#swlStartupStatus');
       enter = overlay.querySelector('.swl-startup__enter');

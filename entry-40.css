@@ -1,0 +1,73 @@
+/* A deliberate entrance, with the detailed controls out of the way. */
+body.programme-menu-open .header .nav,
+body.programme-menu-open .header .all-skills-button,
+body.programme-menu-open .header .scoring-lock-button,
+body.programme-menu-open .footer .main-menu-button { display: none; }
+body.programme-menu-open .header-inner { flex-wrap: nowrap; }
+body.programme-menu-open .utilities { margin-left: auto; }
+.programme-menu { max-width: 920px; margin: 0 auto; padding: clamp(36px, 8vh, 88px) 0 34px; }
+.programme-menu[hidden] { display: none; }
+.programme-heading { margin-bottom: 36px; }
+.programme-heading .eyebrow { margin: 0 0 16px; font-size: 10px; letter-spacing: .22em; }
+.programme-heading h1 { font-size: clamp(36px, 5vw, 60px); font-weight: 850; line-height: 1.08; letter-spacing: -.055em; margin: 0 0 16px; }
+.programme-heading > p:last-child { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
+.programme-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.programme-card { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 30px; border: 1px solid var(--p40-soft-edge); border-radius: 22px; background: var(--p40-surface); color: var(--text); box-shadow: var(--p40-shadow); text-align: left; transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; overflow: hidden; }
+.programme-card::before { content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 100% 0%, var(--p40-soft-action), transparent 65%); }
+.programme-card::after { content: ''; position: absolute; top: 0; left: 30px; width: 64px; height: 2px; border-radius: 2px; background: var(--purple); opacity: .7; }
+.programme-card-index { color: var(--purple); font-size: 9px; font-weight: 750; letter-spacing: .15em; margin: 0 0 30px; }
+.programme-card-title { font-size: clamp(26px, 3vw, 34px); font-weight: 850; letter-spacing: -.045em; line-height: 1.18; margin-bottom: 14px; }
+.programme-card-copy { color: var(--muted); font-size: 13px; font-weight: 450; line-height: 1.7; flex: 1; }
+.programme-card-action { display: flex; align-items: center; justify-content: space-between; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--p40-edge); color: var(--purple); font-weight: 750; font-size: 12px; }
+.programme-card-action > span { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--p40-soft-action); font-size: 19px; }
+.programme-note { margin: 24px 0 0; color: var(--muted); font-size: 11px; }
+.programme-card:focus-visible, .entry-filters > summary:focus-visible { outline: 2px solid var(--purple); outline-offset: 4px; }
+.entry-filters { margin: 0 0 18px; min-width: 0; border: 1px solid var(--p40-edge); border-radius: 13px; background: var(--p40-surface); box-shadow: var(--p40-shadow); }
+.entry-filters > summary { display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 52px; padding: 12px 17px; list-style: none; cursor: pointer; border-radius: 13px; }
+.entry-filters > summary::-webkit-details-marker { display: none; }
+.entry-filter-label { color: var(--text); font-size: 13px; font-weight: 750; flex-shrink: 0; }
+.entry-filter-summary { min-width: 0; flex: 1; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.entry-filter-chevron { margin-left: auto; color: var(--purple); transition: transform .2s; }
+.entry-filters[open] .entry-filter-chevron { transform: rotate(180deg); }
+.entry-filter-content { padding: 18px; border-top: 1px solid var(--p40-edge); }
+#leaderboardFilters .board-filter-controls { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; margin: 0; }
+#leaderboardFilters .board-age-filter { width: 100%; min-width: 0; max-width: none; }
+#leaderboardFilters select { width: 100%; min-width: 0; max-width: 100%; }
+.entry-filter-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 16px; }
+.entry-filter-footer p { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.6; }
+.entry-filter-footer button { flex-shrink: 0; min-height: 40px; font-size: 11px; }
+#dashboard .apparatus-toolbar { margin-bottom: 12px; }
+@media (hover: hover) { .programme-card:hover { transform: translateY(-3px); border-color: var(--purple); box-shadow: var(--p40-shadow), 0 10px 32px var(--p40-action-glow); } .entry-filters > summary:hover { background: var(--p40-subtle); } }
+@media (max-width: 600px) {
+ .programme-menu { padding-top: 30px; }
+ .programme-heading { margin-bottom: 25px; }
+ .programme-heading > p:last-child { font-size: 13px; }
+ .programme-cards { grid-template-columns: minmax(0, 1fr); gap: 13px; }
+ .programme-card { padding: 22px; border-radius: 18px; }
+ .programme-card-index { margin-bottom: 18px; }
+ .programme-card-title { font-size: 27px; margin-bottom: 8px; }
+ .programme-card-copy { font-size: 12px; }
+ .programme-card-action { margin-top: 19px; padding-top: 14px; }
+ .programme-note { font-size: 10px; }
+ .entry-filters > summary { gap: 10px; padding: 12px 14px; }
+ .entry-filter-summary { font-size: 10px; }
+ .entry-filter-content { padding: 14px; }
+ #leaderboardFilters .board-filter-controls { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+ .entry-filter-footer { align-items: flex-start; flex-direction: column; gap: 10px; }
+}
+body.no-motion .programme-card, body.no-motion .entry-filter-chevron { transition: none; }
+@media (prefers-reduced-motion: reduce) { .programme-card, .entry-filter-chevron { transition: none; } .programme-card:hover { transform: none; } }
+@media (max-width: 600px) and (max-height: 680px) {
+ .programme-menu { padding-top: 22px; padding-bottom: 12px; }
+ .programme-heading { margin-bottom: 18px; }
+ .programme-heading .eyebrow { margin-bottom: 10px; }
+ .programme-heading h1 { font-size: 31px; margin-bottom: 10px; }
+ .programme-cards { gap: 10px; }
+ .programme-card { padding: 16px 18px; }
+ .programme-card-index { display: none; }
+ .programme-card-title { font-size: 24px; }
+ .programme-card-copy { font-size: 11px; line-height: 1.55; }
+ .programme-card-action { margin-top: 12px; padding-top: 10px; }
+ .programme-card-action > span { width: 26px; height: 26px; }
+ .programme-note { margin-top: 13px; }
+}

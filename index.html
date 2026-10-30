@@ -1570,7 +1570,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 @media(max-width:600px){.brand>div:last-child{display:none}.brand{flex:0;margin-right:auto}.scoring-lock-button{padding:10px 9px}.scoring-lock-button>span[aria-hidden]{display:none}.scoring-lock-status{font-size:10px}}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
-<link rel="stylesheet" href="./startup.css">
+<link rel="stylesheet" href="./startup.css?v=20261030-entry">
 <link rel="stylesheet" href="./celebration.css?v=20261021-brief">
 <link rel="stylesheet" href="./placement.css?v=20261019v3">
 <link rel="stylesheet" href="./games.css?v=20261019v3">
@@ -1592,9 +1592,11 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./polish-40.css?v=20261029-fire-green">
 <link rel="stylesheet" href="./polish-motion-40.css?v=20261029-weekly-flames">
 <link rel="stylesheet" href="./apparatus-40.css?v=20261030-vault">
+<link rel="stylesheet" href="./entry-40.css?v=20261030-entry">
+<link rel="stylesheet" href="./entry-directory-40.css?v=20261030-entry">
 </head>
 
-<body>
+<body class="programme-menu-open">
 <a href="#main" class="skip">Skip to content</a>
 
 <header class="header">
@@ -1628,7 +1630,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
 <main class="wrap" id="main" tabindex="-1">
   <div class="scoring-lock-status sr-only" id="lockStatus" role="status">Checking scoring access…</div>
-  <div class="squad-family-switch" id="squadFamilySwitch" role="group" aria-label="Choose training programme"><button type="button" data-board-family="floor" aria-pressed="false"><span>Floor &amp; vault</span><small>All floor &amp; vault squads</small></button><button type="button" data-board-family="senior" aria-pressed="false"><span>Senior squad</span><small>Marx’s &amp; Dan’s groups</small></button></div>
+
   <div
     id="storageWarning"
     class="warning"
@@ -1643,14 +1645,29 @@ html:has(body.no-motion){scroll-behavior:auto}
     </div>
   </div>
 
-  <section id="dashboard" aria-label="Leaderboards">
+  <section id="programmeMenu" class="programme-menu" aria-labelledby="programmeMenuTitle">
+    <div class="programme-heading"><p class="eyebrow">YOUR TRAINING SPACE</p><h1 id="programmeMenuTitle">Choose your squad.</h1><p>Pick your programme to see your league and gymnasts.</p></div>
+    <div class="programme-cards">
+      <button type="button" class="programme-card" data-programme="floor"><span class="programme-card-index" aria-hidden="true">01 / FLOOR &amp; VAULT</span><span class="programme-card-title">Floor &amp; vault</span><span class="programme-card-copy">Morning and afternoon squads.<br>One place to see your progress.</span><span class="programme-card-action">Enter your league <span aria-hidden="true">↗</span></span></button>
+      <button type="button" class="programme-card" data-programme="senior"><span class="programme-card-index" aria-hidden="true">02 / SENIOR SQUAD</span><span class="programme-card-title">Senior squad</span><span class="programme-card-copy">Marx’s and Dan’s groups.<br>Build on every achievement.</span><span class="programme-card-action">Enter your league <span aria-hidden="true">↗</span></span></button>
+    </div>
+    <p class="programme-note">You can change programme at any time.</p>
+  </section>
+
+  <section id="dashboard" aria-label="Leaderboards" hidden>
     <h1 class="sr">Leaderboards</h1>
 
-    <div class="apparatus-toolbar"><div id="leaderboardApparatus"></div><p id="apparatusNote">Floor scoring · the 250 Challenge uses floor points only.</p></div>
-    <div class="board-filter-controls">
-      <label class="board-age-filter board-squad-filter" for="leaderboardGroup"><span>Squad</span><select id="leaderboardGroup" aria-describedby="leaderboardScope"><option value="all">Overall · all squads</option></select></label>
-      <label class="board-age-filter" for="leaderboardAge"><span>Age</span><select id="leaderboardAge" aria-describedby="leaderboardScope"><option value="all">All ages</option></select></label>
-    </div>
+    <div class="apparatus-toolbar"><div id="leaderboardApparatus"></div></div>
+    <details class="entry-filters" id="leaderboardFilters">
+      <summary><span class="entry-filter-label">Filters</span><span id="leaderboardFilterSummary" class="entry-filter-summary">All squads · All ages</span><span class="entry-filter-chevron" aria-hidden="true">⌄</span></summary>
+      <div class="entry-filter-content">
+        <div class="board-filter-controls">
+          <label class="board-age-filter board-squad-filter" for="leaderboardGroup"><span>Squad</span><select id="leaderboardGroup" aria-describedby="leaderboardScope"><option value="all">Overall · all squads</option></select></label>
+          <label class="board-age-filter" for="leaderboardAge"><span>Age</span><select id="leaderboardAge" aria-describedby="leaderboardScope"><option value="all">All ages</option></select></label>
+        </div>
+        <div class="entry-filter-footer"><p id="apparatusNote">Floor scoring · the 250 Challenge uses floor points only.</p><button class="quiet" type="button" data-view="home">Change programme</button></div>
+      </div>
+    </details>
     <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
     <div class="section-head">
       <h2>The standings</h2>
@@ -1750,6 +1767,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   <strong>SWL · TRAIN WITH PURPOSE</strong>
   <div class="footer-sync">
     <span id="saveStatus" role="status">Connecting to Google Sheets…</span>
+    <button class="quiet main-menu-button" type="button" data-view="home">Main menu</button>
     <button class="quiet" type="button" data-open-welcome>About this app</button>
     <button class="quiet" id="retrySavingButton" type="button">↻ Retry saving</button>
     <button class="quiet" id="refreshButton">↻ Refresh scores</button>
@@ -1789,7 +1807,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261029-v4"></script>
+<script src="./startup.js?v=20261030-entry"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261021-brief"></script>
@@ -1806,9 +1824,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games.js?v=20261026-line-order"></script>
 <script src="./skills-catalogue.js?v=20261030-vault"></script>
 <script src="./v4-search.js?v=20261029-weekly-flames"></script>
-<script src="./v2.js?v=20261030-vault"></script>
+<script src="./v2.js?v=20261030-entry"></script>
 <script src="./challenge.js?v=20261029-weekly-flames"></script>
-<script src="./welcome.js?v=20261019v3"></script>
+<script src="./welcome.js?v=20261030-entry"></script>
 <script>
 (() => {
   'use strict';
@@ -2274,7 +2292,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
 
   let selectedId = null;
-  let currentView = 'dashboard';
+  let currentView = 'home';
   let directoryScroll = 0;
   let catalogueReturnView = 'dashboard';
   let catalogueReturnScroll = 0;
@@ -2331,7 +2349,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function setApparatus(value) {
     if (!['floor','vault','combined'].includes(value) || apparatus === value) return;
     const focused = document.activeElement;
-    const switchRoot = focused?.matches?.('[data-apparatus]') ? (focused.closest('#athletePanel') ? 'athletePanel' : 'leaderboardApparatus') : null;
+    const switchRoot = focused?.matches?.('[data-apparatus]') ? (focused.closest('#athletePanel') ? 'athletePanel' : focused.closest('#directoryRoot') ? 'directoryApparatus' : 'leaderboardApparatus') : null;
     apparatus = value; categoryFilter = 'all';
     renderAll();
     if (switchRoot) $(switchRoot)?.querySelector(`[data-apparatus="${value}"]`)?.focus({preventScroll:true});
@@ -3281,9 +3299,10 @@ html:has(body.no-motion){scroll-behavior:auto}
       stableHTML($('leaderboardAge'),ageOptions);
     }
     const filteredGymnasts = groupGymnasts.filter(g=>inLeaderboardAge(g,leaderboardAge));
-    document.querySelectorAll('[data-board-family]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.boardFamily === leaderboardGroup || (button.dataset.boardFamily === 'floor' && (leaderboardGroup === 'afternoon' || isFloorGroup(leaderboardGroup))) || (button.dataset.boardFamily === 'senior' && ['Marx','Dan'].includes(leaderboardGroup)))));
+
     const squadLabel = leaderboardGroup === 'all' ? 'All squads' : leaderboardGroup === 'senior' ? 'All senior squad' : leaderboardGroup === 'overall' ? 'Overall · all squads + coaches' : groupLabel(leaderboardGroup);
     if ($('leaderboardScope')) $('leaderboardScope').textContent = `${apparatusLabel()} · ${squadLabel} · ${ageCategoryLabel(leaderboardAge)}${hasLoaded ? ` · ${filteredGymnasts.length} ${leaderboardGroup==='coaches'?(filteredGymnasts.length===1?'coach':'coaches'):(leaderboardGroup==='overall'?'participant':'gymnast')+(filteredGymnasts.length===1?'':'s')}` : ''}${leaderboardGroup==='coaches'?'':` · age reached in ${londonYear()}`}`;
+    $('leaderboardFilterSummary').textContent = `${squadLabel} · ${ageCategoryLabel(leaderboardAge)}`;
     const all = filteredGymnasts.map(g => summary(g.id, apparatusScore()));
 
     if (!hasLoaded) {
@@ -3822,15 +3841,29 @@ html:has(body.no-motion){scroll-behavior:auto}
     openGymnast(roster[next].id);
   }
 
+  function selectProgramme(programme) {
+    if (!['floor','senior'].includes(programme)) return;
+    leaderboardGroup = programme;
+    leaderboardAge = 'all';
+    apparatus = 'floor';
+    categoryFilter = 'all';
+    $('leaderboardFilters').open = false;
+    v2Api()?.setDirectoryGroup(programme);
+    setView('dashboard');
+    renderAll();
+    window.dispatchEvent(new Event('swl:programme-selected'));
+  }
+
   function setView(view, scroll = true) {
-    if (!['dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue', 'challenge'].includes(view)) return;
+    if (!['home', 'dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue', 'challenge'].includes(view)) return;
     if (currentView === 'directory' && view !== 'directory') directoryScroll = window.scrollY;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
 
     $('dashboard').hidden = view !== 'dashboard';
-    if ($('squadFamilySwitch')) $('squadFamilySwitch').hidden = view !== 'dashboard';
+    $('programmeMenu').hidden = view !== 'home';
+    document.body.classList.toggle('programme-menu-open', view === 'home');
     $('tracker').hidden = !tracker;
     $('placementProfile').hidden = !placement;
     $('games').hidden = view !== 'games';
@@ -3855,7 +3888,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (scroll) {
       window.scrollTo({
         top: 0,
-        behavior: reducedMotion() ? 'instant' : 'smooth'
+        behavior: view === 'home' || reducedMotion() ? 'instant' : 'smooth'
       });
 
       $('main').focus({ preventScroll: true });
@@ -4174,7 +4207,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     const button = event.target.closest('button');
 
     if (button && !button.disabled) {
-      if (button.hasAttribute('data-apparatus')) {
+      if (button.hasAttribute('data-programme')) {
+        selectProgramme(button.dataset.programme);
+      } else if (button.hasAttribute('data-apparatus')) {
         setApparatus(button.dataset.apparatus);
       } else if (button.hasAttribute('data-back-gymnasts')) {
         backToGymnasts();
@@ -4195,8 +4230,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         changeSkill(button.dataset.quickSkill,button,undefined,button.dataset.quickGymnast);
       } else if (button.hasAttribute('data-quick-renew')) {
         renewSkill(button.dataset.quickRenew,button,button.dataset.quickGymnast);
-      } else if (button.hasAttribute('data-board-family')) {
-        leaderboardGroup=button.dataset.boardFamily;leaderboardAge='all';setView('dashboard',false);renderBoards();
+
       } else if (button.hasAttribute('data-board-group')) {
         leaderboardGroup=button.dataset.boardGroup;if(leaderboardGroup==='coaches')leaderboardAge='all';renderBoards();
       } else if (button.hasAttribute('data-renew-skill')) {
@@ -4484,13 +4518,16 @@ html:has(body.no-motion){scroll-behavior:auto}
     playSound: details => window.SWLCelebration?.gameSound(details)
   });
   v2Api()?.mount({directory:$('directoryRoot'),analytics:$('analyticsRoot'),openGymnast,setView,onApparatus:setApparatus});
-  $('directoryRoot').querySelector('.directory-tools')?.append($('addGymnastDetails'));
+  $('directoryRoot').querySelector('.directory-extra-tools')?.append($('addGymnastDetails'));
   window.SWLSkillsCatalogue?.mount($('allSkillsRoot'),{categories:CATEGORIES,skills:SKILLS});
   const recovery = restoreRecovery();
   syncHeader();
   updateMotion();
   renderAll();
-  $('dashboard').classList.add('enter');
+  setView('home', false);
+  window.addEventListener('swl:startup-finished', () => {
+    if (currentView === 'home') window.scrollTo({top:0,behavior:'instant'});
+  }, {once:true});
   recovery.then(() => readScores()).finally(() => window.SWLStartup?.finish({ error: !hasLoaded }));
 })();
 </script>

@@ -66,9 +66,8 @@
   }
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
-    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Find a gymnast, or add a complex to mark the whole squad at a glance.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><div class="directory-complex-tools directory-apparatus-tools"><label for="directoryApparatus">Apparatus <span aria-hidden="true">⌄</span></label><select id="directoryApparatus"><option value="floor">Floor</option><option value="vault">Vault</option><option value="combined">Floor + Vault</option></select></div><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad <span aria-hidden="true">⌄</span></label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex <span>⌄</span></label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div></div><div id="directoryResults"></div>`;
+    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Search a name, or browse your squad below.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="apparatus-switch directory-apparatus-switch" id="directoryApparatus" role="group" aria-label="Choose scoring apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([id,label])=>`<button type="button" id="directory-apparatus-${id}" data-apparatus="${id}" aria-pressed="${id==='floor'}" disabled>${label}</button>`).join('')}</div></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>Filters &amp; training</strong><span id="directoryFilterSummary">All squads</span></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex</label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><div id="directoryResults"></div>`;
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
-    directory.querySelector('#directoryApparatus')?.addEventListener('change',e=>changeApparatus(e.target.value));
     directory.querySelector('#directorySearch').addEventListener('input',renderDirectory);
     directory.querySelector('#directoryComplex').addEventListener('change',e=>{directoryComplex=e.target.value;renderDirectory();});
     directory.querySelector('#directoryGroups').addEventListener('change',e=>{directoryGroup=e.target.value;renderDirectory();});
@@ -117,7 +116,7 @@
   }
   function renderDirectory() {
     if(!data)return;const key=focusKey(directory),groups=groupOptions(),skills=scopedSkills();
-    const apparatusSelect=directory.querySelector('#directoryApparatus');if(apparatusSelect){apparatusSelect.value=apparatus();apparatusSelect.disabled=!data.hasLoaded;}
+    directory.querySelectorAll('.directory-apparatus-switch [data-apparatus]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.apparatus===apparatus()));button.disabled=!data.hasLoaded;});
     if(!['all','floor','senior','overall'].includes(directoryGroup)&&!groups.includes(directoryGroup))directoryGroup='all';
     const complexes=complexOptions(),select=directory.querySelector('#directoryComplex');
     if(directoryComplex&&!complexes.some(c=>c.id===directoryComplex))directoryComplex='';
@@ -129,6 +128,8 @@
     const squadSelect=directory.querySelector('#directoryGroups');
     commitHTML(squadSelect,[['all','All squads'],['floor','All floor & vault'],['senior','All senior squad'],...groups.map(g=>[g,g==='coaches'?'Coaches':data.shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join(''));
     squadSelect.value=directoryGroup;squadSelect.disabled=!data.hasLoaded;
+    const squadLabel=directoryGroup==='all'?'All squads':directoryGroup==='floor'?'All floor & vault':directoryGroup==='senior'?'All senior squad':directoryGroup==='overall'?'All squads + coaches':groupName(directoryGroup);
+    const filterSummary=directory.querySelector('#directoryFilterSummary');if(filterSummary)filterSummary.textContent=squadLabel+(complex?' · '+complex.label:'');
     const query=directory.querySelector('#directorySearch').value.trim().toLocaleLowerCase('en-GB');
     const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&(g.name+' '+personGroups(g)).toLocaleLowerCase('en-GB').includes(query));
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
@@ -333,11 +334,19 @@
       ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',renderAgePanels(cohortPeople))}</div>`);
   }
   function resetAnalytics() {priorityPinned=null;analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='foundation';analyticsRankCategory='overall';analyticsRankMetric='points';}
+  function setDirectoryGroup(group) {
+    directoryGroup=['all','floor','senior','overall',...(data?groupOptions():[])].includes(group)?group:'all';
+    directoryComplex='';
+    if(!directory)return;
+    const search=directory.querySelector('#directorySearch');if(search)search.value='';
+    const filters=directory.querySelector('#directoryFilters');if(filters)filters.open=false;
+    renderDirectory();
+  }
   function analyticsFromDirectory() {resetAnalytics();analyticsGroup=directoryGroup;}
   function selectGymnast(id) {priorityPinned=null;analyticsGroup=isCoach(data?.gymnasts.find(g=>g.id===id))?'coaches':'all';analyticsAge='all';analyticsGymnast=id;}
   function showGymnastInDirectory(id) {
     const gymnast=data?.gymnasts.find(g=>g.id===id);if(!gymnast)return;
     if(!inGroup(gymnast,directoryGroup))directoryGroup=isCoach(gymnast)?'coaches':'all';
   }
-  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,showGymnastInDirectory});
+  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,showGymnastInDirectory,setDirectoryGroup});
 })();

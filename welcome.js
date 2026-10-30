@@ -130,6 +130,7 @@
   function tryShow() {
     if (destroyed || !initialized || active || document.hidden || !document.body) return active;
     if (!requested && (!automaticPending || hasSeen())) { automaticPending = false; return false; }
+    if (!requested && document.body.classList.contains('programme-menu-open')) return false;
     if (isBlocked()) return false;
     build();
     previousFocus = document.activeElement;
@@ -182,10 +183,12 @@
     document.removeEventListener('visibilitychange', tryShow);
     window.removeEventListener('storage', onStorage);
     window.removeEventListener('swl:startup-finished', tryShow);
+    window.removeEventListener('swl:programme-selected', tryShow);
     dialog?.remove(); backdrop?.remove();
   }
   window.SWLWelcome = Object.freeze({ version: 1, open, close: () => finishClose(), destroy, get active() { return active; } });
   window.addEventListener('swl:startup-finished', tryShow);
+  window.addEventListener('swl:programme-selected', tryShow);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
   else initialTimer = setTimeout(initialize, 0);
 })();
