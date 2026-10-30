@@ -1,0 +1,141 @@
+/* Floor, Vault and Combined share the existing violet action palette. */
+.apparatus-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  min-width: 0;
+  margin: 0 0 20px;
+}
+#leaderboardApparatus {
+  flex: 0 1 360px;
+  min-width: 0;
+  max-width: 100%;
+}
+#leaderboardApparatus > .apparatus-switch { width: 100%; }
+.apparatus-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 4px;
+  flex: 0 1 360px;
+  width: min(100%, 360px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--p40-edge, #d3bfff25);
+  border-radius: 12px;
+  background: var(--p40-field, #11121b);
+  box-shadow: inset 0 1px var(--p40-highlight, #ffffff0d);
+}
+.apparatus-switch > button[data-apparatus] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--p40-secondary, #c4bbd3);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: normal;
+  box-shadow: none;
+  transform: none;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+.apparatus-switch > button[data-apparatus][aria-pressed="true"] {
+  color: var(--purple, #c5a4ff);
+  background: var(--p40-soft-action, #b896ef12);
+  border-color: var(--p40-soft-edge, #b896ef45);
+  box-shadow: inset 0 1px var(--p40-highlight, #ffffff0d);
+}
+.apparatus-switch > button[data-apparatus]:focus-visible {
+  outline: 2px solid var(--purple, #c5a4ff);
+  outline-offset: 2px;
+}
+.apparatus-switch > button[data-apparatus]:disabled {
+  cursor: default;
+  opacity: .55;
+}
+.apparatus-toolbar > p {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 48ch;
+  margin: 0;
+  color: var(--muted, #aaa5ba);
+  font-size: 11px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.apparatus-switch.profile-apparatus { margin-block: 0 16px; }
+
+/* Native apparatus fields match the existing squad, age and complex menus. */
+.directory-tools > .directory-apparatus-tools:first-child {
+  margin-top: 0;
+  margin-bottom: 17px;
+  padding-top: 0;
+  border-top: 0;
+}
+html[data-theme] :is(#directoryApparatus, #analyticsApparatus) {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid var(--p40-edge, #d3bfff25);
+  border-radius: 10px;
+  background: var(--p40-field, #11121b);
+  color: var(--text, #f6f3fc);
+  box-shadow: inset 0 1px 3px #00000008;
+  font: inherit;
+  font-size: 13px;
+}
+html[data-theme] :is(#directoryApparatus, #analyticsApparatus):focus-visible {
+  outline: 2px solid var(--purple, #c5a4ff);
+  outline-offset: 3px;
+}
+#analyticsRoot .analytics-filters:has(#analyticsApparatus) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 15px;
+}
+#analyticsRoot .analytics-filters:has(#analyticsApparatus) > label {
+  min-width: 0;
+  width: 100%;
+}
+#analyticsRoot .analytics-filters:has(#analyticsApparatus) > p { grid-column: 1 / -1; }
+
+@media (hover: hover) {
+  .apparatus-switch > button[data-apparatus]:not(:disabled):hover {
+    border-color: var(--p40-hover-edge, #b89bdd73);
+    color: var(--purple, #c5a4ff);
+  }
+}
+@media (max-width: 1000px) {
+  #analyticsRoot .analytics-filters:has(#analyticsApparatus) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .apparatus-toolbar { gap: 10px; margin-bottom: 17px; }
+  .apparatus-toolbar > .apparatus-switch { flex-basis: 100%; width: 100%; }
+  #leaderboardApparatus { flex-basis: 100%; width: 100%; }
+  .apparatus-toolbar > p { flex-basis: 100%; max-width: none; font-size: 10px; }
+  .apparatus-switch > button[data-apparatus] { padding-inline: 8px; font-size: 11px; }
+  #analyticsRoot .analytics-filters:has(#analyticsApparatus) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+body.no-motion .apparatus-switch > button[data-apparatus] { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .apparatus-switch > button[data-apparatus] { transition: none; }
+}

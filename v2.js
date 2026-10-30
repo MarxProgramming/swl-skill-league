@@ -6,6 +6,17 @@
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
   const initials=name=>name.trim().split(/\s+/).filter((_,i,a)=>i===0||i===a.length-1).map(s=>Array.from(s)[0]).join('');
+  const apparatus=()=>['floor','vault','combined'].includes(data?.apparatus)?data.apparatus:'floor';
+  const apparatusLabel=(value=apparatus())=>value==='vault'?'Vault':value==='combined'?'Floor + Vault':'Floor';
+  const apparatusShortLabel=()=>apparatus()==='combined'?'Combined':apparatusLabel();
+  const scoreCategory=(value=apparatus())=>value==='floor'?'overall':value;
+  const scopedSkills=(value=apparatus())=>data.skills.filter(skill=>value==='combined'||(value==='vault'?skill.category==='vault':skill.category!=='vault'));
+  const scopedCategories=()=>data.categories.filter(category=>apparatus()==='combined'||(apparatus()==='vault'?category.id==='vault':category.id!=='vault'));
+  function changeApparatus(value) {
+    if(!['floor','vault','combined'].includes(value)||value===apparatus())return;
+    priorityPinned=null;analyticsRankCategory='overall';analyticsRankMetric='points';
+    actions.onApparatus?.(value);
+  }
   const fireBadge=id=>data.fireBadge?.(id)||'';
   const heatClass=(id,at)=>{const level=data.heatLevel?.(id,at)||(data.isOnFire(id,at)?'fire':'none');return level==='fire'?'is-on-fire':'';};
   const ageGroups=()=>data.ageCategories||[];
@@ -55,12 +66,14 @@
   }
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
-    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Find a gymnast, or add a complex to mark the whole squad at a glance.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad <span aria-hidden="true">⌄</span></label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex <span>⌄</span></label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div></div><div id="directoryResults"></div>`;
+    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Find a gymnast, or add a complex to mark the whole squad at a glance.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><div class="directory-complex-tools directory-apparatus-tools"><label for="directoryApparatus">Apparatus <span aria-hidden="true">⌄</span></label><select id="directoryApparatus"><option value="floor">Floor</option><option value="vault">Vault</option><option value="combined">Floor + Vault</option></select></div><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad <span aria-hidden="true">⌄</span></label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex <span>⌄</span></label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div></div><div id="directoryResults"></div>`;
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
+    directory.querySelector('#directoryApparatus')?.addEventListener('change',e=>changeApparatus(e.target.value));
     directory.querySelector('#directorySearch').addEventListener('input',renderDirectory);
     directory.querySelector('#directoryComplex').addEventListener('change',e=>{directoryComplex=e.target.value;renderDirectory();});
     directory.querySelector('#directoryGroups').addEventListener('change',e=>{directoryGroup=e.target.value;renderDirectory();});
-    analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 4.0</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
+    analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 4.0</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Apparatus<select id="analyticsApparatus"><option value="floor">Floor</option><option value="vault">Vault</option><option value="combined">Floor + Vault</option></select></label><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
+    analytics.querySelector('#analyticsApparatus')?.addEventListener('change',e=>changeApparatus(e.target.value));
     analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;if(analyticsGroup==='coaches')analyticsAge='all';analyticsGymnast='all';renderAnalytics();});
     analytics.querySelector('#analyticsAge')?.addEventListener('change',e=>{analyticsAge=e.target.value;analyticsGymnast='all';renderAnalytics();});
     analytics.querySelector('#analyticsGymnast').addEventListener('change',e=>{analyticsGymnast=e.target.value;renderAnalytics();});
@@ -87,10 +100,12 @@
     'acro-pro-0':'Back tuck','acro-pro-1':'Double spin','acro-pro-2':'Front somi',
     'leaps-base-0':'Split leap','leaps-base-cat':'Cat leap','leaps-base-scissor':'Scissor kick',
     'leaps-base-1':'Cat leap 1/1','leaps-base-2':'Split change','leaps-upgrade-w-hop':'W hop',
-    'handstands-base-0':'HS · 5s','handstands-base-1':'HS · 10s','handstands-base-2':'HS · 30s'
+    'handstands-base-0':'HS · 5s','handstands-base-1':'HS · 10s','handstands-base-2':'HS · 30s',
+    'vault-run-0':'Run','vault-run-1':'Hurdle jump','vault-run-2':'Arm swing',
+    'vault-vaults-0':'Handspring','vault-vaults-1':'Half on','vault-vaults-2':'½ on ½ off'
   };
   function complexOptions() {
-    return data.categories.flatMap(c=>c.tiers.map(([tier,label])=>({id:c.id+'-'+tier,label:c.name+' · '+label,skills:data.skills.filter(k=>k.category===c.id&&k.tier===tier)}))).filter(c=>c.skills.length===3);
+    return scopedCategories().flatMap(c=>c.tiers.map(([tier,label])=>({id:c.id+'-'+tier,label:c.name+' · '+label,skills:data.skills.filter(k=>k.category===c.id&&k.tier===tier)}))).filter(c=>c.skills.length===3);
   }
   function quickMarks(g,complex) {
     if(!complex)return '';
@@ -101,7 +116,8 @@
     }).join('')}</div></div>`;
   }
   function renderDirectory() {
-    if(!data)return;const key=focusKey(directory),groups=groupOptions();
+    if(!data)return;const key=focusKey(directory),groups=groupOptions(),skills=scopedSkills();
+    const apparatusSelect=directory.querySelector('#directoryApparatus');if(apparatusSelect){apparatusSelect.value=apparatus();apparatusSelect.disabled=!data.hasLoaded;}
     if(!['all','floor','senior','overall'].includes(directoryGroup)&&!groups.includes(directoryGroup))directoryGroup='all';
     const complexes=complexOptions(),select=directory.querySelector('#directoryComplex');
     if(directoryComplex&&!complexes.some(c=>c.id===directoryComplex))directoryComplex='';
@@ -117,7 +133,7 @@
     const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&(g.name+' '+personGroups(g)).toLocaleLowerCase('en-GB').includes(query));
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
       const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
-      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id),due=data.skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)}</strong><small class="heat-meta"><span class="heat-meta-text">${s.achieved}/${data.skills.length} skills · ${s.perfect} perfect</span></small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>pts ↗</small></span></button>${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
+      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,scoreCategory()),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)}</strong><small class="heat-meta"><span class="heat-meta-text">${s.achieved}/${skills.length} ${esc(apparatusShortLabel())} skills · ${s.perfect} perfect</span></small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${esc(apparatusShortLabel())} pts ↗</small></span></button>${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
     window.SWLSearch?.render(data,{group:directoryGroup});
     restore(directory,key);
@@ -125,13 +141,13 @@
   function aggregate(people,at=Date.now()) {
     const counts={unticked:0,achieved:0,perfect:0,points:0,due:0,gains:0,onFire:0,hot:0,weeklyPoints:0};
     const horizon=[0,0,0,0],momentum=Array(7).fill(0);
-    const categories=data.categories.map(c=>({...c,total:0,achieved:0,perfect:0}));
+    const skills=scopedSkills(),categories=scopedCategories().map(c=>({...c,total:0,achieved:0,perfect:0}));
     const duePeople=[];
     people.forEach(g=>{
-      counts.points+=data.summary(g.id).points;let due=0;
+      counts.points+=data.summary(g.id,scoreCategory()).points;let due=0;
       if(heatClass(g.id,at)==='is-on-fire')counts.onFire++;else if(data.heatLevel?.(g.id,at)==='hot')counts.hot++;
       counts.weeklyPoints+=data.weeklyPoints?.(g.id,at)||0;
-      data.skills.forEach(skill=>{
+      skills.forEach(skill=>{
         const level=data.mark(g.id,skill.id),fresh=data.skillFreshness(g.id,skill.id,at),cat=categories.find(c=>c.id===skill.category);cat.total++;
         counts[['unticked','achieved','perfect'][level]]++;if(level)cat.achieved++;if(level===2)cat.perfect++;
         if(fresh.due){counts.due++;due++;}
@@ -140,21 +156,21 @@
         if(level&&Number.isFinite(earned)&&earned<=at&&earned>at-7*DAY){counts.gains++;momentum[Math.max(0,Math.min(6,6-Math.floor((at-earned)/DAY)))]++;}
       });if(due)duePeople.push({g,due});
     });
-    return {counts,horizon,momentum,categories,duePeople,total:people.length*data.skills.length};
+    return {counts,horizon,momentum,categories,duePeople,total:people.length*skills.length};
   }
-  function cohortStats(people,skills=data.skills) {
+  function cohortStats(people,skills=scopedSkills()) {
     let achieved=0,perfect=0,levels=0;
     people.forEach(g=>skills.forEach(k=>{const level=data.mark(g.id,k.id);if(level===1)achieved++;if(level===2)perfect++;levels+=level;}));
     const total=people.length*skills.length;
     return {achieved,perfect,total,retained:achieved+perfect,foundation:total?levels/(total*2)*100:0,
-      average:people.length?people.reduce((sum,g)=>sum+data.summary(g.id).points,0)/people.length:0};
+      average:people.length?people.reduce((sum,g)=>sum+data.summary(g.id,scoreCategory()).points,0)/people.length:0};
   }
   function stackedTrack(stats,extra='') {
     return `<span class="a31-stack ${extra}" aria-hidden="true"><i class="a31-perfect" style="width:${stats.total?stats.perfect/stats.total*100:0}%"></i><i class="a31-achieved" style="width:${stats.total?stats.achieved/stats.total*100:0}%"></i></span>`;
   }
   function chartKey() {return '<div class="a31-key"><span><i class="a31-perfect"></i>Perfect</span><span><i class="a31-achieved"></i>Achieved</span><span><i></i>Not yet</span></div>';}
   function squadComparisons(groups) {
-    const baseSkills=data.skills.filter(k=>k.tier==='base');
+    const baseSkills=scopedSkills().filter(k=>k.tier==='base'||k.category==='vault');
     return groups.map(group=>{
       const members=data.gymnasts.filter(g=>inGroup(g,group)&&(analyticsAge==='all'||ageOf(g)===analyticsAge));
       const all=cohortStats(members),base=cohortStats(members,baseSkills);
@@ -171,9 +187,9 @@
     const insight=lead&&lead.value>0?`${joint?'Joint lead':'Leading'} · ${groupName(lead.group)}`:'A fresh starting line';
     return `<section class="analytics-panel analytics-wide a31-squad-panel"><div class="analytics-panel-head"><div><p class="eyebrow">A fair view of every squad</p><h2>Squad foundations</h2></div><span class="a31-panel-index" aria-hidden="true">02 / COMPARE</span></div>
       <div class="a31-comparison-lead"><div><span>${esc(insight)}</span><strong>${lead&&lead.value>0?number(lead.value):'0'}<small>${suffix}</small></strong><p>${esc(metric)}${joint?' · tied at the top':''}</p></div><div class="a31-segments" role="group" aria-label="Squad comparison measure">${[['foundation','Foundations'],['average','Average points'],['retained','Skills retained']].map(([id,label])=>`<button type="button" data-analytics-comparison="${id}" aria-pressed="${analyticsComparison===id}">${label}</button>`).join('')}</div></div>
-      <p class="a31-chart-scope">${esc(ageScope)} · Whole-squad comparison${analyticsGymnast!=='all'?' · personal selection applies to the other charts':''}</p>
+      <p class="a31-chart-scope">${esc(apparatusLabel())} · ${esc(ageScope)} · Whole-squad comparison${analyticsGymnast!=='all'?' · personal selection applies to the other charts':''}</p>
       <div class="a31-squad-chart">${rows.map((r,i)=>`<button type="button" class="a31-squad-row${r.group===analyticsGroup?' is-selected':''}" data-analytics-group="${esc(r.group)}" aria-pressed="${r.group===analyticsGroup}" aria-label="${esc(groupName(r.group))}: ${number(r.value)} ${metric}, ${r.members.length} ${countNoun(r.group,r.members.length)}. Explore squad."${r.members.length?'':' disabled'}><span class="a31-chart-rank">${String(i+1).padStart(2,'0')}</span><span class="a31-chart-name"><strong>${esc(groupName(r.group))}</strong><small>${r.members.length} ${countNoun(r.group,r.members.length)} · ${number(r.all.average)} average points</small></span><span class="a31-comparison-track" aria-hidden="true"><i style="width:${r.value/max*100}%"></i></span><span class="a31-chart-value">${r.members.length?number(r.value):'—'}<small>${r.members.length?suffix:'no records'}</small></span></button>`).join('')}</div>
-      <p class="chart-note">${analyticsComparison==='foundation'?'Base skills, basic leaps and handstands only. Achieved counts halfway; Perfect counts fully.':analyticsComparison==='average'?'Total league points divided by the number of gymnasts in each squad. Completion bonuses are included.':'The percentage of all available skills that are Achieved or Perfect.'} Every gymnast has the same available skills, so a larger squad does not get a size advantage. Choose a squad to update the selected view.</p></section>`;
+      <p class="chart-note">${analyticsComparison==='foundation'?((apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Floor base skills, basic leaps, handstands, and all run and vault skills.':'Base skills, basic leaps and handstands only.')+' Achieved counts halfway; Perfect counts fully.'):analyticsComparison==='average'?'Total league points divided by the number of gymnasts in each squad. Completion bonuses are included.':'The percentage of all available skills that are Achieved or Perfect.'} Every gymnast has the same available skills, so a larger squad does not get a size advantage. Choose a squad to update the selected view.</p></section>`;
   }
   function renderAgePanels(people) {
     const groups=ageGroups();if(!groups.length)return '';
@@ -207,7 +223,7 @@
           perDay.set(day,record.points);
         });
         perDay.forEach((points,day)=>{values[7-Math.floor((end-day)/7)]+=points;});
-      }else data.skills.forEach(skill=>{
+      }else scopedSkills('floor').forEach(skill=>{
         if(!data.mark(g.id,skill.id))return;
         const earned=Date.parse(data.state.skillDates?.[g.id]?.[skill.id]?.earnedAt||'');
         if(!Number.isFinite(earned)||earned>Date.now())return;
@@ -219,34 +235,35 @@
     return {values,known,tracked,started,end};
   }
   function renderMomentum(people) {
+    if(apparatus()==='vault')return '';
     const series=weeklySeries(people),max=Math.max(1,...series.values.map(Math.abs));
     const dateLabel=day=>chartDayFormat.format(new Date(day*DAY));
     const range=i=>`${dateLabel(series.end-(7-i)*7-6)}–${dateLabel(series.end-(7-i)*7)}`;
     const unit=series.tracked?'net league points':'latest retained gains',total=series.values[7],delta=total-series.values[6];
-    return `<section class="analytics-panel momentum-panel a31-momentum"><div class="analytics-panel-head"><div><p class="eyebrow">Eight seven-day windows</p><h2>Building momentum</h2></div><span class="analytics-symbol" aria-hidden="true">↗</span></div><div class="momentum-total"><strong>${number(total)}</strong><span>${series.tracked?'net league points in the last 7 days':'latest retained gains in 7 days'}${series.known[6]&&series.tracked?`<small class="a31-delta${delta<0?' negative':''}">${delta>0?'+':''}${number(delta)} vs previous 7 days</small>`:''}</span></div><div class="a31-momentum-chart" role="img" aria-label="${esc((series.tracked?'Net league point history':'Retained skill gain dates')+', oldest to newest. '+series.values.map((n,i)=>range(i)+': '+(series.known[i]?number(n)+' '+unit:'not tracked')).join('; '))}">${series.values.map((n,i)=>`<div class="a31-week${i===7?' is-current':''}" title="${esc(range(i)+': '+(series.known[i]?number(n)+' '+unit:'not tracked'))}"><strong>${series.known[i]?number(n):'—'}</strong><span class="a31-week-track" aria-hidden="true"><i style="grid-row:${n<0?2:1};align-self:${n<0?'start':'end'};height:${series.known[i]&&n?Math.max(3,Math.abs(n)/max*72):0}px" class="${n<0?'negative':''}"></i></span><small>${i===7?'Latest':dateLabel(series.end-(7-i)*7)}</small></div>`).join('')}</div><p class="chart-note">${series.tracked?'The chart includes all league points. Each bar covers seven days, ending on the date below it; the latest window ends today (London time). Gains sit above zero; reductions sit below. Untracked weeks show —.':'Point history is not available in this snapshot. These bars show only each currently retained skill’s latest gain date; they are not a historical point total.'}${series.tracked&&data.state.weeklyProgress.complete===false?' Tracking began partway through the first window, so earlier points are not included.':''}</p></section>`;
+    return `<section class="analytics-panel momentum-panel a31-momentum"><div class="analytics-panel-head"><div><p class="eyebrow">Floor · Eight seven-day windows</p><h2>Building momentum</h2></div><span class="analytics-symbol" aria-hidden="true">↗</span></div><div class="momentum-total"><strong>${number(total)}</strong><span>${series.tracked?'net Floor points in the last 7 days':'latest retained Floor gains in 7 days'}${series.known[6]&&series.tracked?`<small class="a31-delta${delta<0?' negative':''}">${delta>0?'+':''}${number(delta)} vs previous 7 days</small>`:''}</span></div><div class="a31-momentum-chart" role="img" aria-label="${esc((series.tracked?'Net league point history':'Retained skill gain dates')+', oldest to newest. '+series.values.map((n,i)=>range(i)+': '+(series.known[i]?number(n)+' '+unit:'not tracked')).join('; '))}">${series.values.map((n,i)=>`<div class="a31-week${i===7?' is-current':''}" title="${esc(range(i)+': '+(series.known[i]?number(n)+' '+unit:'not tracked'))}"><strong>${series.known[i]?number(n):'—'}</strong><span class="a31-week-track" aria-hidden="true"><i style="grid-row:${n<0?2:1};align-self:${n<0?'start':'end'};height:${series.known[i]&&n?Math.max(3,Math.abs(n)/max*72):0}px" class="${n<0?'negative':''}"></i></span><small>${i===7?'Latest':dateLabel(series.end-(7-i)*7)}</small></div>`).join('')}</div><p class="chart-note">${series.tracked?'The chart tracks Floor points only. Vault points are not included. Each bar covers seven days, ending on the date below it; the latest window ends today (London time). Gains sit above zero; reductions sit below. Untracked weeks show —.':'Floor point history is not available in this snapshot. These bars show only each currently retained Floor skill’s latest gain date; they are not a historical point total.'}${series.tracked&&data.state.weeklyProgress.complete===false?' Tracking began partway through the first window, so earlier points are not included.':''}</p></section>`;
   }
   function renderCategories(a) {
     return `<section class="analytics-panel a31-categories"><div class="analytics-panel-head"><div><p class="eyebrow">Where the strengths are</p><h2>Across the skills</h2></div><span class="analytics-symbol" aria-hidden="true">≋</span></div>${chartKey()}<div class="a31-category-chart">${a.categories.map(cat=>{const stats={perfect:cat.perfect,achieved:cat.achieved-cat.perfect,total:cat.total};return `<button type="button" data-analytics-category="${esc(cat.id)}" data-v2-focus="category-chart" aria-label="${esc(cat.name)}: ${cat.achieved} of ${cat.total} skills retained, ${cat.perfect} perfect. View full ${esc(cat.name)} standings."><span class="a31-category-label"><strong>${esc(cat.name)}</strong><b>${pct(cat.achieved,cat.total)}<small>%</small></b></span>${stackedTrack(stats)}<span class="a31-category-detail">${cat.achieved}/${cat.total} retained · ${cat.perfect} perfect<span aria-hidden="true">Standings ↗</span></span></button>`;}).join('')}</div><p class="chart-note">Purple is Achieved. Mint is Perfect. Every skill counts once, whatever its points. Select a category to see its full standings.</p></section>`;
   }
   function rankedPeople(people,category='overall',metric='points') {
     const tracked=Boolean(data.state.weeklyProgress?.history&&typeof data.state.weeklyProgress.history==='object');
-    return people.map(g=>{const score=data.summary(g.id,category),weekly=tracked?weeklySeries([g]).values[7]:null;return {g,score,weekly,value:metric==='weekly'?weekly:score.points};}).sort((a,b)=>(b.value??0)-(a.value??0)||a.g.name.localeCompare(b.g.name,'en-GB'));
+    return people.map(g=>{const score=data.summary(g.id,category==='overall'?scoreCategory():category),weekly=tracked&&apparatus()!=='vault'?weeklySeries([g]).values[7]:null;return {g,score,weekly,value:metric==='weekly'?weekly:score.points};}).sort((a,b)=>(b.value??0)-(a.value??0)||a.g.name.localeCompare(b.g.name,'en-GB'));
   }
   function renderStandings(people,scope) {
-    if(!['overall',...data.categories.map(c=>c.id)].includes(analyticsRankCategory))analyticsRankCategory='overall';
-    const tracked=Boolean(data.state.weeklyProgress?.history&&typeof data.state.weeklyProgress.history==='object');
+    if(apparatus()==='vault'||!['overall',...scopedCategories().map(c=>c.id)].includes(analyticsRankCategory))analyticsRankCategory='overall';
+    const tracked=apparatus()!=='vault'&&Boolean(data.state.weeklyProgress?.history&&typeof data.state.weeklyProgress.history==='object');
     if(!tracked)analyticsRankMetric='points';
     const weekly=analyticsRankMetric==='weekly',category=weekly?'overall':analyticsRankCategory,rows=rankedPeople(people,category,analyticsRankMetric),max=Math.max(1,...rows.map(r=>Math.abs(r.value||0)));
-    const categoryName=category==='overall'?'Overall league':data.categories.find(c=>c.id===category)?.name;
+    const categoryName=category==='overall'?apparatusLabel()+' league':data.categories.find(c=>c.id===category)?.name;
     return `<section class="analytics-panel analytics-wide a31-standings" id="analyticsStandings"><div class="analytics-panel-head"><div><p class="eyebrow">The whole field</p><h2>Every place. Every point.</h2></div><span class="a31-panel-index" aria-hidden="true">03 / STANDINGS</span></div>
-      <div class="a31-standing-controls"><div class="a31-segments" role="group" aria-label="Standings category">${[{id:'overall',name:'Overall'},...data.categories].map(c=>`<button type="button" data-analytics-category="${esc(c.id)}" data-v2-focus="standings" aria-pressed="${!weekly&&analyticsRankCategory===c.id}">${esc(c.name)}</button>`).join('')}</div><label>Order by<select id="analyticsRankMetric"><option value="points"${!weekly?' selected':''}>League points</option><option value="weekly"${weekly?' selected':''}${tracked?'':' disabled'}>Last 7 days · net points</option></select></label></div>
-      <p class="a31-chart-scope">${esc(scope)} · ${weekly?'Net league points in the last 7 days':esc(categoryName)} · highest to lowest</p>
+      <div class="a31-standing-controls"><div class="a31-segments" role="group" aria-label="Standings category">${[{id:'overall',name:apparatusLabel()},...scopedCategories().filter(c=>apparatus()!=='vault'||c.id!=='vault')].map(c=>`<button type="button" data-analytics-category="${esc(c.id)}" data-v2-focus="standings" aria-pressed="${!weekly&&analyticsRankCategory===c.id}">${esc(c.name)}</button>`).join('')}</div><label>Order by<select id="analyticsRankMetric"><option value="points"${!weekly?' selected':''}>League points</option><option value="weekly"${weekly?' selected':''}${tracked?'':' disabled'}>Last 7 days · Floor net points</option></select></label></div>
+      <p class="a31-chart-scope">${esc(scope)} · ${weekly?'Floor net points in the last 7 days':esc(categoryName)} · highest to lowest</p>
       ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)} ${fireBadge(r.g.id)}</strong><small>${esc(personGroups(r.g))}</small></button><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match these filters. Try All ages or another squad.</p>'}
-      <p class="chart-note">${weekly?'Includes gains and reductions across all skills. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
+      <p class="chart-note">${weekly?'Includes gains and reductions across Floor skills only. Vault points are not included. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
   }
   function skillPriorities(people,{includeComplete=false,limit=5}={}) {
     if(!people.length)return [];
-    return data.skills.filter(skill=>['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier)).map(skill=>{
+    return scopedSkills().filter(skill=>skill.category==='vault'||(['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier))).map(skill=>{
       const complex=data.skills.filter(k=>k.category===skill.category&&k.tier===skill.tier);
       let achieved=0,perfect=0,nextPoints=0,minNextPoints=Infinity,availablePoints=0,bonusCount=0;
       people.forEach(g=>{
@@ -266,7 +283,7 @@
     }).join('')}</ul></div>`;
   }
   function renderPriorities(people,scope) {
-    priorityScope=JSON.stringify([analyticsGroup,analyticsAge,analyticsGymnast,people.map(g=>g.id).sort()]);
+    priorityScope=JSON.stringify([apparatus(),analyticsGroup,analyticsAge,analyticsGymnast,people.map(g=>g.id).sort()]);
     if(priorityPinned?.scope!==priorityScope)priorityPinned=null;
     const allRows=priorityPinned?skillPriorities(people,{includeComplete:true,limit:Infinity}):null;
     const rows=priorityPinned?priorityPinned.ids.map(id=>allRows.find(row=>row.skill.id===id)).filter(Boolean):skillPriorities(people);
@@ -277,7 +294,7 @@
         const {skill,achieved,perfect,total,target,availablePoints}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
         return `<li class="v4-priority-entry" data-priority-skill="${esc(skill.id)}"><details data-priority-detail="${esc(skill.id)}" data-analytics-disclosure="priority-${esc(skill.id)}"><summary id="priority-summary-${esc(skill.id)}" class="a31-priority-row${target==='perfect'?' is-polishing':''}"><span class="a31-priority-rank" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">${perfect===total?'All Perfect':`+${number(availablePoints)} pts`} <small>${perfect===total?'complete':'available'}</small></span></div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p><span class="v4-priority-expand"><span class="v4-closed-label">View gymnasts</span><span class="v4-open-label">Close gymnasts</span><span aria-hidden="true">⌄</span></span></div></summary>${priorityMembers(people,skill)}</details></li>`;
       }).join('')}</ol><p class="chart-note">Ranked by the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match these filters. Try All ages or another squad.'}</p>`}
-      <p class="a31-priority-includes">Rolls, acro &amp; leaps · Handstands excluded.</p></section>`;
+      <p class="a31-priority-includes">${apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Rolls, acro, leaps &amp; vault · Handstands excluded.':'Rolls, acro &amp; leaps · Handstands excluded.'}</p></section>`;
   }
   function analyticsDisclosure(id,title,description,content) {
     if(!content)return '';
@@ -285,6 +302,7 @@
   }
   function renderAnalytics() {
     if(!data)return;
+    const apparatusSelect=analytics.querySelector('#analyticsApparatus');if(apparatusSelect){apparatusSelect.value=apparatus();apparatusSelect.disabled=!data.hasLoaded;}
     const groups=groupOptions();if(!['all','floor','senior','overall'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
     const squadPeople=data.gymnasts.filter(g=>inGroup(g,analyticsGroup));
@@ -303,7 +321,7 @@
     const host=analytics.querySelector('#analyticsContent');if(!data.hasLoaded){commitHTML(host,'<p class="v2-empty" role="status">Loading your training picture…</p>');return;}
     const people=candidates.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast),a=aggregate(people),c=a.counts;
     const scope=analyticsGymnast==='all'?(analyticsGroup==='all'?'All squads':analyticsGroup==='senior'?'All senior squad':analyticsGroup==='overall'?'Overall · all squads + coaches':groupName(analyticsGroup)):people[0]?.name;
-    const ageScope=analyticsAge==='all'?'All ages':ageLabel(ageGroups().find(c=>c.id===analyticsAge)),fullScope=scope+' · '+ageScope;
+    const ageScope=analyticsAge==='all'?'All ages':ageLabel(ageGroups().find(c=>c.id===analyticsAge)),fullScope=apparatusLabel()+' · '+scope+' · '+ageScope;
     const cohortPeople=squadPeople.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast);
     const overview=`<div class="analytics-wide a31-selected-scope"><div><p class="analytics-scope${analyticsGymnast!=='all'&&heatClass(analyticsGymnast)?' '+heatClass(analyticsGymnast):''}">${esc(scope)} ${analyticsGymnast!=='all'?coachBadge(people[0])+' '+fireBadge(analyticsGymnast):''}<span>· ${esc(ageScope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</span></p></div>${analyticsGymnast!=='all'?`<button type="button" class="quiet" data-gymnast="${esc(analyticsGymnast)}">Open skills ↗</button>`:''}</div>
       <div class="analytics-stat-grid analytics-wide a31-stats"><article><span>Average points</span><strong>${number(people.length?c.points/people.length:0)}</strong><p>Per ${analyticsGroup==='coaches'?'coach':'gymnast'} in this view</p></article><article><span>Skills retained</span><strong>${pct(c.achieved+c.perfect,a.total)}<small>%</small></strong><p>${c.achieved+c.perfect} of ${a.total} available skills</p></article><article><span>Perfect marks</span><strong>${c.perfect}</strong><p>${pct(c.perfect,a.total)}% of available skills</p></article><article><span>League points</span><strong>${number(c.points)}</strong><p>Combined points in this view</p></article></div>
@@ -311,7 +329,7 @@
     commitHTML(host,`<div class="analytics-grid a31-grid">${renderPriorities(people,fullScope)}${renderSquadComparison(comparisonGroups)}${renderStandings(people,fullScope)}
       ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',overview)}
       ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',renderCategories(a))}
-      ${analyticsDisclosure('momentum','Building momentum','Explore point changes over eight weeks',renderMomentum(people))}
+      ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',renderMomentum(people))}
       ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',renderAgePanels(cohortPeople))}</div>`);
   }
   function resetAnalytics() {priorityPinned=null;analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='foundation';analyticsRankCategory='overall';analyticsRankMetric='points';}

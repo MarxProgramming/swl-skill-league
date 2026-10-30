@@ -59,7 +59,7 @@
     </article>`;
   }
 
-  function render({ gymnast, boards, motionOff = false, fireBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
+  function render({ gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
     const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':'';};
@@ -73,12 +73,12 @@
       <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to gymnast</button>
       <header class="swlp-hero${heatClass(gymnast.id) ? ' '+heatClass(gymnast.id) : ''}">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-          <div><p class="swlp-eyebrow">Placement profile</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} ${fireBadge(gymnast.id)}</h2>
+          <div><p class="swlp-eyebrow">${escapeHTML(apparatusLabel)} placement</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} ${fireBadge(gymnast.id)}</h2>
             <p class="swlp-coach heat-meta"><span class="heat-meta-text">${escapeHTML(groupLabel(gymnast.coach || 'Your league'))}</span></p></div></div>
         <div class="swlp-overall"><p>${escapeHTML(scope)} position</p><strong>${overallWindow.position ? `<span aria-hidden="true">#</span>${overallWindow.position}` : '—'}</strong>
           <small>${overallWindow.position ? `of ${overallWindow.total} ${escapeHTML(participantLabel)}` : 'Scores are loading'}</small></div>
         <div class="swlp-facts" aria-label="Gymnast score summary">
-          <span><strong>${displayNumber(selected.points)}</strong><small>total points</small></span>
+          <span><strong>${displayNumber(selected.points)}</strong><small>${escapeHTML(apparatusLabel.toLowerCase())} points</small></span>
           <span><strong>${displayNumber(selected.achieved)}</strong><small>skills achieved</small></span>
           <span><strong>${displayNumber(selected.perfect)}</strong><small>skills perfect</small></span>
         </div>

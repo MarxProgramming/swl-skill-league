@@ -144,7 +144,7 @@ Retry saving is always available in the footer. It reconnects if needed and retr
 
 ## Skill catalogue and IGA reference
 
-The subtle All skills header button opens a read-only catalogue of all nine groups and 27 skills, including the existing skill points and completion bonuses. It never assigns or changes gymnast marks. Filters narrow the catalogue by category, and Back restores the previous view.
+The subtle All skills header button opens a read-only catalogue of all eleven groups and 33 skills, including the existing skill points and completion bonuses. It never assigns or changes gymnast marks. Filters narrow the catalogue by category, and Back restores the previous view.
 
 Fifteen clear floor-skill matches show difficulty letters from the official [IGA 2026 Women’s Artistic Code of Points](https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-CODE-OF-POINTS-2026.pdf#page=9). These A–G letters are separate from competition levels or Gems grades. New or changed skills without an individually verified code entry, unspecified combinations and the unspecified front somersault are left ungraded. Handstand roll to pike stand is identified as Regional pathway only. Qualifications for straight jumps and change-leg leaps remain visible without information pop-ups.
 
@@ -182,3 +182,12 @@ The existing layout now uses shared category styling, without decorative complex
 Training priorities show the skill, category/tier, available points, achievement counts/progress and a clearer View gymnasts disclosure. The ranking formula, complex bonus calculation, marks and Google Sheets synchronisation are unchanged.
 
 The 4.0 follow-up restores the exact pre-polish Perfect green in each theme, enlarges the complex/category headings, and separates orange/red heat from the podium metals. At 50+ qualifying weekly points, heat uses differently phased 15–18 second plume movement and a 38–47 second independent drift; reduced-motion settings stop both. Lower tiers are static inline flames.
+
+
+### 4.0 Floor and Vault — 30 October 2026
+
+A compact Floor / Vault / Combined selector keeps apparatus scores separate. Floor is the default and retains all existing marks and rules (maximum 339). Vault has two three-skill groups: Run & hurdle (Run, Hurdle jump, Arm swing) and Vaults (Handspring, Half on, Half on half off). Each Vault skill earns 10 for Achieved or 20 for Perfect; each all-Perfect group adds 1, for a maximum of 122. Combined adds the two independent totals (maximum 461).
+
+Profiles, directory quick marking, placement and analytics follow the selected apparatus. All skills includes both apparatuses. The 250 Challenge, weekly flames and progress-history charts remain Floor-only; floor games retain their existing skill pools. Vault marks use the same shared lock, 30-day Perfect renewal, background saving, recovery and Undo.
+
+Backend catalogue 4 adds blank Vault rows without rewriting existing floor marks, dates, progress history, challenge results or game data. Older catalogue-3 clients can still read Floor; they must refresh before scoring. Lana Alexander’s existing record is moved to Hannah’s floor and vault, preserving her marks. Google Sheets remains the shared data store.
