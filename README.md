@@ -197,3 +197,12 @@ Backend catalogue 4 adds blank Vault rows without rewriting existing floor marks
 Each Gymnasts directory card has a small × with a 44px touch target. It opens a “Not here today?” confirmation before hiding that gymnast from the normal directory for exactly 24 hours on that device/browser. A matching name search still reveals the gymnast, with a restore control. The hidden-count disclosure also offers Show again. Expiry works after reload, while the app is open and after returning from a suspended tab. The list synchronises between tabs on the same browser; blocked storage is clearly described as visit-only. Only gymnast IDs and expiry times are stored under `swl-directory-hidden-v1`; no attendance information is sent to Google Sheets.
 
 The visible Training complex bar has previous/next controls, including before a first complex is chosen. They cycle through the current Floor, Vault or Combined complexes while retaining the selected squad, search and marks. Pressing the complex name opens the existing selector, where No complex returns to names only. These view controls work while scoring is locked. Attendance hiding affects only the directory; analytics, search suggestions, profiles, leaderboards and the shared roster retain everyone.
+
+
+### 4.0 individual progress graph — 30 October 2026
+
+Individual Progress insights now begins with an interactive Points over time graph. The 7-day, 4-week and 8-week views plot cumulative recorded net Floor gains from a zero baseline for the selected period, with signed corrections included. A date slider and the plot itself reveal each day's change and cumulative gain. Recorded gain, average weekly pace and the current confirmed Floor score are shown separately; a disclosure provides daily values and explains the limits of the history.
+
+The existing WeeklyProgress ledger retains up to 56 calendar days. Partial and stale coverage is labelled. This is not a reconstruction of historical leaderboard totals: automatic expiry, renewals and scoring-rule changes are excluded by the ledger. Average pace uses available calendar days, not training sessions. Missing history is shown explicitly. Combined identifies the graph as Floor-only; Vault shows its current saved score and explains that Vault history is not yet recorded. No history is inferred from skill dates.
+
+The graph works while scoring is locked and does not change any gymnast data. Existing analytics filters and score controls are retained. Google Sheets, backend version 27, scoring rules and the shared roster are unchanged.

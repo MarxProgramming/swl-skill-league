@@ -1,0 +1,293 @@
+/* Personal progress is a read-only chart. Its controls stay in normal flow. */
+.gymnast-progress{
+  --gp-area:#bd9bff1c;
+  --gp-guide:#bd9bff68;
+  min-width:0;
+  color:var(--text,#f6f3fc);
+  background:var(--p40-surface,#181922);
+  border-color:var(--p40-edge,#d3bfff25);
+}
+html[data-theme="light"] .gymnast-progress{
+  --gp-area:#7851a518;
+  --gp-guide:#68439870;
+}
+.gymnast-progress .gp-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:18px 24px;
+}
+.gymnast-progress .gp-head>div{min-width:0}
+.gymnast-progress .gp-head .eyebrow{
+  margin:0 0 8px;
+  color:var(--purple,#c5a4ff);
+  font-size:10px;
+  font-weight:750;
+  letter-spacing:.1em;
+  line-height:1.6;
+}
+.gymnast-progress .gp-head h2{
+  margin:0;
+  font-size:clamp(23px,3vw,29px);
+  line-height:1.2;
+  letter-spacing:-.04em;
+  overflow-wrap:anywhere;
+}
+.gymnast-progress .gp-ranges{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  flex:0 1 270px;
+  min-width:0;
+  padding:4px;
+  gap:3px;
+  border:1px solid var(--p40-edge,#d3bfff25);
+  border-radius:13px;
+  background:var(--p40-field,#11121b);
+}
+.gymnast-progress .gp-ranges button{
+  min-width:44px;
+  min-height:44px;
+  padding:9px 11px;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:var(--muted,#aaa5ba);
+  font:inherit;
+  font-size:11px;
+  font-weight:750;
+  line-height:1.4;
+  cursor:pointer;
+  transition:background .16s ease,border-color .16s ease,color .16s ease;
+}
+.gymnast-progress .gp-ranges button[aria-pressed="true"]{
+  border-color:var(--p40-soft-edge,#b896ef45);
+  background:var(--p40-soft-action,#b896ef12);
+  color:var(--purple,#c5a4ff);
+  box-shadow:inset 0 1px var(--p40-highlight,#e9dcff0d);
+}
+.gymnast-progress .gp-ranges button:disabled{
+  color:var(--muted,#aaa5ba);
+  opacity:.55;
+  cursor:default;
+  box-shadow:none;
+}
+.gymnast-progress .gp-person{
+  margin:13px 0 23px;
+  color:var(--muted,#aaa5ba);
+  font-size:13px;
+  line-height:1.65;
+  overflow-wrap:anywhere;
+}
+.gymnast-progress .gp-person strong{color:var(--text,#f6f3fc);font-weight:700}
+.gymnast-progress .gp-stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:0 0 25px;
+}
+.gymnast-progress .gp-stats article{
+  min-width:0;
+  padding:16px 17px;
+  border:1px solid var(--p40-edge,#d3bfff25);
+  border-radius:14px;
+  background:var(--p40-subtle,#ffffff04);
+}
+.gymnast-progress .gp-stats article>span{
+  display:block;
+  color:var(--muted,#aaa5ba);
+  font-size:11px;
+  font-weight:650;
+  line-height:1.5;
+}
+.gymnast-progress .gp-stats article>strong{
+  display:block;
+  margin:9px 0 4px;
+  color:var(--purple,#c5a4ff);
+  font-size:clamp(28px,3.6vw,40px);
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.055em;
+  line-height:1.15;
+  overflow-wrap:anywhere;
+}
+.gymnast-progress .gp-stats article:last-child>strong{color:var(--text,#f6f3fc)}
+.gymnast-progress .gp-stats small{
+  display:block;
+  color:var(--muted,#aaa5ba);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:0;
+  line-height:1.5;
+}
+.gymnast-progress .gp-chart{
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr);
+  gap:12px 0;
+  min-width:0;
+  margin:17px 0 0;
+}
+.gymnast-progress .gp-y-axis{position:relative;grid-column:1;grid-row:1;height:240px;min-width:0}
+.gymnast-progress .gp-y-tick{
+  position:absolute;
+  right:9px;
+  transform:translateY(-50%);
+  color:var(--muted,#aaa5ba);
+  font-size:11px;
+  line-height:1.2;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  white-space:nowrap;
+}
+.gymnast-progress .gp-plot{position:relative;grid-column:2;grid-row:1;height:240px;min-width:0}
+.gymnast-progress .gp-chart svg{
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:100%;
+  overflow:visible;
+  font-family:inherit;
+}
+.gymnast-progress .gp-x-axis{display:flex;grid-column:2;justify-content:space-between;gap:8px;min-width:0;color:var(--muted,#aaa5ba);font-size:11px;line-height:1.5;font-variant-numeric:tabular-nums}
+.gymnast-progress .gp-x-axis>*{min-width:0;white-space:nowrap}
+.gymnast-progress .gp-x-axis>:first-child{text-align:left}
+.gymnast-progress .gp-x-axis>:last-child{text-align:right}
+.gymnast-progress .gp-grid,
+.gymnast-progress .gp-grid line{
+  fill:none;
+  stroke:var(--p40-edge,#d3bfff25);
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+.gymnast-progress .gp-zero{
+  fill:none;
+  stroke:var(--p40-soft-edge,#b896ef45);
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
+}
+.gymnast-progress .gp-area{fill:var(--gp-area);stroke:none}
+.gymnast-progress .gp-line{
+  fill:none;
+  stroke:var(--purple,#c5a4ff);
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
+}
+.gymnast-progress .gp-tick,
+.gymnast-progress .gp-axis-label{
+  fill:var(--muted,#aaa5ba);
+  color:var(--muted,#aaa5ba);
+  font-family:inherit;
+  font-size:12px;
+  font-weight:500;
+  font-variant-numeric:tabular-nums;
+}
+.gymnast-progress .gp-axis-label{margin:0 0 12px;font-size:11px;line-height:1.5}
+.gymnast-progress .gp-selected,
+.gymnast-progress .gp-selected line{
+  stroke:var(--gp-guide);
+  stroke-width:1;
+  stroke-dasharray:4 5;
+  vector-effect:non-scaling-stroke;
+}
+.gymnast-progress .gp-selected circle{
+  fill:var(--purple,#c5a4ff);
+  stroke:var(--panel,#181922);
+  stroke-width:3;
+  vector-effect:non-scaling-stroke;
+}
+.gymnast-progress .gp-marker{
+  position:absolute;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--purple,#c5a4ff);
+  box-shadow:0 0 0 3px var(--panel,#181922);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.gymnast-progress .gp-reading{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  flex-wrap:wrap;
+  min-width:0;
+  gap:6px 16px;
+  margin:16px 0 5px;
+  padding:13px 15px;
+  border:1px solid var(--p40-soft-edge,#b896ef45);
+  border-radius:11px;
+  background:var(--p40-soft-action,#b896ef12);
+  font-size:12px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+.gymnast-progress .gp-reading strong{color:var(--text,#f6f3fc);font-weight:650}
+.gymnast-progress .gp-reading>span{color:var(--purple,#c5a4ff);font-weight:700;font-variant-numeric:tabular-nums}
+.gymnast-progress .gp-scrub{display:grid;gap:2px;margin:14px 0 20px;min-width:0}
+.gymnast-progress .gp-scrub label{color:var(--muted,#aaa5ba);font-size:11px;line-height:1.5}
+.gymnast-progress .gp-scrub input[type="range"]{
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  margin:0;
+  padding:0;
+  background:transparent;
+  accent-color:var(--purple,#c5a4ff);
+  cursor:ew-resize;
+}
+.gymnast-progress .gp-scrub input:disabled{opacity:.55;cursor:default}
+.gymnast-progress .gp-values{min-width:0;margin:0;border-top:1px solid var(--p40-edge,#d3bfff25)}
+.gymnast-progress .gp-values>summary{
+  min-height:44px;
+  padding:14px 0;
+  color:var(--purple,#c5a4ff);
+  font-size:12px;
+  font-weight:650;
+  line-height:1.5;
+  cursor:pointer;
+  list-style-position:inside;
+}
+.gymnast-progress .gp-values>summary::marker{color:var(--purple,#c5a4ff);font-size:10px}
+.gymnast-progress .gp-values table{width:100%;table-layout:fixed;border-collapse:collapse;margin:5px 0 13px;font-size:12px;line-height:1.6;font-variant-numeric:tabular-nums}
+.gymnast-progress .gp-values :is(th,td){padding:10px 6px;border-bottom:1px solid var(--p40-edge,#d3bfff25);text-align:right;vertical-align:top;overflow-wrap:anywhere}
+.gymnast-progress .gp-values th{color:var(--muted,#aaa5ba);font-size:10px;font-weight:650}
+.gymnast-progress .gp-values td{color:var(--text,#f6f3fc)}
+.gymnast-progress .gp-values :is(th,td):first-child{width:42%;padding-left:0;text-align:left}
+.gymnast-progress .gp-values :is(th,td):last-child{padding-right:0}
+.gymnast-progress .gp-values tbody tr:last-child td{border-bottom:0}
+.gymnast-progress .gp-note{margin:17px 0 0;color:var(--muted,#aaa5ba);font-size:11px;line-height:1.7;overflow-wrap:anywhere}
+.gymnast-progress .gp-empty{margin:22px 0 8px;padding:25px 20px;border:1px dashed var(--p40-soft-edge,#b896ef45);border-radius:14px;background:var(--p40-subtle,#ffffff04);color:var(--muted,#aaa5ba);font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+.gymnast-progress .gp-empty :is(strong,h3){color:var(--text,#f6f3fc)}
+.gymnast-progress :is(button,input,summary):focus-visible{outline:2px solid var(--purple,#c5a4ff);outline-offset:3px}
+@media(hover:hover){
+  .gymnast-progress .gp-ranges button:hover:not(:disabled){background:var(--p40-soft-action,#b896ef12);border-color:var(--p40-hover-edge,#b89bdd73);color:var(--purple,#c5a4ff)}
+  .gymnast-progress .gp-values>summary:hover{color:var(--text,#f6f3fc)}
+}
+@media(max-width:600px){
+  .gymnast-progress .gp-head{gap:17px}
+  .gymnast-progress .gp-ranges{flex:1 1 100%;width:100%}
+  .gymnast-progress .gp-ranges button{padding-inline:7px}
+  .gymnast-progress .gp-person{margin:16px 0 19px}
+  .gymnast-progress .gp-stats{gap:8px;margin-bottom:22px}
+  .gymnast-progress .gp-stats article{padding:13px 12px}
+  .gymnast-progress .gp-stats article>strong{font-size:30px}
+  .gymnast-progress .gp-y-axis,.gymnast-progress .gp-plot{height:200px}
+  .gymnast-progress .gp-reading{gap:5px 12px;padding:11px 12px}
+}
+@media(max-width:420px){
+  .gymnast-progress .gp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gymnast-progress .gp-stats article:first-child{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px}
+  .gymnast-progress .gp-stats article:first-child>strong{grid-column:2;grid-row:1/3;margin:0;font-size:35px}
+  .gymnast-progress .gp-stats article:first-child>small{grid-column:1}
+  .gymnast-progress .gp-stats article>strong{font-size:28px}
+  .gymnast-progress .gp-stats article>span{font-size:10px}
+  .gymnast-progress .gp-values table{font-size:11px}
+  .gymnast-progress .gp-values th{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .gymnast-progress,.gymnast-progress *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+body.no-motion .gymnast-progress,body.no-motion .gymnast-progress *{animation:none!important;transition:none!important}

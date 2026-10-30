@@ -1595,6 +1595,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./entry-40.css?v=20261030-entry">
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261030-training">
 <link rel="stylesheet" href="./directory-attendance.css?v=20261030-training">
+<link rel="stylesheet" href="./gymnast-progress.css?v=20261030-progress">
 </head>
 
 <body class="programme-menu-open">
@@ -1826,7 +1827,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./skills-catalogue.js?v=20261030-vault"></script>
 <script src="./v4-search.js?v=20261029-weekly-flames"></script>
 <script src="./directory-attendance.js?v=20261030-training"></script>
-<script src="./v2.js?v=20261030-training"></script>
+<script src="./gymnast-progress.js?v=20261030-progress"></script>
+<script src="./v2.js?v=20261030-progress"></script>
 <script src="./challenge.js?v=20261029-weekly-flames"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script>
@@ -2463,7 +2465,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
   function renderV2() {
     window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
-    v2Api()?.render({state,apparatus,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({state,apparatus,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));

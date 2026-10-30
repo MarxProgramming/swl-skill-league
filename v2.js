@@ -2,6 +2,7 @@
   'use strict';
   const DAY=86400000, esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all',analyticsAge='all',analyticsComparison='foundation',analyticsRankCategory='overall',analyticsRankMetric='points';
+  let progressRange=28;
   let priorityPinned=null,priorityScope='',priorityRenderedIds=[];
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
@@ -33,7 +34,7 @@
   function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
   const focusControls='button,input,select,summary,a,[tabindex]';
-  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore'];
+  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange'];
   function focusKey(root) {
     const e=document.activeElement;if(!e||!root.contains(e))return null;
     const dataset=Object.fromEntries(focusData.filter(key=>e.dataset?.[key]!==undefined).map(key=>[key,e.dataset[key]]));
@@ -79,6 +80,7 @@
     });
     window.SWLDirectoryAttendance?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],onChange:()=>renderDirectory()});
     analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 4.0</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Apparatus<select id="analyticsApparatus"><option value="floor">Floor</option><option value="vault">Vault</option><option value="combined">Floor + Vault</option></select></label><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
+    window.SWLGymnastProgress?.mount(analytics);
     analytics.querySelector('#analyticsApparatus')?.addEventListener('change',e=>changeApparatus(e.target.value));
     analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;if(analyticsGroup==='coaches')analyticsAge='all';analyticsGymnast='all';renderAnalytics();});
     analytics.querySelector('#analyticsAge')?.addEventListener('change',e=>{analyticsAge=e.target.value;analyticsGymnast='all';renderAnalytics();});
@@ -91,6 +93,8 @@
       }else if(priorityPinned){priorityPinned=null;renderAnalytics();}
     },true);
     analytics.addEventListener('click',e=>{
+      const progressButton=e.target.closest('[data-progress-range]');if(progressButton){const days=Number(progressButton.dataset.progressRange);if([7,28,56].includes(days)){progressRange=days;renderAnalytics();}return;}
+      if(e.target.closest('[data-progress-floor]')){changeApparatus('floor');return;}
       const comparison=e.target.closest('[data-analytics-comparison]');if(comparison){analyticsComparison=comparison.dataset.analyticsComparison;renderAnalytics();return;}
       const category=e.target.closest('[data-analytics-category]');if(category){analyticsRankCategory=category.dataset.analyticsCategory;analyticsRankMetric='points';renderAnalytics();if(category.dataset.v2Focus==='category-chart')analytics.querySelector('#analyticsStandings')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
       const person=e.target.closest('[data-analytics-person]');if(person){selectGymnast(person.dataset.analyticsPerson);renderAnalytics();analytics.scrollIntoView({behavior:'instant',block:'start'});return;}
@@ -355,7 +359,10 @@
     const overview=`<div class="analytics-wide a31-selected-scope"><div><p class="analytics-scope${analyticsGymnast!=='all'&&heatClass(analyticsGymnast)?' '+heatClass(analyticsGymnast):''}">${esc(scope)} ${analyticsGymnast!=='all'?coachBadge(people[0])+' '+fireBadge(analyticsGymnast):''}<span>· ${esc(ageScope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</span></p></div>${analyticsGymnast!=='all'?`<button type="button" class="quiet" data-gymnast="${esc(analyticsGymnast)}">Open skills ↗</button>`:''}</div>
       <div class="analytics-stat-grid analytics-wide a31-stats"><article><span>Average points</span><strong>${number(people.length?c.points/people.length:0)}</strong><p>Per ${analyticsGroup==='coaches'?'coach':'gymnast'} in this view</p></article><article><span>Skills retained</span><strong>${pct(c.achieved+c.perfect,a.total)}<small>%</small></strong><p>${c.achieved+c.perfect} of ${a.total} available skills</p></article><article><span>Perfect marks</span><strong>${c.perfect}</strong><p>${pct(c.perfect,a.total)}% of available skills</p></article><article><span>League points</span><strong>${number(c.points)}</strong><p>Combined points in this view</p></article></div>
       ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match these filters. Try All ages or another squad.</p>':''}`;
-    commitHTML(host,`<div class="analytics-grid a31-grid">${renderPriorities(people,fullScope)}${renderSquadComparison(comparisonGroups)}${renderStandings(people,fullScope)}
+    const progressPerson=analyticsGymnast!=='all'?people[0]:null;
+    const progressCategory=apparatus()==='vault'?'vault':'overall';
+    const progressChart=progressPerson?window.SWLGymnastProgress?.render({person:progressPerson,progress:data.state.weeklyProgress,currentPoints:data.confirmedPoints?.(progressPerson.id,progressCategory)??data.summary(progressPerson.id,progressCategory).points,days:progressRange,apparatus:apparatus()})||'':'';
+    commitHTML(host,`<div class="analytics-grid a31-grid">${progressChart}${renderPriorities(people,fullScope)}${renderSquadComparison(comparisonGroups)}${renderStandings(people,fullScope)}
       ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',overview)}
       ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',renderCategories(a))}
       ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',renderMomentum(people))}
