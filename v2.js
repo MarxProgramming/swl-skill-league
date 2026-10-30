@@ -33,7 +33,7 @@
   function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
   const focusControls='button,input,select,summary,a,[tabindex]';
-  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','priorityMark','prioritySkill','priorityGymnast'];
+  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore'];
   function focusKey(root) {
     const e=document.activeElement;if(!e||!root.contains(e))return null;
     const dataset=Object.fromEntries(focusData.filter(key=>e.dataset?.[key]!==undefined).map(key=>[key,e.dataset[key]]));
@@ -66,11 +66,18 @@
   }
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
-    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Search a name, or browse your squad below.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="apparatus-switch directory-apparatus-switch" id="directoryApparatus" role="group" aria-label="Choose scoring apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([id,label])=>`<button type="button" id="directory-apparatus-${id}" data-apparatus="${id}" aria-pressed="${id==='floor'}" disabled>${label}</button>`).join('')}</div></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>Filters &amp; training</strong><span id="directoryFilterSummary">All squads</span></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex</label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><div id="directoryResults"></div>`;
+    directory.innerHTML=`<div class="v2-page-head"><div><p class="eyebrow">Every squad. Every gymnast.</p><h1>Find your gymnast</h1><p>Search a name, or browse your squad below.</p></div><button class="insights-button" data-view="analytics">◈ Analytics ↗</button></div><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="apparatus-switch directory-apparatus-switch" id="directoryApparatus" role="group" aria-label="Choose scoring apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([id,label])=>`<button type="button" id="directory-apparatus-${id}" data-apparatus="${id}" aria-pressed="${id==='floor'}" disabled>${label}</button>`).join('')}</div></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>Filters &amp; training</strong><span id="directoryFilterSummary">All squads</span></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-complex-tools directory-squad-tools"><label for="directoryGroups">Squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div><div class="directory-complex-tools"><label for="directoryComplex">Add a complex</label><select id="directoryComplex" aria-describedby="directoryComplexHint"><option value="">No complex selected</option></select><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p></div><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details><div class="directory-quick-switch" role="group" aria-label="Quick complex switching"><button type="button" id="directoryComplexPrevious" aria-label="Previous complex" title="Previous complex" disabled>‹</button><button type="button" class="directory-quick-switch-choice" id="directoryComplexChoice" aria-controls="directoryFilters" disabled><span>Training complex</span><strong id="directoryComplexCurrent" aria-live="polite">Choose a complex</strong></button><button type="button" id="directoryComplexNext" aria-label="Next complex" title="Next complex" disabled>›</button></div></div><div id="directoryAttendanceStatus"></div><div id="directoryResults"></div>`;
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
     directory.querySelector('#directorySearch').addEventListener('input',renderDirectory);
     directory.querySelector('#directoryComplex').addEventListener('change',e=>{directoryComplex=e.target.value;renderDirectory();});
     directory.querySelector('#directoryGroups').addEventListener('change',e=>{directoryGroup=e.target.value;renderDirectory();});
+    directory.querySelector('#directoryComplexPrevious').addEventListener('click',()=>switchComplex(-1));
+    directory.querySelector('#directoryComplexNext').addEventListener('click',()=>switchComplex(1));
+    directory.querySelector('#directoryComplexChoice').addEventListener('click',()=>{
+      directory.querySelector('#directoryFilters').open=true;
+      directory.querySelector('#directoryComplex').focus({preventScroll:true});
+    });
+    window.SWLDirectoryAttendance?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],onChange:()=>renderDirectory()});
     analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 4.0</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Apparatus<select id="analyticsApparatus"><option value="floor">Floor</option><option value="vault">Vault</option><option value="combined">Floor + Vault</option></select></label><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
     analytics.querySelector('#analyticsApparatus')?.addEventListener('change',e=>changeApparatus(e.target.value));
     analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;if(analyticsGroup==='coaches')analyticsAge='all';analyticsGymnast='all';renderAnalytics();});
@@ -106,6 +113,18 @@
   function complexOptions() {
     return scopedCategories().flatMap(c=>c.tiers.map(([tier,label])=>({id:c.id+'-'+tier,label:c.name+' · '+label,skills:data.skills.filter(k=>k.category===c.id&&k.tier===tier)}))).filter(c=>c.skills.length===3);
   }
+  function switchComplex(direction) {
+    if(!data?.hasLoaded)return;
+    const options=complexOptions();if(!options.length)return;
+    const current=options.findIndex(c=>c.id===directoryComplex);
+    const next=current<0?(direction>0?0:options.length-1):(current+direction+options.length)%options.length;
+    directoryComplex=options[next].id;renderDirectory();
+  }
+  const normaliseName=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-GB').replace(/[’']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+  function nameMatches(g,query) {
+    const tokens=normaliseName(query).split(/\s+/).filter(Boolean),name=normaliseName(g.name);
+    return tokens.length>0&&tokens.every(token=>name.includes(token));
+  }
   function quickMarks(g,complex) {
     if(!complex)return '';
     return `<div class="directory-quick" role="group" aria-label="${esc(complex.label)} for ${esc(g.name)}"><span class="directory-quick-label">${esc(complex.label)}</span><div class="directory-quick-grid">${complex.skills.map(k=>{
@@ -124,6 +143,9 @@
     commitHTML(select,options);
     select.value=directoryComplex;select.disabled=!data.hasLoaded;
     const complex=complexes.find(c=>c.id===directoryComplex);
+    const currentLabel=directory.querySelector('#directoryComplexCurrent');
+    if(currentLabel)currentLabel.textContent=complex?.label||'Choose a complex';
+    ['Previous','Choice','Next'].forEach(part=>{const button=directory.querySelector('#directoryComplex'+part);if(button)button.disabled=!data.hasLoaded||!complexes.length;});
     directory.querySelector('#directoryComplexHint').textContent=complex?(data.canEdit===false?'Scoring is locked. You can view the three marks below each name.':'✓ Achieved · ✓✓ Perfect. HS = handstand · CW = cartwheel.'): 'One complex at a time. Your choice appears below every gymnast.';
     const squadSelect=directory.querySelector('#directoryGroups');
     commitHTML(squadSelect,[['all','All squads'],['floor','All floor & vault'],['senior','All senior squad'],...groups.map(g=>[g,g==='coaches'?'Coaches':data.shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join(''));
@@ -131,12 +153,18 @@
     const squadLabel=directoryGroup==='all'?'All squads':directoryGroup==='floor'?'All floor & vault':directoryGroup==='senior'?'All senior squad':directoryGroup==='overall'?'All squads + coaches':groupName(directoryGroup);
     const filterSummary=directory.querySelector('#directoryFilterSummary');if(filterSummary)filterSummary.textContent=squadLabel+(complex?' · '+complex.label:'');
     const query=directory.querySelector('#directorySearch').value.trim().toLocaleLowerCase('en-GB');
-    const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&(g.name+' '+personGroups(g)).toLocaleLowerCase('en-GB').includes(query));
+    const people=data.gymnasts.filter(g=>{
+      if(!inGroup(g,directoryGroup))return false;
+      const byName=nameMatches(g,query);
+      if(window.SWLDirectoryAttendance?.isHidden(g.id))return byName;
+      return !query||byName||personGroups(g).toLocaleLowerCase('en-GB').includes(query);
+    });
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
       const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
-      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,scoreCategory()),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)}</strong><small class="heat-meta"><span class="heat-meta-text">${s.achieved}/${skills.length} ${esc(apparatusShortLabel())} skills · ${s.perfect} perfect</span></small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${esc(apparatusShortLabel())} pts ↗</small></span></button>${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
+      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,scoreCategory()),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)}</strong><small class="heat-meta"><span class="heat-meta-text">${s.achieved}/${skills.length} ${esc(apparatusShortLabel())} skills · ${s.perfect} perfect</span></small>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${esc(apparatusShortLabel())} pts ↗</small></span></button>${window.SWLDirectoryAttendance?.control(g)||''}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
     window.SWLSearch?.render(data,{group:directoryGroup});
+    window.SWLDirectoryAttendance?.refresh();
     restore(directory,key);
   }
   function aggregate(people,at=Date.now()) {

@@ -151,3 +151,69 @@ body.no-motion #directoryRoot .directory-filter-chevron { transition:none; }
 @media(prefers-reduced-motion:reduce) {
   #directoryRoot .directory-filter-chevron { transition:none; }
 }
+/* One tap moves the entire squad to its next training complex. */
+#directoryRoot .directory-quick-switch {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) 48px;
+  align-items:stretch;
+  gap:8px;
+  margin-top:18px;
+  padding:6px;
+  border:1px solid var(--p40-soft-edge,#b896ef45);
+  border-radius:16px;
+  background:var(--p40-soft-action,#b896ef12);
+}
+#directoryRoot .directory-quick-switch > button {
+  min-width:0;
+  min-height:48px;
+  margin:0;
+  padding:7px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:transparent;
+  color:var(--purple,#bd9bff);
+  font:inherit;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  transition:background .16s ease,border-color .16s ease;
+}
+#directoryRoot .directory-quick-switch > button:hover:not(:disabled) {
+  background:var(--p40-soft-action,#b896ef12);
+  border-color:var(--p40-soft-edge,#b896ef45);
+}
+#directoryRoot .directory-quick-switch > button:focus-visible {
+  outline:2px solid var(--purple,#bd9bff);
+  outline-offset:2px;
+}
+#directoryRoot .directory-quick-switch > button:disabled { opacity:.4;cursor:default; }
+#directoryRoot .directory-quick-switch > .directory-quick-switch-choice {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:8px 3px;
+  text-align:center;
+}
+#directoryRoot .directory-quick-switch-choice > span {
+  color:var(--muted,#aaa5ba);
+  font-size:10px;
+  line-height:1.2;
+  font-weight:650;
+}
+#directoryRoot .directory-quick-switch-choice > strong {
+  color:var(--text,#f6f4f8);
+  font-size:12px;
+  line-height:1.4;
+  font-weight:750;
+  overflow-wrap:anywhere;
+}
+@media(max-width:420px) {
+  #directoryRoot .directory-quick-switch { grid-template-columns:44px minmax(0,1fr) 44px;gap:2px;padding:4px; }
+  #directoryRoot .directory-quick-switch-choice > strong { font-size:11px; }
+}
+body.no-motion #directoryRoot .directory-quick-switch > button { transition:none; }
+@media(prefers-reduced-motion:reduce) {
+  #directoryRoot .directory-quick-switch > button { transition:none; }
+}
