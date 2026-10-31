@@ -35,14 +35,14 @@
     const heat = !peek ? options.heatClass(gymnast.id) : '';
     const details = `<span class="swlp-row-position"><span class="sr">Position </span>${position}</span>
       <span class="swlp-row-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-      <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)} ${options.coachBadge(gymnast)} ${options.fireBadge(gymnast.id)}</strong>
+      <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)} ${options.coachBadge(gymnast)} ${options.fireBadge(gymnast.id)} ${peek ? '' : options.achievementBadge(gymnast)}</strong>
         <small class="heat-meta"><span class="heat-meta-text">${selected ? (options.isCoachParticipant(gymnast) ? 'Your selected coach' : 'Your selected gymnast') : escapeHTML(options.groupLabel(gymnast.coach || ''))}</span></small></span>
       <span class="swlp-row-score"><strong>${displayNumber(row.points)}</strong><small>pts</small></span>`;
     if (peek) {
       return `<li class="swlp-row swlp-peek" data-placement-position="${position}" data-placement-peek="${distance < 0 ? 'above' : 'below'}" aria-hidden="true">
         <div class="swlp-peek-content">${details}</div><span class="swlp-peek-label">${distance < 0 ? 'Just above' : 'Just below'}</span></li>`;
     }
-    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${heat ? ' '+heat : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + (options.isCoachParticipant(gymnast) ? ', coach' : '') + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}${options.achievementBadge(gymnast)}</li>`;
+    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${heat ? ' '+heat : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + (options.isCoachParticipant(gymnast) ? ', coach' : '') + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
   }
 
   function boardHTML(board, gymnast, options) {

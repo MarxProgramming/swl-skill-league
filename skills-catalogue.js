@@ -37,10 +37,6 @@
   "acro-upgrade-2": {
     "grade": "C"
   },
-  "acro-pro-0": {
-    "grade": "C",
-    "note": "Floor tuck-back"
-  },
   "acro-pro-1": {
     "grade": "D"
   },

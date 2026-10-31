@@ -3,7 +3,7 @@
   'use strict';
   let mounted = false, dialog = null, opener = null;
   const eligible = gymnast => gymnast?.id === 'g03' && String(gymnast.name || '').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-GB') === 'lexi primrose';
-  const emblem = `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path class="award-ribbon" d="M9 23l-2 11 9-4 9 4-2-11"/><path class="award-seal" d="M16 1l4 3 5 1 1 5 4 4-2 5-1 5-5 1-6 4-6-4-5-1-1-5-2-5 4-4 1-5 5-1z"/><path class="award-star" d="m16 7 2.5 5.1 5.6.8-4.1 4 .9 5.6-4.9-2.7-4.9 2.7.9-5.6-4.1-4 5.6-.8z"/></svg>`;
+  const emblem = `<svg viewBox="0 0 54 32" aria-hidden="true" focusable="false"><path class="award-seal" d="M8 2h38l6 7v14l-6 7H8l-6-7V9z"/><path class="award-inset" d="M10 5h34l5 5v12l-5 5H10l-5-5V10z"/><text class="award-number" x="27" y="22" text-anchor="middle">250</text></svg>`;
 
   function badge(gymnast) {
     if (!eligible(gymnast)) return '';

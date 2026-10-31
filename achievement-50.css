@@ -1,32 +1,35 @@
-/* A small collectible seal, with a generous touch target. */
-.swl-achievement-badge{position:relative;display:inline-grid;place-items:center;vertical-align:middle;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:12px;background:transparent;color:#f5d999;line-height:1;cursor:pointer;isolation:isolate;box-shadow:none}
-.swl-achievement-badge .swl-achievement-emblem{display:block;width:25px;height:29px;filter:drop-shadow(0 2px 3px #0008);transition:transform .18s ease,filter .18s ease}
-.swl-achievement-badge:hover .swl-achievement-emblem{transform:translateY(-2px) rotate(-5deg);filter:drop-shadow(0 2px 6px #e5b85c55)}
+/* A tiny historical 250 emblem, inline with the name and weekly flames. */
+.swl-achievement-badge{position:relative;z-index:2;display:inline-grid;place-items:center;vertical-align:middle;flex:0 0 28px;width:28px;height:28px;min-width:28px;min-height:28px;margin:-4px 0 -3px 1px;padding:0;border:0;border-radius:7px;background:transparent;color:#f5d999;line-height:1;cursor:pointer;isolation:isolate;box-shadow:none;pointer-events:auto}
+.swl-achievement-badge .swl-achievement-emblem{display:block;width:24px;height:15px;filter:drop-shadow(0 1px 2px #0006);transition:transform .18s ease,filter .18s ease}
+.swl-achievement-badge:hover .swl-achievement-emblem{transform:translateY(-1px);filter:drop-shadow(0 1px 5px #e5b85c55)}
 .swl-achievement-badge:focus-visible{outline:2px solid #e9c97d;outline-offset:0;background:#e9c97d12}
 .swl-achievement-badge svg,.swl-achievement-large svg{width:100%;height:100%;overflow:visible}
-.award-ribbon{fill:#9971d2;stroke:#ddc9ff;stroke-width:.7}
-.award-seal{fill:#302739;stroke:#edcc81;stroke-width:1.6;stroke-linejoin:round}
-.award-star{fill:#f6da94;stroke:#fff4c9;stroke-width:.6;stroke-linejoin:round}
-#directoryRoot .directory-card>.swl-achievement-badge{position:absolute;z-index:2;top:38px;left:37px}
-#directoryRoot .directory-card:has(>.swl-achievement-badge) .directory-avatar{overflow:visible}
-.athlete-info h2>.swl-achievement-badge{vertical-align:middle;margin-left:1px}
-.a31-standing-identity{display:flex;align-items:center;min-width:0;gap:0}
-.a31-standing-identity>.a31-standing-person{min-width:0;flex:1}
-.a31-standing-identity>.swl-achievement-badge{flex-shrink:0}
-.v4-mark-person>.swl-achievement-badge{vertical-align:middle}
-.v4-mark-person:has(>.swl-achievement-badge)>button:first-child{display:inline;max-width:calc(100% - 48px)}
-.v3-rank-item:has(>.swl-achievement-badge){position:relative}
-.v3-rank-item>.swl-achievement-badge{position:absolute;left:38px;bottom:0;z-index:3}
-.overall .v3-podium .v3-rank-item>.swl-achievement-badge{left:7px;bottom:7px}
-.challenge-list>li.has-achievement{position:relative}
-.challenge-list>li>.swl-achievement-badge{position:absolute;left:5px;top:35px;z-index:2;width:44px;height:44px}
-.challenge-list>li.has-achievement .challenge-rank{align-self:start;padding-top:3px}
-.challenge-list>li.has-achievement .challenge-row{min-height:91px}
+.award-seal{fill:#362c26;stroke:#e8c678;stroke-width:1.4;stroke-linejoin:round}
+.award-inset{fill:none;stroke:#e8c67855;stroke-width:.6}
+.award-number{fill:#ffe5a7;font-family:Arial,sans-serif;font-size:17px;font-weight:800;letter-spacing:.5px}
+.athlete-info h2>.swl-achievement-badge{vertical-align:middle}
+/* The full card stays clickable; the emblem is a separate, valid button. */
+.directory-profile-content{position:relative;display:flex;align-items:center;gap:13px;width:100%;min-width:0;padding:20px 17px;color:inherit;text-align:left;border-radius:18px}
+#directoryRoot .directory-card:has(>.directory-attendance-control)>.directory-profile-content{padding-right:57px}
+.directory-profile-content>.directory-profile,.rank-row>.swl-profile-open{position:absolute;z-index:1;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:inherit;background:transparent;color:inherit;box-shadow:none;cursor:pointer}
+.directory-profile-content>:not(.directory-profile),.rank-row:has(>.swl-profile-open)>:not(.swl-profile-open){pointer-events:none}
+.directory-profile-content .swl-achievement-badge,.rank-row .swl-achievement-badge{pointer-events:auto}
+.directory-profile-content:hover{background:#bd9bff08}
+.directory-profile-content>.directory-profile:hover,.rank-row>.swl-profile-open:hover{background:transparent;transform:none}
+.directory-profile-content>.directory-profile:focus-visible,.rank-row>.swl-profile-open:focus-visible{outline:2px solid #bd9bff;outline-offset:-3px}
+.a31-standing-identity{display:block;min-width:0}
+.a31-standing-name{display:block;line-height:1.45}
+.a31-standing-name>.a31-standing-person{display:inline;min-height:28px;padding:2px 0;vertical-align:middle}
+.a31-standing-name>.a31-standing-person strong{display:inline}
+.a31-standing-identity>small{display:block;font-size:9px;color:#95869f;line-height:1.5;overflow-wrap:anywhere;margin-top:2px}
+.v4-mark-person>button:not(.swl-achievement-badge){display:inline;min-height:28px;vertical-align:middle}
+.v4-mark-person>.swl-achievement-badge{display:inline-grid;width:28px;min-width:28px;height:28px;min-height:28px;margin:-4px 0 -3px 1px;padding:0;text-align:center;line-height:1;background:transparent}
+@media(max-width:420px){.directory-profile-content{padding:17px 14px}}
 .swl-achievement-dialog{color:#f8f4fc;border:1px solid #e5c17d55;border-radius:26px;width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:36px 28px 27px;text-align:center;background:radial-gradient(ellipse at 50% 0,#ab7b2530,transparent 65%),#1d1925;box-shadow:0 24px 90px #0009;overflow:auto}
 .swl-achievement-dialog::backdrop{background:#09070fc9;backdrop-filter:blur(6px)}
 .swl-achievement-close{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:44px;height:44px;min-height:44px;border:0;border-radius:12px;background:none;color:#b9acbf;font-size:25px;cursor:pointer}
 .swl-achievement-close:hover{background:#ffffff08;color:#f6e4c3}
-.swl-achievement-large{display:block;width:78px;height:88px;margin:0 auto 21px;filter:drop-shadow(0 7px 20px #c79a3625)}
+.swl-achievement-large{display:block;width:100px;height:60px;margin:0 auto 21px;filter:drop-shadow(0 7px 20px #c79a3625)}
 .swl-achievement-eyebrow{color:#d6bc87;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin:0 0 10px}
 .swl-achievement-dialog h2{color:#fff0c9;font-size:35px;letter-spacing:-.05em;line-height:1.15;margin:0 0 11px}
 .swl-achievement-recipient{font-size:17px;font-weight:800;color:#f7f2fb;margin:0 0 18px}
@@ -35,8 +38,7 @@
 .swl-achievement-done{width:100%;min-height:48px;padding:12px 17px;border:1px solid #d9b96355;border-radius:13px;background:linear-gradient(135deg,#a9813830,#c4a05f13);color:#f5dba0;font-size:12px;font-weight:800;cursor:pointer}
 .swl-achievement-done:hover{background:#c4a05f28}
 .swl-achievement-dialog button:focus-visible{outline:2px solid #e9c97d;outline-offset:3px}
-@media(max-width:420px){#directoryRoot .directory-card>.swl-achievement-badge{top:34px;left:34px}.swl-achievement-dialog{padding:32px 22px 22px}}
+@media(max-width:420px){.swl-achievement-dialog{padding:32px 22px 22px}}
 @media(prefers-reduced-motion:reduce){.swl-achievement-badge .swl-achievement-emblem{transition:none}.swl-achievement-badge:hover .swl-achievement-emblem{transform:none}}
-.swlp-row>.swl-achievement-badge{position:absolute;left:42px;bottom:0;z-index:2}
 .swlp-identity h2>.swl-achievement-badge{vertical-align:middle}
 @media(max-width:700px){.a31-standing-identity{grid-column:2;grid-row:1}}

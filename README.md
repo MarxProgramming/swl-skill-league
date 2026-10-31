@@ -1,4 +1,24 @@
-# SWL Squad Training 4.0
+# SWL Squad Training 5.1
+
+GitHub Pages hosts this static app. Google Sheets remains the shared data store through the existing Google Apps Script endpoint.
+
+## Current experience
+
+The main tabs are **Leaderboards**, **Gymnasts** and **Analytics**. **Games** and **All skills** sit in the header. The app uses its dark theme with sound enabled; browser audio still requires a user interaction. The Gymnasts page always combines Floor and Vault, keeps its chosen squad visible and remembers that selection, and rotates through all eleven complexes using the quick-switch arrows. Hidden gymnasts appear in a disclosure below the list. Profiles show all skills without category filter buttons; individual progress charts are collapsed at the bottom of Insights. Gymnasts and Analytics retain their own viewing context.
+
+Four challenge cards below the leaderboards open current-progress standings for **Achieve all Floor skills**, **Achieve all Vault skills**, **Perfect all Floor skills**, and **Perfect all Vault skills**. Floor includes 27 skills; Vault includes 6. Perfect also counts as Achieved. Each challenge lists all noncoach gymnasts by completed skills, then points and name. These are current completion goals, with no new prize or historical winner inferred.
+
+**All gymnasts** shows current points, percentage of full marks and points remaining. The maximum is **339 Floor**, **122 Vault**, or **461 Combined**. Equal scores are ordered alphabetically. All squads are shown independently of the main leaderboard filters; coaches remain in their own selectable category on the main boards.
+
+The Acro pro complex contains **Round-off flick**, **Double spin** and **Handspring**. Each remains 2.5 points for Achieved and 5 for Perfect, with +1 only for a complete Perfect complex. The two replacement Floor skills have new identifiers; Floor Handspring and Vault Handspring are separate records. The catalogue, profiles, quick marking, analytics and skill-shuffle pools use the same updated definitions.
+
+Lexi Primrose’s historical first-to-250 Floor achievement is a tiny outlined **250** emblem directly after her flames or name. Its accessible button opens the explanation and does not open or alter her skills. Current points do not affect this historical award.
+
+Backend catalogue 5 archives the two replaced skill records before migration and clears their existing marks and dates, so the new skills must be demonstrated. Unrelated skills, Double spin, Vault marks, dates, game records and earned weekly history are preserved. Older clients can read a compatible view but must refresh before scoring. The shared scoring lock, 30-minute unlock lease, background saving, retry and 30-day Perfect renewal remain unchanged. Release testing uses isolated invented records; it does not tick live gymnasts for tests.
+
+The sections below are historical implementation notes; the current experience above supersedes earlier navigation, challenge, theme and sound controls.
+
+# Earlier releases and implementation history
 
 A static gymnastics training app with three main views: Leaderboards, Gymnasts and Games, plus focused Analytics, All skills and Challenge Tracker pages. The Skill League tracker connects to the shared Google Sheet, with instant skill cycling, gymnast creation, undo, and recovery of unsaved edits. The ten games run independently on the current device, with anonymous game ratings saved to Google Sheets.
 
