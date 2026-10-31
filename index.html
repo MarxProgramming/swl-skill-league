@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d0e13">
-<title>SWL · Squad Training 4.0</title>
+<title>SWL · Squad Training 5.0</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
-<script src="./theme.js?v=20261026b"></script>
+<script src="./theme.js?v=20261031-v5"></script>
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
 
@@ -1586,16 +1586,18 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
 <link rel="stylesheet" href="./analytics-31.css?v=20261029-polish">
-<link rel="stylesheet" href="./challenge.css?v=20261021-reset"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
+<link rel="stylesheet" href="./challenge.css?v=20261031-v5"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
 <link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
 <link rel="stylesheet" href="./polish-40.css?v=20261029-fire-green">
 <link rel="stylesheet" href="./polish-motion-40.css?v=20261029-weekly-flames">
 <link rel="stylesheet" href="./apparatus-40.css?v=20261030-vault">
 <link rel="stylesheet" href="./entry-40.css?v=20261030-entry">
-<link rel="stylesheet" href="./entry-directory-40.css?v=20261030-training">
-<link rel="stylesheet" href="./directory-attendance.css?v=20261030-training">
+<link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
+<link rel="stylesheet" href="./directory-attendance.css?v=20261031-v5">
 <link rel="stylesheet" href="./gymnast-progress.css?v=20261030-progress">
+<link rel="stylesheet" href="./achievement-50.css?v=20261031-v5">
+<link rel="stylesheet" href="./v50.css?v=20261031-v5">
 </head>
 
 <body class="programme-menu-open">
@@ -1607,7 +1609,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div class="logo"><img src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125"></div>
       <div>
         <strong>SWL GYMNASTICS</strong>
-        <small>SQUAD TRAINING <span class="version-tag">4.0</span></small>
+        <small>SQUAD TRAINING <span class="version-tag">5.0</span></small>
       </div>
     </div>
 
@@ -1616,14 +1618,14 @@ html:has(body.no-motion){scroll-behavior:auto}
         Leaderboards
       </button>
       <button data-view="directory" aria-pressed="false">Gymnasts</button>
-      <button data-view="games" aria-pressed="false">
-        Games
+      <button data-view="analytics" aria-pressed="false">
+        Analytics
       </button>
     </nav>
 
     <div class="utilities">
       <button class="quiet all-skills-button" id="allSkillsButton" type="button" data-open-skills aria-controls="allSkills">All skills</button>
-      <button class="quiet theme-toggle" id="themeToggle" type="button" aria-label="Switch to light mode" title="Switch to light mode" aria-pressed="false"><span aria-hidden="true">☀</span></button>
+      <button class="quiet games-entry-button" id="gamesButton" type="button" data-view="games" aria-controls="games" aria-pressed="false">Games</button>
       <button class="quiet scoring-lock-button" id="lockButton" type="button" disabled aria-describedby="lockStatus"><span aria-hidden="true">◇</span> <span id="lockButtonLabel">Checking lock…</span></button>
     </div>
 
@@ -1667,13 +1669,12 @@ html:has(body.no-motion){scroll-behavior:auto}
           <label class="board-age-filter board-squad-filter" for="leaderboardGroup"><span>Squad</span><select id="leaderboardGroup" aria-describedby="leaderboardScope"><option value="all">Overall · all squads</option></select></label>
           <label class="board-age-filter" for="leaderboardAge"><span>Age</span><select id="leaderboardAge" aria-describedby="leaderboardScope"><option value="all">All ages</option></select></label>
         </div>
-        <div class="entry-filter-footer"><p id="apparatusNote">Floor scoring · the 250 Challenge uses floor points only.</p><button class="quiet" type="button" data-view="home">Change programme</button></div>
+        <div class="entry-filter-footer"><p id="apparatusNote">Floor scoring · compare foundations and progress.</p><button class="quiet" type="button" data-view="home">Change programme</button></div>
       </div>
     </details>
     <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
     <div class="section-head">
       <h2>The standings</h2>
-      <button class="insights-button" data-view="analytics" type="button">◈ Analytics <span aria-hidden="true">↗</span></button>
       <button class="scoring-guide-button" id="scoringGuideButton" type="button" aria-haspopup="dialog" aria-controls="scoringGuide"><span aria-hidden="true">ⓘ</span> Scoring guide</button>
     </div>
 
@@ -1687,7 +1688,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <p class="note">
       The top five gymnasts are shown. Equal scores are ordered alphabetically.
     </p>
-    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge"><span class="challenge-entry-copy"><strong>The 250 Challenge</strong><small>Floor points · see who is closest to the prize</small></span><span aria-hidden="true">↗</span></button></div>
+    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge"><span class="challenge-entry-copy"><strong>All gymnasts</strong><small>Every place and every point</small></span><span aria-hidden="true">↗</span></button></div>
   </section>
 
   <section id="tracker" aria-label="Gymnast profile" hidden>
@@ -1733,32 +1734,13 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div>
         <div id="athletePanel"></div>
 
-        <details class="scoring">
-          <summary>How scoring works</summary>
-          <p>
-            Base skills and basic leaps: 10 points. Handstand holds: 5 points.
-            Upgrades: 5. Pro upgrades: 2.5.
-            A perfect mark earns double, replacing the achieved score.
-          </p>
-          <p>
-            Strong basics earn the most; advanced skills add smaller gains.
-            Skills score independently.
-            Upgrades do not tick earlier skills,
-            and a three-skill group earns +1 bonus point only when all three are Perfect.
-            Achieved and mixed groups earn no bonus. This includes both leap groups and the three handstand holds.
-            Bonuses follow the current marks, so resetting a skill can remove a completion bonus.
-            All three perfect skills also unlock a celebration.
-            The ring shows your share of the available points.
-            Achieved totals include perfect skills.
-          </p>
-        </details>
       </div>
     </div>
   </section>
   <section id="directory" aria-label="Gymnast directory" hidden><div id="directoryRoot"></div></section>
   <section id="allSkills" aria-labelledby="allSkillsTitle" hidden><div id="allSkillsRoot"></div></section>
   <section id="analytics" aria-label="Training analytics" hidden><div id="analyticsRoot"></div></section>
-  <section id="challenge" aria-label="250-point challenge" hidden><div id="challengeRoot"></div></section>
+  <section id="challenge" aria-label="All gymnast standings" hidden><div id="challengeRoot"></div></section>
   <section id="games" aria-label="Squad games" hidden><div id="gamesRoot"></div></section>
   <section id="placementProfile" aria-labelledby="placementTitle" hidden>
     <div id="placementContent"></div>
@@ -1787,7 +1769,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Floor and Vault.</strong> Floor is selected when the app opens. Vault has its own leaderboard: 10 points for each Achieved skill, 20 for Perfect, and +1 when all three in a group are Perfect. Combined adds floor and vault together. The 250 Challenge and weekly flames use floor progress only.</li>
+    <li><strong>Floor and Vault.</strong> Floor is selected when the app opens. Vault has its own leaderboard: 10 points for each Achieved skill, 20 for Perfect, and +1 when all three in a group are Perfect. Combined adds floor and vault together. Weekly flames use floor progress only.</li>
     <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. One flame appears beside your name at 10 qualifying points in the last seven days, two at 20, and three at 30. At 50 points, your card also gains a slow red-orange fire effect. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Flames and the fire effect follow the qualifying points earned in the current seven-day window.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
   </ul>
@@ -1809,12 +1791,12 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261030-entry"></script>
+<script src="./startup.js?v=20261031-v5"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
-<script src="./celebration.js?v=20261021-brief"></script>
-<script src="./v3-rankings.js?v=20261030-vault"></script>
-<script src="./placement.js?v=20261030-vault"></script>
+<script src="./celebration.js?v=20261031-v5"></script>
+<script src="./v3-rankings.js?v=20261031-v5"></script>
+<script src="./placement.js?v=20261031-v5"></script>
 <script src="./games-wheel.js?v=20261019v3"></script>
 <script src="./games-team.js?v=20261020"></script>
 <script src="./games-skill.js?v=20261022-contest"></script>
@@ -1828,8 +1810,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./v4-search.js?v=20261029-weekly-flames"></script>
 <script src="./directory-attendance.js?v=20261030-training"></script>
 <script src="./gymnast-progress.js?v=20261030-progress"></script>
-<script src="./v2.js?v=20261030-progress"></script>
-<script src="./challenge.js?v=20261029-weekly-flames"></script>
+<script src="./v2.js?v=20261031-v5"></script>
+<script src="./achievement-50.js?v=20261031-v5"></script>
+<script src="./challenge.js?v=20261031-v5"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script>
 (() => {
@@ -2298,6 +2281,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   let selectedId = null;
   let currentView = 'home';
   let directoryScroll = 0;
+  let gymnastTabView = 'directory', gymnastTabScroll = 0, analyticsScroll = 0;
+  let analyticsVisited = false;
   let catalogueReturnView = 'dashboard';
   let catalogueReturnScroll = 0;
   let coachFilter = 'all';
@@ -2358,10 +2343,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderAll();
     if (switchRoot) $(switchRoot)?.querySelector(`[data-apparatus="${value}"]`)?.focus({preventScroll:true});
   }
-  function apparatusBoards() {
-    const overall = {id:'overall', name:apparatus === 'combined' ? 'Floor + Vault league' : apparatusLabel() + ' league', scoreCategory:apparatusScore(), icon:'', color:'#f3ce86'};
-    return apparatus === 'vault' ? [overall,{id:'vault-run',name:'Run & hurdle'},{id:'vault-vaults',name:'Vaults'}]
-      : apparatus === 'combined' ? [overall,{id:'floor',name:'Floor points'},{id:'vault',name:'Vault points'}]
+  function apparatusBoards(value = apparatus) {
+    const overall = {id:'overall', name:value === 'combined' ? 'Floor + Vault league' : apparatusLabel(value) + ' league', scoreCategory:apparatusScore(value), icon:'', color:'#f3ce86'};
+    return value === 'vault' ? [overall,{id:'vault-run',name:'Run & hurdle'},{id:'vault-vaults',name:'Vaults'}]
+      : value === 'combined' ? [overall,{id:'floor',name:'Floor points'},{id:'vault',name:'Vault points'}]
       : [overall,...CATEGORIES.filter(category => category.id !== 'vault')];
   }
   function summary(id, category = 'overall', source = state) {
@@ -2463,9 +2448,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     const label = `${flames} ${flames === 1 ? 'flame' : 'flames'}: ${points.toLocaleString('en-GB', {maximumFractionDigits:2})} qualifying points in the last 7 days`;
     return `<span class="weekly-flames" role="img" aria-label="${label}" title="${label}"><span aria-hidden="true">${'🔥'.repeat(flames)}</span></span>`;
   }
+  const achievementBadge = gymnast => window.SWLAchievements?.badge(gymnast) || '';
   function renderV2() {
-    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
-    v2Api()?.render({state,apparatus,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
+    window.SWLChallenge?.render($('challengeRoot'), {gymnasts:GYMNASTS,summary,apparatus,achievementBadge,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected});
+    v2Api()?.render({state,apparatus,achievementBadge,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
@@ -2905,7 +2891,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
     conflict: 'This save can no longer be confirmed safely. Review the latest Google Sheet and download an unsaved backup before discarding or re-entering these edits.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
-    update_required: 'Version 4.0 is ready. Reload this page to use the updated skills and scoring.',
+    update_required: 'Version 5.0 is ready. Reload this page to use the updated skills and scoring.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
     invalid_state: 'The scores include an unknown gymnast, skill or status.',
     duplicate_gymnast: 'A gymnast with that name already exists. Refresh the roster before adding them again.',
@@ -3099,7 +3085,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       persistRecovery();
       // A successful receipt owns its announcement even when a newer read has
       // already supplied the same marks. Presentation cannot fail the saved batch.
-      if (milestones.length) try { window.SWLCelebration?.prizes?.(milestones); } catch {}
+      // Historical prize records are retained; standings no longer announce a challenge winner.
       return true;
     } catch (error) {
       connected = false;
@@ -3283,7 +3269,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderBoards() {
     renderV2();
     stableHTML($('leaderboardApparatus'), apparatusSwitch());
-    $('apparatusNote').textContent = apparatus === 'vault' ? 'Vault scores stand alone. The 250 Challenge stays floor-only.' : apparatus === 'combined' ? 'Floor + Vault totals together. The 250 Challenge stays floor-only.' : 'Floor scoring · the 250 Challenge uses floor points only.';
+    $('apparatusNote').textContent = apparatus === 'vault' ? 'Vault scores stand alone.' : apparatus === 'combined' ? 'Floor + Vault totals together.' : 'Floor scoring · compare foundations and progress.';
     if (currentView === 'placement') renderPlacementProfile();
     const groups = rosterGroupOptions();
     if (!['all','floor','afternoon','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
@@ -3324,7 +3310,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     const boardHTML = boards.map((board, index) => window.SWLRankings.renderBoard({
       board, index, rows:standings(board.scoreCategory || board.id, leaderboardGroup, leaderboardAge),
       max:summary('g01',board.scoreCategory || board.id).max, squad:apparatusLabel() + ' · ' + squadLabel, age:ageCategoryLabel(leaderboardAge),
-      groupLabel, initials, coachBadge, fireBadge, heatClass, isCoachParticipant
+      groupLabel, initials, coachBadge, fireBadge, heatClass, isCoachParticipant, achievementBadge
     })).join('');
     window.SWLRankings.commit($('boards'),boardHTML);
   }
@@ -3454,18 +3440,17 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
 
     $('athletePanel').innerHTML = `
-      ${apparatusSwitch('profile-apparatus')}
       <section class="athlete-summary${heatClass(gymnast.id)}" id="athleteSummary">
         <div class="athlete-info">
           <p class="eyebrow">${escapeHTML(gymnastSquadLabel(gymnast))}</p>
 
           <h2 id="athleteTitle" tabindex="-1">
-            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteFire">${fireBadge(gymnast.id)}</span>
+            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} ${achievementBadge(gymnast)} <span id="athleteFire">${fireBadge(gymnast.id)}</span>
           </h2>
 
           <div class="mini-stats">
             <span>
-              <b id="athleteAchieved">0</b> / ${apparatusSkills().length} ${apparatusLabel().toLowerCase()} skills achieved
+              <b id="athleteAchieved">0</b> / ${SKILLS.length} floor & vault skills achieved
             </span>
             <span>
               <b id="athletePerfect">0</b> perfect
@@ -3491,7 +3476,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
           <div aria-hidden="true">
             <strong id="athletePoints">0</strong>
-            <small>of ${summary(selectedId, apparatusScore()).max} pts</small>
+            <small>of ${summary(selectedId, 'combined').max} pts</small>
           </div>
         </div>
       </section>
@@ -3531,27 +3516,6 @@ html:has(body.no-motion){scroll-behavior:auto}
         </button>
       </div>
 
-      <div class="tracker-controls"${apparatus === 'vault' ? ' hidden' : ''}>
-        <div class="chips" aria-label="Filter skills by category">
-          ${[
-            ['all', 'All skills'],
-            ['rolls', 'Rolls'],
-            ['acro', 'Acro & spins'],
-            ['leaps', 'Leaps'],
-            ['handstands', 'Handstands'],
-            ...(apparatus === 'combined' ? [['vault','Vault']] : [])
-          ].map(([id, name]) => `
-            <button
-              class="chip"
-              data-category="${id}"
-              aria-pressed="${categoryFilter === id}"
-            >
-              ${name}
-            </button>
-          `).join('')}
-        </div>
-      </div>
-
       <div class="result-filter">
         <label>
           Show
@@ -3567,14 +3531,6 @@ html:has(body.no-motion){scroll-behavior:auto}
         <span id="visibleCount"></span>
       </div>
 
-      <p class="renewal-guide">Achieved stays until unticked. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. Red means 7 days or less remain.</p>
-      <details class="marking-guide">
-        <summary>ⓘ What counts as achieved or perfect?</summary>
-        <p><strong>Achieved ✓</strong> — the intended skill would count in competition without being downgraded, with no more than <strong>0.5 total deductions</strong>.</p>
-        <p><strong>Perfect ✓✓</strong> — the same correctly recognised skill, with no more than <strong>0.2 total deductions</strong>.</p>
-        <p>Look at the whole skill, including pointed toes, straight legs and the correct arm shape. Add the errors together. If an error changes the skill or would downgrade it — for example, bent arms that stop a backward roll to handstand meeting its requirements — leave that skill as <strong>Not yet</strong>.</p>
-        <p>These are the SWL training app’s marking guidelines for both floor and vault. Achieved stays recorded; Perfect is renewed every 30 days.</p>
-      </details>
 
       <div class="filter-empty" id="filterEmpty" hidden>
         <span aria-hidden="true">⌕</span>
@@ -3589,12 +3545,6 @@ html:has(body.no-motion){scroll-behavior:auto}
         <section
           class="complex"
           data-complex="${category.id}"
-          ${
-            !inScoreCategory({category:category.id}, apparatusScore()) || (categoryFilter !== 'all' &&
-            categoryFilter !== category.id)
-              ? 'hidden'
-              : ''
-          }
         >
           <div class="complex-head">
 <div>
@@ -3653,7 +3603,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function updateAthlete(animate = true) {
     if (!selectedId) return;
 
-    const total = summary(selectedId, apparatusScore());
+    const total = summary(selectedId, 'combined');
 
     if (animate) {
       animateNumber($('athletePoints'), total.points);
@@ -3782,7 +3732,6 @@ html:has(body.no-motion){scroll-behavior:auto}
           );
 
           const show =
-            inScoreCategory(skill, apparatusScore()) && (categoryFilter === 'all' || categoryFilter === category.id) &&
             (
               statusFilter === 'all' ||
               (statusFilter === 'due' && skillFreshness(selectedId,skill.id).due) ||
@@ -3804,7 +3753,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
 
     $('visibleCount').textContent =
-      `${visible} of ${apparatusSkills().length} ${apparatusLabel().toLowerCase()} skills shown`;
+      `${visible} of ${SKILLS.length} floor & vault skills shown`;
 
     $('filterEmpty').hidden = visible > 0;
 
@@ -3860,7 +3809,13 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function setView(view, scroll = true) {
     if (!['home', 'dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue', 'challenge'].includes(view)) return;
-    if (currentView === 'directory' && view !== 'directory') directoryScroll = window.scrollY;
+    if (view !== currentView) {
+      if (currentView === 'directory') directoryScroll = window.scrollY;
+      if (['directory','tracker','placement'].includes(currentView)) { gymnastTabView = currentView; gymnastTabScroll = window.scrollY; }
+      if (currentView === 'analytics') analyticsScroll = window.scrollY;
+    }
+    if (['directory','tracker','placement'].includes(view)) gymnastTabView = view;
+    if (view === 'analytics') analyticsVisited = true;
     currentView = view;
     const tracker = view === 'tracker';
     const placement = view === 'placement';
@@ -3876,14 +3831,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     if ($('challenge')) $('challenge').hidden = view !== 'challenge';
     if ($('allSkills')) $('allSkills').hidden = view !== 'catalogue';
     $('allSkillsButton')?.setAttribute('aria-pressed',String(view === 'catalogue'));
-    $('nav').style.setProperty('--nav-index', view === 'games' ? '2' : view === 'directory' || tracker || placement ? '1' : '0');
+    const navView = view === 'catalogue' ? catalogueReturnView : view;
+    const activeTab = ['tracker','placement','directory'].includes(navView) ? 'directory' : navView === 'analytics' ? 'analytics' : navView === 'games' || navView === 'home' ? null : 'dashboard';
+    $('nav').dataset.active = String(Boolean(activeTab));
+    $('nav').style.setProperty('--nav-index', activeTab === 'analytics' ? '2' : activeTab === 'directory' ? '1' : '0');
+    $('gamesButton')?.setAttribute('aria-pressed',String(view === 'games'));
     renderV2();
     window.SWLGames?.setActive(view === 'games');
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
         'aria-pressed',
-        String(button.dataset.view === (tracker || placement ? 'directory' : view === 'analytics' || view === 'catalogue' || view === 'challenge' ? 'dashboard' : view))
+        String(button.dataset.view === activeTab)
       );
     });
 
@@ -3910,10 +3869,10 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (coach && placementGroup === 'all') placementGroup = 'own';
     const placementScope = placementGroup === 'own' ? coachingGroupKey(gymnast.coach) : placementGroup;
     window.SWLPlacement.render({
-      gymnast, apparatusLabel:apparatusLabel(),
+      gymnast, apparatusLabel:apparatusLabel('combined'), achievementBadge,
       fireBadge, coachBadge, isCoachParticipant, fireCount, isOnFire, heatLevel, dailyPoints, ageCategories:AGE_CATEGORIES, ageCategory, ageCategoryLabel, londonYear, groupLabel, scope:placementGroup === 'own' ? groupLabel(gymnast.coach) : placementGroup === 'overall' ? 'Overall · all squads + coaches' : placementGroup === 'all' ? 'All squads' : groupLabel(placementGroup), ownGroup:placementGroup === 'own',
       selectedScope:placementGroup, scopeOptions:[{id:'own',label:coach?'Coaches':'Own squad'},...(!coach?[...squadMemberships(gymnast).filter(g=>g!==coachingGroupKey(gymnast.coach)).map(g=>({id:g,label:groupLabel(g)})),{id:'floor',label:'All floor & vault squads'},{id:'all',label:'All squads'}]:[]),{id:'overall',label:'Overall · all squads + coaches'}], participantLabel:placementGroup==='overall'?'participants':coach?'coaches':'gymnasts',
-      boards: apparatusBoards()
+      boards: apparatusBoards('combined')
         .map(board => ({...board, rows:standings(board.scoreCategory || board.id, placementScope)})),
       motionOff: reducedMotion() || !animate
     });
@@ -3938,7 +3897,6 @@ html:has(body.no-motion){scroll-behavior:auto}
   function openGymnast(id) {
     if (!GYMNAST_IDS.has(id)) return;
 
-    if (!['directory','tracker','placement'].includes(currentView)) directoryScroll = 0;
     if (selectedId !== id) placementGroup = 'own';
     selectedId = id;
     v2Api()?.showGymnastInDirectory?.(id);
@@ -4222,11 +4180,22 @@ html:has(body.no-motion){scroll-behavior:auto}
       } else if (button.hasAttribute('data-close-skills')) {
         closeAllSkills();
       } else if (button.dataset.view) {
-        if (button.dataset.view === 'analytics') {
-          if (currentView === 'directory') v2Api()?.analyticsFromDirectory();
-          else v2Api()?.resetAnalytics();
-        }
-        setView(button.dataset.view);
+        const destination = button.dataset.view;
+        if (destination === 'directory' && button.closest('#nav')) {
+          if (!['directory','tracker','placement'].includes(currentView)) {
+            setView(gymnastTabView, false);
+            window.scrollTo({top:gymnastTabScroll,behavior:'instant'});
+          }
+        } else if (destination === 'analytics') {
+          if (currentView !== 'analytics') {
+            if (!analyticsVisited) {
+              if (currentView === 'directory') v2Api()?.analyticsFromDirectory();
+              else v2Api()?.resetAnalytics();
+            }
+            setView('analytics', false);
+            window.scrollTo({top:analyticsScroll,behavior:'instant'});
+          }
+        } else setView(destination);
 
       } else if (button.hasAttribute('data-priority-mark')) {
         changeSkill(button.dataset.prioritySkill,button,Number(button.dataset.priorityMark),button.dataset.priorityGymnast);
@@ -4242,7 +4211,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       } else if (button.hasAttribute('data-placement-scope')) {
         placementGroup=button.dataset.placementScope;renderPlacementProfile();
       } else if (button.hasAttribute('data-analytics-gymnast')) {
-        v2Api()?.selectGymnast(button.dataset.analyticsGymnast);setView('analytics');
+        v2Api()?.selectGymnast(button.dataset.analyticsGymnast);analyticsScroll=0;setView('analytics');
       } else if (button.id === 'scoringGuideButton') {
         $('scoringGuide').showModal();
 
@@ -4250,7 +4219,6 @@ html:has(body.no-motion){scroll-behavior:auto}
         $('scoringGuide').close();
 
       } else if (button.dataset.gymnast) {
-        if (button.closest?.('#challengeRoot')) setApparatus('floor');
         openGymnast(button.dataset.gymnast);
 
       } else if (button.hasAttribute('data-reveal-placement')) {
@@ -4514,6 +4482,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     window.addEventListener('resize', syncHeader);
   }
 
+  window.SWLAchievements?.mount();
   window.SWLGames?.mount($('gamesRoot'), {
     skills: SKILLS.filter(skill => skill.category !== 'vault').map(skill => ({id:skill.id,label:skill.name,category:skill.category,tier:skill.tier})),
     requestRatings: body => scoresRequest(body),

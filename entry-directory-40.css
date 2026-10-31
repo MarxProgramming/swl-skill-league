@@ -1,219 +1,50 @@
-/* Gymnast search and apparatus stay visible; coaching controls open on demand. */
-#directoryRoot .directory-primary-tools {
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(260px,330px);
-  align-items:center;
-  gap:12px 18px;
-  min-width:0;
+/* Version 5.0: the working squad is always visible and independently retained. */
+#directoryRoot .directory-primary-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,340px);align-items:end;gap:12px 18px;min-width:0}
+#directoryRoot .directory-primary-tools>.directory-search{grid-column:1;grid-row:1;min-width:0;margin:0}
+#directoryRoot .directory-primary-tools>.directory-squad-tools{grid-column:2;grid-row:1;display:grid;gap:7px;min-width:0;margin:0}
+#directoryRoot .directory-squad-tools>label{font-size:11px;font-weight:700;color:var(--p40-secondary,#c4bbd3)}
+#directoryRoot .directory-squad-tools>select{width:100%;min-width:0;min-height:48px;padding:12px 34px 12px 14px;border:1px solid var(--p40-edge,#d3bfff25);border-radius:12px;background:var(--p40-subtle,#ffffff04);color:var(--text,#f6f4f8);font:inherit;font-size:12px;text-overflow:ellipsis}
+#directoryRoot .directory-squad-tools>select:focus-visible{outline:2px solid var(--purple,#bd9bff);outline-offset:3px}
+#directoryRoot .directory-primary-tools>.v4-search-suggestions{grid-column:1/-1;min-width:0;margin:0}
+#directoryRoot .directory-quick-switch{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:stretch;gap:8px;margin-top:18px;padding:6px;border:1px solid var(--p40-soft-edge,#b896ef45);border-radius:16px;background:var(--p40-soft-action,#b896ef12)}
+#directoryRoot .directory-quick-switch>button{min-width:0;min-height:48px;margin:0;padding:7px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--purple,#bd9bff);font:inherit;font-size:28px;line-height:1;cursor:pointer;transition:background .16s ease,border-color .16s ease}
+#directoryRoot .directory-quick-switch>button:hover:not(:disabled){background:var(--p40-soft-action,#b896ef12);border-color:var(--p40-soft-edge,#b896ef45)}
+#directoryRoot .directory-quick-switch>button:focus-visible{outline:2px solid var(--purple,#bd9bff);outline-offset:2px}
+#directoryRoot .directory-quick-switch>button:disabled{opacity:.4;cursor:default}
+#directoryRoot .directory-quick-switch-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;padding:8px 3px;text-align:center}
+#directoryRoot .directory-quick-switch-choice>span{color:var(--muted,#aaa5ba);font-size:10px;line-height:1.2;font-weight:650}
+#directoryRoot .directory-quick-switch-choice>strong{color:var(--text,#f6f4f8);font-size:12px;line-height:1.4;font-weight:750;overflow-wrap:anywhere}
+#directoryRoot .directory-complex-footer{display:flex;align-items:center;justify-content:space-between;gap:8px 14px;min-height:44px;margin-top:4px}
+#directoryRoot #directoryComplexHint{margin:0;color:var(--muted,#aaa5ba);font-size:10px;line-height:1.6}
+#directoryRoot #directoryComplexClear{flex-shrink:0;min-height:44px;padding:8px;font-size:10px}
+#directoryRoot #directoryComplexClear[hidden]{display:none}
+#directoryRoot .directory-filter-panel{margin-top:6px;min-width:0}
+#directoryRoot .directory-filter-panel>summary{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:8px 2px;cursor:pointer;list-style:none;border-radius:8px;color:var(--p40-secondary,#c4bbd3)}
+#directoryRoot .directory-filter-panel>summary::-webkit-details-marker{display:none}
+#directoryRoot .directory-filter-panel>summary::marker{content:''}
+#directoryRoot .directory-filter-panel>summary:focus-visible{outline:2px solid var(--purple,#bd9bff);outline-offset:4px}
+#directoryRoot .directory-filter-copy{display:block;min-width:0}
+#directoryRoot .directory-filter-copy>strong{display:block;font-size:11px;line-height:1.5;font-weight:650}
+#directoryRoot .directory-filter-chevron{flex:0 0 auto;color:var(--purple,#bd9bff);font-size:15px;line-height:1;transition:transform .18s ease}
+#directoryRoot .directory-filter-panel[open] .directory-filter-chevron{transform:rotate(180deg)}
+#directoryRoot .directory-filter-content{padding-top:10px;min-width:0}
+#directoryRoot .directory-extra-tools{display:flex;flex-direction:column;align-items:stretch;gap:12px;min-width:0;padding-top:12px;border-top:1px solid var(--p40-edge,#d3bfff25)}
+#directoryRoot .directory-change-programme{align-self:flex-start;min-height:44px;padding:9px 12px;font-size:11px}
+#directoryRoot .directory-extra-tools>.add-gymnast{margin:0;padding:0;border:0;max-width:100%}
+#directoryRoot .directory-extra-tools>.add-gymnast>summary{display:inline-flex;align-items:center;width:auto;min-height:44px;padding:9px 12px;border:1px solid var(--p40-soft-edge,#b896ef45);border-radius:10px;background:var(--p40-soft-action,#b896ef12);color:var(--purple,#bd9bff);font-size:11px;font-weight:750;list-style:none}
+#directoryRoot .directory-extra-tools>.add-gymnast>summary::-webkit-details-marker{display:none}
+#directoryRoot .directory-extra-tools>.add-gymnast>summary::marker{content:''}
+#directoryRoot .directory-extra-tools>.add-gymnast>summary:focus-visible{outline:2px solid var(--purple,#bd9bff);outline-offset:3px}
+#directoryRoot .directory-extra-tools>.add-gymnast form{max-width:560px}
+@media(max-width:760px){
+ #directoryRoot .directory-primary-tools{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+ #directoryRoot .directory-primary-tools>.directory-squad-tools{width:100%}
 }
-#directoryRoot .directory-primary-tools > .directory-search {
-  grid-column:1;
-  grid-row:1;
-  min-width:0;
-  margin:0;
+@media(max-width:420px){
+ #directoryRoot .directory-quick-switch{grid-template-columns:44px minmax(0,1fr) 44px;gap:2px;padding:4px}
+ #directoryRoot .directory-quick-switch-choice>strong{font-size:11px}
+ #directoryRoot .directory-complex-footer{align-items:flex-start}
+ #directoryRoot #directoryComplexHint{padding-top:9px}
 }
-#directoryRoot #directoryApparatus {
-  padding:4px;
-  font:inherit;
-  box-shadow:inset 0 1px var(--p40-highlight,#ffffff0d);
-}
-#directoryRoot .directory-primary-tools > .directory-apparatus-switch {
-  grid-column:2;
-  grid-row:1;
-  width:100%;
-}
-#directoryRoot .directory-primary-tools > .v4-search-suggestions {
-  grid-column:1/-1;
-  min-width:0;
-  margin:0;
-}
-#directoryRoot .directory-filter-panel {
-  margin-top:18px;
-  border-top:1px solid var(--p40-edge,#d3bfff25);
-  min-width:0;
-}
-#directoryRoot .directory-filter-panel > summary {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  min-height:64px;
-  padding:16px 2px 0;
-  cursor:pointer;
-  list-style:none;
-  border-radius:8px;
-  color:var(--p40-secondary,#c4bbd3);
-}
-#directoryRoot .directory-filter-panel > summary::-webkit-details-marker { display:none; }
-#directoryRoot .directory-filter-panel > summary::marker { content:''; }
-#directoryRoot .directory-filter-panel > summary:focus-visible {
-  outline:2px solid var(--purple,#bd9bff);
-  outline-offset:4px;
-}
-#directoryRoot .directory-filter-copy { display:block;min-width:0; }
-#directoryRoot .directory-filter-copy > strong {
-  display:block;
-  color:var(--text,#f6f4f8);
-  font-size:12px;
-  line-height:1.5;
-  font-weight:750;
-}
-#directoryRoot #directoryFilterSummary {
-  display:block;
-  margin-top:4px;
-  color:var(--muted,#aaa5ba);
-  font-size:11px;
-  line-height:1.6;
-  overflow-wrap:anywhere;
-}
-#directoryRoot .directory-filter-chevron {
-  flex:0 0 auto;
-  color:var(--purple,#bd9bff);
-  font-size:19px;
-  line-height:1;
-  transition:transform .18s ease;
-}
-#directoryRoot .directory-filter-panel[open] .directory-filter-chevron { transform:rotate(180deg); }
-#directoryRoot .directory-filter-content {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  align-items:start;
-  gap:18px 22px;
-  padding-top:20px;
-  min-width:0;
-}
-#directoryRoot .directory-filter-content > .directory-complex-tools {
-  display:grid;
-  grid-template-columns:minmax(0,1fr);
-  align-items:start;
-  gap:8px;
-  min-width:0;
-  margin:0;
-  padding:0;
-  border:0;
-}
-#directoryRoot .directory-filter-content select { width:100%;min-width:0; }
-#directoryRoot .directory-filter-content .directory-complex-tools p { grid-column:1; }
-#directoryRoot .directory-extra-tools {
-  grid-column:1/-1;
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  gap:12px;
-  min-width:0;
-  padding-top:16px;
-  border-top:1px solid var(--p40-edge,#d3bfff25);
-}
-#directoryRoot .directory-change-programme {
-  align-self:flex-start;
-  min-height:40px;
-  padding:9px 12px;
-  font-size:11px;
-}
-#directoryRoot .directory-extra-tools > .add-gymnast { margin:0;padding:0;border:0;max-width:100%; }
-#directoryRoot .directory-extra-tools > .add-gymnast > summary {
-  display:inline-flex;
-  align-items:center;
-  width:auto;
-  min-height:40px;
-  padding:9px 12px;
-  border:1px solid var(--p40-soft-edge,#b896ef45);
-  border-radius:10px;
-  background:var(--p40-soft-action,#b896ef12);
-  color:var(--purple,#bd9bff);
-  font-size:11px;
-  font-weight:750;
-  list-style:none;
-}
-#directoryRoot .directory-extra-tools > .add-gymnast > summary::-webkit-details-marker { display:none; }
-#directoryRoot .directory-extra-tools > .add-gymnast > summary::marker { content:''; }
-#directoryRoot .directory-extra-tools > .add-gymnast > summary:focus-visible {
-  outline:2px solid var(--purple,#bd9bff);
-  outline-offset:3px;
-}
-#directoryRoot .directory-extra-tools > .add-gymnast form { max-width:560px; }
-@media(max-width:760px) {
-  #directoryRoot .directory-primary-tools { display:flex;flex-direction:column;align-items:stretch;gap:12px; }
-  #directoryRoot #directoryApparatus {
-  padding:4px;
-  font:inherit;
-  box-shadow:inset 0 1px var(--p40-highlight,#ffffff0d);
-}
-#directoryRoot .directory-primary-tools > .directory-apparatus-switch { width:100%;max-width:none;flex:none; }
-  #directoryRoot .directory-filter-content { grid-template-columns:minmax(0,1fr);gap:18px; }
-}
-@media(max-width:420px) {
-  #directoryRoot .directory-filter-panel { margin-top:15px; }
-  #directoryRoot .directory-filter-panel > summary { gap:10px; }
-  #directoryRoot #directoryFilterSummary { font-size:10px; }
-}
-body.no-motion #directoryRoot .directory-filter-chevron { transition:none; }
-@media(prefers-reduced-motion:reduce) {
-  #directoryRoot .directory-filter-chevron { transition:none; }
-}
-/* One tap moves the entire squad to its next training complex. */
-#directoryRoot .directory-quick-switch {
-  display:grid;
-  grid-template-columns:48px minmax(0,1fr) 48px;
-  align-items:stretch;
-  gap:8px;
-  margin-top:18px;
-  padding:6px;
-  border:1px solid var(--p40-soft-edge,#b896ef45);
-  border-radius:16px;
-  background:var(--p40-soft-action,#b896ef12);
-}
-#directoryRoot .directory-quick-switch > button {
-  min-width:0;
-  min-height:48px;
-  margin:0;
-  padding:7px;
-  border:1px solid transparent;
-  border-radius:10px;
-  background:transparent;
-  color:var(--purple,#bd9bff);
-  font:inherit;
-  font-size:28px;
-  line-height:1;
-  cursor:pointer;
-  transition:background .16s ease,border-color .16s ease;
-}
-#directoryRoot .directory-quick-switch > button:hover:not(:disabled) {
-  background:var(--p40-soft-action,#b896ef12);
-  border-color:var(--p40-soft-edge,#b896ef45);
-}
-#directoryRoot .directory-quick-switch > button:focus-visible {
-  outline:2px solid var(--purple,#bd9bff);
-  outline-offset:2px;
-}
-#directoryRoot .directory-quick-switch > button:disabled { opacity:.4;cursor:default; }
-#directoryRoot .directory-quick-switch > .directory-quick-switch-choice {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-  padding:8px 3px;
-  text-align:center;
-}
-#directoryRoot .directory-quick-switch-choice > span {
-  color:var(--muted,#aaa5ba);
-  font-size:10px;
-  line-height:1.2;
-  font-weight:650;
-}
-#directoryRoot .directory-quick-switch-choice > strong {
-  color:var(--text,#f6f4f8);
-  font-size:12px;
-  line-height:1.4;
-  font-weight:750;
-  overflow-wrap:anywhere;
-}
-@media(max-width:420px) {
-  #directoryRoot .directory-quick-switch { grid-template-columns:44px minmax(0,1fr) 44px;gap:2px;padding:4px; }
-  #directoryRoot .directory-quick-switch-choice > strong { font-size:11px; }
-}
-body.no-motion #directoryRoot .directory-quick-switch > button { transition:none; }
-@media(prefers-reduced-motion:reduce) {
-  #directoryRoot .directory-quick-switch > button { transition:none; }
-}
+body.no-motion #directoryRoot :is(.directory-filter-chevron,.directory-quick-switch>button){transition:none}
+@media(prefers-reduced-motion:reduce){#directoryRoot :is(.directory-filter-chevron,.directory-quick-switch>button){transition:none}}

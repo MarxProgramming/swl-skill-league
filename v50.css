@@ -1,0 +1,7 @@
+/* 5.0: three persistent work areas; lightweight utilities. */
+body.programme-menu-open .games-entry-button { display:none; }
+#nav[data-active="false"]::before { opacity:0; }
+.games-entry-button[aria-pressed="true"] { color:var(--purple); border-color:var(--purple); background:rgba(171,143,255,.10); }
+#athleteTitle { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+#athleteTitle .achievement-badge { flex:0 0 auto; }
+.profile-insights { margin-right:8px; }

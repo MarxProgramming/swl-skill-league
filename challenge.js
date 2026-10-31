@@ -36,37 +36,47 @@
     return {target:TARGET,rows,winners,finishers:finishes,race,hasLoaded,pending,startedAt:race?.startedAt || null};
   }
 
+  function buildStandings({gymnasts = [],summary = () => ({points:0}),isCoachParticipant = isCoach,apparatus = 'floor',hasLoaded = false,pending = false}) {
+    const selected = ['floor','vault','combined'].includes(apparatus) ? apparatus : 'floor';
+    const category = selected === 'floor' ? 'overall' : selected;
+    const rows = gymnasts.filter(g => !isCoach(g) && !isCoachParticipant(g)).map(gymnast => {
+      const value = summary(gymnast.id,category)?.points;
+      const points = typeof value === 'number' && Number.isFinite(value) ? Math.max(0,value) : 0;
+      return {gymnast,points};
+    }).sort((a,b) => b.points-a.points || a.gymnast.name.localeCompare(b.gymnast.name,'en-GB')).map((row,index) => ({...row,rank:index+1}));
+    return {rows,apparatus:selected,hasLoaded,pending};
+  }
+
   function render(host, config) {
     if (!host) return;
-    const model = buildChallenge(config);
-    const {rows,winners,race,hasLoaded,pending} = model;
+    const {rows,apparatus,hasLoaded,pending} = buildStandings(config);
     const groupLabel = config.groupLabel || (value => value);
     const heatClass = config.heatClass || (() => '');
     const personLabel = config.gymnastSquadLabel || (g => groupLabel(g.coach));
     const participantBadge = config.coachBadge || (() => '');
     const fireBadge = config.fireBadge || (() => '');
-    const date = value => new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Europe/London'}).format(new Date(value));
-    const names = winners.map(row => row.gymnast.name).join(' & ');
-    const winnerIDs = new Set(winners.map(row => row.gymnast.id));
-    const finishedIDs = new Set(model.finishers.map(row => row.gymnastId));
-    const status = !hasLoaded ? 'Loading the challenge…' : !race ? 'Preparing the new race…' : winners.length ? 'Prize secured' : 'The race is on';
-    const heading = winners.length ? `${names} ${winners.length === 1 ? 'wins' : 'share first place'}` : 'First to 250.';
-    const body = winners.length
-      ? `${winners.length === 1 ? 'The first gymnast' : 'These gymnasts were first in the same saved update'} to reach 250 in this challenge ${winners.length === 1 ? 'has' : 'have'} won a prize. Recorded on ${date(winners[0].finish.reachedAt)}.`
-      : 'One target. Every squad. The first gymnast to reach 250 points wins a prize.';
-    const html = `<div class="v2-page-head challenge-page-head"><div><p class="eyebrow">SWL · The prize challenge</p><h1>The 250 Challenge</h1></div><button type="button" class="quiet" data-view="dashboard">← Leaderboards</button></div>
-      <section class="challenge-hero${winners.length ? ' challenge-won' : ''}" aria-labelledby="challengeHeadline"><div class="challenge-copy"><span class="challenge-status">${status}</span><h2 id="challengeHeadline">${esc(heading)}</h2><p>${esc(body)}</p><p class="challenge-rules">All squads compete together. Coaches are excluded.<br>Current points carry over; earlier prize milestones do not count.</p>${race ? `<span class="challenge-start">Started ${date(race.startedAt)} · Results are saved with the league</span>` : ''}</div><div class="challenge-target" aria-hidden="true"><span>THE TARGET</span><strong>250</strong><span>POINTS</span></div></section>
-      <div class="challenge-list-head"><div><h2>Every gymnast. One finish line.</h2><p>${hasLoaded ? rows.length+' gymnasts · highest current score first' : 'Waiting for saved scores'} · equal scores ordered alphabetically.</p></div><span>250 pts to win</span></div>
-      ${!hasLoaded ? '<p class="challenge-empty" role="status">Loading the saved standings. If the connection needs attention, use Refresh scores below.</p>' : !race ? '<p class="challenge-notice" role="status">The new challenge is being connected. These are current scores; a prize will only be confirmed once the race is ready.</p>' : ''}
-      ${hasLoaded && pending ? '<p class="challenge-notice" role="status">Some score changes are still saving. A finish counts once it is confirmed in the shared record.</p>' : ''}
-      ${hasLoaded && !rows.length ? '<p class="challenge-empty">No gymnasts are available yet.</p>' : hasLoaded ? `<ol class="challenge-list" aria-label="All gymnasts ranked by points towards 250">${rows.map(row => `<li><button type="button" class="challenge-row ${heatClass(row.gymnast.id)}${winnerIDs.has(row.gymnast.id)?' challenge-winner':''}" data-gymnast="${esc(row.gymnast.id)}" aria-label="Position ${row.rank}: ${esc(row.gymnast.name)}, ${number(row.points)} points, ${number(row.remaining)} points to 250${winnerIDs.has(row.gymnast.id)?', confirmed challenge winner':''}. Open profile."><span class="challenge-rank">${String(row.rank).padStart(2,'0')}</span><span class="challenge-person"><strong>${esc(row.gymnast.name)} ${participantBadge(row.gymnast)} ${fireBadge(row.gymnast.id)}</strong><small>${esc(personLabel(row.gymnast))}${winnerIDs.has(row.gymnast.id)?' · Prize winner':finishedIDs.has(row.gymnast.id)?' · Reached 250':''}</small></span><span class="challenge-row-progress" aria-hidden="true"><i style="width:${row.progress}%"></i></span><span class="challenge-points"><b>${number(row.points)}</b><small>${row.remaining?number(row.remaining)+' to go':finishedIDs.has(row.gymnast.id)?'Target reached':'Confirming finish'}</small></span><span class="challenge-arrow" aria-hidden="true">↗</span></button></li>`).join('')}</ol>` : ''}
-      <p class="challenge-footnote">This list always shows all eligible gymnasts, regardless of leaderboard filters. A confirmed winner keeps their place in the challenge record even if their league score changes later.</p>`;
+    const achievementBadge = config.achievementBadge || window.SWLAchievements?.badge || (() => '');
+    const apparatusLabel = {floor:'Floor',vault:'Vault',combined:'Floor + Vault'}[apparatus];
+    const maximum = Math.max(1,...rows.map(row => row.points));
+    const html = `<div class="v2-page-head challenge-page-head"><div><p class="eyebrow">SWL · Full standings</p><h1>All gymnasts</h1><p>Every place. Every point.</p></div><button type="button" class="quiet" data-view="dashboard">← Leaderboards</button></div>
+      <div class="standings-apparatus" role="group" aria-label="Standings apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([value,label]) => `<button type="button" data-apparatus="${value}" aria-pressed="${apparatus===value}">${label}</button>`).join('')}</div>
+      <div class="challenge-list-head"><div><h2>${apparatusLabel} standings</h2><p>${hasLoaded ? rows.length+' gymnasts · all squads' : 'Waiting for saved scores'} · equal scores ordered alphabetically.</p></div><span>${apparatus==='combined'?'Floor and Vault added together':'Current '+apparatusLabel+' points'}</span></div>
+      ${!hasLoaded ? '<p class="challenge-empty" role="status">Loading the saved standings. If the connection needs attention, use Refresh scores below.</p>' : ''}
+      ${hasLoaded && pending ? '<p class="challenge-notice" role="status">Some score changes are still saving.</p>' : ''}
+      ${hasLoaded && !rows.length ? '<p class="challenge-empty">No gymnasts are available yet.</p>' : hasLoaded ? `<ol class="challenge-list" aria-label="All gymnasts ranked by ${apparatusLabel} points">${rows.map(row => `<li${achievementBadge(row.gymnast)?' class="has-achievement"':''}><button type="button" class="challenge-row ${heatClass(row.gymnast.id)}" data-gymnast="${esc(row.gymnast.id)}" aria-label="Position ${row.rank}: ${esc(row.gymnast.name)}, ${number(row.points)} ${apparatusLabel} points. Open profile."><span class="challenge-rank">${String(row.rank).padStart(2,'0')}</span><span class="challenge-person"><strong>${esc(row.gymnast.name)} ${participantBadge(row.gymnast)} ${fireBadge(row.gymnast.id)}</strong><small>${esc(personLabel(row.gymnast))}</small></span><span class="challenge-row-progress" aria-hidden="true"><i style="width:${row.points/maximum*100}%"></i></span><span class="challenge-points"><b>${number(row.points)}</b><small>points</small></span><span class="challenge-arrow" aria-hidden="true">↗</span></button>${achievementBadge(row.gymnast)}</li>`).join('')}</ol>` : ''}
+      <p class="challenge-footnote">All squads are shown here, independently of leaderboard filters. Coaches have their own category on the main leaderboards.</p>`;
     if (host._renderedHTML === html) return;
     const focused = document.activeElement;
     const focusID = host.contains(focused) ? focused?.dataset?.gymnast : null;
+    const focusApparatus = host.contains(focused) ? focused?.dataset?.apparatus : null;
+    const achievementFocused = host.contains(focused) && focused?.hasAttribute?.('data-swl-achievement');
     host.innerHTML = html;
     host._renderedHTML = html;
-    if (focusID && document.activeElement === document.body) Array.from(host.querySelectorAll('[data-gymnast]')).find(button => button.dataset.gymnast === focusID)?.focus({preventScroll:true});
+    if (document.activeElement === document.body) {
+      if (focusID) Array.from(host.querySelectorAll('[data-gymnast]')).find(button => button.dataset.gymnast === focusID)?.focus({preventScroll:true});
+      else if (focusApparatus) Array.from(host.querySelectorAll('[data-apparatus]')).find(button => button.dataset.apparatus === focusApparatus)?.focus({preventScroll:true});
+      else if (achievementFocused) host.querySelector('[data-swl-achievement]')?.focus({preventScroll:true});
+    }
   }
-  window.SWLChallenge = Object.freeze({parseChallenge,buildChallenge,render});
+  window.SWLChallenge = Object.freeze({parseChallenge,buildChallenge,buildStandings,render});
 })();

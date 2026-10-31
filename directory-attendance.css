@@ -5,7 +5,7 @@
 #directoryRoot .directory-attendance-control:hover>span,#directoryRoot .directory-attendance-control:focus-visible>span{color:var(--purple,#c5a4ff);background:var(--p40-soft-action,#b896ef12)}
 #directoryRoot .directory-attendance-control.is-hidden-here{color:var(--purple,#c5a4ff)}
 #directoryRoot .directory-attendance-control.is-hidden-here>span{font-size:22px;background:var(--p40-soft-action,#b896ef12)}
-#directoryAttendanceStatus{margin-top:12px;margin-bottom:16px;color:var(--muted,#aaa5ba);font-size:11px;line-height:1.6}
+#directoryAttendanceStatus{margin-top:28px;margin-bottom:16px;color:var(--muted,#aaa5ba);font-size:11px;line-height:1.6}
 #directoryAttendanceStatus[hidden]{display:none}
 .directory-attendance-status{border:1px solid var(--p40-edge,#d3bfff25);border-radius:14px;background:var(--p40-subtle,#ffffff04);padding:0 14px}
 .directory-attendance-status>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px;min-height:44px;color:var(--p40-secondary,#c4bbd3);font-weight:650}

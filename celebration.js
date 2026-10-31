@@ -1,19 +1,17 @@
 (() => {
   'use strict';
   if (window.SWLCelebration?.version === 1) return;
-  const SOUND_KEY = 'swl-celebration-sound';
   const COMPLEX_MESSAGE_MS = 1600;
   const MAX_BELLS = 6, MASTER_LEVEL = 0.23;
   const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const animations = new Set(), voices = new Set(), retiringVoices = new Set();
   let overlay = null, cleanupTimer = null, generation = 0, fadeStartsAt = 0;
-  let audioContext = null, masterGain = null, roomInput = null, soundButton = null, motionObserver = null;
+  let audioContext = null, masterGain = null, roomInput = null, motionObserver = null;
   let audioGeneration = 0, resumeAttempt = null, audioGestureSeen = false;
   const audioGraph = new Set(), pendingAudio = new Map();
   const prizeQueue=[];
   let prizeTimer=null;
   let soundEnabled = true;
-  try { soundEnabled = localStorage.getItem(SOUND_KEY) !== 'off'; } catch (_) {}
 
   function motionOff() {
     if (motionQuery?.matches || document.body?.classList.contains('no-motion')) return true;
@@ -366,19 +364,10 @@
     }, token);
   }
 
-  function updateSoundButton() {
-    if (!soundButton) return;
-    soundButton.setAttribute('aria-pressed', String(soundEnabled));
-    soundButton.title = soundEnabled ? 'Turn sound effects off' : 'Turn sound effects on';
-    soundButton.querySelector('.swl-sound-icon').textContent = soundEnabled ? '♫' : '♩';
-    soundButton.querySelector('.swl-sound-label').textContent = soundEnabled ? 'Sound on' : 'Sound off';
-  }
-
-  function setSoundEnabled(value) {
-    soundEnabled = Boolean(value);
-    try { localStorage.setItem(SOUND_KEY, soundEnabled ? 'on' : 'off'); } catch (_) {}
-    updateSoundButton();
-    if (soundEnabled) unlockAudio(); else silence();
+  // Kept as an API for older game modules. Sound is always enabled in 5.0.
+  function setSoundEnabled() {
+    soundEnabled = true;
+    unlockAudio();
   }
 
   function settleMotion() {
@@ -512,17 +501,6 @@
   }
 
   function initialize() {
-    const utilities = document.querySelector('.utilities');
-    if (utilities && !document.getElementById('swlSoundButton')) {
-      soundButton = make('quiet swl-sound-toggle',undefined,'button');
-      soundButton.id = 'swlSoundButton'; soundButton.type = 'button';
-      soundButton.setAttribute('aria-label','Sound effects');
-      const icon = make('swl-sound-icon','♫','span'); icon.setAttribute('aria-hidden','true');
-      soundButton.append(icon,make('swl-sound-label','','span'));
-      soundButton.addEventListener('click',()=>setSoundEnabled(!soundEnabled));
-      utilities.append(soundButton);
-      updateSoundButton();
-    }
     if (window.MutationObserver && document.body) {
       motionObserver = new MutationObserver(settleMotion);
       motionObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
@@ -541,7 +519,6 @@
     window.addEventListener('focus',()=>unlockAudio());
     window.addEventListener('storage',event=>{
       if(event.key==='swl-motion-paused') settleMotion();
-      if(event.key===SOUND_KEY) { soundEnabled=event.newValue!=='off'; updateSoundButton(); if(soundEnabled) unlockAudio(); else silence(); }
     });
     window.addEventListener('pagehide',()=>{stop();prizeQueue.length=0;clearTimeout(prizeTimer);prizeTimer=null;});
   }

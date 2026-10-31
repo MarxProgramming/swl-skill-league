@@ -42,7 +42,7 @@
       return `<li class="swlp-row swlp-peek" data-placement-position="${position}" data-placement-peek="${distance < 0 ? 'above' : 'below'}" aria-hidden="true">
         <div class="swlp-peek-content">${details}</div><span class="swlp-peek-label">${distance < 0 ? 'Just above' : 'Just below'}</span></li>`;
     }
-    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${heat ? ' '+heat : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + (options.isCoachParticipant(gymnast) ? ', coach' : '') + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}</li>`;
+    return `<li class="swlp-row${selected ? ' swlp-selected' : ''}${heat ? ' '+heat : ''}${Math.abs(distance) === 2 ? ' swlp-outer' : ''}" data-placement-position="${position}"${selected ? ' data-placement-selected="true" aria-label="' + escapeHTML(selectedName) + (options.isCoachParticipant(gymnast) ? ', coach' : '') + ', position ' + position + ', ' + displayNumber(row.points) + ' points"' : ''}>${details}${options.achievementBadge(gymnast)}</li>`;
   }
 
   function boardHTML(board, gymnast, options) {
@@ -59,11 +59,11 @@
     </article>`;
   }
 
-  function render({ gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
+  function render({ gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', achievementBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
     const host = document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
     const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':'';};
-    const options = { fireBadge, coachBadge, isCoachParticipant, heatClass, groupLabel, scope };
+    const options = { fireBadge, achievementBadge, coachBadge, isCoachParticipant, heatClass, groupLabel, scope };
     const overall = boards.find(board => board.id === 'overall');
     const overallRows = Array.isArray(overall?.rows) ? overall.rows : [];
     const overallWindow = placementWindow(overallRows, gymnast.id);
@@ -73,7 +73,7 @@
       <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to gymnast</button>
       <header class="swlp-hero${heatClass(gymnast.id) ? ' '+heatClass(gymnast.id) : ''}">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
-          <div><p class="swlp-eyebrow">${escapeHTML(apparatusLabel)} placement</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} ${fireBadge(gymnast.id)}</h2>
+          <div><p class="swlp-eyebrow">${escapeHTML(apparatusLabel)} placement</p><h2 id="placementTitle" tabindex="-1">${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} ${fireBadge(gymnast.id)} ${achievementBadge(gymnast)}</h2>
             <p class="swlp-coach heat-meta"><span class="heat-meta-text">${escapeHTML(groupLabel(gymnast.coach || 'Your league'))}</span></p></div></div>
         <div class="swlp-overall"><p>${escapeHTML(scope)} position</p><strong>${overallWindow.position ? `<span aria-hidden="true">#</span>${overallWindow.position}` : '—'}</strong>
           <small>${overallWindow.position ? `of ${overallWindow.total} ${escapeHTML(participantLabel)}` : 'Scores are loading'}</small></div>
