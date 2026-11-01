@@ -47,9 +47,8 @@
 @media(max-width:700px){.a31-standing-identity{grid-column:2;grid-row:1}}
 
 /* One illustrated sheet keeps the eight progressive awards consistent at every size. */
-.swl-award-art{display:block;width:100%;height:100%;background-image:url("progressive-badges.png");background-repeat:no-repeat;background-size:400% 214.2512077%;background-position:0 0;filter:drop-shadow(0 1px 1px #0005)}
-/* The source sheet splits at y=414 of 887, keeping lower-row crowns intact. */
-.swl-award-art:is([data-award-sprite="4"],[data-award-sprite="5"],[data-award-sprite="6"],[data-award-sprite="7"]){background-size:400% 187.526427%}
+.swl-award-art{display:block;width:100%;height:100%;background-image:url("neon-badges.png");background-repeat:no-repeat;background-size:400% 200%;background-position:0 0;filter:drop-shadow(0 1px 1px #0005)}
+/* Eight equal square cells, four across and two down, keep every crest intact. */
 .swl-award-art[data-award-sprite="1"]{background-position:33.333333% 0}
 .swl-award-art[data-award-sprite="2"]{background-position:66.666667% 0}
 .swl-award-art[data-award-sprite="3"]{background-position:100% 0}
@@ -57,15 +56,30 @@
 .swl-award-art[data-award-sprite="5"]{background-position:33.333333% 100%}
 .swl-award-art[data-award-sprite="6"]{background-position:66.666667% 100%}
 .swl-award-art[data-award-sprite="7"]{background-position:100% 100%}
-.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:28px;height:28px;filter:none}
-.swl-completion-badge.swl-achievement-badge.is-profile-award{width:36px;min-width:36px;height:36px;min-height:36px;margin:0;padding:0}
-.swl-completion-badge.swl-achievement-badge.is-profile-award .swl-achievement-emblem{width:34px;height:34px}
+.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:22px;height:22px;filter:none}
+.swl-completion-badge.swl-achievement-badge.is-profile-award{width:28px;min-width:28px;height:28px;min-height:28px;margin:0;padding:0}
+.swl-completion-badge.swl-achievement-badge.is-profile-award .swl-achievement-emblem{width:24px;height:24px}
 .swl-completion-icon{display:inline-block;width:48px;height:48px;flex-shrink:0;line-height:0}
-.swl-achievement-large.swl-completion-badge{width:144px;height:144px;margin-bottom:9px;filter:none}
-.swl-achievement-dialog:has(.swl-completion-badge){border-color:#b99ae44d;background:radial-gradient(ellipse at 50% 0,#865bc72b,transparent 65%),#1d1925}
-.swl-achievement-dialog:has(.swl-completion-badge) h2{font-size:31px;color:#f5ebff}
-.swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-eyebrow{color:#baa4d6}
-.swl-achievement-dialog:has(.is-perfect){border-color:#8cdbc04d}
+.swl-achievement-large.swl-completion-badge{width:120px;height:120px;margin-bottom:13px;filter:none}
+/* Distinct palettes echo the artwork; the historical 250 emblem keeps its gold. */
+.swl-achievement-dialog:has(.swl-completion-badge){--award-rgb:180,144,255;--award-ink:#dfceff;border-color:rgba(var(--award-rgb),.32);background:radial-gradient(ellipse at 50% 0,rgba(var(--award-rgb),.14),transparent 60%),#17141e}
+.swl-achievement-dialog[data-award="floor-basics-achieved"]{--award-rgb:180,144,255;--award-ink:#dfceff}
+.swl-achievement-dialog[data-award="floor-basics-perfect"]{--award-rgb:82,224,212;--award-ink:#b4f5ee}
+.swl-achievement-dialog[data-award="floor-upgrades-achieved"]{--award-rgb:96,163,255;--award-ink:#c3dcff}
+.swl-achievement-dialog[data-award="floor-upgrades-perfect"]{--award-rgb:249,137,185;--award-ink:#ffd2e5}
+.swl-achievement-dialog:is([data-award="floor-pro-achieved"],[data-award="floor-achieved"]){--award-rgb:255,155,86;--award-ink:#ffdabf}
+.swl-achievement-dialog:is([data-award="floor-pro-perfect"],[data-award="floor-perfect"]){--award-rgb:255,207,102;--award-ink:#ffebbb}
+.swl-achievement-dialog[data-award="vault-achieved"]{--award-rgb:223,114,244;--award-ink:#f5ccff}
+.swl-achievement-dialog[data-award="vault-perfect"]{--award-rgb:147,239,170;--award-ink:#d1f9da}
+.swl-achievement-dialog:has(.swl-completion-badge) h2{font-size:31px;color:#f6f0fc}
+.swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-eyebrow{color:var(--award-ink)}
+.swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-done{border-color:rgba(var(--award-rgb),.3);background:linear-gradient(135deg,rgba(var(--award-rgb),.13),rgba(var(--award-rgb),.04));color:var(--award-ink)}
+.swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-done:hover{background:rgba(var(--award-rgb),.17)}
+@media(max-width:600px){
+  .swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:19px;height:19px}
+  .swl-completion-badge.swl-achievement-badge.is-profile-award .swl-achievement-emblem{width:22px;height:22px}
+  .swl-achievement-large.swl-completion-badge{width:104px;height:104px}
+}
 .swl-achievement-earned{color:#d4c3e2;font-size:11px;line-height:1.6;margin:15px 0 0}
 .swl-achievement-earned time{color:#eee5f5;font-weight:750}
 /* Pointer close must not inherit the app's purple keyboard-focus treatment. */

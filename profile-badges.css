@@ -1,0 +1,71 @@
+/* Personal badge progress follows the profile, without replacing the page. */
+.athlete-info .profile-pane-switch{display:flex;align-items:stretch;gap:3px;width:max-content;max-width:100%;margin-top:15px;padding:3px;border:1px solid #c8ace724;border-radius:13px;background:#0d0b143b;isolation:isolate}
+.athlete-info .profile-pane-switch>button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:76px;min-height:44px;padding:9px 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:#a99ab8;font-size:12px;font-weight:700;line-height:1.3;box-shadow:none;cursor:pointer;transition:color .18s ease,background .18s ease,border-color .18s ease}
+.athlete-info .profile-pane-switch>button[aria-pressed="true"]{border-color:#ba94ed38;background:linear-gradient(140deg,#ab78e529,#9e6ed213);color:#dfc9fb;box-shadow:inset 0 1px #e5d1ff0c}
+.athlete-info .profile-pane-switch>button:hover{color:#e8d9fb;background:#c59cf10a;transform:none}
+.athlete-info .profile-pane-switch>button[aria-pressed="true"]:hover{background:linear-gradient(140deg,#ab78e52f,#9e6ed21b)}
+.athlete-info .profile-pane-switch>button:focus-visible{outline:2px solid #bd9bff;outline-offset:2px}
+.athlete-info .profile-pane-switch>button>span{color:#c9b2e1;font-size:14px;line-height:1}
+.profile-badge-collection{max-width:1160px;margin:24px auto 0;color:#eee8f6;--pb-purple:#bc9aff;--pb-mint:#9af5d3}
+.pb-heading,.pb-journey-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pb-heading{padding:0 2px 16px;border-bottom:1px solid #c3ace514}
+.pb-heading h2{margin:0;font-size:clamp(21px,3vw,27px);font-weight:800;letter-spacing:-.035em}
+.pb-heading>span{color:#b5a8c7;font-size:12px;white-space:nowrap}
+.pb-journey{margin-top:25px}
+.pb-journey-heading{margin:0 2px 12px;align-items:baseline}
+.pb-journey-heading h2{margin:0;font-size:17px;letter-spacing:-.025em}
+.pb-journey-heading p{margin:0;color:#95879f;font-size:11px;line-height:1.5;text-align:right}
+.pb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:start}
+.pb-card{--pb-accent:#ad9afa;position:relative;min-width:0;overflow:hidden;padding:17px 18px 0;border:1px solid #bb9fe126;border-radius:18px;background:linear-gradient(135deg,#231e3045,transparent 70%),#17131e;box-shadow:0 5px 18px #0000000d}
+.pb-card[data-badge-stage="upgrades"]{--pb-accent:#74d1eb}
+.pb-card[data-badge-stage="pro"]{--pb-accent:#e8ae71}
+.pb-card[data-badge-stage="vault"]{--pb-accent:#de8ccc}
+.pb-card.is-earned{border-color:color-mix(in srgb,var(--pb-accent) 37%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--pb-accent) 7%,transparent),transparent 65%),#19151f}
+.pb-card-head{display:flex;align-items:center;gap:11px;min-width:0}
+.pb-art{display:grid;place-items:center;flex:0 0 47px;width:47px;height:47px}
+.pb-art>.swl-completion-icon{width:47px;height:47px}
+.pb-card:not(.is-earned) .pb-art{opacity:.68;filter:saturate(.6)}
+.pb-icon-fallback{font-size:22px;font-weight:850;color:var(--pb-accent)}
+.pb-card-title{min-width:0;flex:1}
+.pb-card-title h3{margin:0;color:#f1ebf7;font-size:16px;font-weight:780;letter-spacing:-.025em;line-height:1.25}
+.pb-card-title p{margin:4px 0 0;color:var(--pb-accent);font-size:11px;font-weight:650}
+.pb-earned,.pb-pending{flex-shrink:0;font-size:10px;line-height:1.5;white-space:nowrap}
+.pb-earned{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:7px;color:var(--pb-accent);background:color-mix(in srgb,var(--pb-accent) 9%,transparent)}
+.pb-earned>span{font-size:12px}
+.pb-pending{color:#b8aaca}
+.pb-progress-label{font-size:21px;font-weight:800;letter-spacing:-.05em;color:#e9e2f2;white-space:nowrap}
+.pb-progress-label small{font-size:12px;font-weight:550;letter-spacing:0;color:#887b96}
+.pb-scope{margin:13px 0 9px;font-size:11px;color:#aa9bb8;line-height:1.4}
+.pb-progress{height:4px;overflow:hidden;border-radius:99px;background:#e5d8fb0d}
+.pb-progress>span{display:block;height:100%;border-radius:inherit;background:var(--pb-accent);box-shadow:0 0 8px color-mix(in srgb,var(--pb-accent) 20%,transparent);transition:width .3s ease}
+.pb-caption{display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap;min-height:16px;margin:8px 0 13px;font-size:10px;color:#a293b0;line-height:1.5}
+.pb-caption time{color:#c0b1ce}
+.pb-caption>span{font-size:9px;color:#8e809a}
+.pb-requirements{margin:0 -18px;border-top:1px solid #c3ace513}
+.pb-requirements>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:10px 18px;list-style:none;color:#d4c4e6;font-size:11px;font-weight:650;cursor:pointer;user-select:none;transition:background .16s ease}
+.pb-requirements>summary::-webkit-details-marker{display:none}
+.pb-requirements>summary:hover{background:#bea4ed07}
+.pb-requirements>summary:focus-visible{outline:2px solid #bd9bff;outline-offset:-3px;border-radius:0 0 16px 16px}
+.pb-chevron{display:grid;place-items:center;flex:0 0 23px;width:23px;height:23px;border:1px solid #d7bafd20;border-radius:7px;background:#b48be509;color:#cbb4e3}
+.pb-chevron svg{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease}
+.pb-requirements[open] .pb-chevron svg{transform:rotate(180deg)}
+.pb-requirements[open]>summary{background:#bea4ed05}
+.pb-requirement-content{padding:0 18px 16px;border-top:1px solid #c3ace50a}
+.pb-requirement-rule{margin:12px 0 16px;font-size:10px;line-height:1.6;color:#a092ad}
+.pb-skill-group+.pb-skill-group{margin-top:15px}
+.pb-skill-group h4{margin:0 0 6px;color:#d4c7df;font-size:11px;font-weight:700}
+.pb-skill-group h4 span{font-weight:500;color:#8e7f9f}
+.pb-skill-group ul{margin:0;padding:0;list-style:none}
+.pb-skill{display:grid;grid-template-columns:23px minmax(0,1fr) auto;align-items:center;gap:7px;min-height:35px;padding:7px 0;border-top:1px solid #e3cbfa09;font-size:11px;line-height:1.4;color:#c5b6d3}
+.pb-skill-mark{display:block;text-align:center;font-size:13px;letter-spacing:-.15em;color:#75697f}
+.pb-skill.is-achieved .pb-skill-mark{color:var(--pb-purple)}
+.pb-skill.is-perfect .pb-skill-mark{color:var(--pb-mint)}
+.pb-skill-name{min-width:0;overflow-wrap:anywhere}
+.pb-skill.meets-requirement .pb-skill-name{color:#a193ae}
+.pb-skill small{max-width:85px;text-align:right;font-size:9px;line-height:1.4;color:#8f7fa1}
+.pb-skill.is-achieved small{color:#b797df}
+.pb-empty{margin:22px 0;padding:24px;border:1px solid #c3ace51b;border-radius:18px;background:#19151f;color:#a799b7;font-size:13px;line-height:1.6}
+.pb-empty h2{margin:0 0 8px;color:#e6dcf0;font-size:19px}.pb-empty p{margin:0}
+@media(max-width:600px){.athlete-info .profile-pane-switch{margin-top:12px}.athlete-info .profile-pane-switch>button{min-width:64px;padding-inline:12px;font-size:11px}.profile-badge-collection{margin-top:19px}.pb-grid{grid-template-columns:minmax(0,1fr);gap:11px}.pb-heading{padding-bottom:12px}.pb-heading>span{font-size:11px}.pb-journey{margin-top:21px}.pb-journey-heading p{font-size:10px}.pb-card{padding:15px 15px 0;border-radius:16px}.pb-art,.pb-art>.swl-completion-icon{width:41px;height:41px}.pb-art{flex-basis:41px}.pb-card-title h3{font-size:15px}.pb-card-title p{font-size:10px}.pb-requirements{margin-inline:-15px}.pb-requirements>summary{padding-inline:15px}.pb-requirement-content{padding-inline:15px}.pb-skill{font-size:11px}.pb-earned{font-size:9px;padding:4px 6px}.pb-progress-label{font-size:20px}}
+@media(max-width:350px){.pb-card{padding-inline:12px}.pb-card-head{gap:8px}.pb-card-title h3{font-size:14px}.pb-art,.pb-art>.swl-completion-icon{width:35px;height:35px}.pb-art{flex-basis:35px}.pb-requirements{margin-inline:-12px}.pb-requirements>summary,.pb-requirement-content{padding-inline:12px}.pb-journey-heading{align-items:flex-start}.pb-journey-heading p{max-width:170px}.pb-skill{grid-template-columns:22px minmax(0,1fr)}.pb-skill small{grid-column:2;text-align:left;max-width:none;margin-top:-5px}}
+@media(prefers-reduced-motion:reduce){.pb-progress>span,.pb-chevron svg,.pb-requirements>summary,.athlete-info .profile-pane-switch>button{transition:none}}

@@ -1574,7 +1574,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 @media(max-width:600px){.brand>div:last-child{display:none}.brand{flex:0;margin-right:auto}.scoring-lock-button{padding:10px 9px}.scoring-lock-button>span[aria-hidden]{display:none}.scoring-lock-status{font-size:10px}}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
-<link rel="stylesheet" href="./startup.css?v=20261030-entry">
+<link rel="stylesheet" href="./startup.css?v=20261101-refined">
 <link rel="stylesheet" href="./celebration.css?v=20261021-brief">
 <link rel="stylesheet" href="./placement.css?v=20261019v3">
 <link rel="stylesheet" href="./games.css?v=20261019v3">
@@ -1589,7 +1589,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
-<link rel="stylesheet" href="./analytics-31.css?v=20261101-emblems">
+<link rel="stylesheet" href="./analytics-31.css?v=20261101-refined">
 <link rel="stylesheet" href="./challenge.css?v=20261101-progressive"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
 <link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
@@ -1600,8 +1600,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
 <link rel="stylesheet" href="./directory-attendance.css?v=20261031-v5">
 <link rel="stylesheet" href="./gymnast-progress.css?v=20261030-progress">
-<link rel="stylesheet" href="./achievement-50.css?v=20261101-progressive">
+<link rel="stylesheet" href="./achievement-50.css?v=20261101-refined">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
+<link rel="stylesheet" href="./profile-badges.css?v=20261101-refined">
 </head>
 
 <body class="programme-menu-open">
@@ -1676,7 +1677,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         <div class="entry-filter-footer"><p id="apparatusNote">Floor scoring · compare foundations and progress.</p><button class="quiet" type="button" data-view="home">Change programme</button></div>
       </div>
     </details>
-    <p class="board-scope" id="leaderboardScope">All squads · overall leaderboards</p>
+    <p class="sr" id="leaderboardScope">All squads · overall leaderboards</p>
 
     <p class="note empty-note" id="emptyNote">
       Everyone starts at zero.
@@ -1793,7 +1794,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261031-v51"></script>
+<script src="./startup.js?v=20261101-refined"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261031-v5"></script>
@@ -1812,9 +1813,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./v4-search.js?v=20261101-emblems"></script>
 <script src="./directory-attendance.js?v=20261101-emblems"></script>
 <script src="./gymnast-progress.js?v=20261030-progress"></script>
-<script src="./v2.js?v=20261101-emblems"></script>
-<script src="./achievement-50.js?v=20261101-progressive"></script>
+<script src="./v2.js?v=20261101-refined"></script>
+<script src="./achievement-50.js?v=20261101-refined"></script>
 <script src="./challenge.js?v=20261101-progressive"></script>
+<script src="./profile-badges.js?v=20261101-refined"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script>
 (() => {
@@ -2295,6 +2297,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
 
   let selectedId = null;
+  let profilePane = 'skills';
   let currentView = 'home';
   let activeChallenge = null;
   let directoryScroll = 0;
@@ -3423,7 +3426,24 @@ html:has(body.no-motion){scroll-behavior:auto}
     `;
   }
 
+  function profileBadgeConfig() {
+    return {gymnast:GYMNASTS.find(g => g.id === selectedId),skills:SKILLS,mark,
+      completionAchievements:confirmedState.completionAchievements,hasLoaded,pending:hasPending()};
+  }
+
+  function setProfilePane(value) {
+    if (!['skills','badges'].includes(value)) return;
+    profilePane = value;
+    if ($('profileSkills')) $('profileSkills').hidden = value !== 'skills';
+    if ($('profileBadgeProgress')) $('profileBadgeProgress').hidden = value !== 'badges';
+    $('athletePanel').querySelectorAll('[data-profile-pane]').forEach(button => {
+      button.setAttribute('aria-pressed',String(button.dataset.profilePane === value));
+    });
+    window.SWLProfileBadges?.update($('profileBadgeProgress'),profileBadgeConfig());
+  }
+
   function renderAthlete() {
+    const badgeViewState = window.SWLProfileBadges?.capture?.($('profileBadgeProgress'));
     $('athletePanel').dataset.gymnastInfo = selectedId
       ? JSON.stringify(GYMNASTS.find(g => g.id === selectedId)) : '';
     if (!selectedId) {
@@ -3445,8 +3465,8 @@ html:has(body.no-motion){scroll-behavior:auto}
           <span aria-hidden="true">↻</span>
           <h2 id="athleteTitle" tabindex="-1">${escapeHTML(gymnast.name)} ${coachBadge(gymnast)}</h2>
           <p role="status">${reading
-            ? 'Loading scores from Google Sheets…'
-            : 'Scores not loaded. Connect Google Sheets, then use Refresh scores.'}</p>
+            ? 'Loading scores…'
+            : 'Scores not loaded yet. Use Refresh scores to try again.'}</p>
         </section>
       `;
       return;
@@ -3473,6 +3493,10 @@ html:has(body.no-motion){scroll-behavior:auto}
           <button class="reveal-placement" type="button" data-reveal-placement aria-label="Reveal placement for ${escapeHTML(gymnast.name)}">
             Reveal placement <span aria-hidden="true">↗</span>
           </button>
+          <div class="profile-pane-switch" role="group" aria-label="Profile view">
+            <button type="button" data-profile-pane="skills" aria-pressed="${profilePane === 'skills'}" aria-controls="profileSkills">Skills</button>
+            <button type="button" data-profile-pane="badges" aria-pressed="${profilePane === 'badges'}" aria-controls="profileBadgeProgress">Badges <span aria-hidden="true">↗</span></button>
+          </div>
         </div>
 
         <div class="ring" id="progressRing" role="img">
@@ -3494,6 +3518,8 @@ html:has(body.no-motion){scroll-behavior:auto}
         </div>
       </section>
 
+      <div id="profileBadgeProgress" aria-label="Badge progress"${profilePane === 'badges' ? '' : ' hidden'}></div>
+      <div id="profileSkills"${profilePane === 'skills' ? '' : ' hidden'}>
       ${CATEGORIES.map(category => `
         <section
           class="complex"
@@ -3547,9 +3573,11 @@ html:has(body.no-motion){scroll-behavior:auto}
           `).join('')}
         </section>
       `).join('')}
+      </div>
     `;
 
     updateAthlete(false);
+    window.SWLProfileBadges?.restore?.($('profileBadgeProgress'),badgeViewState);
   }
 
   function updateAthlete(animate = true) {
@@ -3639,6 +3667,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
 
     applyFilters();
+    window.SWLProfileBadges?.update($('profileBadgeProgress'),profileBadgeConfig());
   }
 
   function applyFilters() {
@@ -3783,7 +3812,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function openGymnast(id) {
     if (!GYMNAST_IDS.has(id)) return;
 
-    if (selectedId !== id) placementGroup = 'own';
+    if (selectedId !== id) { placementGroup = 'own'; profilePane = 'skills'; }
     selectedId = id;
     v2Api()?.showGymnastInDirectory?.(id);
 
@@ -4053,6 +4082,8 @@ html:has(body.no-motion){scroll-behavior:auto}
         selectProgramme(button.dataset.programme);
       } else if (button.hasAttribute('data-apparatus')) {
         setApparatus(button.dataset.apparatus);
+      } else if (button.hasAttribute('data-profile-pane')) {
+        setProfilePane(button.dataset.profilePane);
       } else if (button.hasAttribute('data-back-gymnasts')) {
         backToGymnasts();
       } else if (button.hasAttribute('data-open-skills')) {
@@ -4066,7 +4097,9 @@ html:has(body.no-motion){scroll-behavior:auto}
         const destination = button.dataset.view;
         if (destination === 'challenge') activeChallenge = null;
         if (destination === 'directory' && button.closest('#nav')) {
-          if (!['directory','tracker','placement'].includes(currentView)) {
+          if (['tracker','placement'].includes(currentView)) {
+            backToGymnasts();
+          } else if (currentView !== 'directory') {
             setView(gymnastTabView, false);
             window.scrollTo({top:gymnastTabScroll,behavior:'instant'});
           }
