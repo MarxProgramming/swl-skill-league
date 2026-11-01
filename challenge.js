@@ -36,11 +36,22 @@
     return {target:TARGET,rows,winners,finishers:finishes,race,hasLoaded,pending,startedAt:race?.startedAt || null};
   }
 
+  const FLOOR_CATEGORIES = Object.freeze(['rolls','acro','leaps']);
+  const FLOOR_LEVELS = Object.freeze([
+    Object.freeze({key:'basics',label:'Foundations',tiers:['base'],scope:'All basic Rolls, Acro and Leaps skills.'}),
+    Object.freeze({key:'upgrades',label:'Upgrades',tiers:['base','upgrade'],scope:'All basic and upgraded Rolls, Acro and Leaps skills.'}),
+    Object.freeze({key:'pro',label:'Complete Floor',tiers:['base','upgrade','pro'],scope:'Every Rolls, Acro and Leaps skill, including Pro upgrades.'})
+  ]);
   const COMPLETION_CHALLENGES = Object.freeze([
-    Object.freeze({id:'floor-achieved', apparatus:'floor', status:'achieved', title:'Achieve all Floor skills', shortTitle:'All Floor skills', description:'Achieved or Perfect on every Floor skill.', symbol:'✓'}),
-    Object.freeze({id:'vault-achieved', apparatus:'vault', status:'achieved', title:'Achieve all Vault skills', shortTitle:'All Vault skills', description:'Achieved or Perfect on every Vault skill.', symbol:'✓'}),
-    Object.freeze({id:'floor-perfect', apparatus:'floor', status:'perfect', title:'Perfect all Floor skills', shortTitle:'Perfect Floor', description:'Every Floor skill marked Perfect.', symbol:'✓✓'}),
-    Object.freeze({id:'vault-perfect', apparatus:'vault', status:'perfect', title:'Perfect all Vault skills', shortTitle:'Perfect Vault', description:'Every Vault skill marked Perfect.', symbol:'✓✓'})
+    ...FLOOR_LEVELS.flatMap((level,index) => ['achieved','perfect'].map((status,step) => Object.freeze({
+      id:`floor-${level.key}-${status}`, apparatus:'floor', status, level:level.key, levelNumber:index+1, stage:index*2+step+1,
+      title:`${level.label} · ${status === 'perfect' ? 'Perfect' : 'Achieved'}`,
+      shortTitle:`${level.label} ${status === 'perfect' ? 'Perfect' : 'Achieved'}`,
+      description:`${level.scope} ${status === 'perfect' ? 'Every skill must be Perfect.' : 'Achieved or Perfect marks count.'} Handstand holds are not included.`,
+      tiers:level.tiers, symbol:status === 'perfect' ? '✓✓' : '✓'
+    }))),
+    Object.freeze({id:'vault-achieved', apparatus:'vault', status:'achieved', title:'Achieve all Vault skills', shortTitle:'Vault Achieved', description:'Achieved or Perfect on every Vault skill.', symbol:'✓'}),
+    Object.freeze({id:'vault-perfect', apparatus:'vault', status:'perfect', title:'Perfect all Vault skills', shortTitle:'Vault Perfect', description:'Every Vault skill marked Perfect.', symbol:'✓✓'})
   ]);
   const finite = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0,value) : 0;
   const percentage = (value, maximum) => maximum > 0 ? Math.min(100,Math.max(0,value/maximum*100)) : 0;
@@ -63,15 +74,16 @@
   function buildCompletion(config = {}, challengeID = config.activeChallenge) {
     const definition = COMPLETION_CHALLENGES.find(item => item.id === challengeID);
     if (!definition) return null;
-    const skills = (config.skills || []).filter(skill => definition.apparatus === 'vault' ? skill.category === 'vault' : skill.category !== 'vault');
+    const skills = (config.skills || []).filter(skill => definition.apparatus === 'vault' ? skill.category === 'vault' : FLOOR_CATEGORIES.includes(skill.category) && definition.tiers.includes(skill.tier));
     const mark = config.mark || ((id,skillID) => config.state?.marks?.[id]?.[skillID] || 0);
     const summary = config.summary || (() => ({points:0,max:0}));
     const rows = peopleFor(config).map(gymnast => {
       const total = summary(gymnast.id,definition.apparatus === 'floor' ? 'overall' : 'vault') || {};
-      const achieved = skills.filter(skill => Number(mark(gymnast.id,skill.id)) >= 1).length;
-      const perfect = skills.filter(skill => Number(mark(gymnast.id,skill.id)) === 2).length;
+      const skillMarks = skills.map(skill => ({skill,level:Math.max(0,Math.min(2,Number(mark(gymnast.id,skill.id)) || 0))}));
+      const achieved = skillMarks.filter(item => item.level >= 1).length;
+      const perfect = skillMarks.filter(item => item.level === 2).length;
       const completed = definition.status === 'perfect' ? perfect : achieved;
-      return {gymnast,points:finite(total.points),maximum:skills.length,achieved,perfect,completed,remaining:skills.length-completed,progress:percentage(completed,skills.length),complete:skills.length > 0 && completed === skills.length};
+      return {gymnast,points:finite(total.points),maximum:skills.length,achieved,perfect,completed,skillMarks,remaining:skills.length-completed,progress:percentage(completed,skills.length),complete:skills.length > 0 && completed === skills.length};
     }).sort((a,b) => b.completed-a.completed || b.points-a.points || a.gymnast.name.localeCompare(b.gymnast.name,'en-GB')).map((row,index) => ({...row,rank:index+1}));
     return {definition,rows,skillCount:skills.length,completedCount:rows.filter(row => row.complete).length,hasLoaded:!!config.hasLoaded,pending:!!config.pending};
   }
@@ -79,18 +91,39 @@
   function replaceHTML(host, html) {
     if (host._renderedHTML === html) return;
     const focused = document.activeElement;
-    const focus = host.contains(focused) ? ['gymnast','apparatus','completionChallenge','swlAchievement'].map(key => [key,focused?.dataset?.[key]]).find(([,value]) => value != null) : null;
+    const focus = host.contains(focused) ? ['gymnast','apparatus','completionChallenge','swlAchievement','checklistToggle'].map(key => [key,focused?.dataset?.[key]]).find(([,value]) => value != null) : null;
     const achievementGymnast = focus?.[0] === 'swlAchievement' ? focused.dataset.achievementGymnast : null;
+    const openChecklists = new Set(Array.from(host.querySelectorAll('details[data-challenge-checklist][open]')).map(item => item.dataset.challengeChecklist));
     host.innerHTML = html;
     host._renderedHTML = html;
-    if (focus && document.activeElement === document.body) Array.from(host.querySelectorAll('button')).find(button => button.dataset[focus[0]] === focus[1] && (focus[0] !== 'swlAchievement' || button.dataset.achievementGymnast === achievementGymnast))?.focus({preventScroll:true});
+    // A score refresh must not close the checklist a coach is reading.
+    for (const details of host.querySelectorAll('details[data-challenge-checklist]')) if (openChecklists.has(details.dataset.challengeChecklist)) details.open = true;
+    if (focus && document.activeElement === document.body) Array.from(host.querySelectorAll('button,summary')).find(control => control.dataset[focus[0]] === focus[1] && (focus[0] !== 'swlAchievement' || control.dataset.achievementGymnast === achievementGymnast))?.focus({preventScroll:true});
+  }
+
+  function challengeCard(model) {
+    const definition = model.definition;
+    const icon = window.SWLAchievements?.challengeIcon?.(definition.id) || definition.symbol;
+    return `<button type="button" class="completion-challenge-card is-${definition.status}" data-completion-challenge="${definition.id}" aria-label="${definition.title}. View progress for all gymnasts."><span class="completion-challenge-symbol" aria-hidden="true">${icon}</span><span class="completion-challenge-copy"><strong>${definition.status === 'perfect' ? 'All Perfect' : 'All Achieved'}</strong><small>${model.skillCount} skills${definition.apparatus === 'floor' ? ' · '+(definition.level === 'basics' ? 'Basics' : definition.level === 'upgrades' ? 'Basics + upgrades' : 'Basics + upgrades + pro') : ' · Vault'}</small><span class="completion-challenge-count">${model.hasLoaded ? `<span aria-hidden="true">${definition.symbol}</span> ${model.completedCount} of ${model.rows.length} complete` : 'Loading saved progress…'}</span></span><span class="completion-challenge-arrow" aria-hidden="true">↗</span></button>`;
   }
 
   function renderChallenges(host, config = {}) {
     if (!host) return;
     const models = COMPLETION_CHALLENGES.map(definition => buildCompletion(config,definition.id));
-    const icon = definition => window.SWLAchievements?.challengeIcon?.(definition.id) || definition.symbol;
-    replaceHTML(host, `<section class="completion-challenges" aria-labelledby="completionChallengesHeading"><div class="completion-challenges-heading"><div><p class="eyebrow">The next milestone</p><h2 id="completionChallengesHeading">Complete the collection</h2></div><p>Four challenges. Every skill counts.</p></div><div class="completion-challenge-grid">${models.map(model => `<button type="button" class="completion-challenge-card is-${model.definition.status}" data-completion-challenge="${model.definition.id}" aria-label="${model.definition.title}. View progress for all gymnasts."><span class="completion-challenge-symbol" aria-hidden="true">${icon(model.definition)}</span><span class="completion-challenge-copy"><strong>${model.definition.title}</strong><small>${model.skillCount} skills · ${model.definition.status === 'perfect' ? 'All Perfect' : 'Achieved or Perfect'}</small><span class="completion-challenge-count">${model.hasLoaded ? `${model.completedCount} of ${model.rows.length} gymnasts complete` : 'Loading saved progress…'}</span></span><span class="completion-challenge-arrow" aria-hidden="true">↗</span></button>`).join('')}</div></section>`);
+    replaceHTML(host, `<section class="completion-challenges" aria-labelledby="completionChallengesHeading"><div class="completion-challenges-heading"><div><p class="eyebrow">The next milestone</p><h2 id="completionChallengesHeading">Build your collection</h2></div><p>Your emblem upgrades as you progress.</p></div><section class="completion-journey" aria-labelledby="floorJourneyHeading"><div class="completion-journey-heading"><h3 id="floorJourneyHeading">Floor journey</h3><p>Start with the basics. Build through each level.</p></div><div class="completion-floor-levels">${FLOOR_LEVELS.map((level,index) => `<section class="completion-level" aria-label="Floor level ${index+1}: ${level.label}"><h4><span>${index+1}</span>${level.label}</h4><div class="completion-challenge-grid">${models.filter(model => model.definition.level === level.key).map(challengeCard).join('')}</div></section>`).join('')}</div><p class="completion-journey-note">Each level includes the skills before it. Handstand holds do not count.</p></section><section class="completion-journey completion-vault-journey" aria-labelledby="vaultJourneyHeading"><div class="completion-journey-heading"><h3 id="vaultJourneyHeading">Vault journey</h3><p>Your separate Vault emblem.</p></div><div class="completion-challenge-grid">${models.filter(model => model.definition.apparatus === 'vault').map(challengeCard).join('')}</div></section></section>`);
+  }
+
+  function renderChecklist(row, completion) {
+    const key = `${completion.definition.id}:${row.gymnast.id}`;
+    const categoryNames = {rolls:'Rolls',acro:'Acro & spins',leaps:'Leaps',vault:'Vault'};
+    const tierNames = {base:'Basics',upgrade:'Upgrades',pro:'Pro upgrades',run:'Run & hurdle',vaults:'Vaults'};
+    const groups = new Map();
+    for (const item of row.skillMarks) {
+      const group = item.skill.category+':'+item.skill.tier;
+      if (!groups.has(group)) groups.set(group,[]);
+      groups.get(group).push(item);
+    }
+    return `<details class="challenge-skill-checklist" data-challenge-checklist="${esc(key)}"><summary data-checklist-toggle="${esc(key)}"><span>View skills</span><span class="challenge-checklist-summary"><span class="is-achieved" aria-label="${row.achieved-row.perfect} achieved"><b aria-hidden="true">✓</b> ${row.achieved-row.perfect}</span><span class="is-perfect" aria-label="${row.perfect} perfect"><b aria-hidden="true">✓✓</b> ${row.perfect}</span><span class="challenge-checklist-chevron" aria-hidden="true">⌄</span></span></summary><div class="challenge-checklist-content"><p>Saved marks · <span class="is-achieved">✓ Achieved</span> · <span class="is-perfect">✓✓ Perfect</span></p><div class="challenge-checklist-groups">${Array.from(groups.values()).map(items => `<section><h3>${categoryNames[items[0].skill.category] || esc(items[0].skill.category)} · ${tierNames[items[0].skill.tier] || esc(items[0].skill.tier)}</h3><ul>${items.map(({skill,level}) => `<li class="is-${level === 2 ? 'perfect' : level === 1 ? 'achieved' : 'unachieved'}"><span class="challenge-skill-mark" aria-label="${level === 2 ? 'Perfect' : level === 1 ? 'Achieved' : 'Not achieved'}">${level === 2 ? '✓✓' : level === 1 ? '✓' : '–'}</span><span>${esc(skill.name)}</span></li>`).join('')}</ul></section>`).join('')}</div></div></details>`;
   }
 
   function renderRow(row, config, completion) {
@@ -102,7 +135,7 @@
     const achievementBadge = config.achievementBadge || (gymnast => window.SWLAchievements?.allBadges?.(gymnast,config.completionAchievements || config.state?.completionAchievements) || window.SWLAchievements?.badge?.(gymnast) || '');
     const label = completion ? `${row.completed} of ${row.maximum} skills ${completion.definition.status === 'perfect' ? 'Perfect' : 'achieved'}` : `${number(row.points)} of ${number(row.maximum)} points`;
     const progressText = row.complete ? (completion ? 'Complete' : 'Full marks') : completion ? `${row.remaining} ${row.remaining === 1 ? 'skill' : 'skills'} to go` : `${number(row.remaining)} points to go`;
-    return `<li><div class="challenge-row ${completion ? 'is-completion is-'+completion.definition.status : ''} ${row.complete ? 'is-complete' : ''} ${heatClass(row.gymnast.id)}"><span class="challenge-rank">${String(row.rank).padStart(2,'0')}</span><span class="challenge-person"><span class="challenge-person-line"><button type="button" class="challenge-profile-link" data-gymnast="${esc(row.gymnast.id)}" aria-label="Position ${row.rank}: ${esc(row.gymnast.name)}, ${label}. Open profile."><strong>${esc(row.gymnast.name)} ${participantBadge(row.gymnast)} ${fireBadge(row.gymnast.id)}</strong></button>${achievementBadge(row.gymnast)}</span><small>${esc(personLabel(row.gymnast))}</small></span><span class="challenge-progress-details"><span class="challenge-row-progress" role="progressbar" aria-label="${esc(row.gymnast.name)}: ${completion ? completion.definition.title : apparatusName(config.apparatus)+' full marks'}" aria-valuemin="0" aria-valuemax="${row.maximum || 1}" aria-valuenow="${Math.min(row.maximum,completion ? row.completed : row.points)}" aria-valuetext="${label}"><i style="width:${row.progress}%"></i></span><span class="challenge-progress-caption"><b>${percentageLabel(row.progress)}%</b><span>${row.complete ? '<span aria-hidden="true">✓ </span>' : ''}${progressText}</span></span></span><span class="challenge-points"><span><b>${number(completion ? row.completed : row.points)}</b><small> / ${number(row.maximum)}</small></span><small>${completion ? (completion.definition.status === 'perfect' ? 'Perfect skills' : 'skills achieved') : 'points'}</small></span><span class="challenge-arrow" aria-hidden="true">↗</span></div></li>`;
+    return `<li class="challenge-list-item"><div class="challenge-row ${completion ? 'is-completion is-'+completion.definition.status : ''} ${row.complete ? 'is-complete' : ''} ${heatClass(row.gymnast.id)}"><span class="challenge-rank">${String(row.rank).padStart(2,'0')}</span><span class="challenge-person"><span class="challenge-person-line"><button type="button" class="challenge-profile-link" data-gymnast="${esc(row.gymnast.id)}" aria-label="Position ${row.rank}: ${esc(row.gymnast.name)}, ${label}. Open profile."><strong>${esc(row.gymnast.name)} ${participantBadge(row.gymnast)} ${fireBadge(row.gymnast.id)}</strong></button>${achievementBadge(row.gymnast)}</span><small>${esc(personLabel(row.gymnast))}</small></span><span class="challenge-progress-details"><span class="challenge-row-progress" role="progressbar" aria-label="${esc(row.gymnast.name)}: ${completion ? completion.definition.title : apparatusName(config.apparatus)+' full marks'}" aria-valuemin="0" aria-valuemax="${row.maximum || 1}" aria-valuenow="${Math.min(row.maximum,completion ? row.completed : row.points)}" aria-valuetext="${label}"><i style="width:${row.progress}%"></i></span><span class="challenge-progress-caption"><b>${percentageLabel(row.progress)}%</b><span>${row.complete ? '<span aria-hidden="true">✓ </span>' : ''}${progressText}</span></span></span><span class="challenge-points"><span><b>${number(completion ? row.completed : row.points)}</b><small> / ${number(row.maximum)}</small></span><small>${completion ? (completion.definition.status === 'perfect' ? 'Perfect skills' : 'skills achieved') : 'points'}</small></span><span class="challenge-arrow" aria-hidden="true">↗</span></div>${completion ? renderChecklist(row,completion) : ''}</li>`;
   }
 
   function render(host, config = {}) {
@@ -112,7 +145,7 @@
     const {rows,hasLoaded,pending} = model;
     const apparatus = completion?.definition.apparatus || model.apparatus;
     const title = completion?.definition.title || 'All gymnasts';
-    const heading = completion ? `${completion.skillCount} skills. One complete collection.` : `${apparatusName(apparatus)} standings`;
+    const heading = completion ? `${completion.skillCount} skills to ${completion.definition.status === 'perfect' ? 'Perfect' : 'Achieve'}.` : `${apparatusName(apparatus)} standings`;
     const description = completion?.definition.description || 'Every place. Every point. See how close everyone is to full marks.';
     const overview = completion ? `${completion.completedCount} of ${rows.length} gymnasts complete` : `${rows.length} gymnasts · all squads`;
     const html = `<div class="v2-page-head challenge-page-head"><div><p class="eyebrow">SWL · ${completion ? 'Skill challenge' : 'Full standings'}</p><h1>${title}</h1><p>${description}</p></div><button type="button" class="quiet" data-view="dashboard">← Leaderboards</button></div>
@@ -121,7 +154,7 @@
       ${!hasLoaded ? '<p class="challenge-empty" role="status">Loading saved progress. If the connection needs attention, use Refresh scores below.</p>' : ''}
       ${hasLoaded && pending ? '<p class="challenge-notice" role="status">Some score changes are still saving.</p>' : ''}
       ${hasLoaded && !rows.length ? '<p class="challenge-empty">No gymnasts are available yet.</p>' : hasLoaded ? `<ol class="challenge-list" aria-label="${completion ? completion.definition.title+' progress' : 'All gymnasts ranked by '+apparatusName(apparatus)+' points'}">${rows.map(row => renderRow(row,{...config,apparatus},completion)).join('')}</ol>` : ''}
-      <p class="challenge-footnote">All squads are shown here, independently of leaderboard filters. Coaches have their own category on the main leaderboards.${completion ? ' Progress reflects current marks.' : ' Full marks include the complex completion bonuses.'}</p>`;
+      <p class="challenge-footnote">All squads are shown here, independently of leaderboard filters. Coaches have their own category on the main leaderboards.${completion ? ' Open View skills for the individual checkmarks. Progress reflects current marks.' : ' Full marks include the complex completion bonuses.'}</p>`;
     replaceHTML(host, html);
   }
   window.SWLChallenge = Object.freeze({parseChallenge,buildChallenge,buildStandings,buildCompletion,renderChallenges,render,definitions:COMPLETION_CHALLENGES});

@@ -228,10 +228,10 @@ The existing WeeklyProgress ledger retains up to 56 calendar days. Partial and s
 The graph works while scoring is locked and does not change any gymnast data. Existing analytics filters and score controls are retained. Google Sheets, backend version 27, scoring rules and the shared roster are unchanged.
 
 
-### Lasting challenge achievements and one weekly flame
+### Progressive challenge emblems — November 2026
 
-The four completion challenges award a permanent profile emblem after all current Floor or Vault skills have been achieved or perfected. Awards are confirmed by the existing Google Sheets service and saved once in its `CompletionAchievements` ledger. They survive later unticking and Perfect expiry, carry no extra points, and exclude coaches. Already-complete gymnasts receive their emblem when this update first reads their marks; no earlier completion date is invented.
+Floor achievements build through six permanent stages: all Basics achieved, all Basics perfect, all Basics and Upgrades achieved, all Basics and Upgrades perfect, all Floor tiers achieved, and all Floor tiers perfect. The cumulative scopes contain 9, 18 and 24 skills. Handstand holds do not count. Vault retains its separate Achieved and Perfect challenges across all six Vault skills.
 
-Profiles show small Floor/Vault emblems with a single tick for achieved and double ticks for Perfect. Tapping an emblem explains it. Pointer and touch dismissal leaves the emblem unhighlighted; keyboard users retain visible focus. Lexi’s historical250 emblem remains separate.
+Ordinary gymnast cards show the highest earned Floor emblem and highest earned Vault emblem. The main profile displays the full earned collection. Lexi’s first-to-250 emblem remains separate. The eight illustrated badges use a transparent raster atlas at progressive-badges.png; tap an emblem for its meaning and earned date. Gymnast flame emojis are removed; the existing glow remains at 50 qualifying weekly Floor points.
 
-Weekly heat now shows one flame from30 qualifying Floor points, none below30, and retains the slow fire effect at50. Scoring, heat eligibility and the seven-day window are unchanged.
+Challenge pages provide expandable, read-only skill checklists with purple single ticks and mint double ticks. The progression changes no points, skills, renewal periods or lock rules. Badges are confirmed by the existing CompletionAchievements ledger and remain earned after later unticking or Perfect expiry. Existing complete Floor receipts are retained as historical proof. New app requests opt in to achievementVersion:2; earlier app versions still receive their original four receipt IDs.

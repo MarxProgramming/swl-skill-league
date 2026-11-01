@@ -1590,7 +1590,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
 <link rel="stylesheet" href="./analytics-31.css?v=20261101-emblems">
-<link rel="stylesheet" href="./challenge.css?v=20261101-emblems"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
+<link rel="stylesheet" href="./challenge.css?v=20261101-progressive"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
 <link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
 <link rel="stylesheet" href="./polish-40.css?v=20261029-fire-green">
@@ -1600,7 +1600,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
 <link rel="stylesheet" href="./directory-attendance.css?v=20261031-v5">
 <link rel="stylesheet" href="./gymnast-progress.css?v=20261030-progress">
-<link rel="stylesheet" href="./achievement-50.css?v=20261101-compact">
+<link rel="stylesheet" href="./achievement-50.css?v=20261101-progressive">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 </head>
 
@@ -1813,8 +1813,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./directory-attendance.js?v=20261101-emblems"></script>
 <script src="./gymnast-progress.js?v=20261030-progress"></script>
 <script src="./v2.js?v=20261101-emblems"></script>
-<script src="./achievement-50.js?v=20261101-compact"></script>
-<script src="./challenge.js?v=20261101-emblems"></script>
+<script src="./achievement-50.js?v=20261101-progressive"></script>
+<script src="./challenge.js?v=20261101-progressive"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script>
 (() => {
@@ -2226,7 +2226,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
     if (data.completionAchievements != null) {
       if (!isObject(data.completionAchievements)) throw Error('Challenge achievements could not be read.');
-      const challengeIds = new Set(['floor-achieved','vault-achieved','floor-perfect','vault-perfect']);
+      const challengeIds = new Set(['floor-achieved','vault-achieved','floor-perfect','vault-perfect','floor-basics-achieved','floor-basics-perfect','floor-upgrades-achieved','floor-upgrades-perfect','floor-pro-achieved','floor-pro-perfect']);
       for (const [id, awards] of Object.entries(data.completionAchievements)) {
         if (!ids.has(id) || !isObject(awards)) throw Error('Invalid challenge achievement.');
         clean.completionAchievements[id] = {};
@@ -2462,9 +2462,9 @@ html:has(body.no-motion){scroll-behavior:auto}
   const fireBadge = () => '';
   const achievementBadge = gymnast => window.SWLAchievements?.allBadges(gymnast, confirmedState.completionAchievements) || '';
   const achievementIcons = gymnast => window.SWLAchievements?.allIcons(gymnast, confirmedState.completionAchievements) || '';
-  const profileAchievementBadges = gymnast => window.SWLAchievements?.profileBadges(gymnast, confirmedState.completionAchievements) || '';
+  const profileAchievementBadges = gymnast => window.SWLAchievements?.fullProfileBadges(gymnast, confirmedState.completionAchievements) || '';
   function renderV2() {
-    const challengeConfig = {gymnasts:GYMNASTS,skills:SKILLS,mark,summary,apparatus,activeChallenge,achievementBadge,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected};
+    const challengeConfig = {gymnasts:GYMNASTS,skills:SKILLS,mark,summary,apparatus,activeChallenge,achievementBadge,completionAchievements:confirmedState.completionAchievements,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected};
     window.SWLChallenge?.render($('challengeRoot'), challengeConfig);
     window.SWLChallenge?.renderChallenges($('completionChallengesRoot'), challengeConfig);
     v2Api()?.render({state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,hasLoaded,canEdit:canEdit()});
@@ -2938,7 +2938,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       const response = await fetch(scoresEndpoint(), {
         method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5 }),
+        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2 }),
         signal: controller.signal
       });
       let payload;
@@ -3458,7 +3458,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           <p class="eyebrow">${escapeHTML(gymnastSquadLabel(gymnast))}</p>
 
           <h2 id="athleteTitle" tabindex="-1">
-            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteAchievements">${achievementBadge(gymnast)}</span>
+            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteAchievements">${profileAchievementBadges(gymnast)}</span>
           </h2>
 
           <div class="mini-stats">
@@ -3568,7 +3568,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('athletePerfect').textContent = total.perfect;
     $('athleteSummary')?.classList?.toggle('is-on-fire', isOnFire(selectedId));
     $('athleteSummary')?.classList?.remove('is-hot');
-    const earnedEmblems = achievementBadge(GYMNASTS.find(g => g.id === selectedId));
+    const earnedEmblems = profileAchievementBadges(GYMNASTS.find(g => g.id === selectedId));
     if ($('athleteAchievements') && $('athleteAchievements').innerHTML !== earnedEmblems) $('athleteAchievements').innerHTML = earnedEmblems;
 
     $('ringFill').style.strokeDashoffset =
@@ -4061,7 +4061,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         closeAllSkills();
       } else if (button.hasAttribute('data-completion-challenge')) {
         const challenge = button.dataset.completionChallenge;
-        if (['floor-achieved','vault-achieved','floor-perfect','vault-perfect'].includes(challenge)) { activeChallenge = challenge; setView('challenge'); }
+        if (window.SWLChallenge?.definitions.some(item => item.id === challenge)) { activeChallenge = challenge; setView('challenge'); }
       } else if (button.dataset.view) {
         const destination = button.dataset.view;
         if (destination === 'challenge') activeChallenge = null;

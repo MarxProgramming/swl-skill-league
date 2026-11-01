@@ -78,3 +78,52 @@
 @media(max-width:650px){.completion-challenges-heading{align-items:flex-start;flex-direction:column;gap:8px}.completion-challenges-heading h2{font-size:22px}.completion-challenge-card{gap:9px;padding:16px 12px}.completion-challenge-symbol{flex-basis:28px;width:28px;height:32px;font-size:11px}.completion-challenge-symbol .swl-completion-icon{width:28px;height:32px}.completion-challenge-arrow{display:none}.completion-challenge-copy strong{font-size:12px}.completion-challenge-copy small,.completion-challenge-count{font-size:9px}.challenge-row{grid-template-columns:24px minmax(0,1fr) 93px;gap:9px 10px;padding:15px 13px}.challenge-person{grid-row:1;grid-column:2}.challenge-rank{grid-row:1;grid-column:1;align-self:center}.challenge-profile-link strong{font-size:13px}.challenge-points{grid-column:3;grid-row:1}.challenge-points>span>b{font-size:22px}.challenge-points>span>small{font-size:10px}.challenge-progress-details{grid-column:2/-1;grid-row:2;gap:6px}.challenge-progress-caption{flex-wrap:nowrap;font-size:9px}.challenge-arrow{display:none}.challenge-row-progress{height:4px}.completion-challenge-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.completion-challenge-tabs button{min-width:0;font-size:10px;padding:10px}.challenge-list-head{align-items:flex-start}.challenge-list-head>span{display:none}}
 @media(max-width:360px){.completion-challenge-grid{grid-template-columns:1fr}.completion-challenge-card{min-height:100px}.challenge-row{grid-template-columns:20px minmax(0,1fr) 80px;padding:13px 10px;gap:8px}.challenge-points>span>b{font-size:20px}.challenge-profile-link strong{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.completion-challenge-card{transition:none}.completion-challenge-card:hover{transform:none}}
+/* Progressive collections: three cumulative Floor levels and a separate Vault path. */
+.completion-journey{margin-top:23px}
+.completion-journey-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:13px}
+.completion-journey-heading h3{font-size:16px;letter-spacing:-.02em;margin:0;color:#e9e1f3}
+.completion-journey-heading p,.completion-journey-note{font-size:10px;line-height:1.6;color:#a99ab6;margin:0}
+.completion-floor-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.completion-level{min-width:0;padding:12px;border:1px solid #c6a1ff15;border-radius:20px;background:#100f160e}
+.completion-level h4{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:12px;line-height:1.5;font-weight:700;color:#e4d8f0}
+.completion-level h4>span{display:grid;place-items:center;width:24px;height:24px;flex-shrink:0;border:1px solid #c6a1ff2a;border-radius:8px;background:#c6a1ff0c;font-size:10px;font-variant-numeric:tabular-nums;color:#c9adeb}
+.completion-level .completion-challenge-grid{grid-template-columns:minmax(0,1fr);gap:8px}
+.completion-level .completion-challenge-card{min-height:115px;padding:15px 12px;align-items:center;border-radius:13px;gap:9px}
+.completion-level .completion-challenge-copy{gap:6px}
+.completion-level .completion-challenge-copy strong{font-size:12px}
+.completion-level .completion-challenge-arrow{font-size:12px}
+.completion-challenge-symbol img{display:block;width:100%;height:100%;object-fit:contain}
+.completion-challenge-count>span{font-weight:900;margin-right:3px}
+.completion-journey-note{margin-top:11px}
+.completion-vault-journey{padding-top:21px;border-top:1px solid #c6a1ff13}
+.completion-vault-journey>.completion-challenge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.completion-vault-journey .completion-challenge-card{min-height:110px;align-items:center}
+.challenge-list-item{min-width:0}
+.challenge-skill-checklist{position:relative;margin:0 10px;border:1px solid #c6a1ff18;border-top:0;border-radius:0 0 12px;background:#13121a}
+.challenge-skill-checklist>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:9px 15px;cursor:pointer;list-style:none;color:#cfc0df;font-size:11px;font-weight:700;border-radius:0 0 11px}
+.challenge-skill-checklist>summary::-webkit-details-marker{display:none}
+.challenge-skill-checklist>summary::marker{content:''}
+.challenge-skill-checklist>summary:hover{background:#c6a1ff08;color:#f0e3ff}
+.challenge-skill-checklist>summary:focus-visible{outline:2px solid #c6a1ff;outline-offset:2px}
+.challenge-checklist-summary{display:flex;align-items:center;gap:13px;font-size:10px;font-variant-numeric:tabular-nums}
+.challenge-checklist-summary b{font-size:11px;letter-spacing:-.13em;margin-right:3px}
+.challenge-checklist-chevron{display:inline-block;line-height:1;font-size:16px;transition:transform .16s ease;color:#b9a0d3}
+.challenge-skill-checklist[open] .challenge-checklist-chevron{transform:rotate(180deg)}
+.challenge-checklist-content{padding:4px 15px 16px}
+.challenge-checklist-content>p{color:#a79ab4;font-size:9px;line-height:1.6;margin:0 0 13px}
+.challenge-checklist-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 22px}
+.challenge-checklist-groups>section{min-width:0}
+.challenge-checklist-groups h3{margin:0 0 8px;font-size:10px;line-height:1.5;color:#d4c5e1;font-weight:700}
+.challenge-checklist-groups ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.challenge-checklist-groups li{display:flex;align-items:flex-start;gap:8px;min-width:0;color:#b4a8c0;font-size:11px;line-height:1.5}
+.challenge-skill-mark{display:grid;place-items:center;width:23px;min-height:23px;flex:0 0 23px;border:1px solid #ffffff18;border-radius:7px;background:#ffffff05;font-size:12px;font-weight:900;letter-spacing:-.12em;color:#8e8499}
+.challenge-checklist-summary>.is-achieved,.challenge-checklist-content .is-achieved{color:#c6a1ff}
+.challenge-checklist-summary>.is-perfect,.challenge-checklist-content .is-perfect{color:#9cf3d5}
+.challenge-checklist-groups .is-achieved .challenge-skill-mark{border-color:#c6a1ff4a;background:#c6a1ff14;color:#c6a1ff}
+.challenge-checklist-groups .is-perfect .challenge-skill-mark{border-color:#9cf3d544;background:#9cf3d512;color:#9cf3d5}
+.challenge-checklist-groups li>span:last-child{min-width:0;overflow-wrap:anywhere;padding-top:3px}
+@media(max-width:1050px){.completion-floor-levels{gap:9px}.completion-level{padding:10px}.completion-level .completion-challenge-arrow{display:none}.completion-level .completion-challenge-card{padding:13px 10px;gap:8px}.completion-level .completion-challenge-symbol{width:27px;flex-basis:27px;height:32px}.completion-level .completion-challenge-symbol .swl-completion-icon{width:27px;height:32px}.challenge-checklist-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.completion-floor-levels{grid-template-columns:minmax(0,1fr);gap:12px}.completion-level{padding:12px}.completion-level .completion-challenge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.completion-level .completion-challenge-card{min-height:109px;padding:13px 10px;align-items:flex-start}.completion-journey-heading{align-items:flex-start;flex-direction:column;gap:4px}.completion-challenge-tabs button{font-size:10px}.challenge-skill-checklist{margin:0 6px}.challenge-skill-checklist>summary{padding:9px 13px}.challenge-checklist-content{padding:3px 13px 15px}}
+@media(max-width:450px){.completion-challenge-copy strong{font-size:11px}.completion-level .completion-challenge-symbol{width:25px;flex-basis:25px;height:29px}.completion-level .completion-challenge-symbol .swl-completion-icon{width:25px;height:29px}.completion-level .completion-challenge-card{gap:7px}.completion-level .completion-challenge-copy small,.completion-level .completion-challenge-count{font-size:8px}.challenge-checklist-groups{grid-template-columns:minmax(0,1fr);gap:15px}.completion-vault-journey .completion-challenge-card{padding:14px 10px;gap:7px}.completion-vault-journey .completion-challenge-symbol{width:25px;flex-basis:25px;height:29px}.completion-vault-journey .completion-challenge-symbol .swl-completion-icon{width:25px;height:29px}}
+@media(max-width:360px){.completion-level .completion-challenge-grid,.completion-vault-journey>.completion-challenge-grid{grid-template-columns:minmax(0,1fr)}.completion-level .completion-challenge-card{min-height:96px}.completion-level .completion-challenge-copy small,.completion-level .completion-challenge-count{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.challenge-checklist-chevron{transition:none}}

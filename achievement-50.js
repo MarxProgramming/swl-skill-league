@@ -7,23 +7,30 @@
   const isCoach = gymnast => [gymnast?.coach,...(Array.isArray(gymnast?.squads) ? gymnast.squads : [])].some(squad => String(squad || '').trim().toLowerCase() === 'coaches');
   const emblem = `<svg viewBox="0 0 54 32" aria-hidden="true" focusable="false"><path class="award-seal" d="M8 2h38l6 7v14l-6 7H8l-6-7V9z"/><path class="award-inset" d="M10 5h34l5 5v12l-5 5H10l-5-5V10z"/><text class="award-number" x="27" y="22" text-anchor="middle">250</text></svg>`;
   const challenges = Object.freeze({
-    'floor-achieved':{apparatus:'Floor',letter:'F',level:'achieved',title:'All Floor skills achieved',description:'Every Floor skill was marked Achieved or Perfect.'},
-    'vault-achieved':{apparatus:'Vault',letter:'V',level:'achieved',title:'All Vault skills achieved',description:'Every Vault skill was marked Achieved or Perfect.'},
-    'floor-perfect':{apparatus:'Floor',letter:'F',level:'perfect',title:'All Floor skills perfect',description:'Every Floor skill was marked Perfect at the same time.'},
-    'vault-perfect':{apparatus:'Vault',letter:'V',level:'perfect',title:'All Vault skills perfect',description:'Every Vault skill was marked Perfect at the same time.'}
+    'floor-basics-achieved':Object.freeze({apparatus:'Floor',rank:1,sprite:0,level:'achieved',title:'Floor Basics achieved',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
+    'floor-basics-perfect':Object.freeze({apparatus:'Floor',rank:2,sprite:1,level:'perfect',title:'Floor Basics perfect',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
+    'floor-upgrades-achieved':Object.freeze({apparatus:'Floor',rank:3,sprite:2,level:'achieved',title:'Floor Upgrades achieved',description:'Every basic and upgraded Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
+    'floor-upgrades-perfect':Object.freeze({apparatus:'Floor',rank:4,sprite:3,level:'perfect',title:'Floor Upgrades perfect',description:'Every basic and upgraded Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
+    'floor-pro-achieved':Object.freeze({apparatus:'Floor',rank:5,sprite:4,level:'achieved',title:'Floor Pro achieved',description:'Every basic, upgraded and Pro Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
+    'floor-pro-perfect':Object.freeze({apparatus:'Floor',rank:6,sprite:5,level:'perfect',title:'Floor Pro perfect',description:'Every basic, upgraded and Pro Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
+    'vault-achieved':Object.freeze({apparatus:'Vault',rank:1,sprite:6,level:'achieved',title:'All Vault skills achieved',description:'Every Vault skill was marked Achieved or Perfect.'}),
+    'vault-perfect':Object.freeze({apparatus:'Vault',rank:2,sprite:7,level:'perfect',title:'All Vault skills perfect',description:'Every Vault skill was marked Perfect at the same time.'})
   });
+  // Earlier full-Floor receipts remain proof of the corresponding Pro award.
+  const legacyIds = Object.freeze({'floor-achieved':'floor-pro-achieved','floor-perfect':'floor-pro-perfect'});
+  const canonicalId = id => Object.hasOwn(legacyIds,id) ? legacyIds[id] : id;
   const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
   const earnedDate = value => new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',day:'numeric',month:'long',year:'numeric'}).format(new Date(value));
 
   function completionEmblem(challenge) {
-    const ticks = challenge.level === 'perfect' ? '<path class="award-check" d="m7 25 3 3 5-6m1 3 3 3 5-6"/>' : '<path class="award-check" d="m10 25 3 3 7-7"/>';
-    return `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path class="award-completion-face" d="M7 2h18l4 4v14c0 6-7 11-13 14C10 31 3 26 3 20V6z"/><path class="award-completion-inset" d="M8 5h16l2 2v13c0 4-5 8-10 11-5-3-10-7-10-11V7z"/><path class="award-completion-bevel" d="m4 7 4-4h16l4 4M4 8v11"/><text class="award-apparatus-letter" x="16" y="20" text-anchor="middle">${challenge.letter}</text>${ticks}</svg>`;
+    return `<span class="swl-award-art" data-award-sprite="${challenge.sprite}" aria-hidden="true"></span>`;
   }
 
-  // Shared artwork for non-interactive challenge tiles. It never opens a dialog.
+  // Shared illustrated artwork for non-interactive challenge tiles.
   function challengeIcon(id) {
-    if (!Object.hasOwn(challenges,id)) return '';
-    const challenge = challenges[id];
+    const key = canonicalId(id);
+    if (!Object.hasOwn(challenges,key)) return '';
+    const challenge = challenges[key];
     return `<span class="swl-completion-icon swl-completion-badge is-${challenge.level}" aria-hidden="true">${completionEmblem(challenge)}</span>`;
   }
 
@@ -39,26 +46,46 @@
     const awards = Object.hasOwn(completionAchievements, gymnast.id) ? completionAchievements[gymnast.id] : null;
     if (!awards || typeof awards !== 'object' || Array.isArray(awards)) return [];
     return Object.entries(challenges).flatMap(([id, challenge]) => {
-      const earnedAt = Object.hasOwn(awards,id) ? awards[id] : null;
-      return validDate(earnedAt) ? [{id,challenge,earnedAt}] : [];
+      const dates = [Object.hasOwn(awards,id) ? awards[id] : null];
+      for (const [oldId,newId] of Object.entries(legacyIds)) if (newId === id && Object.hasOwn(awards,oldId)) dates.push(awards[oldId]);
+      const earnedAt = dates.filter(validDate).sort()[0];
+      return earnedAt ? [{id,challenge,earnedAt}] : [];
     });
   }
 
-  function profileBadges(gymnast, completionAchievements) {
-    return savedChallenges(gymnast, completionAchievements).map(({id,challenge,earnedAt}) => {
+  function highestChallenges(gymnast, completionAchievements) {
+    const highest = new Map();
+    for (const award of savedChallenges(gymnast, completionAchievements)) {
+      const previous = highest.get(award.challenge.apparatus);
+      if (!previous || award.challenge.rank > previous.challenge.rank) highest.set(award.challenge.apparatus,award);
+    }
+    return [...highest.values()];
+  }
+
+  function challengeButtons(gymnast, awards, profile = false) {
+    return awards.map(({id,challenge,earnedAt}) => {
       const label = `${gymnast.name}: ${challenge.title}. Earned ${earnedDate(earnedAt)}.`;
-      return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></button>`;
+      return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}${profile ? ' is-profile-award' : ''}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></button>`;
     }).join('');
   }
 
-  function allBadges(gymnast, completionAchievements) {
-    return badge(gymnast) + profileBadges(gymnast, completionAchievements);
+  // Profiles keep the whole earned collection; everyday cards show one per apparatus.
+  function profileBadges(gymnast, completionAchievements) {
+    return challengeButtons(gymnast,savedChallenges(gymnast,completionAchievements),true);
   }
 
-  // Use inside existing profile/chooser buttons: no nested button or dialog trigger.
+  function fullProfileBadges(gymnast, completionAchievements) {
+    return badge(gymnast) + profileBadges(gymnast,completionAchievements);
+  }
+
+  function allBadges(gymnast, completionAchievements) {
+    return badge(gymnast) + challengeButtons(gymnast,highestChallenges(gymnast,completionAchievements));
+  }
+
+  // Use inside existing profile buttons: no nested button or dialog trigger.
   function allIcons(gymnast, completionAchievements) {
     const historical = eligible(gymnast) ? `<span class="swl-achievement-icon" role="img" aria-label="Lexi’s achievement: first to 250 Floor points" title="First to 250 Floor points"><span class="swl-achievement-emblem">${emblem}</span></span>` : '';
-    return historical + savedChallenges(gymnast, completionAchievements).map(({challenge,earnedAt}) => {
+    return historical + highestChallenges(gymnast, completionAchievements).map(({challenge,earnedAt}) => {
       const label = `${gymnast.name}: ${challenge.title}. Earned ${earnedDate(earnedAt)}.`;
       return `<span class="swl-achievement-icon swl-completion-badge is-${challenge.level}" role="img" aria-label="${escape(label)}" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></span>`;
     }).join('');
@@ -118,7 +145,8 @@
   }
 
   function fillDialog(panel, button, id) {
-    const challenge = challenges[id];
+    const key = canonicalId(id);
+    const challenge = Object.hasOwn(challenges,key) ? challenges[key] : null;
     const historical = id === 'first-250';
     const earnedAt = button.dataset?.achievementEarned;
     if (!historical && (!challenge || !validDate(earnedAt))) return false;
@@ -140,7 +168,7 @@
       const button=event.target.closest?.('[data-swl-achievement]');
       if(!button)return;
       const id=button.dataset?.swlAchievement || 'first-250';
-      if(id!=='first-250'&&!Object.hasOwn(challenges,id))return;
+      if(id!=='first-250'&&!Object.hasOwn(challenges,canonicalId(id)))return;
       event.preventDefault();event.stopPropagation();
       const panel=createDialog();
       if(panel.open || !fillDialog(panel,button,id))return;
@@ -154,5 +182,5 @@
     },true);
   }
 
-  window.SWLAchievements=Object.freeze({badge,profileBadges,allBadges,allIcons,challengeIcon,eligible,mount});
+  window.SWLAchievements=Object.freeze({badge,profileBadges,fullProfileBadges,allBadges,allIcons,challengeIcon,challenges,eligible,mount});
 })();

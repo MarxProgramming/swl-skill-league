@@ -1,4 +1,4 @@
-/* Tiny saved achievement emblems, inline with the name and weekly flames. */
+/* Compact earned emblems sit beside names; profiles show the full collection. */
 .swl-achievement-badge{position:relative;z-index:2;display:inline-grid;place-items:center;vertical-align:middle;flex:0 0 28px;width:28px;height:28px;min-width:28px;min-height:28px;margin:-4px 0 -3px 1px;padding:0;border:0;border-radius:7px;background:transparent;color:#f5d999;line-height:1;cursor:pointer;isolation:isolate;box-shadow:none;pointer-events:auto}
 .swl-achievement-badge .swl-achievement-emblem{display:block;width:22px;height:13px;filter:drop-shadow(0 1px 2px #0006);transition:transform .18s ease,filter .18s ease}
 .swl-achievement-badge:focus-visible{outline:2px solid #e9c97d;outline-offset:0;background:#e9c97d12}
@@ -9,6 +9,8 @@
 .award-inset{fill:none;stroke:#e8c67855;stroke-width:.6}
 .award-number{fill:#ffe5a7;font-family:Arial,sans-serif;font-size:17px;font-weight:800;letter-spacing:.5px}
 .athlete-info h2>.swl-achievement-badge{vertical-align:middle}
+#athleteAchievements{display:inline-flex;flex-wrap:wrap;align-items:center;gap:1px;max-width:100%;vertical-align:middle;line-height:1}
+#athleteAchievements:empty{display:none}
 /* The full card stays clickable; the emblem is a separate, valid button. */
 .directory-profile-content{position:relative;display:flex;align-items:center;gap:13px;width:100%;min-width:0;padding:20px 17px;color:inherit;text-align:left;border-radius:18px}
 #directoryRoot .directory-card:has(>.directory-attendance-control)>.directory-profile-content{padding-right:57px}
@@ -44,18 +46,26 @@
 .swlp-identity h2>.swl-achievement-badge{vertical-align:middle}
 @media(max-width:700px){.a31-standing-identity{grid-column:2;grid-row:1}}
 
-/* Bevelled shield artwork stays compact on cards and scales up on collection tiles. */
-.swl-completion-badge{--award-completion-ink:#f0e0ff;--award-completion-edge:#ba8dec;--award-completion-fill:#422954;--award-completion-inset:#54376a}
-.swl-completion-badge.is-perfect{--award-completion-ink:#d6fff0;--award-completion-edge:#85dfbb;--award-completion-fill:#194738;--award-completion-inset:#285b49}
-.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:17px;height:20px;filter:drop-shadow(0 1px 1px #0007)}
-.award-completion-face{fill:var(--award-completion-fill);stroke:var(--award-completion-edge);stroke-width:1.4;stroke-linejoin:round}
-.award-completion-inset{fill:var(--award-completion-inset);stroke:var(--award-completion-edge);stroke-opacity:.35;stroke-width:.7;stroke-linejoin:round}
-.award-completion-bevel{fill:none;stroke:var(--award-completion-ink);stroke-opacity:.6;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
-.award-apparatus-letter{fill:var(--award-completion-ink);font:900 18px Arial,sans-serif}
-.award-check{fill:none;stroke:var(--award-completion-ink);stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
-.swl-completion-icon{display:inline-block;width:32px;height:36px;flex-shrink:0;line-height:0}
-.swl-completion-icon svg{display:block;width:100%;height:100%;overflow:visible}
-.swl-achievement-large.swl-completion-badge{width:72px;height:81px;filter:none}
+/* One illustrated sheet keeps the eight progressive awards consistent at every size. */
+.swl-award-art{display:block;width:100%;height:100%;background-image:url("progressive-badges.png");background-repeat:no-repeat;background-size:400% 214.2512077%;background-position:0 0;filter:drop-shadow(0 1px 1px #0005)}
+/* The source sheet splits at y=414 of 887, keeping lower-row crowns intact. */
+.swl-award-art:is([data-award-sprite="4"],[data-award-sprite="5"],[data-award-sprite="6"],[data-award-sprite="7"]){background-size:400% 187.526427%}
+.swl-award-art[data-award-sprite="1"]{background-position:33.333333% 0}
+.swl-award-art[data-award-sprite="2"]{background-position:66.666667% 0}
+.swl-award-art[data-award-sprite="3"]{background-position:100% 0}
+.swl-award-art[data-award-sprite="4"]{background-position:0 100%}
+.swl-award-art[data-award-sprite="5"]{background-position:33.333333% 100%}
+.swl-award-art[data-award-sprite="6"]{background-position:66.666667% 100%}
+.swl-award-art[data-award-sprite="7"]{background-position:100% 100%}
+.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:28px;height:28px;filter:none}
+.swl-completion-badge.swl-achievement-badge.is-profile-award{width:36px;min-width:36px;height:36px;min-height:36px;margin:0;padding:0}
+.swl-completion-badge.swl-achievement-badge.is-profile-award .swl-achievement-emblem{width:34px;height:34px}
+.swl-completion-icon{display:inline-block;width:48px;height:48px;flex-shrink:0;line-height:0}
+.swl-achievement-large.swl-completion-badge{width:144px;height:144px;margin-bottom:9px;filter:none}
+.swl-achievement-dialog:has(.swl-completion-badge){border-color:#b99ae44d;background:radial-gradient(ellipse at 50% 0,#865bc72b,transparent 65%),#1d1925}
+.swl-achievement-dialog:has(.swl-completion-badge) h2{font-size:31px;color:#f5ebff}
+.swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-eyebrow{color:#baa4d6}
+.swl-achievement-dialog:has(.is-perfect){border-color:#8cdbc04d}
 .swl-achievement-earned{color:#d4c3e2;font-size:11px;line-height:1.6;margin:15px 0 0}
 .swl-achievement-earned time{color:#eee5f5;font-weight:750}
 /* Pointer close must not inherit the app's purple keyboard-focus treatment. */
