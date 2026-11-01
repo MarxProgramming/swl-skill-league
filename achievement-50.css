@@ -1,7 +1,6 @@
-/* A tiny historical 250 emblem, inline with the name and weekly flames. */
+/* Tiny saved achievement emblems, inline with the name and weekly flames. */
 .swl-achievement-badge{position:relative;z-index:2;display:inline-grid;place-items:center;vertical-align:middle;flex:0 0 28px;width:28px;height:28px;min-width:28px;min-height:28px;margin:-4px 0 -3px 1px;padding:0;border:0;border-radius:7px;background:transparent;color:#f5d999;line-height:1;cursor:pointer;isolation:isolate;box-shadow:none;pointer-events:auto}
 .swl-achievement-badge .swl-achievement-emblem{display:block;width:24px;height:15px;filter:drop-shadow(0 1px 2px #0006);transition:transform .18s ease,filter .18s ease}
-.swl-achievement-badge:hover .swl-achievement-emblem{transform:translateY(-1px);filter:drop-shadow(0 1px 5px #e5b85c55)}
 .swl-achievement-badge:focus-visible{outline:2px solid #e9c97d;outline-offset:0;background:#e9c97d12}
 .swl-achievement-badge svg,.swl-achievement-large svg{width:100%;height:100%;overflow:visible}
 .award-seal{fill:#362c26;stroke:#e8c678;stroke-width:1.4;stroke-linejoin:round}
@@ -42,3 +41,21 @@
 @media(prefers-reduced-motion:reduce){.swl-achievement-badge .swl-achievement-emblem{transition:none}.swl-achievement-badge:hover .swl-achievement-emblem{transform:none}}
 .swlp-identity h2>.swl-achievement-badge{vertical-align:middle}
 @media(max-width:700px){.a31-standing-identity{grid-column:2;grid-row:1}}
+
+/* Challenge letters and one/two ticks remain distinct at the compact size. */
+.swl-completion-badge{--award-completion-ink:#e5cdff;--award-completion-edge:#c6a0ff;--award-completion-fill:#32283f}
+.swl-completion-badge.is-perfect{--award-completion-ink:#baf5dc;--award-completion-edge:#85dfbb;--award-completion-fill:#1f3832}
+.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem{width:26px;height:18px}
+.award-completion-face{fill:var(--award-completion-fill);stroke:var(--award-completion-edge);stroke-width:1.5;stroke-linejoin:round}
+.award-apparatus-letter{fill:var(--award-completion-ink);font:800 18px Arial,sans-serif}
+.award-check{fill:none;stroke:var(--award-completion-ink);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.award-apparatus-detail{fill:none;stroke:var(--award-completion-edge);stroke-width:1.2;stroke-linecap:round;opacity:.65}
+.swl-achievement-large.swl-completion-badge{width:96px;height:64px}
+.swl-achievement-earned{color:#d4c3e2;font-size:11px;line-height:1.6;margin:15px 0 0}
+.swl-achievement-earned time{color:#eee5f5;font-weight:750}
+/* Pointer close must not inherit the app's purple keyboard-focus treatment. */
+html[data-theme] button.swl-achievement-badge:is(:hover,:focus,:active){background:transparent;box-shadow:none;transform:none}
+html[data-theme] button.swl-achievement-badge:focus:not(:focus-visible):not([data-award-keyboard-return]){outline:none!important}
+html[data-theme] button.swl-achievement-badge:focus-visible,html[data-theme] button.swl-achievement-badge[data-award-keyboard-return]:focus{outline:2px solid #e9c97d!important;outline-offset:1px!important;background:#e9c97d12}
+html[data-theme] .swl-achievement-dialog button:focus-visible{outline:2px solid #e9c97d!important;outline-offset:3px!important}
+@media(hover:hover){html[data-theme] button.swl-achievement-badge:hover .swl-achievement-emblem{filter:brightness(1.12)}}

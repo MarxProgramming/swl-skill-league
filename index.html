@@ -1596,7 +1596,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
 <link rel="stylesheet" href="./directory-attendance.css?v=20261031-v5">
 <link rel="stylesheet" href="./gymnast-progress.css?v=20261030-progress">
-<link rel="stylesheet" href="./achievement-50.css?v=20261031-v51">
+<link rel="stylesheet" href="./achievement-50.css?v=20261101-awards">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 </head>
 
@@ -1771,7 +1771,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
     <li><strong>Floor and Vault.</strong> Floor is selected when the app opens. Vault has its own leaderboard: 10 points for each Achieved skill, 20 for Perfect, and +1 when all three in a group are Perfect. Combined adds floor and vault together. Weekly flames use floor progress only.</li>
-    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. One flame appears beside your name at 10 qualifying points in the last seven days, two at 20, and three at 30. At 50 points, your card also gains a slow red-orange fire effect. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Flames and the fire effect follow the qualifying points earned in the current seven-day window.</li>
+    <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, it turns red and joins the unticked list. Renewals do not add points. One flame appears beside your name at 30 qualifying points in the last seven days. No flame is shown below 30. At 50 points, your card also gains a slow red-orange fire effect. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. Flames and the fire effect follow the qualifying points earned in the current seven-day window.</li>
     <li><strong>Reveal your place.</strong> On a gymnast’s card, choose Reveal placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
   </ul>
 </dialog>
@@ -1812,7 +1812,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./directory-attendance.js?v=20261030-training"></script>
 <script src="./gymnast-progress.js?v=20261030-progress"></script>
 <script src="./v2.js?v=20261031-v51"></script>
-<script src="./achievement-50.js?v=20261031-v51"></script>
+<script src="./achievement-50.js?v=20261101-awards"></script>
 <script src="./challenge.js?v=20261031-v51"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script>
@@ -2053,6 +2053,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     dailyProgress: null,
     weeklyProgress: null,
     prizes: {},
+    completionAchievements: {},
     challenge: null
   });
 
@@ -2219,6 +2220,18 @@ html:has(body.no-motion){scroll-behavior:auto}
         for (const threshold of ['200','250']) {
           if (awards[threshold]!=null && (typeof awards[threshold]!=='string' || !Number.isFinite(Date.parse(awards[threshold])))) throw Error('Invalid prize date.');
           if (awards[threshold]) clean.prizes[id][threshold]=awards[threshold];
+        }
+      }
+    }
+    if (data.completionAchievements != null) {
+      if (!isObject(data.completionAchievements)) throw Error('Challenge achievements could not be read.');
+      const challengeIds = new Set(['floor-achieved','vault-achieved','floor-perfect','vault-perfect']);
+      for (const [id, awards] of Object.entries(data.completionAchievements)) {
+        if (!ids.has(id) || !isObject(awards)) throw Error('Invalid challenge achievement.');
+        clean.completionAchievements[id] = {};
+        for (const [challengeId, earnedAt] of Object.entries(awards)) {
+          if (!challengeIds.has(challengeId) || typeof earnedAt !== 'string' || !Number.isFinite(Date.parse(earnedAt)) || new Date(earnedAt).toISOString() !== earnedAt) throw Error('Invalid challenge achievement date.');
+          clean.completionAchievements[id][challengeId] = earnedAt;
         }
       }
     }
@@ -2440,18 +2453,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     const points = weeklyHeatPoints(id, at);
     // Legacy glow-until timestamps use the old 10/15 thresholds. New visuals
     // follow only qualifying points in the current seven-day window.
-    return points >= 50 ? 'fire' : points >= 10 ? 'hot' : 'none';
+    return points >= 50 ? 'fire' : points >= 30 ? 'hot' : 'none';
   }
   const isOnFire = (id, at = Date.now()) => heatLevel(id, at) === 'fire';
   const heatClass = id => isOnFire(id) ? ' is-on-fire' : '';
   function fireBadge(id, at = Date.now()) {
     const points = weeklyHeatPoints(id, at);
-    const flames = points >= 30 ? 3 : points >= 20 ? 2 : points >= 10 ? 1 : 0;
-    if (!flames) return '';
-    const label = `${flames} ${flames === 1 ? 'flame' : 'flames'}: ${points.toLocaleString('en-GB', {maximumFractionDigits:2})} qualifying points in the last 7 days`;
-    return `<span class="weekly-flames" role="img" aria-label="${label}" title="${label}"><span aria-hidden="true">${'🔥'.repeat(flames)}</span></span>`;
+    if (points < 30) return '';
+    const label = `On fire: ${points.toLocaleString('en-GB', {maximumFractionDigits:2})} qualifying points in the last 7 days`;
+    return `<span class="weekly-flames" role="img" aria-label="${label}" title="${label}"><span aria-hidden="true">🔥</span></span>`;
   }
   const achievementBadge = gymnast => window.SWLAchievements?.badge(gymnast) || '';
+  const profileAchievementBadges = gymnast => window.SWLAchievements?.profileBadges(gymnast, confirmedState.completionAchievements) || '';
   function renderV2() {
     const challengeConfig = {gymnasts:GYMNASTS,skills:SKILLS,mark,summary,apparatus,activeChallenge,achievementBadge,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected};
     window.SWLChallenge?.render($('challengeRoot'), challengeConfig);
@@ -2987,7 +3000,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   let scoreViewSignature='';
   function refreshScoreViews() {
-    const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,confirmedState.challenge,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,apparatus,londonDay()]);
+    const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,confirmedState.completionAchievements,confirmedState.challenge,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,apparatus,londonDay()]);
     if(signature===scoreViewSignature){renderSaveStatus();return;}
     scoreViewSignature=signature;
     renderBoards();
@@ -3450,7 +3463,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           <p class="eyebrow">${escapeHTML(gymnastSquadLabel(gymnast))}</p>
 
           <h2 id="athleteTitle" tabindex="-1">
-            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteFire">${fireBadge(gymnast.id)}</span>${achievementBadge(gymnast)}
+            ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteFire">${fireBadge(gymnast.id)}</span>${achievementBadge(gymnast)}<span id="athleteAchievements">${profileAchievementBadges(gymnast)}</span>
           </h2>
 
           <div class="mini-stats">
@@ -3625,6 +3638,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('gymnastChooser')?.classList?.remove('is-hot');
     if ($('athleteFire')) $('athleteFire').innerHTML = fireBadge(selectedId);
     if ($('chooserFire')) $('chooserFire').innerHTML = fireBadge(selectedId);
+    const earnedEmblems = profileAchievementBadges(GYMNASTS.find(g => g.id === selectedId));
+    if ($('athleteAchievements') && $('athleteAchievements').innerHTML !== earnedEmblems) $('athleteAchievements').innerHTML = earnedEmblems;
 
     $('ringFill').style.strokeDashoffset =
       276.46 * (1 - total.points / total.max);

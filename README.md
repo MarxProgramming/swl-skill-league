@@ -226,3 +226,12 @@ Individual Progress insights now begins with an interactive Points over time gra
 The existing WeeklyProgress ledger retains up to 56 calendar days. Partial and stale coverage is labelled. This is not a reconstruction of historical leaderboard totals: automatic expiry, renewals and scoring-rule changes are excluded by the ledger. Average pace uses available calendar days, not training sessions. Missing history is shown explicitly. Combined identifies the graph as Floor-only; Vault shows its current saved score and explains that Vault history is not yet recorded. No history is inferred from skill dates.
 
 The graph works while scoring is locked and does not change any gymnast data. Existing analytics filters and score controls are retained. Google Sheets, backend version 27, scoring rules and the shared roster are unchanged.
+
+
+### Lasting challenge achievements and one weekly flame
+
+The four completion challenges award a permanent profile emblem after all current Floor or Vault skills have been achieved or perfected. Awards are confirmed by the existing Google Sheets service and saved once in its `CompletionAchievements` ledger. They survive later unticking and Perfect expiry, carry no extra points, and exclude coaches. Already-complete gymnasts receive their emblem when this update first reads their marks; no earlier completion date is invented.
+
+Profiles show small Floor/Vault emblems with a single tick for achieved and double ticks for Perfect. Tapping an emblem explains it. Pointer and touch dismissal leaves the emblem unhighlighted; keyboard users retain visible focus. Lexi’s historical250 emblem remains separate.
+
+Weekly heat now shows one flame from30 qualifying Floor points, none below30, and retains the slow fire effect at50. Scoring, heat eligibility and the seven-day window are unchanged.
