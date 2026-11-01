@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const DAY=86400000, esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all',analyticsAge='all',analyticsComparison='foundation',analyticsRankCategory='overall',analyticsRankMetric='points';
+  let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all',analyticsAge='all',analyticsComparison='progress',analyticsRankCategory='overall',analyticsRankMetric='points';
   let progressRange=28;
   const DIRECTORY_SQUAD_KEY='swl-directory-squad-v5';
   let directoryGroupChosen=false,analyticsDirectoryGroup=null;
@@ -197,7 +197,7 @@
     let achieved=0,perfect=0,levels=0;
     people.forEach(g=>skills.forEach(k=>{const level=data.mark(g.id,k.id);if(level===1)achieved++;if(level===2)perfect++;levels+=level;}));
     const total=people.length*skills.length;
-    return {achieved,perfect,total,retained:achieved+perfect,foundation:total?levels/(total*2)*100:0,
+    return {achieved,perfect,total,retained:achieved+perfect,progress:total?levels/(total*2)*100:0,
       average:people.length?people.reduce((sum,g)=>sum+data.summary(g.id,scoreCategory()).points,0)/people.length:0};
   }
   function stackedTrack(stats,extra='') {
@@ -205,26 +205,25 @@
   }
   function chartKey() {return '<div class="a31-key"><span><i class="a31-perfect"></i>Perfect</span><span><i class="a31-achieved"></i>Achieved</span><span><i></i>Not yet</span></div>';}
   function squadComparisons(groups) {
-    const baseSkills=scopedSkills().filter(k=>k.tier==='base'||k.category==='vault');
     return groups.map(group=>{
       const members=data.gymnasts.filter(g=>inGroup(g,group)&&(analyticsAge==='all'||ageOf(g)===analyticsAge));
-      const all=cohortStats(members),base=cohortStats(members,baseSkills);
-      const value=analyticsComparison==='average'?all.average:analyticsComparison==='retained'?(all.total?all.retained/all.total*100:0):base.foundation;
-      return {group,members,all,base,value};
+      const all=cohortStats(members);
+      const value=analyticsComparison==='average'?all.average:analyticsComparison==='retained'?(all.total?all.retained/all.total*100:0):all.progress;
+      return {group,members,all,value};
     }).sort((a,b)=>b.value-a.value||groupName(a.group).localeCompare(groupName(b.group),'en-GB'));
   }
   function renderSquadComparison(groups) {
     const rows=squadComparisons(groups),active=rows.filter(r=>r.members.length),lead=active[0],max=analyticsComparison==='average'?Math.max(1,...rows.map(r=>r.value)):100;
-    const metric=analyticsComparison==='average'?'average points':analyticsComparison==='retained'?'skills retained':'foundation progress';
+    const metric=analyticsComparison==='average'?'average points':analyticsComparison==='retained'?'skills retained':'all-skills progress';
     const ageScope=analyticsAge==='all'?'All ages':ageLabel(ageGroups().find(c=>c.id===analyticsAge));
     const suffix=analyticsComparison==='average'?'pts':'%';
     const joint=lead&&active.filter(r=>Math.abs(r.value-lead.value)<0.00001).length>1;
     const insight=lead&&lead.value>0?`${joint?'Joint lead':'Leading'} · ${groupName(lead.group)}`:'A fresh starting line';
-    return `<section class="analytics-panel analytics-wide a31-squad-panel"><div class="analytics-panel-head"><div><p class="eyebrow">A fair view of every squad</p><h2>Squad foundations</h2></div><span class="a31-panel-index" aria-hidden="true">02 / COMPARE</span></div>
-      <div class="a31-comparison-lead"><div><span>${esc(insight)}</span><strong>${lead&&lead.value>0?number(lead.value):'0'}<small>${suffix}</small></strong><p>${esc(metric)}${joint?' · tied at the top':''}</p></div><div class="a31-segments" role="group" aria-label="Squad comparison measure">${[['foundation','Foundations'],['average','Average points'],['retained','Skills retained']].map(([id,label])=>`<button type="button" data-analytics-comparison="${id}" aria-pressed="${analyticsComparison===id}">${label}</button>`).join('')}</div></div>
+    return `<section class="analytics-panel analytics-wide a31-squad-panel"><div class="analytics-panel-head"><div><p class="eyebrow">A fair view of every squad</p><h2>Squad progress</h2></div><span class="a31-panel-index" aria-hidden="true">02 / COMPARE</span></div>
+      <div class="a31-comparison-lead"><div><span>${esc(insight)}</span><strong>${lead&&lead.value>0?number(lead.value):'0'}<small>${suffix}</small></strong><p>${esc(metric)}${joint?' · tied at the top':''}</p></div><div class="a31-segments" role="group" aria-label="Squad comparison measure">${[['progress','All skills'],['average','Average points'],['retained','Skills retained']].map(([id,label])=>`<button type="button" data-analytics-comparison="${id}" aria-pressed="${analyticsComparison===id}">${label}</button>`).join('')}</div></div>
       <p class="a31-chart-scope">${esc(apparatusLabel())} · ${esc(ageScope)} · Whole-squad comparison${analyticsGymnast!=='all'?' · personal selection applies to the other charts':''}</p>
       <div class="a31-squad-chart">${rows.map((r,i)=>`<button type="button" class="a31-squad-row${r.group===analyticsGroup?' is-selected':''}" data-analytics-group="${esc(r.group)}" aria-pressed="${r.group===analyticsGroup}" aria-label="${esc(groupName(r.group))}: ${number(r.value)} ${metric}, ${r.members.length} ${countNoun(r.group,r.members.length)}. Explore squad."${r.members.length?'':' disabled'}><span class="a31-chart-rank">${String(i+1).padStart(2,'0')}</span><span class="a31-chart-name"><strong>${esc(groupName(r.group))}</strong><small>${r.members.length} ${countNoun(r.group,r.members.length)} · ${number(r.all.average)} average points</small></span><span class="a31-comparison-track" aria-hidden="true"><i style="width:${r.value/max*100}%"></i></span><span class="a31-chart-value">${r.members.length?number(r.value):'—'}<small>${r.members.length?suffix:'no records'}</small></span></button>`).join('')}</div>
-      <p class="chart-note">${analyticsComparison==='foundation'?((apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Floor base skills, basic leaps, handstands, and all run and vault skills.':'Base skills, basic leaps and handstands only.')+' Achieved counts halfway; Perfect counts fully.'):analyticsComparison==='average'?'Total league points divided by the number of gymnasts in each squad. Completion bonuses are included.':'The percentage of all available skills that are Achieved or Perfect.'} Every gymnast has the same available skills, so a larger squad does not get a size advantage. Choose a squad to update the selected view.</p></section>`;
+      <p class="chart-note">${analyticsComparison==='progress'?('Every skill in the selected '+apparatusLabel()+' programme counts equally, including all upgrades. Achieved counts halfway; Perfect counts fully.'):analyticsComparison==='average'?'Total league points divided by the number of gymnasts in each squad. Completion bonuses are included.':'The percentage of all available skills that are Achieved or Perfect.'} Every gymnast has the same available skills, so a larger squad does not get a size advantage. Choose a squad to update the selected view.</p></section>`;
   }
   function renderAgePanels(people) {
     const groups=ageGroups();if(!groups.length)return '';
@@ -370,7 +369,7 @@
       ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',renderAgePanels(cohortPeople))}
       ${analyticsDisclosure('personal-progress','Points over time','Explore this gymnast’s recorded Floor gains',progressChart)}</div>`);
   }
-  function resetAnalytics() {priorityPinned=null;analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='foundation';analyticsRankCategory='overall';analyticsRankMetric='points';}
+  function resetAnalytics() {priorityPinned=null;analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='progress';analyticsRankCategory='overall';analyticsRankMetric='points';}
   function setDirectoryGroup(group) {
     // Programme navigation supplies a first default only. The visible squad
     // selector owns this choice after that, including across browser visits.

@@ -9,8 +9,6 @@
   ];
   const INFO={
     handstand:{name:'Handstand Timer',title:'Every second counts.',intro:'Time one gymnast at a time, or bring the whole team up together. Every confirmed second builds your total.',tag:'HIGHEST TOTAL WINS',unit:'s',rules:['Give every gymnast one timed attempt. Teams take turns; completed teams are skipped.','Coach starts and stops the clock. Review the time before confirming it.','Pro adds a judgement: Fell over makes the attempt zero, or Extra neat adds one second.','The highest total number of seconds wins. A larger team has more attempts.']},
-    relayrace:{name:'Conditioning Relay',title:'Pass the effort on.',intro:'One shared task. One continuous team clock. Every gymnast takes a lap.',tag:'LOWEST AVERAGE WINS',unit:'s',rules:['Choose one task for every team. Each gymnast completes it once.','Start the team clock. Tap Next gymnast at each changeover, then Finish for the final gymnast.','Review the splits. Add two seconds for each missed repetition, then submit the team time.','Lowest adjusted seconds per gymnast wins. Teams of different sizes can compete fairly.']},
-    timesense:{name:'Time Sense',title:'Feel the seconds.',intro:'Find a familiar balance. Trust your timing. How close can you get?',tag:'HIGHEST AVERAGE WINS',unit:'pts',rules:['Each gymnast gets a target of 8–15 seconds and one attempt.','Choose a familiar balance with your coach. Go hides the clock; tell the coach when to stop.','Start with 10 points and subtract the error in seconds, to one decimal place. Balance lost scores zero.','Highest average points per gymnast wins. Everyone has exactly one turn.']}
   };
   let sequence=0;
   const clone=value=>JSON.parse(JSON.stringify(value));
@@ -240,6 +238,4 @@
     return api;
   }
   if(!window.SWLHandstand)window.SWLHandstand=createGame('handstand');
-  if(!window.SWLConditioningRelay)window.SWLConditioningRelay=createGame('relayrace');
-  if(!window.SWLTimeSense)window.SWLTimeSense=createGame('timesense');
 })();

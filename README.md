@@ -4,6 +4,10 @@ GitHub Pages hosts this static app. Google Sheets remains the shared data store 
 
 ## Current experience
 
+Squad progress compares all skills in the selected Floor, Vault or Combined programme, including upgrades, Pro upgrades and handstands. Each skill contributes equally: Achieved is halfway and Perfect is complete. Percentages are averaged across squad members, so squad size does not provide an advantage. Average points and Skills retained remain separate comparison options.
+
+The games lobby contains eight games. Conditioning Relay and Time Sense have been removed; their historical ratings remain stored. Handstand Timer retains both individual and group formats.
+
 The main tabs are **Leaderboards**, **Gymnasts** and **Analytics**. **Games** and **All skills** sit in the header. The app uses its dark theme with sound enabled; browser audio still requires a user interaction. The Gymnasts page always combines Floor and Vault, keeps its chosen squad visible and remembers that selection, and rotates through all eleven complexes using the quick-switch arrows. Hidden gymnasts appear in a disclosure below the list. Directory cards show points without skill-count summaries. Pressing Gymnasts while already in a profile or placement returns to the filtered directory at its previous scroll position. Gymnasts and Analytics retain their own viewing context when switching between tabs.
 
 The progressive collection contains six cumulative Floor stages: **Achieved Foundations**, **Perfect Foundations**, **Achieved Upgrades**, **Perfect Upgrades**, **Achieved Complete Floor**, and **Perfect Complete Floor**. Their scopes include 9 basic, 18 basic-and-upgraded, and 24 basic-through-Pro skills respectively; handstands are excluded. Vault has separate Achieved and Perfect badges across all 6 skills. Perfect also counts as Achieved. Badge collections and their progress are available within individual profiles rather than at the bottom of the main leaderboard.
