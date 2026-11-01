@@ -3332,7 +3332,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     const boardHTML = boards.map((board, index) => window.SWLRankings.renderBoard({
       board, index, rows:standings(board.scoreCategory || board.id, leaderboardGroup, leaderboardAge),
       max:summary('g01',board.scoreCategory || board.id).max, squad:apparatusLabel() + ' · ' + squadLabel, age:ageCategoryLabel(leaderboardAge),
-      groupLabel, initials, coachBadge, fireBadge, heatClass, isCoachParticipant, achievementBadge:() => ''
+      groupLabel, initials, coachBadge, fireBadge, heatClass, isCoachParticipant, achievementBadge
     })).join('');
     window.SWLRankings.commit($('boards'),boardHTML);
   }
