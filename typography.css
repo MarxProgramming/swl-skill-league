@@ -1,0 +1,76 @@
+/* Locally hosted fonts; SIL Open Font Licences in font-licenses.txt. */
+:root{--font-ui:"Plus Jakarta Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--font-score:"Barlow Semi Condensed","Arial Narrow",sans-serif}
+/* latin */
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(./barlow-semi-600.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin */
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(./barlow-semi-700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url(./jakarta-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url(./jakarta-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* The website's text face, with the app's existing scale and hierarchy. */
+body{font-family:var(--font-ui)}
+/* Jakarta's rounded letters need a little more breathing room than the old face. */
+body h1,body h2,body h3{letter-spacing:-.035em!important}
+button,input,select,textarea{font-family:inherit}
+.swl-lock{font-family:var(--font-ui)}
+.swl-lock .swl-lock-key{font-family:var(--font-ui)}
+.swl-welcome :is(h2,p,b,i,button),.swl-welcome-brand,
+.swlw-game button,.swlw-segment text,.game-card-art text{font-family:var(--font-ui)!important}
+
+/* Distinct, steady numerals for scores, places, timers and measured progress. */
+.place,.score b,.stat strong,.gymnast-score,.directory-points b,
+#athletePoints,#athleteAchieved,#athletePerfect,.skill-points,.category-score,.score-pop,
+.catalogue-points,.catalogue-bonus b,
+.swlp-overall>strong,.swlp-facts strong,.swlp-row-position,.swlp-row-score strong,.swlp-board-position strong,
+.challenge-rank,.challenge-points>span,.challenge-progress-caption>b,.pb-progress-label,.award-number,
+.analytics-stat-grid article>strong,.a31-chart-rank,.a31-chart-value,.a31-standing-rank,.a31-standing-value,
+.a31-priority-count strong,.a31-priority-gain,.a31-category-label>b,.momentum-total>strong,.a31-week>strong,
+.age-cohort-metrics b,.gp-stats article>strong,.gp-y-tick,.gp-values tbody td,
+.swl-skill-score>strong,.swl-podium-value,.swl-podium-rank,.swl-stick-count,
+.swl-team-score>strong,.swl-team-clock>b,.swl-team-rule-icon,
+.swl-addon-score>strong,.swl-addon-chain-number,.rating-vote>strong,.rating-average>strong,
+.swl-game-stepper input[type=number],.swl-skill-stepper input[type=number],.swl-addon-stepper input[type=number],
+[data-game-team-count],.swlt-score>strong,.swlt-clock-digits,.swlt-target,.swlt-lap-clock b,
+.swlt-draft strong,.swlt-comparison strong,.swlt-penalty strong,.swlt-splits strong,.swlt-confirmed>strong,
+.swlt-history-row>strong,.swlt-round-picker strong,.swlt-team-input input[type=number],
+.swl-timing-game[data-game=handstand] .swlt-rule-mark,
+.swl-relay-score>strong,.swl-relay-draft>strong,.swl-relay-card-meta>b,.swl-relay-linking>b,.swl-relay-finish-score,
+.swltr-score-value strong,.swltr-clock strong,.swltr-pot>strong,.swlm-score>strong,
+.swlm-final-score,.swlm-countdown,.swlm-tile-number,.swl-lock .swl-lock-key:not(.swl-lock-key--action){
+  font-family:var(--font-score);font-weight:700!important;font-variant-numeric:tabular-nums lining-nums;letter-spacing:0!important
+}
+/* Keep captions in the text face, while fraction denominators stay numeric. */
+.score small,.skill-points small,.catalogue-points small,.a31-chart-value small,.a31-standing-value small,
+.gp-stats strong small,.swlt-score strong small,.swlt-target small{font-family:var(--font-ui);letter-spacing:0}
+.swlw-segment[data-kind="exercise"] g>text:first-child,
+.game-card--draft .game-card-art text,.game-card--relay .game-card-art text{font-family:var(--font-score)!important;font-weight:700}

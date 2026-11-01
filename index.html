@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#0d0e13">
 <title>SWL · Squad Training 5.1</title>
 <link rel="icon" href="./swl-logo.png" type="image/png">
+<link rel="preload" href="./jakarta-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./barlow-semi-700.woff2" as="font" type="font/woff2" crossorigin>
 <script src="./theme.js?v=20261031-v5"></script>
 <script src="./config.js"></script>
 <link rel="stylesheet" href="./lock.css">
@@ -1574,7 +1576,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 @media(max-width:600px){.brand>div:last-child{display:none}.brand{flex:0;margin-right:auto}.scoring-lock-button{padding:10px 9px}.scoring-lock-button>span[aria-hidden]{display:none}.scoring-lock-status{font-size:10px}}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
-<link rel="stylesheet" href="./startup.css?v=20261101-refined">
+<link rel="stylesheet" href="./startup.css?v=20261101-type">
 <link rel="stylesheet" href="./celebration.css?v=20261021-brief">
 <link rel="stylesheet" href="./placement.css?v=20261019v3">
 <link rel="stylesheet" href="./games.css?v=20261019v3">
@@ -1596,13 +1598,14 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./polish-40.css?v=20261029-fire-green">
 <link rel="stylesheet" href="./polish-motion-40.css?v=20261029-weekly-flames">
 <link rel="stylesheet" href="./apparatus-40.css?v=20261030-vault">
-<link rel="stylesheet" href="./entry-40.css?v=20261030-entry">
+<link rel="stylesheet" href="./entry-40.css?v=20261101-type">
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
 <link rel="stylesheet" href="./directory-attendance.css?v=20261031-v5">
 <link rel="stylesheet" href="./gymnast-progress.css?v=20261030-progress">
-<link rel="stylesheet" href="./achievement-50.css?v=20261101-refined">
+<link rel="stylesheet" href="./achievement-50.css?v=20261101-type">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 <link rel="stylesheet" href="./profile-badges.css?v=20261101-refined">
+<link rel="stylesheet" href="./typography.css?v=20261101-type">
 </head>
 
 <body class="programme-menu-open">
@@ -1655,12 +1658,11 @@ html:has(body.no-motion){scroll-behavior:auto}
   </div>
 
   <section id="programmeMenu" class="programme-menu" aria-labelledby="programmeMenuTitle">
-    <div class="programme-heading"><p class="eyebrow">YOUR TRAINING SPACE</p><h1 id="programmeMenuTitle">Choose your squad.</h1><p>Pick your programme to see your league and gymnasts.</p></div>
+    <div class="programme-heading"><h1 id="programmeMenuTitle">Choose your squad</h1></div>
     <div class="programme-cards">
-      <button type="button" class="programme-card" data-programme="floor"><span class="programme-card-index" aria-hidden="true">01 / FLOOR &amp; VAULT</span><span class="programme-card-title">Floor &amp; vault</span><span class="programme-card-copy">Morning and afternoon squads.<br>One place to see your progress.</span><span class="programme-card-action">Enter your league <span aria-hidden="true">↗</span></span></button>
-      <button type="button" class="programme-card" data-programme="senior"><span class="programme-card-index" aria-hidden="true">02 / SENIOR SQUAD</span><span class="programme-card-title">Senior squad</span><span class="programme-card-copy">Marx’s and Dan’s groups.<br>Build on every achievement.</span><span class="programme-card-action">Enter your league <span aria-hidden="true">↗</span></span></button>
+      <button type="button" class="programme-card" data-programme="floor"><span class="programme-card-title">Floor &amp; vault</span><span class="programme-card-copy">Morning and afternoon squads.<br>One place to see your progress.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="programme-card" data-programme="senior"><span class="programme-card-title">Senior squad</span><span class="programme-card-copy">Marx’s and Dan’s groups.<br>Build on every achievement.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
-    <p class="programme-note">You can change programme at any time.</p>
   </section>
 
   <section id="dashboard" aria-label="Leaderboards" hidden>
@@ -1794,7 +1796,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   </p>
 </noscript>
 
-<script src="./startup.js?v=20261101-refined"></script>
+<script src="./startup.js?v=20261101-type"></script>
 <script src="./scoring-lease.js?v=20261019v3"></script>
 <script src="./lock.js?v=20261019v3"></script>
 <script src="./celebration.js?v=20261031-v5"></script>

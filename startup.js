@@ -135,39 +135,16 @@
       overlay.tabIndex = -1;
       overlay.setAttribute('role', 'dialog');
       overlay.setAttribute('aria-modal', 'true');
-      overlay.setAttribute('aria-labelledby', 'swlStartupTitle');
+      overlay.setAttribute('aria-label', 'Loading squad training');
       overlay.setAttribute('aria-describedby', 'swlStartupStatus');
       // These essential styles keep the exit usable even if the CSS file fails.
       overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background-color:#0d0e13;color:#f6f4f8;';
       overlay.innerHTML = `
         <div class="swl-startup__content">
-          <div class="swl-startup__stage" aria-hidden="true">
-            <div class="swl-startup__halo"></div>
-            <svg class="swl-startup__orbit" viewBox="0 0 360 260" fill="none" focusable="false">
-              <defs>
-                <linearGradient id="swlStartupTrail" x1="36" y1="52" x2="324" y2="208" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#bd9bff" stop-opacity="0"/>
-                  <stop offset=".5" stop-color="#bd9bff"/>
-                  <stop offset="1" stop-color="#ede4ff"/>
-                </linearGradient>
-                <linearGradient id="swlStartupTrailMint" x1="324" y1="208" x2="36" y2="52" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#d5fa70" stop-opacity="0"/>
-                  <stop offset="1" stop-color="#d5fa70"/>
-                </linearGradient>
-              </defs>
-              <ellipse class="swl-startup__orbit-base" cx="180" cy="130" rx="154" ry="104"/>
-              <ellipse class="swl-startup__orbit-inner" cx="180" cy="130" rx="140" ry="90"/>
-              <ellipse class="swl-startup__trail" cx="180" cy="130" rx="154" ry="104" pathLength="100"/>
-              <ellipse class="swl-startup__trail swl-startup__trail--mint" cx="180" cy="130" rx="140" ry="90" pathLength="100"/>
-            </svg>
-            <img class="swl-startup__logo" src="./swl-logo.png" alt="" width="2000" height="1125" style="max-width:208px;height:auto;filter:invert(1)">
-          </div>
-          <h2 class="swl-startup__title" id="swlStartupTitle">Squad <span>training</span></h2>
-          <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Loading your squad…</p>
-          <div class="swl-startup__progress" aria-hidden="true"></div>
+          <div class="swl-startup__loader" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Loading…</p>
           <div class="swl-startup__escape">
-            <button class="swl-startup__enter" type="button" hidden>Continue<span aria-hidden="true"> →</span></button>
-            <p class="swl-startup__hint" hidden>You can continue while your scores load.</p>
+            <button class="swl-startup__enter" type="button" hidden>Continue</button>
           </div>
         </div>`;
       status = overlay.querySelector('#swlStartupStatus');
@@ -199,8 +176,7 @@
       exitTimer = setTimeout(() => {
         if (!overlay || finished || leaving) return;
         enter.hidden = false;
-        overlay.querySelector('.swl-startup__hint').hidden = false;
-        if (!finishRequested) status.textContent = 'Getting things ready…';
+        if (!finishRequested) status.textContent = 'Loading…';
       }, EXIT_MS);
       if (queuedFinish !== null) finish(queuedFinish);
     } catch {
