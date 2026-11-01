@@ -17,7 +17,7 @@
 
   function completionEmblem(challenge) {
     const ticks = challenge.level === 'perfect' ? '<path class="award-check" d="m7 25 3 3 5-6m1 3 3 3 5-6"/>' : '<path class="award-check" d="m10 25 3 3 7-7"/>';
-    return `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path class="award-completion-face" d="M4 3h24v17c0 7-12 13-12 13S4 27 4 20z"/><text class="award-apparatus-letter" x="16" y="20" text-anchor="middle">${challenge.letter}</text>${ticks}</svg>`;
+    return `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path class="award-completion-face" d="M7 2h18l4 4v14c0 6-7 11-13 14C10 31 3 26 3 20V6z"/><path class="award-completion-inset" d="M8 5h16l2 2v13c0 4-5 8-10 11-5-3-10-7-10-11V7z"/><path class="award-completion-bevel" d="m4 7 4-4h16l4 4M4 8v11"/><text class="award-apparatus-letter" x="16" y="20" text-anchor="middle">${challenge.letter}</text>${ticks}</svg>`;
   }
 
   // Shared artwork for non-interactive challenge tiles. It never opens a dialog.
