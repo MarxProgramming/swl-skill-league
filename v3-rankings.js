@@ -25,12 +25,12 @@
     };
     const scroll = new Map(Array.from(host.querySelectorAll(scrollSelector), element => [scrollKey(element),element.scrollTop]));
     const focus = document.activeElement;
-    const selected = focus && host.contains(focus) ? {gymnast:focus.dataset.gymnast,achievement:focus.dataset.swlAchievement,board:focus.closest('[data-leaderboard]')?.dataset.leaderboard} : null;
+    const selected = focus && host.contains(focus) ? {gymnast:focus.dataset.gymnast,achievement:focus.dataset.swlAchievement,achievementGymnast:focus.dataset.achievementGymnast,board:focus.closest('[data-leaderboard]')?.dataset.leaderboard} : null;
     host.innerHTML = html;
     host._renderedHTML = html;
     host.querySelectorAll(scrollSelector).forEach(element => {element.scrollTop = scroll.get(scrollKey(element)) || 0;});
     if ((selected?.gymnast || selected?.achievement) && document.activeElement === document.body) {
-      const target = Array.from(host.querySelectorAll(selected.achievement ? '[data-swl-achievement]' : '[data-gymnast]')).find(element => (selected.achievement ? element.dataset.swlAchievement === selected.achievement : element.dataset.gymnast === selected.gymnast) && element.closest('[data-leaderboard]')?.dataset.leaderboard === selected.board);
+      const target = Array.from(host.querySelectorAll(selected.achievement ? '[data-swl-achievement]' : '[data-gymnast]')).find(element => (selected.achievement ? element.dataset.swlAchievement === selected.achievement && element.dataset.achievementGymnast === selected.achievementGymnast : element.dataset.gymnast === selected.gymnast) && element.closest('[data-leaderboard]')?.dataset.leaderboard === selected.board);
       target?.focus({preventScroll:true});
     }
   }

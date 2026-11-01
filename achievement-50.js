@@ -16,9 +16,15 @@
   const earnedDate = value => new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',day:'numeric',month:'long',year:'numeric'}).format(new Date(value));
 
   function completionEmblem(challenge) {
-    const shape = challenge.apparatus === 'Floor' ? '<path class="award-completion-face" d="M7 3h40l5 5v20l-5 5H7l-5-5V8z"/><path class="award-apparatus-detail" d="M7 27h11M7 24v5M18 24v5"/>' : '<path class="award-completion-face" d="M3 13C4-1 50-1 51 13v17l-5 3H8l-5-3z"/><path class="award-apparatus-detail" d="M7 27h11M9 27v3M16 27v3"/>';
-    const ticks = challenge.level === 'perfect' ? '<path class="award-check" d="m26 18 4 4 8-10m-1 10 4 4 9-11"/>' : '<path class="award-check" d="m30 18 5 5 11-12"/>';
-    return `<svg viewBox="0 0 54 36" aria-hidden="true" focusable="false">${shape}<text class="award-apparatus-letter" x="13" y="22" text-anchor="middle">${challenge.letter}</text>${ticks}</svg>`;
+    const ticks = challenge.level === 'perfect' ? '<path class="award-check" d="m7 25 3 3 5-6m1 3 3 3 5-6"/>' : '<path class="award-check" d="m10 25 3 3 7-7"/>';
+    return `<svg viewBox="0 0 32 36" aria-hidden="true" focusable="false"><path class="award-completion-face" d="M4 3h24v17c0 7-12 13-12 13S4 27 4 20z"/><text class="award-apparatus-letter" x="16" y="20" text-anchor="middle">${challenge.letter}</text>${ticks}</svg>`;
+  }
+
+  // Shared artwork for non-interactive challenge tiles. It never opens a dialog.
+  function challengeIcon(id) {
+    if (!Object.hasOwn(challenges,id)) return '';
+    const challenge = challenges[id];
+    return `<span class="swl-completion-icon swl-completion-badge is-${challenge.level}" aria-hidden="true">${completionEmblem(challenge)}</span>`;
   }
 
   function badge(gymnast) {
@@ -26,24 +32,62 @@
     return `<button type="button" class="swl-achievement-badge" data-swl-achievement="first-250" data-achievement-gymnast="g03" aria-label="Lexi’s achievement: first to 250 Floor points" aria-haspopup="dialog" title="First to 250 Floor points"><span class="swl-achievement-emblem">${emblem}</span></button>`;
   }
 
-  // Profile only. Pass the complete confirmed state.completionAchievements map.
+  // Pass the complete confirmed state.completionAchievements map on every surface.
   // These saved dates are authoritative; current marks never grant/remove a badge.
-  function profileBadges(gymnast, completionAchievements) {
-    if (!gymnast?.id || isCoach(gymnast) || !completionAchievements || typeof completionAchievements !== 'object') return '';
+  function savedChallenges(gymnast, completionAchievements) {
+    if (!gymnast?.id || isCoach(gymnast) || !completionAchievements || typeof completionAchievements !== 'object') return [];
     const awards = Object.hasOwn(completionAchievements, gymnast.id) ? completionAchievements[gymnast.id] : null;
-    if (!awards || typeof awards !== 'object' || Array.isArray(awards)) return '';
-    return Object.entries(challenges).map(([id, challenge]) => {
+    if (!awards || typeof awards !== 'object' || Array.isArray(awards)) return [];
+    return Object.entries(challenges).flatMap(([id, challenge]) => {
       const earnedAt = Object.hasOwn(awards,id) ? awards[id] : null;
-      if (!validDate(earnedAt)) return '';
+      return validDate(earnedAt) ? [{id,challenge,earnedAt}] : [];
+    });
+  }
+
+  function profileBadges(gymnast, completionAchievements) {
+    return savedChallenges(gymnast, completionAchievements).map(({id,challenge,earnedAt}) => {
       const label = `${gymnast.name}: ${challenge.title}. Earned ${earnedDate(earnedAt)}.`;
       return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></button>`;
     }).join('');
   }
 
+  function allBadges(gymnast, completionAchievements) {
+    return badge(gymnast) + profileBadges(gymnast, completionAchievements);
+  }
+
+  // Use inside existing profile/chooser buttons: no nested button or dialog trigger.
+  function allIcons(gymnast, completionAchievements) {
+    const historical = eligible(gymnast) ? `<span class="swl-achievement-icon" role="img" aria-label="Lexi’s achievement: first to 250 Floor points" title="First to 250 Floor points"><span class="swl-achievement-emblem">${emblem}</span></span>` : '';
+    return historical + savedChallenges(gymnast, completionAchievements).map(({challenge,earnedAt}) => {
+      const label = `${gymnast.name}: ${challenge.title}. Earned ${earnedDate(earnedAt)}.`;
+      return `<span class="swl-achievement-icon swl-completion-badge is-${challenge.level}" role="img" aria-label="${escape(label)}" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></span>`;
+    }).join('');
+  }
+
+  function focusContext(button) {
+    return {
+      surface:button.closest?.('[id]')?.id || null,
+      priority:button.closest?.('[data-priority-detail]')?.dataset?.priorityDetail || null,
+      board:button.closest?.('[data-leaderboard]')?.dataset?.leaderboard || null
+    };
+  }
+
+  function visibleFocusTarget(button) {
+    if (!button || button.isConnected === false || button.closest?.('[hidden], [inert], [aria-hidden="true"]')) return false;
+    if (typeof button.checkVisibility === 'function') return button.checkVisibility({checkVisibilityCSS:true,checkOpacity:true});
+    if (typeof button.getClientRects === 'function' && !button.getClientRects().length) return false;
+    const style = window.getComputedStyle?.(button);
+    return !style || (style.visibility !== 'hidden' && style.visibility !== 'collapse' && style.opacity !== '0');
+  }
+
   function restoreFocus() {
-    let target = opener?.isConnected ? opener : null;
+    let target = visibleFocusTarget(opener) ? opener : null;
     if (!target && openerIdentity) {
-      target = Array.from(document.querySelectorAll('[data-swl-achievement]')).find(button => button.dataset.swlAchievement === openerIdentity.award && button.dataset.achievementGymnast === openerIdentity.gymnast);
+      const matches = Array.from(document.querySelectorAll('[data-swl-achievement]')).filter(button => button.dataset.swlAchievement === openerIdentity.award && button.dataset.achievementGymnast === openerIdentity.gymnast && visibleFocusTarget(button));
+      target = matches.find(button => {
+        const context = focusContext(button);
+        return context.surface === openerIdentity.surface && context.priority === openerIdentity.priority && context.board === openerIdentity.board;
+      }) || matches.find(button => focusContext(button).surface === openerIdentity.surface) || matches[0];
     }
     opener = null; openerIdentity = null;
     if (!target) return;
@@ -101,7 +145,7 @@
       const panel=createDialog();
       if(panel.open || !fillDialog(panel,button,id))return;
       opener=button;
-      openerIdentity={award:id,gymnast:button.dataset?.achievementGymnast};
+      openerIdentity={award:id,gymnast:button.dataset?.achievementGymnast,...focusContext(button)};
       returnKeyboard=event.detail===0 && !event.pointerType;
       try {
         panel.showModal();
@@ -110,5 +154,5 @@
     },true);
   }
 
-  window.SWLAchievements=Object.freeze({badge,profileBadges,eligible,mount});
+  window.SWLAchievements=Object.freeze({badge,profileBadges,allBadges,allIcons,challengeIcon,eligible,mount});
 })();

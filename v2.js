@@ -4,7 +4,7 @@
   let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all',analyticsAge='all',analyticsComparison='foundation',analyticsRankCategory='overall',analyticsRankMetric='points';
   let progressRange=28;
   const DIRECTORY_SQUAD_KEY='swl-directory-squad-v5';
-  let directoryGroupChosen=false;
+  let directoryGroupChosen=false,analyticsDirectoryGroup=null;
   function rememberDirectoryGroup(group) {
     directoryGroup=group;directoryGroupChosen=true;
     try{window.localStorage?.setItem(DIRECTORY_SQUAD_KEY,group);}catch(_){}
@@ -38,14 +38,14 @@
   const coachBadge=g=>data.coachBadge?.(g)||'';
   const achievementBadge=g=>g?(data.achievementBadge?.(g)||''):'';
   const inGroup=(g,group)=>data.inGroup?.(g,group)??(group==='overall'||(group==='all'?!isCoach(g):group==='senior'?['Marx','Dan'].includes(g.coach):groupKey(g.coach)===groupKey(group)));
-  const groupName=group=>group==='coaches'?'Coaches':data.groupLabel(group);
+  const groupName=group=>group==='all'?'All squads':group==='overall'?'Overall · all squads + coaches':group==='coaches'?'Coaches':data.groupLabel(group);
   const countNoun=(group,n)=>group==='coaches'?(n===1?'coach':'coaches'):group==='overall'?(n===1?'participant':'participants'):(n===1?'gymnast':'gymnasts');
   const memberships=g=>data.squadMemberships?.(g)||[groupKey(g.coach)];
   const personGroups=g=>data.gymnastSquadLabel?.(g)||data.groupLabel(g.coach);
   function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
   const focusControls='button,input,select,summary,a,[tabindex]';
-  const focusData=['gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange'];
+  const focusData=['swlAchievement','achievementGymnast','gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','analyticsApparatus','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange'];
   function focusKey(root) {
     const e=document.activeElement;if(!e||!root.contains(e))return null;
     const dataset=Object.fromEntries(focusData.filter(key=>e.dataset?.[key]!==undefined).map(key=>[key,e.dataset[key]]));
@@ -85,12 +85,9 @@
     directory.querySelector('#directoryComplexPrevious').addEventListener('click',()=>switchComplex(-1));
     directory.querySelector('#directoryComplexNext').addEventListener('click',()=>switchComplex(1));
     directory.querySelector('#directoryComplexClear').addEventListener('click',()=>{directoryComplex='';renderDirectory();directory.querySelector('#directoryComplexNext').focus({preventScroll:true});});
-    window.SWLDirectoryAttendance?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],onChange:()=>renderDirectory()});
-    analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 5.1</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters"><label>Apparatus<select id="analyticsApparatus"><option value="floor">Floor</option><option value="vault">Vault</option><option value="combined">Floor + Vault</option></select></label><label>Squad<select id="analyticsGroup"></select></label><label>Age group<select id="analyticsAge" aria-describedby="analyticsAgeNote"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><p>Live from your skill records<br><span>Scores use the same league rules.</span></p></div><p id="analyticsAgeNote" class="analytics-age-note"></p><div id="analyticsContent"></div>`;
+    window.SWLDirectoryAttendance?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],achievementIcons:g=>data?.achievementIcons?.(g)||'',onChange:()=>renderDirectory()});
+    analytics.innerHTML=`<div class="v2-page-head analytics-heading"><div><p class="eyebrow">SWL Squad Training · 5.1</p><h1>Progress, in focus.</h1><p>Compare squads. Find strengths. See what is moving.</p></div><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters analytics-controls51"><div class="analytics-apparatus-control"><span class="analytics-control-label">Apparatus</span><div id="analyticsApparatusButtons" class="a31-segments" role="group" aria-label="Analytics apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([value,label])=>`<button type="button" id="analytics-apparatus-${value}" data-analytics-apparatus="${value}" aria-pressed="${value==='floor'}">${label}</button>`).join('')}</div></div><label>Gymnast<select id="analyticsGymnast"></select></label><div class="analytics-following"><span id="analyticsScopeOrigin">Squad from Gymnasts</span><strong id="analyticsSquadScope"></strong></div></div><div id="analyticsDrilldown" class="analytics-drilldown" hidden><button type="button" class="quiet" data-analytics-reset></button></div><div id="analyticsContent"></div>`;
     window.SWLGymnastProgress?.mount(analytics);
-    analytics.querySelector('#analyticsApparatus')?.addEventListener('change',e=>changeApparatus(e.target.value));
-    analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;if(analyticsGroup==='coaches')analyticsAge='all';analyticsGymnast='all';renderAnalytics();});
-    analytics.querySelector('#analyticsAge')?.addEventListener('change',e=>{analyticsAge=e.target.value;analyticsGymnast='all';renderAnalytics();});
     analytics.querySelector('#analyticsGymnast').addEventListener('change',e=>{analyticsGymnast=e.target.value;renderAnalytics();});
     analytics.addEventListener('change',e=>{if(e.target.id==='analyticsRankMetric'){analyticsRankMetric=e.target.value;renderAnalytics();}});
     analytics.addEventListener('toggle',e=>{
@@ -100,6 +97,8 @@
       }else if(priorityPinned){priorityPinned=null;renderAnalytics();}
     },true);
     analytics.addEventListener('click',e=>{
+      const apparatusButton=e.target.closest('[data-analytics-apparatus]');if(apparatusButton){if(!apparatusButton.disabled)changeApparatus(apparatusButton.dataset.analyticsApparatus);return;}
+      if(e.target.closest('[data-analytics-reset]')){analyticsFromDirectory();renderAnalytics();return;}
       const progressButton=e.target.closest('[data-progress-range]');if(progressButton){const days=Number(progressButton.dataset.progressRange);if([7,28,56].includes(days)){progressRange=days;renderAnalytics();}return;}
       if(e.target.closest('[data-progress-floor]')){changeApparatus('floor');return;}
       const comparison=e.target.closest('[data-analytics-comparison]');if(comparison){analyticsComparison=comparison.dataset.analyticsComparison;renderAnalytics();return;}
@@ -294,7 +293,7 @@
     return `<section class="analytics-panel analytics-wide a31-standings" id="analyticsStandings"><div class="analytics-panel-head"><div><p class="eyebrow">The whole field</p><h2>Every place. Every point.</h2></div><span class="a31-panel-index" aria-hidden="true">03 / STANDINGS</span></div>
       <div class="a31-standing-controls"><div class="a31-segments" role="group" aria-label="Standings category">${[{id:'overall',name:apparatusLabel()},...scopedCategories().filter(c=>apparatus()!=='vault'||c.id!=='vault')].map(c=>`<button type="button" data-analytics-category="${esc(c.id)}" data-v2-focus="standings" aria-pressed="${!weekly&&analyticsRankCategory===c.id}">${esc(c.name)}</button>`).join('')}</div><label>Order by<select id="analyticsRankMetric"><option value="points"${!weekly?' selected':''}>League points</option><option value="weekly"${weekly?' selected':''}${tracked?'':' disabled'}>Last 7 days · Floor net points</option></select></label></div>
       <p class="a31-chart-scope">${esc(scope)} · ${weekly?'Floor net points in the last 7 days':esc(categoryName)} · highest to lowest</p>
-      ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><div class="a31-standing-identity"><span class="a31-standing-name"><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)} ${fireBadge(r.g.id)}</strong></button>${achievementBadge(r.g)}</span><small>${esc(personGroups(r.g))}</small></div><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match these filters. Try All ages or another squad.</p>'}
+      ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><div class="a31-standing-identity"><span class="a31-standing-name"><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)} ${fireBadge(r.g.id)}</strong></button>${achievementBadge(r.g)}</span><small>${esc(personGroups(r.g))}</small></div><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.</p>'}
       <p class="chart-note">${weekly?'Includes gains and reductions across Floor skills only. Vault points are not included. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
   }
   function skillPriorities(people,{includeComplete=false,limit=5}={}) {
@@ -326,10 +325,10 @@
     priorityRenderedIds=rows.map(row=>row.skill.id);
     return `<section class="analytics-panel analytics-wide a31-priorities" aria-labelledby="priorityTitle"><div class="analytics-panel-head"><div><p class="eyebrow">Your next training focus</p><h2 id="priorityTitle">Top skills to work on</h2></div><span class="a31-panel-index" aria-hidden="true">01 / FOCUS</span></div>
       <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}${people.length?` · ${people.length===1?'Biggest personal gain':'Biggest combined gain'}`:''}</p>
-      ${rows.length?`<ol class="a31-priority-list">${rows.map((row,i)=>{
+      ${rows.length?`<ol class="a31-priority-list">${rows.map(row=>{
         const {skill,achieved,perfect,total,target,availablePoints}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
-        return `<li class="v4-priority-entry" data-priority-skill="${esc(skill.id)}"><details data-priority-detail="${esc(skill.id)}" data-analytics-disclosure="priority-${esc(skill.id)}"><summary id="priority-summary-${esc(skill.id)}" class="a31-priority-row${target==='perfect'?' is-polishing':''}"><span class="a31-priority-rank" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">${perfect===total?'All Perfect':`+${number(availablePoints)} pts`} <small>${perfect===total?'complete':'available'}</small></span></div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p><span class="v4-priority-expand"><span class="v4-closed-label">View gymnasts</span><span class="v4-open-label">Close gymnasts</span><span aria-hidden="true">⌄</span></span></div></summary>${priorityMembers(people,skill)}</details></li>`;
-      }).join('')}</ol><p class="chart-note">Ranked by the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match these filters. Try All ages or another squad.'}</p>`}
+        return `<li class="v4-priority-entry" data-priority-skill="${esc(skill.id)}"><details data-priority-detail="${esc(skill.id)}" data-analytics-disclosure="priority-${esc(skill.id)}"><summary id="priority-summary-${esc(skill.id)}" class="a31-priority-row"><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3></div><span class="a51-priority-chevron" aria-hidden="true">⌄</span></summary><div class="a51-priority-content${target==='perfect'?' is-polishing':''}"><div class="a51-priority-metrics"><div class="a31-priority-skill"><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">${perfect===total?'All Perfect':`+${number(availablePoints)} pts`} <small>${perfect===total?'complete':'available'}</small></span></div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p></div></div>${priorityMembers(people,skill)}</div></details></li>`;
+      }).join('')}</ol><p class="chart-note">Ranked by the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.'}</p>`}
       <p class="a31-priority-includes">${apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Rolls, acro, leaps &amp; vault · Handstands excluded.':'Rolls, acro &amp; leaps · Handstands excluded.'}</p></section>`;
   }
   function analyticsDisclosure(id,title,description,content) {
@@ -338,22 +337,21 @@
   }
   function renderAnalytics() {
     if(!data)return;
-    const apparatusSelect=analytics.querySelector('#analyticsApparatus');if(apparatusSelect){apparatusSelect.value=apparatus();apparatusSelect.disabled=!data.hasLoaded;}
-    const groups=groupOptions();if(!['all','floor','senior','overall'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
+    analytics.querySelectorAll('[data-analytics-apparatus]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.analyticsApparatus===apparatus()));button.disabled=!data.hasLoaded;});
+    const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','overall'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
     const squadPeople=data.gymnasts.filter(g=>inGroup(g,analyticsGroup));
     const comparisonGroups=groups.filter(group=>group!=='coaches'||['coaches','overall'].includes(analyticsGroup));
     const candidates=squadPeople.filter(g=>analyticsAge==='all'||ageOf(g)===analyticsAge);
     if(analyticsGymnast!=='all'&&!candidates.some(g=>g.id===analyticsGymnast))analyticsGymnast='all';
-    const ageSelect=analytics.querySelector('#analyticsAge');
-    const ageHTML='<option value="all">All ages · includes unknown</option>'+ageGroups().map(c=>`<option value="${esc(c.id)}">${esc(ageLabel(c))}</option>`).join('');
-    if(ageSelect){commitHTML(ageSelect,ageHTML);ageSelect.value=analyticsAge;}
-    const ageNote=analytics.querySelector('#analyticsAgeNote');if(ageNote)ageNote.textContent=`Age is the age a gymnast turns during ${data.londonYear?.()||new Date().getFullYear()} (London calendar year). ${analyticsAge==='all'?'All ages includes gymnasts whose age is not available.':'This age filter excludes gymnasts whose current-year age is not available.'} Full dates of birth are never shown.`;
-    const groupSelect=analytics.querySelector('#analyticsGroup'),personSelect=analytics.querySelector('#analyticsGymnast');
-    const gHTML='<option value="all">All squads</option><option value="floor">All floor &amp; vault squads</option><option value="senior">All senior squad</option>'+groups.map(g=>`<option value="${esc(g)}">${esc(groupName(g))}</option>`).join('')+'<option value="overall">Overall · all squads + coaches</option>';
-    const pHTML='<option value="all">All gymnasts</option>'+candidates.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${isCoach(g)?' · Coach':''}</option>`).join('');
-    commitHTML(groupSelect,gHTML);commitHTML(personSelect,pHTML);
-    groupSelect.value=analyticsGroup;personSelect.value=analyticsGymnast;
+    const personSelect=analytics.querySelector('#analyticsGymnast');
+    const pHTML='<option value="all">All gymnasts in this view</option>'+candidates.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${isCoach(g)?' · Coach':''}</option>`).join('');
+    commitHTML(personSelect,pHTML);personSelect.value=analyticsGymnast;personSelect.disabled=!data.hasLoaded;
+    const exploring=analyticsGroup!==directoryGroup||analyticsAge!=='all'||analyticsGymnast!=='all';
+    analytics.querySelector('#analyticsSquadScope').textContent=groupName(analyticsGroup)+(analyticsAge==='all'?'':' · '+ageLabel(ageGroups().find(c=>c.id===analyticsAge)));
+    analytics.querySelector('#analyticsScopeOrigin').textContent=analyticsGroup!==directoryGroup||analyticsAge!=='all'?'Exploring':'Squad from Gymnasts';
+    const drilldown=analytics.querySelector('#analyticsDrilldown');drilldown.hidden=!exploring;
+    drilldown.querySelector('[data-analytics-reset]').textContent='Back to '+groupName(directoryGroup);
     const host=analytics.querySelector('#analyticsContent');if(!data.hasLoaded){commitHTML(host,'<p class="v2-empty" role="status">Loading your training picture…</p>');return;}
     const people=candidates.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast),a=aggregate(people),c=a.counts;
     const scope=analyticsGymnast==='all'?(analyticsGroup==='all'?'All squads':analyticsGroup==='senior'?'All senior squad':analyticsGroup==='overall'?'Overall · all squads + coaches':groupName(analyticsGroup)):people[0]?.name;
@@ -361,7 +359,7 @@
     const cohortPeople=squadPeople.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast);
     const overview=`<div class="analytics-wide a31-selected-scope"><div><p class="analytics-scope${analyticsGymnast!=='all'&&heatClass(analyticsGymnast)?' '+heatClass(analyticsGymnast):''}">${esc(scope)} ${analyticsGymnast!=='all'?coachBadge(people[0])+' '+fireBadge(analyticsGymnast)+' '+achievementBadge(people[0]):''}<span>· ${esc(ageScope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</span></p></div>${analyticsGymnast!=='all'?`<button type="button" class="quiet" data-gymnast="${esc(analyticsGymnast)}">Open skills ↗</button>`:''}</div>
       <div class="analytics-stat-grid analytics-wide a31-stats"><article><span>Average points</span><strong>${number(people.length?c.points/people.length:0)}</strong><p>Per ${analyticsGroup==='coaches'?'coach':'gymnast'} in this view</p></article><article><span>Skills retained</span><strong>${pct(c.achieved+c.perfect,a.total)}<small>%</small></strong><p>${c.achieved+c.perfect} of ${a.total} available skills</p></article><article><span>Perfect marks</span><strong>${c.perfect}</strong><p>${pct(c.perfect,a.total)}% of available skills</p></article><article><span>League points</span><strong>${number(c.points)}</strong><p>Combined points in this view</p></article></div>
-      ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match these filters. Try All ages or another squad.</p>':''}`;
+      ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.</p>':''}`;
     const progressPerson=analyticsGymnast!=='all'?people[0]:null;
     const progressCategory=apparatus()==='vault'?'vault':'overall';
     const progressChart=progressPerson?window.SWLGymnastProgress?.render({person:progressPerson,progress:data.state.weeklyProgress,currentPoints:data.confirmedPoints?.(progressPerson.id,progressCategory)??data.summary(progressPerson.id,progressCategory).points,days:progressRange,apparatus:apparatus()})||'':'';
@@ -381,10 +379,11 @@
     rememberDirectoryGroup(group);
     if(directory)renderDirectory();
   }
-  function analyticsFromDirectory() {resetAnalytics();analyticsGroup=directoryGroup;}
-  function selectGymnast(id) {priorityPinned=null;analyticsGroup=isCoach(data?.gymnasts.find(g=>g.id===id))?'coaches':'all';analyticsAge='all';analyticsGymnast=id;}
+  function analyticsFromDirectory() {resetAnalytics();analyticsGroup=directoryGroup;analyticsDirectoryGroup=directoryGroup;}
+  function syncAnalyticsDirectory() {if(analyticsDirectoryGroup===directoryGroup)return false;analyticsFromDirectory();return true;}
+  function selectGymnast(id) {analyticsDirectoryGroup=directoryGroup;priorityPinned=null;analyticsGroup=isCoach(data?.gymnasts.find(g=>g.id===id))?'coaches':'all';analyticsAge='all';analyticsGymnast=id;}
   function showGymnastInDirectory() {
     // Opening any profile must not replace the coach’s working directory squad.
   }
-  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,showGymnastInDirectory,setDirectoryGroup});
+  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,syncAnalyticsDirectory,showGymnastInDirectory,setDirectoryGroup});
 })();

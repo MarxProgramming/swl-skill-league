@@ -3,7 +3,7 @@
   'use strict';
   const KEY='swl-directory-hidden-v1', TTL=24*60*60*1000;
   let records=new Map(), pending=new Map(), loaded=false, storageFailed=false;
-  let root=null,getGymnasts=()=>[],onChange=()=>{},timer=null,listening=false;
+  let root=null,getGymnasts=()=>[],achievementIcons=()=>'',onChange=()=>{},timer=null,listening=false;
   let dialog=null,modal=null,announcement=null;
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const validId=id=>typeof id==='string'&&id.length>0&&id.length<=256;
@@ -77,7 +77,7 @@
     const oldFocus=document.activeElement,focusedId=host.contains(oldFocus)?oldFocus?.dataset?.attendanceRestore:null;
     const summaryFocused=oldDetails&&oldFocus===oldDetails.querySelector('summary');
     const warning=storageFailed&&pending.size?'<p class="directory-attendance-storage" role="status">Saved on this visit only. This browser could not save the hidden list for your next visit.</p>':'';
-    const html=hidden.length?`<details class="directory-attendance-status"${wasOpen?' open':''}><summary>${hidden.length} hidden here <span aria-hidden="true">⌄</span></summary><p>Hidden on this device for 24 hours. Search a name or restore them below to bring them back sooner.</p><ul>${hidden.map(g=>`<li><span>${escape(g.name)}</span><button type="button" data-attendance-restore="${escape(g.id)}" aria-label="${escape('Show '+g.name+' again')}">Show again</button></li>`).join('')}</ul>${warning}</details>`:warning;
+    const html=hidden.length?`<details class="directory-attendance-status"${wasOpen?' open':''}><summary>${hidden.length} hidden here <span aria-hidden="true">⌄</span></summary><p>Hidden on this device for 24 hours. Search a name or restore them below to bring them back sooner.</p><ul>${hidden.map(g=>`<li><span>${escape(g.name)} ${achievementIcons(g)}</span><button type="button" data-attendance-restore="${escape(g.id)}" aria-label="${escape('Show '+g.name+' again')}">Show again</button></li>`).join('')}</ul>${warning}</details>`:warning;
     if(host.innerHTML!==html)host.innerHTML=html;
     host.hidden=!html;
     if(summaryFocused)host.querySelector('summary')?.focus({preventScroll:true});
@@ -131,7 +131,7 @@
   }
   function mount(options) {
     if(root)root.removeEventListener('click',click);
-    root=options.root;getGymnasts=options.getGymnasts||(()=>[]);onChange=options.onChange||(()=>{});
+    root=options.root;getGymnasts=options.getGymnasts||(()=>[]);achievementIcons=options.achievementIcons||(()=>'');onChange=options.onChange||(()=>{});
     ensureLoaded();root.addEventListener('click',click);
     if(!listening){listening=true;window.addEventListener('focus',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check();});window.addEventListener('storage',event=>{if(event.key===KEY||event.key===null)check();});}
     refresh();schedule();
