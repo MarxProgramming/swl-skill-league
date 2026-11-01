@@ -296,9 +296,9 @@
       ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><div class="a31-standing-identity"><span class="a31-standing-name"><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)} ${fireBadge(r.g.id)}</strong></button>${achievementBadge(r.g)}</span><small>${esc(personGroups(r.g))}</small></div><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.</p>'}
       <p class="chart-note">${weekly?'Includes gains and reductions across Floor skills only. Vault points are not included. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
   }
-  function skillPriorities(people,{includeComplete=false,limit=5}={}) {
+  function skillPriorities(people,{includeComplete=false,limit=5,scope=apparatus()}={}) {
     if(!people.length)return [];
-    return scopedSkills().filter(skill=>skill.category==='vault'||(['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier))).map(skill=>{
+    return scopedSkills(scope).filter(skill=>skill.category==='vault'||(['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier))).map(skill=>{
       const complex=data.skills.filter(k=>k.category===skill.category&&k.tier===skill.tier);
       let achieved=0,perfect=0,nextPoints=0,minNextPoints=Infinity,availablePoints=0,bonusCount=0;
       people.forEach(g=>{
@@ -385,5 +385,10 @@
   function showGymnastInDirectory() {
     // Opening any profile must not replace the coach’s working directory squad.
   }
-  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,syncAnalyticsDirectory,showGymnastInDirectory,setDirectoryGroup});
+  function renderPersonalInsights(host,gymnastId) {
+    return window.SWLProfileInsights?.render(host,{gymnastId,data,priorities:skillPriorities});
+  }
+  const capturePersonalInsights=host=>window.SWLProfileInsights?.capture(host);
+  const restorePersonalInsights=(host,state)=>window.SWLProfileInsights?.restore(host,state);
+  window.SWLV2=Object.freeze({mount,render,selectGymnast,resetAnalytics,analyticsFromDirectory,syncAnalyticsDirectory,showGymnastInDirectory,setDirectoryGroup,renderPersonalInsights,capturePersonalInsights,restorePersonalInsights,renderProfileInsights:renderPersonalInsights,captureProfileInsights:capturePersonalInsights,restoreProfileInsights:restorePersonalInsights});
 })();

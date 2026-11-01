@@ -1,0 +1,13 @@
+.perfect-confirm{width:min(430px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:29px 26px 24px;border:1px solid #bca3e849;border-radius:23px;background:linear-gradient(155deg,#272032,#19151f 65%);color:#f4eefb;box-shadow:0 25px 90px #0009;text-align:center}
+.perfect-confirm::backdrop{background:#08060dc4;backdrop-filter:blur(7px)}
+.perfect-confirm-mark{display:grid;place-items:center;width:43px;height:43px;margin:0 auto 15px;border:1px solid #a9ef9140;border-radius:13px;color:var(--mint,#dcf884);background:#bbef8510;font-size:23px;font-weight:800;letter-spacing:-.18em;padding-right:4px}
+.perfect-confirm-eyebrow{margin:0 0 12px;color:#b9a2cf;text-transform:uppercase;letter-spacing:.12em;font-size:9px;font-weight:750}
+.perfect-confirm h2{margin:0;font-size:27px;line-height:1.2;font-weight:800;overflow-wrap:anywhere}
+.perfect-confirm-skill{margin:9px 0 22px;color:#c7bad5;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.perfect-confirm-question{margin:0 auto 24px;max-width:310px;color:#eee7f6;font-size:17px;font-weight:650;line-height:1.5}
+.perfect-confirm-actions{display:grid;grid-template-columns:1fr 1.2fr;gap:9px}
+.perfect-confirm-actions button{min-height:48px;padding:12px 9px;border:1px solid #c3a4e333;border-radius:12px;background:#16121c;color:#c7b9d7;font-size:12px;font-weight:750;line-height:1.35;cursor:pointer}
+.perfect-confirm-actions [data-perfect-yes]{background:#bf9cef;color:#21152c;border-color:#d1b0f3}
+.perfect-confirm-actions button:hover{filter:brightness(1.08);transform:none}
+.perfect-confirm-actions button:focus-visible{outline:2px solid #dbc0fc;outline-offset:3px}
+@media(max-width:390px){.perfect-confirm{padding:25px 20px 20px}.perfect-confirm h2{font-size:25px}.perfect-confirm-question{font-size:16px}.perfect-confirm-actions{gap:7px}.perfect-confirm-actions button{font-size:11px}}

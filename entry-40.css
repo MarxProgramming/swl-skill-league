@@ -1,18 +1,23 @@
-/* A deliberate entrance, with the detailed controls out of the way. */
+/* Programme choices occupy the available viewport; every other view keeps its layout. */
+body.programme-menu-open { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+body.programme-menu-open > .header,
+body.programme-menu-open > .footer { flex-shrink: 0; }
+body.programme-menu-open > main { flex: 1; display: flex; flex-direction: column; padding-block: 24px; }
+body.programme-menu-open > main > .warning { flex-shrink: 0; }
 body.programme-menu-open .header .nav,
 body.programme-menu-open .header .all-skills-button,
 body.programme-menu-open .header .scoring-lock-button,
 body.programme-menu-open .footer .main-menu-button { display: none; }
 body.programme-menu-open .header-inner { flex-wrap: nowrap; }
 body.programme-menu-open .utilities { margin-left: auto; }
-.programme-menu { max-width: 800px; margin: 0 auto; padding: clamp(28px, 6vh, 64px) 0 28px; font-family: var(--font-ui, "Plus Jakarta Sans", system-ui, sans-serif); }
+.programme-menu { flex: 1; display: flex; flex-direction: column; width: 100%; max-width: 1100px; margin: 0 auto; padding: clamp(12px, 3vh, 30px) 0; font-family: var(--font-ui, "Plus Jakarta Sans", system-ui, sans-serif); }
 .programme-menu[hidden] { display: none; }
 .programme-heading { margin-bottom: 26px; }
 .programme-heading h1 { font-size: clamp(30px, 4vw, 42px); font-weight: 750; line-height: 1.15; letter-spacing: -.045em; margin: 0; }
-.programme-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.programme-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 20px; grid-template-rows: auto 1fr; align-items: start; column-gap: 14px; row-gap: 11px; min-width: 0; min-height: 150px; padding: 25px; border: 1px solid var(--p40-soft-edge); border-radius: 17px; background: var(--p40-surface); color: var(--text); font-family: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 16px #00000014; transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
-.programme-card-title { grid-column: 1; grid-row: 1; font-size: clamp(22px, 2.6vw, 26px); font-weight: 750; letter-spacing: -.035em; line-height: 1.2; }
-.programme-card-copy { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 12px; font-weight: 450; line-height: 1.7; }
+.programme-cards { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.programme-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 20px; grid-template-rows: auto auto; align-content: center; align-items: start; column-gap: 14px; row-gap: 11px; min-width: 0; min-height: 240px; padding: clamp(25px, 4vw, 48px); border: 1px solid var(--p40-soft-edge); border-radius: 17px; background: var(--p40-surface); color: var(--text); font-family: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 16px #00000014; transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
+.programme-card-title { grid-column: 1; grid-row: 1; font-size: clamp(26px, 3.2vw, 36px); font-weight: 750; letter-spacing: -.035em; line-height: 1.2; }
+.programme-card-copy { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 13px; font-weight: 450; line-height: 1.7; }
 .programme-card-chevron { grid-column: 2; grid-row: 1; align-self: center; display: block; width: 18px; height: 18px; color: var(--purple); opacity: .75; transition: transform .2s ease, opacity .2s ease; }
 .programme-card-chevron svg { display: block; width: 100%; height: 100%; }
 .programme-card:focus-visible, .entry-filters > summary:focus-visible { outline: 2px solid var(--purple); outline-offset: 4px; }
@@ -37,11 +42,12 @@ body.programme-menu-open .utilities { margin-left: auto; }
  .entry-filters > summary:hover { background: var(--p40-subtle); }
 }
 @media (max-width: 600px) {
- .programme-menu { padding-top: 28px; }
+ body.programme-menu-open > main { padding-block: 18px; }
+ .programme-menu { padding-block: 14px; }
  .programme-heading { margin-bottom: 22px; }
- .programme-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
- .programme-card { min-height: 128px; padding: 21px; border-radius: 15px; row-gap: 9px; }
- .programme-card-title { font-size: 23px; }
+ .programme-cards { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 12px; }
+ .programme-card { min-height: 150px; padding: 24px; border-radius: 15px; row-gap: 9px; }
+ .programme-card-title { font-size: 26px; }
  .programme-card-copy { font-size: 12px; }
  .entry-filters > summary { gap: 10px; padding: 12px 14px; }
  .entry-filter-summary { font-size: 10px; }
@@ -56,7 +62,8 @@ body.no-motion .programme-card:hover, body.no-motion .programme-card:hover .prog
  .programme-card:hover, .programme-card:hover .programme-card-chevron { transform: none; }
 }
 @media (max-width: 600px) and (max-height: 680px) {
- .programme-menu { padding-top: 22px; padding-bottom: 12px; }
+ body.programme-menu-open > main { padding-block: 12px; }
+ .programme-menu { padding-block: 8px; }
  .programme-heading { margin-bottom: 18px; }
  .programme-heading h1 { font-size: 29px; }
  .programme-cards { gap: 10px; }

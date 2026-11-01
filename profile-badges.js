@@ -65,13 +65,13 @@
     const {definition} = badge;
     const perfect = definition.status === 'perfect';
     const floor = definition.apparatus === 'floor';
-    const title = floor ? ({basics:'Foundations',upgrades:'Upgrades',pro:'Complete Floor'}[definition.level] || 'Floor') : 'Complete Vault';
-    const subtitle = perfect ? 'All Perfect' : 'All Achieved';
+    const collection = floor ? ({basics:'Foundations',upgrades:'Upgrades',pro:'Complete Floor'}[definition.level] || 'Floor') : 'Complete Vault';
+    const title = `${perfect ? 'Perfect' : 'Achieved'} ${collection}`;
     const scope = floor ? ({basics:'Basic Rolls, Acro & Leaps',upgrades:'Basics + upgrades',pro:'Basics + upgrades + Pro'}[definition.level]) : 'Run, hurdle & vaults';
     const artwork = window.SWLAchievements?.challengeIcon?.(definition.id) || `<span class="pb-icon-fallback">${floor ? 'F' : 'V'}</span>`;
     const state = badge.earned ? `<span class="pb-earned"><span aria-hidden="true">✓</span> Earned</span>` : badge.complete ? '<span class="pb-pending">Confirming…</span>' : `<span class="pb-progress-label">${badge.completed}<small> / ${badge.maximum}</small></span>`;
     const caption = badge.earned ? `Earned <time datetime="${esc(badge.earnedAt)}">${dateLabel(badge.earnedAt)}</time>` : badge.complete ? (model.pending ? 'Saving this achievement' : 'Waiting for saved confirmation') : `${badge.completed} of ${badge.maximum} ${perfect ? 'Perfect' : 'achieved'}`;
-    return `<article class="pb-card is-${definition.status}${badge.earned ? ' is-earned' : ''}" data-profile-badge="${definition.id}" data-badge-stage="${definition.level || 'vault'}"><div class="pb-card-head"><span class="pb-art" aria-hidden="true">${artwork}</span><div class="pb-card-title"><h3>${title}</h3><p>${subtitle}</p></div>${state}</div><p class="pb-scope">${scope}</p><div class="pb-progress" role="progressbar" aria-label="${esc(title+' '+subtitle+': current marks')}" aria-valuemin="0" aria-valuemax="${badge.maximum || 1}" aria-valuenow="${badge.completed}" aria-valuetext="${badge.completed} of ${badge.maximum} ${perfect ? 'Perfect' : 'achieved'}${badge.earned ? '. Badge already earned.' : ''}"><span style="width:${badge.progress}%"></span></div><p class="pb-caption">${caption}${badge.earned && !badge.complete ? `<span>Current marks ${badge.completed}/${badge.maximum}</span>` : ''}</p>${requirements(badge,model.gymnast)}</article>`;
+    return `<article class="pb-card is-${definition.status}${badge.earned ? ' is-earned' : ''}" data-profile-badge="${definition.id}" data-badge-stage="${definition.level || 'vault'}"><div class="pb-card-head"><span class="pb-art" aria-hidden="true">${artwork}</span><div class="pb-card-title"><h3>${title}</h3></div>${state}</div><p class="pb-scope">${scope}</p><div class="pb-progress" role="progressbar" aria-label="${esc(title+': current marks')}" aria-valuemin="0" aria-valuemax="${badge.maximum || 1}" aria-valuenow="${badge.completed}" aria-valuetext="${badge.completed} of ${badge.maximum} ${perfect ? 'Perfect' : 'achieved'}${badge.earned ? '. Badge already earned.' : ''}"><span style="width:${badge.progress}%"></span></div><p class="pb-caption">${caption}${badge.earned && !badge.complete ? `<span>Current marks ${badge.completed}/${badge.maximum}</span>` : ''}</p>${requirements(badge,model.gymnast)}</article>`;
   }
 
   function capture(host) {

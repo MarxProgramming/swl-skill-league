@@ -49,22 +49,16 @@
 .swlp-identity h2>.swl-achievement-badge{vertical-align:middle}
 @media(max-width:700px){.a31-standing-identity{grid-column:2;grid-row:1}}
 
-/* One illustrated sheet keeps the eight progressive awards consistent at every size. */
-.swl-award-art{--award-x:0%;--award-y:0%;--award-scale:1;display:block;width:100%;height:100%;background-image:url("neon-badges.png");background-repeat:no-repeat;background-size:400% 200%;background-position:0 0;filter:drop-shadow(0 1px 1px #0005);transform:translate(var(--award-x),var(--award-y)) scale(var(--award-scale));transform-origin:center}
-/* Eight equal square cells, four across and two down, keep every crest intact. */
-/* Optical centring corrects the atlas's uneven transparent padding. The broader
-   Vault crests sit higher in their source cells than the Floor hexagons. */
-.swl-award-art[data-award-sprite="0"]{--award-x:-3.6%;--award-y:.1%}
-.swl-award-art[data-award-sprite="1"]{background-position:33.333333% 0;--award-x:-1.2%;--award-y:.3%}
-.swl-award-art[data-award-sprite="2"]{background-position:66.666667% 0;--award-x:.8%;--award-y:.4%}
-.swl-award-art[data-award-sprite="3"]{background-position:100% 0;--award-x:3.8%;--award-y:.3%}
-.swl-award-art[data-award-sprite="4"]{background-position:0 100%;--award-x:-4.4%;--award-y:6%}
-.swl-award-art[data-award-sprite="5"]{background-position:33.333333% 100%;--award-x:-1.4%;--award-y:6.4%}
-.swl-award-art[data-award-sprite="6"]{background-position:66.666667% 100%;--award-x:.9%;--award-y:11.8%;--award-scale:1.06}
-.swl-award-art[data-award-sprite="7"]{background-position:100% 100%;--award-x:3.8%;--award-y:11.8%;--award-scale:1.06}
-.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:24px;height:24px;filter:none}
-.swl-completion-badge.swl-achievement-badge.is-profile-award{width:28px;min-width:28px;height:28px;min-height:28px;margin:0;padding:0}
-.swl-completion-badge.swl-achievement-badge.is-profile-award .swl-achievement-emblem{width:30px;height:30px}
+/* The image itself is cropped by an SVG viewport; no unequal transparent padding. */
+.swl-award-art{display:block;width:100%;height:100%;overflow:hidden!important;filter:drop-shadow(0 1px 1px #0004);transform:none}
+.swl-completion-badge:is(.swl-achievement-badge,.swl-achievement-icon){--award-height:22px;--award-ratio:.84;display:inline-grid;place-items:center;width:max(24px,calc(var(--award-height) * var(--award-ratio)));min-width:24px;height:28px;min-height:28px;flex:0 0 auto;margin:0;padding:0;vertical-align:middle;line-height:0}
+.swl-completion-badge:has([data-award-sprite="6"]),.swl-completion-badge:has([data-award-sprite="7"]){--award-ratio:1.22623}
+.swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{display:block;width:calc(var(--award-height) * var(--award-ratio));height:var(--award-height);filter:none}
+#athleteAchievements{display:inline-flex;align-items:center;gap:0;line-height:0}
+#athleteAchievements>.swl-achievement-badge{flex:0 0 auto;margin:0;padding:0;align-self:center;min-width:24px;width:24px;height:30px;min-height:30px}
+#athleteAchievements>.swl-completion-badge{--award-height:26px;width:max(24px,calc(var(--award-height) * var(--award-ratio)))}
+#athleteAchievements>.swl-completion-badge .swl-achievement-emblem{width:calc(var(--award-height) * var(--award-ratio));height:var(--award-height)}
+#athleteAchievements>.swl-achievement-badge:not(.swl-completion-badge) .swl-achievement-emblem{width:24px;height:14.2px}
 .swl-completion-icon{display:inline-block;width:48px;height:48px;flex-shrink:0;line-height:0}
 .swl-achievement-large.swl-completion-badge{width:120px;height:120px;margin-bottom:13px;filter:none}
 /* Distinct palettes echo the artwork; the historical 250 emblem keeps its gold. */
@@ -82,15 +76,11 @@
 .swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-done{border-color:rgba(var(--award-rgb),.3);background:linear-gradient(135deg,rgba(var(--award-rgb),.13),rgba(var(--award-rgb),.04));color:var(--award-ink)}
 .swl-achievement-dialog:has(.swl-completion-badge) .swl-achievement-done:hover{background:rgba(var(--award-rgb),.17)}
 @media(max-width:600px){
-  .swl-completion-badge.swl-achievement-badge .swl-achievement-emblem,.swl-completion-badge.swl-achievement-icon .swl-achievement-emblem{width:22px;height:22px}
-  .swl-completion-badge.swl-achievement-badge.is-profile-award .swl-achievement-emblem{width:30px;height:30px}
-  /* Nine profile awards fit beside the progress ring on a phone. The broader
-     Vault artwork stays inside its target instead of overlapping its neighbour. */
-  #athleteAchievements>.swl-achievement-badge{flex-basis:24px;width:24px;min-width:24px}
-  #athleteAchievements>.swl-achievement-badge[data-swl-achievement^="vault-"] .swl-achievement-emblem{width:27px;height:27px}
-  #athleteAchievements>.swl-achievement-badge:not(.swl-completion-badge) .swl-achievement-emblem{width:24px;height:14.2px}
+  .swl-completion-badge:is(.swl-achievement-badge,.swl-achievement-icon){--award-height:21px}
+  #athleteAchievements>.swl-completion-badge{--award-height:24px}
   .swl-achievement-large.swl-completion-badge{width:104px;height:104px}
 }
+
 .swl-achievement-earned{color:#d4c3e2;font-size:11px;line-height:1.6;margin:15px 0 0}
 .swl-achievement-earned time{color:#eee5f5;font-weight:750}
 /* Pointer close must not inherit the app's purple keyboard-focus treatment. */

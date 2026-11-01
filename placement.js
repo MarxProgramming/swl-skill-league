@@ -59,8 +59,8 @@
     </article>`;
   }
 
-  function render({ gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', achievementBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
-    const host = document.getElementById('placementContent');
+  function render({ host:targetHost, embedded = false, gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', achievementBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
+    const host = targetHost || document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
     const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':'';};
     const options = { fireBadge, achievementBadge, coachBadge, isCoachParticipant, heatClass, groupLabel, scope };
@@ -69,7 +69,8 @@
     const overallWindow = placementWindow(overallRows, gymnast.id);
     const selected = overallRows.find(row => row?.gymnast?.id === gymnast.id) || {};
     host.setAttribute('data-placement-motion', motionOff ? 'off' : 'on');
-    host.innerHTML = `<div class="swlp-profile">
+    const html = `<div class="swlp-profile${embedded ? ' swlp-embedded' : ''}">
+      ${embedded ? '' : `
       <button class="swlp-back" type="button" data-back-to-skills><span aria-hidden="true">←</span> Back to gymnast</button>
       <header class="swlp-hero${heatClass(gymnast.id) ? ' '+heatClass(gymnast.id) : ''}">
         <div class="swlp-identity"><span class="swlp-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
@@ -82,17 +83,20 @@
           <span><strong>${displayNumber(selected.achieved)}</strong><small>skills achieved</small></span>
           <span><strong>${displayNumber(selected.perfect)}</strong><small>skills perfect</small></span>
         </div>
-      </header>
+      </header>`}
+      ${embedded ? '<div class="swlp-inline-heading"><h2>Your placement</h2><p>The positions around you</p></div>' : ''}
       <div class="swlp-scope" role="group" aria-label="Placement comparison">
         ${scopeOptions.map(option=>`<button type="button" class="filter-chip${selectedScope===option.id?' active':''}" data-placement-scope="${escapeHTML(option.id)}" aria-pressed="${selectedScope===option.id}">${escapeHTML(option.label)}</button>`).join('')}
         <span>${escapeHTML(scope)}</span>
       </div>
-      <div class="swlp-section-head"><div><p class="swlp-eyebrow">Your place in the league</p><h3>A closer look at every board</h3></div>
-        <p>Two people above and below.<br> The next person is a little glimpse.</p></div>
+      ${embedded ? '' : `<div class="swlp-section-head"><div><p class="swlp-eyebrow">Your place in the league</p><h3>A closer look at every board</h3></div>
+        <p>Two people above and below.<br> The next person is a little glimpse.</p></div>`}
       <div class="swlp-grid">${boards.map(board => boardHTML(board, gymnast, options)).join('')}</div>
       <p class="swlp-order-note">Equal scores are ordered alphabetically, with a separate place for each gymnast. At the top or bottom of a board, fewer neighbours are shown.</p>
     </div>`;
-    return document.getElementById('placementTitle');
+    // A quiet background score refresh should not replace an unchanged panel.
+    if (host._placementHTML !== html) { host.innerHTML = html; host._placementHTML = html; }
+    return embedded ? host : document.getElementById('placementTitle');
   }
 
   window.SWLPlacement = Object.freeze({ render });

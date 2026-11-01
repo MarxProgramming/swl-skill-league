@@ -7,14 +7,14 @@
   const isCoach = gymnast => [gymnast?.coach,...(Array.isArray(gymnast?.squads) ? gymnast.squads : [])].some(squad => String(squad || '').trim().toLowerCase() === 'coaches');
   const emblem = `<svg viewBox="0 0 54 32" aria-hidden="true" focusable="false"><path class="award-seal" d="M8 2h38l6 7v14l-6 7H8l-6-7V9z"/><path class="award-inset" d="M10 5h34l5 5v12l-5 5H10l-5-5V10z"/><text class="award-number" x="27" y="22" text-anchor="middle">250</text></svg>`;
   const challenges = Object.freeze({
-    'floor-basics-achieved':Object.freeze({apparatus:'Floor',rank:1,sprite:0,level:'achieved',title:'Floor Basics achieved',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
-    'floor-basics-perfect':Object.freeze({apparatus:'Floor',rank:2,sprite:1,level:'perfect',title:'Floor Basics perfect',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
-    'floor-upgrades-achieved':Object.freeze({apparatus:'Floor',rank:3,sprite:2,level:'achieved',title:'Floor Upgrades achieved',description:'Every basic and upgraded Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
-    'floor-upgrades-perfect':Object.freeze({apparatus:'Floor',rank:4,sprite:3,level:'perfect',title:'Floor Upgrades perfect',description:'Every basic and upgraded Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
-    'floor-pro-achieved':Object.freeze({apparatus:'Floor',rank:5,sprite:4,level:'achieved',title:'Floor Pro achieved',description:'Every basic, upgraded and Pro Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
-    'floor-pro-perfect':Object.freeze({apparatus:'Floor',rank:6,sprite:5,level:'perfect',title:'Floor Pro perfect',description:'Every basic, upgraded and Pro Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
-    'vault-achieved':Object.freeze({apparatus:'Vault',rank:1,sprite:6,level:'achieved',title:'All Vault skills achieved',description:'Every Vault skill was marked Achieved or Perfect.'}),
-    'vault-perfect':Object.freeze({apparatus:'Vault',rank:2,sprite:7,level:'perfect',title:'All Vault skills perfect',description:'Every Vault skill was marked Perfect at the same time.'})
+    'floor-basics-achieved':Object.freeze({apparatus:'Floor',rank:1,sprite:0,level:'achieved',title:'Achieved Foundations',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
+    'floor-basics-perfect':Object.freeze({apparatus:'Floor',rank:2,sprite:1,level:'perfect',title:'Perfect Foundations',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
+    'floor-upgrades-achieved':Object.freeze({apparatus:'Floor',rank:3,sprite:2,level:'achieved',title:'Achieved Upgrades',description:'Every basic and upgraded Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
+    'floor-upgrades-perfect':Object.freeze({apparatus:'Floor',rank:4,sprite:3,level:'perfect',title:'Perfect Upgrades',description:'Every basic and upgraded Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
+    'floor-pro-achieved':Object.freeze({apparatus:'Floor',rank:5,sprite:4,level:'achieved',title:'Achieved Complete Floor',description:'Every basic, upgraded and Pro Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
+    'floor-pro-perfect':Object.freeze({apparatus:'Floor',rank:6,sprite:5,level:'perfect',title:'Perfect Complete Floor',description:'Every basic, upgraded and Pro Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
+    'vault-achieved':Object.freeze({apparatus:'Vault',rank:1,sprite:6,level:'achieved',title:'Achieved Complete Vault',description:'Every Vault skill was marked Achieved or Perfect.'}),
+    'vault-perfect':Object.freeze({apparatus:'Vault',rank:2,sprite:7,level:'perfect',title:'Perfect Complete Vault',description:'Every Vault skill was marked Perfect at the same time.'})
   });
   // Earlier full-Floor receipts remain proof of the corresponding Pro award.
   const legacyIds = Object.freeze({'floor-achieved':'floor-pro-achieved','floor-perfect':'floor-pro-perfect'});
@@ -22,8 +22,11 @@
   const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
   const earnedDate = value => new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',day:'numeric',month:'long',year:'numeric'}).format(new Date(value));
 
+  // Each viewport trims the original atlas's empty padding, without redrawing it.
+  // Equal visible heights and centred viewports keep unlike shapes in one line.
+  const artworkViewports = Object.freeze(["92 52 293 352", "525 50 293 354", "957 50 296 354", "1388 51 295 352", "92 470 300 352", "522 468 300 351", "918 496 374 305", "1350 496 374 305"]);
   function completionEmblem(challenge) {
-    return `<span class="swl-award-art" data-award-sprite="${challenge.sprite}" aria-hidden="true"></span>`;
+    return `<svg class="swl-award-art" data-award-sprite="${challenge.sprite}" viewBox="${artworkViewports[challenge.sprite]}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="./neon-badges.png" width="1774" height="887"/></svg>`;
   }
 
   // Shared illustrated artwork for non-interactive challenge tiles.

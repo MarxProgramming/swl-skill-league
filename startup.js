@@ -141,6 +141,7 @@
       overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background-color:#0d0e13;color:#f6f4f8;';
       overlay.innerHTML = `
         <div class="swl-startup__content">
+          <img class="swl-startup__logo" src="./swl-logo.png" alt="SWL Gymnastics" width="2000" height="1125" style="max-width:196px;height:auto;filter:invert(1)">
           <div class="swl-startup__loader" aria-hidden="true"><i></i><i></i><i></i></div>
           <p class="swl-startup__status" id="swlStartupStatus" role="status" aria-live="polite">Loading…</p>
           <div class="swl-startup__escape">
