@@ -4,6 +4,8 @@ GitHub Pages hosts this static app. Google Sheets remains the shared data store 
 
 ## Current experience
 
+When a training complex is selected in Gymnasts, each squad is ordered by its total ticks in that complex, fewest first. Achieved counts as one tick and Perfect as two. Equal totals are alphabetical; clearing the complex returns to alphabetical order. Attendance-hidden gymnasts remain below the active list.
+
 Squad progress compares all skills in the selected Floor, Vault or Combined programme, including upgrades, Pro upgrades and handstands. Each skill contributes equally: Achieved is halfway and Perfect is complete. Percentages are averaged across squad members, so squad size does not provide an advantage. Average points and Skills retained remain separate comparison options.
 
 The games lobby contains eight games. Conditioning Relay and Time Sense have been removed; their historical ratings remain stored. Handstand Timer retains both individual and group formats.
