@@ -24,7 +24,10 @@
   // Each viewport trims the original atlas's empty padding, without redrawing it.
   // Equal visible heights and centred viewports keep unlike shapes in one line.
   const artworkViewports = Object.freeze(["92 52 293 352", "525 50 293 354", "957 50 296 354", "1388 51 295 352", "92 470 300 352", "522 468 300 351", "918 496 374 305", "1350 496 374 305"]);
+  // Perfect awards use their own double-framed neon glass artwork, rather than decorating Achieved.
+  const perfectViewports = Object.freeze({1:'72 24 538 570',3:'644 24 538 570',5:'68 620 540 570',7:'606 662 614 526'});
   function completionEmblem(challenge) {
+    if (challenge.level === 'perfect') return `<svg class="swl-award-art" data-award-sprite="${challenge.sprite}" data-perfect-art="neon-shell" viewBox="${perfectViewports[challenge.sprite]}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="./perfect-neon-52.png" width="1254" height="1254"/></svg>`;
     return `<svg class="swl-award-art" data-award-sprite="${challenge.sprite}" viewBox="${artworkViewports[challenge.sprite]}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="./neon-badges.png" width="1774" height="887"/></svg>`;
   }
 
@@ -95,7 +98,8 @@
   }
 
   function allBadges(gymnast, completionAchievements) {
-    return badge(gymnast) + challengeButtons(gymnast,highestChallenges(gymnast,completionAchievements));
+    const awards = badge(gymnast) + challengeButtons(gymnast,highestChallenges(gymnast,completionAchievements));
+    return awards ? `<span class="swl-card-awards">${awards}</span>` : '';
   }
 
   // Use inside existing profile buttons: no nested button or dialog trigger.

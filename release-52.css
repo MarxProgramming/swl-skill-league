@@ -1,40 +1,152 @@
-/* 5.2: raised surfaces, quiet renewal cues and points-only weekly streaks. */
+/* 5.2 — sculpted graphite panels, quiet renewals and points-only streaks. */
 :root {
-  --v52-surface: linear-gradient(155deg, #272633 0%, #1b1c27 48%, #171820 100%);
-  --v52-edge: #d2bcff32;
-  --v52-depth: inset 0 1px 0 #f4eaff16, inset 0 -1px 0 #0008,
-    0 2px 3px #00000028, 0 9px 15px -7px #02020890, 0 24px 40px -22px #010105d9;
-  --v52-card: linear-gradient(150deg, #252530 0%, #1b1c25 65%, #191a23 100%);
-  --v52-card-depth: inset 0 1px 0 #e6d9ff12, inset 0 -1px 0 #05050b70,
-    0 4px 8px -4px #0009, 0 11px 20px -14px #000c;
+  --v52-surface:
+    radial-gradient(ellipse at 5% 0%, #bca6e411, transparent 48%),
+    linear-gradient(170deg, #35313f 0%, #252530 26%, #1a1c25 72%, #15171f 100%);
+  --v52-edge: #c8b8e34d;
+  --v52-header: linear-gradient(115deg, #49415294, #302c3a80 58%, #28293555);
+  --v52-depth: inset 0 2px 0 #eee1ff29, inset 0 0 0 5px #ede4ff03,
+    inset 0 -2px 0 #07080e9c, 0 4px 0 #080a12,
+    0 7px 6px -4px #000b, 0 19px 32px -11px #0009, 0 35px 54px -30px #020309dc;
+  --v52-card:
+    linear-gradient(150deg, #383440 0%, #292a35 36%, #20222d 77%, #1b1d27 100%);
+  --v52-card-depth: inset 0 1px 0 #f3e8ff23, inset 1px 0 0 #e8d9ff08,
+    inset 0 -1px 0 #080911a6, 0 2px 0 #080a1199,
+    0 5px 8px -4px #0009, 0 12px 18px -12px #000b;
 }
-/* Shared depth, with the existing hierarchy and geometry preserved. */
+/* A visible upper bevel, charcoal frame and grounded lower edge replace flat fills.
+   Higher specificity beats legacy theme paint without affecting status colours. */
 html:root:root[data-theme="dark"] :is(.board, .complex, .catalogue-complex, .swlp-board,
-  .directory-tools, .analytics-filters, .athlete-summary, .profile-insights-panel,
-  .game-card:not(.is-hottest), .a31-disclosure, .profile-badge-card) {
+  .directory-tools, .analytics-filters, .athlete-summary, .pi-panel,
+  .game-card:not(.is-hottest), .a31-disclosure) {
   background: var(--v52-surface);
+  background-clip: padding-box;
   border-color: var(--v52-edge);
+  border-top-color: #ded0f26b;
+  border-bottom-color: #080a148f;
   box-shadow: var(--v52-depth);
 }
 html:root:root[data-theme="dark"] #analyticsRoot :is(.analytics-panel, .a31-priorities, .a31-squad-panel, .a31-stats article) {
-  background: var(--v52-surface); border-color: var(--v52-edge); box-shadow: var(--v52-depth);
+  background: var(--v52-surface); background-clip: padding-box;
+  border-color: var(--v52-edge); border-top-color: #ded0f26b;
+  border-bottom-color: #080a148f; box-shadow: var(--v52-depth);
 }
+/* Keep nested disclosure content as one coherent panel, not boxes inside boxes. */
 html:root:root[data-theme="dark"] #analyticsRoot .a31-disclosure-content > .analytics-panel {
   background: transparent; border: 0; box-shadow: none;
 }
+/* Flush header plates preserve title positions; scope pills gain breathing room.
+   Padding variables follow the existing board breakpoints exactly. */
+html:root:root[data-theme="dark"] .board { --v52-board-pad: 20px; --v52-head-gap: 20px; }
+html:root:root[data-theme="dark"] .board.overall { --v52-board-pad: 24px; }
+html:root:root[data-theme="dark"] .v3-board { --v52-head-gap: 12px; }
+html:root:root[data-theme="dark"] .board-head {
+  margin: calc(-1 * var(--v52-board-pad)) calc(-1 * var(--v52-board-pad)) calc(var(--v52-head-gap) - 12px);
+  padding: var(--v52-board-pad) var(--v52-board-pad) 12px;
+  background: var(--v52-header);
+  border-bottom: 0;
+  box-shadow: inset 0 1px #ffffff0b, inset 0 -1px #d0bce52b, 0 1px 0 #07091150;
+}
+html:root:root[data-theme="dark"] .board-head h3 { text-shadow: 0 2px 2px #07091270; }
+html:root:root[data-theme="dark"] .v3-board-scope {
+  /* The pills sit below the header seam, rather than touching its lower bevel. */
+  padding-top: 10px;
+  border-bottom-color: #e1cff11c;
+  background: linear-gradient(180deg, #090c1400, #090c141f);
+}
+/* Complex headers have their own padding already, so only their material changes. */
+html:root:root[data-theme="dark"] :is(.complex-head, .catalogue-complex-head, .swlp-board-head) {
+  border-bottom-color: #d6c1ee32;
+}
+html:root:root[data-theme="dark"] .complex-head {
+  background: var(--v52-header);
+  box-shadow: inset 0 1px #f2e8ff12, 0 2px 0 #080b1445, 0 9px 18px -15px #000c;
+}
+html:root:root[data-theme="dark"] .complex > .tier {
+  background: linear-gradient(180deg, #090c1428, transparent 28px);
+}
+html:root:root[data-theme="dark"] .complex > .tier + .tier {
+  border-top-color: #d7c4ed20;
+  box-shadow: inset 0 1px #090c1480;
+}
+/* Inset tools sit inside the raised directory tray, retaining every control. */
+html:root:root[data-theme="dark"] .directory-tools {
+  background: linear-gradient(160deg, #3c3548 0%, #282733 34%, #1c1e28 100%);
+}
+html:root:root[data-theme="dark"] .directory-search {
+  background: linear-gradient(180deg, #0e1019, #161722);
+  border-color: #d0b9ed29;
+  box-shadow: inset 0 2px 5px #04050c7a, 0 1px 0 #e8d5ff0e;
+}
+html:root:root[data-theme="dark"] .directory-quick-switch {
+  box-shadow: inset 0 1px #f4eaff16, inset 0 -1px #090b1460, 0 4px 8px -6px #000b;
+}
+/* Profiles share the panel frame; the Skills/Badges/etc. gap remains untouched. */
+html:root:root[data-theme="dark"] .athlete-summary {
+  background: radial-gradient(ellipse at 0 0,#ac7bf225,transparent 64%),
+    linear-gradient(125deg,#393044,#242431 58%,#1c202b);
+}
+html:root:root[data-theme="dark"] .athlete-summary > .profile-pane-switch {
+  background: linear-gradient(180deg,#11121b,#1c1c28);
+  box-shadow: inset 0 2px 5px #05060d70,0 1px #e5ceff12;
+}
+/* Analytics headers gain a restrained plate and a clear seam into the charts. */
+html:root:root[data-theme="dark"] #analyticsRoot .analytics-panel-head,
+html:root:root[data-theme="dark"] .pi-panel-heading {
+  padding-bottom: 15px;
+  border-bottom: 1px solid #decaee27;
+  box-shadow: 0 1px 0 #07091150;
+}
+html:root:root[data-theme="dark"] .a31-disclosure > summary,
+html:root:root[data-theme="dark"] .pi-history > summary {
+  background: var(--v52-header);
+  box-shadow: inset 0 1px #f2e6ff0e, inset 0 -1px #d4bce522;
+}
+/* Matching name cards are one elevation lower than their parent containers.
+   Medal podium cards keep their established gold/silver/bronze material. */
 html:root:root[data-theme="dark"] :is(.directory-card, .rank-row:not(.medal), .gymnast, .swlp-row, .challenge-row):not(.challenge-winner) {
-  background: var(--v52-card); border-color: #d2bcff29; box-shadow: var(--v52-card-depth);
+  background: var(--v52-card);
+  border-color: #d2bce33b; border-top-color: #e0ceef50;
+  border-bottom-color: #060a116b;
+  box-shadow: var(--v52-card-depth);
+}
+html:root:root[data-theme="dark"] .directory-card .directory-profile-content {
+  background: linear-gradient(180deg,#ffffff05,transparent);
+}
+html:root:root[data-theme="dark"] .directory-card.has-complex .directory-profile-content {
+  box-shadow: 0 1px 0 #e8d7ff12, 0 2px 0 #080a1445;
+}
+html:root:root[data-theme="dark"] .directory-avatar {
+  border-color: #c8a4ee4d;
+  background: linear-gradient(145deg,#4a3c60,#292738);
+  box-shadow: inset 0 1px #e9d9ff26,0 2px 4px #08070e55;
 }
 html:root:root[data-theme="dark"] .swlp-row.swlp-selected {
   border-color: #c5a4ff80; box-shadow: var(--v52-card-depth), inset 3px 0 #bd9bff;
 }
-html:root:root[data-theme="dark"] :is(.board-head, .complex-head, .catalogue-complex-head, .swlp-board-head) {
-  border-bottom-color: #e3d2ff20;
+/* Badges use the same frame but retain their existing Perfect/Achieved palettes. */
+html:root:root[data-theme="dark"] .pb-card {
+  box-shadow: inset 0 1px #ede0ff20, inset 0 -1px #07091190,
+    0 3px 0 #080a1299, 0 13px 24px -13px #000b;
 }
 @media (hover:hover) {
   html:root:root[data-theme="dark"] :is(.directory-card, .rank-row:not(.medal), .game-card:not(.is-hottest)):hover {
-    border-color: #cfb4ff60;
+    border-color: #d9bcff80;
+    box-shadow: var(--v52-card-depth), inset 0 0 0 1px #ceb0f20a;
   }
+}
+@media (max-width:1100px) {
+  html:root:root[data-theme="dark"] .board { --v52-board-pad: 16px; }
+  html:root:root[data-theme="dark"] .board.overall { --v52-board-pad: 16px; }
+}
+@media (max-width:600px) {
+  html:root:root[data-theme="dark"] .board { --v52-board-pad: 15px; }
+  html:root:root[data-theme="dark"] .board.overall { --v52-board-pad: 15px; }
+  html:root:root[data-theme="dark"] .directory-tools {
+    background: linear-gradient(155deg,#383143,#272632 40%,#1c1e28);
+  }
+  html:root:root[data-theme="dark"] #analyticsRoot .analytics-panel-head,
+  html:root:root[data-theme="dark"] .pi-panel-heading { padding-bottom: 13px; }
 }
 
 /* Due dates do not recolour skill cards, ticks or the days text. */
