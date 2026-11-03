@@ -5,7 +5,7 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const eligible = gymnast => gymnast?.id === 'g03' && String(gymnast.name || '').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-GB') === 'lexi primrose';
   const isCoach = gymnast => [gymnast?.coach,...(Array.isArray(gymnast?.squads) ? gymnast.squads : [])].some(squad => String(squad || '').trim().toLowerCase() === 'coaches');
-  const emblem = `<svg viewBox="0 0 54 32" aria-hidden="true" focusable="false"><path class="award-seal" d="M8 2h38l6 7v14l-6 7H8l-6-7V9z"/><path class="award-inset" d="M10 5h34l5 5v12l-5 5H10l-5-5V10z"/><text class="award-number" x="27" y="22" text-anchor="middle">250</text></svg>`;
+  const emblem = `<svg viewBox="1 1 52 30" aria-hidden="true" focusable="false"><path class="award-seal" d="M8 2h38l6 7v14l-6 7H8l-6-7V9z"/><path class="award-inset" d="M10 5h34l5 5v12l-5 5H10l-5-5V10z"/><text class="award-number" x="27" y="22" text-anchor="middle">250</text></svg>`;
   const challenges = Object.freeze({
     'floor-basics-achieved':Object.freeze({apparatus:'Floor',rank:1,sprite:0,level:'achieved',title:'Achieved Foundations',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Achieved or Perfect. Handstands are not included.'}),
     'floor-basics-perfect':Object.freeze({apparatus:'Floor',rank:2,sprite:1,level:'perfect',title:'Perfect Foundations',description:'Every basic Floor skill in Rolls, Acro and Leaps was marked Perfect at the same time. Handstands are not included.'}),
@@ -26,6 +26,18 @@
   const artworkViewports = Object.freeze(["92 52 293 352", "525 50 293 354", "957 50 296 354", "1388 51 295 352", "92 470 300 352", "522 468 300 351", "918 496 374 305", "1350 496 374 305"]);
   // Perfect awards use their own double-framed neon glass artwork, rather than decorating Achieved.
   const perfectViewports = Object.freeze({1:'72 24 538 570',3:'644 24 538 570',5:'68 620 540 570',7:'606 662 614 526'});
+  function artworkRatio(challenge) {
+    const viewport = challenge.level === 'perfect' ? perfectViewports[challenge.sprite] : artworkViewports[challenge.sprite];
+    const [, , width, height] = viewport.split(' ').map(Number);
+    return width / height;
+  }
+
+  function artworkSizing(award) {
+    const ratio = artworkRatio(award.challenge);
+    const widest = Math.max(ratio,...(award.previous || []).map(item => artworkRatio(item.challenge)));
+    return `--award-ratio:${ratio};--award-stack-ratio:${widest}`;
+  }
+
   function completionEmblem(challenge) {
     if (challenge.level === 'perfect') return `<svg class="swl-award-art" data-award-sprite="${challenge.sprite}" data-perfect-art="neon-shell" viewBox="${perfectViewports[challenge.sprite]}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="./perfect-neon-52.png" width="1254" height="1254"/></svg>`;
     return `<svg class="swl-award-art" data-award-sprite="${challenge.sprite}" viewBox="${artworkViewports[challenge.sprite]}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><image href="./neon-badges.png" width="1774" height="887"/></svg>`;
@@ -76,7 +88,7 @@
   function awardArtwork(award, profile = false) {
     const previous = profile ? [] : award.previous || [];
     if (!previous.length) return `<span class="swl-achievement-emblem">${completionEmblem(award.challenge)}</span>`;
-    return `<span class="swl-achievement-emblem swl-award-stack">${previous.map(({id,challenge},index) => `<span class="swl-award-layer is-${challenge.level}" data-stacked-award="${id}" style="--award-offset:${previous.length-index}" aria-hidden="true">${completionEmblem(challenge)}</span>`).join('')}<span class="swl-award-layer swl-award-front is-${award.challenge.level}" style="--award-offset:0" aria-hidden="true">${completionEmblem(award.challenge)}</span></span>`;
+    return `<span class="swl-achievement-emblem swl-award-stack">${previous.map(({id,challenge},index) => `<span class="swl-award-layer is-${challenge.level}" data-stacked-award="${id}" style="--award-offset:${previous.length-index};--award-ratio:${artworkRatio(challenge)}" aria-hidden="true">${completionEmblem(challenge)}</span>`).join('')}<span class="swl-award-layer swl-award-front is-${award.challenge.level}" style="--award-offset:0;--award-ratio:${artworkRatio(award.challenge)}" aria-hidden="true">${completionEmblem(award.challenge)}</span></span>`;
   }
 
   function challengeButtons(gymnast, awards, profile = false) {
@@ -84,7 +96,7 @@
       const {id,challenge,earnedAt} = award;
       const previous = profile ? [] : award.previous || [];
       const label = `${gymnast.name}: ${challenge.title}${previous.length ? `; ${previous.length} earlier ${challenge.apparatus} ${previous.length === 1 ? 'badge' : 'badges'}` : ''}.`;
-      return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}${profile ? ' is-profile-award' : ''}${previous.length ? ' has-award-stack' : ''}" style="--award-stack-count:${previous.length}" data-award-kind="${id}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}">${awardArtwork(award,profile)}</button>`;
+      return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}${profile ? ' is-profile-award' : ''}${previous.length ? ' has-award-stack' : ''}" style="--award-stack-count:${previous.length};${artworkSizing(award)}" data-award-kind="${id}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}">${awardArtwork(award,profile)}</button>`;
     }).join('');
   }
 
@@ -108,7 +120,7 @@
     return historical + highestChallenges(gymnast, completionAchievements).map(award => {
       const {id,challenge,previous} = award;
       const label = `${gymnast.name}: ${challenge.title}${previous.length ? `; ${previous.length} earlier ${challenge.apparatus} ${previous.length === 1 ? 'badge' : 'badges'}` : ''}.`;
-      return `<span class="swl-achievement-icon swl-completion-badge is-${challenge.level}${previous.length ? ' has-award-stack' : ''}" style="--award-stack-count:${previous.length}" data-award-kind="${id}" role="img" aria-label="${escape(label)}" title="${escape(challenge.title)}">${awardArtwork(award)}</span>`;
+      return `<span class="swl-achievement-icon swl-completion-badge is-${challenge.level}${previous.length ? ' has-award-stack' : ''}" style="--award-stack-count:${previous.length};${artworkSizing(award)}" data-award-kind="${id}" role="img" aria-label="${escape(label)}" title="${escape(challenge.title)}">${awardArtwork(award)}</span>`;
     }).join('');
   }
 
