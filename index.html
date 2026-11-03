@@ -1605,7 +1605,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./profile-insights.css?v=20261101-profile">
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-52c">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
-<link rel="stylesheet" href="./profile-badges.css?v=20261103-52">
+<link rel="stylesheet" href="./profile-badges.css?v=20261103-notices">
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
 <link rel="stylesheet" href="./release-52.css?v=20261103-52d">
@@ -1821,7 +1821,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./v2.js?v=20261103-52"></script>
 <script src="./achievement-50.js?v=20261103-52b"></script>
 <script src="./challenge.js?v=20261103-52"></script>
-<script src="./profile-badges.js?v=20261101-profile"></script>
+<script src="./badge-notices.js?v=20261103-notices"></script>
+<script src="./profile-badges.js?v=20261103-notices"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <script>
@@ -2304,6 +2305,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   let selectedId = null;
   let profilePane = 'skills';
+  let profileBadgeVisit = {id:null,fresh:{}};
   let currentView = 'home';
   let activeChallenge = null;
   let directoryScroll = 0;
@@ -2986,6 +2988,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (remoteRevision && result.revision !== remoteRevision &&
         (!ownScoreSave || incoming > current + 1)) history = [];
     confirmedState = result.state;
+    window.SWLBadgeNotices?.observe({gymnasts:confirmedState.gymnasts,completionAchievements:confirmedState.completionAchievements,hasLoaded:true});
     remoteRevision = result.revision;
     baseEpoch++;
     hasLoaded = true;
@@ -3007,7 +3010,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let scoreViewSignature='';
   function refreshScoreViews() {
     const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,confirmedState.completionAchievements,confirmedState.challenge,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,apparatus,londonDay()]);
-    if(signature===scoreViewSignature){renderSaveStatus();return;}
+    if(signature===scoreViewSignature){renderSaveStatus();syncBadgeNotices();return;}
     scoreViewSignature=signature;
     renderBoards();
     renderRoster();
@@ -3434,18 +3437,46 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   function profileBadgeConfig() {
     return {gymnast:GYMNASTS.find(g => g.id === selectedId),skills:SKILLS,mark,
-      completionAchievements:confirmedState.completionAchievements,hasLoaded,pending:hasPending()};
+      completionAchievements:confirmedState.completionAchievements,hasLoaded,pending:hasPending(),
+      newAwards:profileBadgeVisit.id === selectedId ? profileBadgeVisit.fresh : {}};
+  }
+
+  function updateBadgeNotice() {
+    const button = $('athletePanel').querySelector('[data-profile-pane="badges"]');
+    if (!button) return;
+    const count = Object.keys(window.SWLBadgeNotices?.unread(GYMNASTS.find(g => g.id === selectedId),confirmedState.completionAchievements) || {}).length;
+    const html = 'Badges' + (count ? '<span class="pb-tab-new" aria-hidden="true">New</span>' : '');
+    if (button.innerHTML !== html) button.innerHTML = html;
+    button.setAttribute('aria-label',count ? `Badges, ${count} new ${count === 1 ? 'badge' : 'badges'}` : 'Badges');
+  }
+
+  function syncBadgeNotices() {
+    if (currentView === 'tracker' && profilePane === 'badges') renderProfilePane();
+    else updateBadgeNotice();
   }
 
   function renderProfilePane() {
-    if (profilePane === 'badges') window.SWLProfileBadges?.update($('profileBadgeProgress'),profileBadgeConfig());
+    if (profilePane === 'badges') {
+      const host = $('profileBadgeProgress');
+      const visible = currentView === 'tracker' && !document.hidden && !$('tracker').hidden && host && !host.hidden;
+      const gymnast = GYMNASTS.find(g => g.id === selectedId);
+      if (visible) {
+        if (profileBadgeVisit.id !== selectedId) profileBadgeVisit = {id:selectedId,fresh:{}};
+        Object.assign(profileBadgeVisit.fresh,window.SWLBadgeNotices?.unread(gymnast,confirmedState.completionAchievements));
+      }
+      const model = window.SWLProfileBadges?.update(host,profileBadgeConfig());
+      // Only acknowledge the collection after it is rendered in the visible profile.
+      // Rendering hidden panes for disclosure restoration must never consume a notice.
+      if (visible && model?.loaded && !model.excluded && model.badges.length) window.SWLBadgeNotices?.markSeen(gymnast,confirmedState.completionAchievements);
+    }
     else if (profilePane === 'placement') renderPlacementProfile();
     else if (profilePane === 'insights') v2Api()?.renderPersonalInsights?.($('profileInsights'),selectedId);
+    updateBadgeNotice();
   }
 
   function setProfilePane(value) {
     if (!['skills','badges','placement','insights'].includes(value)) return;
-    if (value !== profilePane) window.SWLPerfectConfirm?.cancel();
+    if (value !== profilePane) { window.SWLPerfectConfirm?.cancel(); profileBadgeVisit = {id:null,fresh:{}}; }
     profilePane = value;
     for (const [pane,id] of Object.entries({skills:'profileSkills',badges:'profileBadgeProgress',placement:'profilePlacement',insights:'profileInsights'})) {
       if ($(id)) $(id).hidden = value !== pane;
@@ -3751,6 +3782,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     // Earlier placement entry points now reveal the same gymnast's inline pane.
     if (view === 'placement') { view = 'tracker'; setProfilePane('placement'); }
     if (view !== currentView) {
+      profileBadgeVisit = {id:null,fresh:{}};
       window.SWLPerfectConfirm?.cancel();
       if (currentView === 'directory') directoryScroll = window.scrollY;
       if (['directory','tracker','placement'].includes(currentView)) { gymnastTabView = currentView; gymnastTabScroll = window.scrollY; }
@@ -3789,6 +3821,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     });
 
     $('dashboard').classList.toggle('enter', view === 'dashboard');
+    if (view === 'tracker') syncBadgeNotices();
 
     if (scroll) {
       window.scrollTo({
@@ -3836,7 +3869,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function openGymnast(id) {
     if (!GYMNAST_IDS.has(id)) return;
 
-    if (selectedId !== id) { window.SWLPerfectConfirm?.cancel(); placementGroup = 'own'; profilePane = 'skills'; }
+    if (selectedId !== id) { profileBadgeVisit = {id:null,fresh:{}}; window.SWLPerfectConfirm?.cancel(); placementGroup = 'own'; profilePane = 'skills'; }
     selectedId = id;
     v2Api()?.showGymnastInDirectory?.(id);
 
@@ -4362,7 +4395,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   setInterval(enforceLease,1000);
   setInterval(() => { if (!document.hidden && !hasPending() && !sending) readScores(); }, 60000);
   $('refreshButton').addEventListener('click', () => readScores());
-  window.addEventListener('focus', () => { enforceLease(); readScores(); });
+  window.addEventListener('focus', () => { enforceLease(); syncBadgeNotices(); readScores(); });
   window.addEventListener('online', () => {
     readScores();
   });
@@ -4377,7 +4410,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   document.addEventListener('visibilitychange', () => {
     enforceLease();
     if (document.hidden && hasPending() && !retryNeeded) flushQueue();
-    if (!document.hidden) readScores();
+    if (!document.hidden) { syncBadgeNotices(); readScores(); }
+  });
+  window.addEventListener('storage', event => {
+    if (event.key === window.SWLBadgeNotices?.storageKey) updateBadgeNotice();
   });
 
   const syncHeader = () => {
