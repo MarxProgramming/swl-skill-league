@@ -96,18 +96,20 @@ html[data-theme] .swl-achievement-dialog button:focus-visible{outline:2px solid 
 
 /* 5.2 — spread the earned stack enough to recognise each earlier enamel edge. */
 .swl-card-awards{display:inline-flex;align-items:center;gap:1px;max-width:100%;vertical-align:middle;white-space:nowrap;line-height:0}
-.swl-completion-badge.is-perfect{--award-ratio:.945;--award-height:25px}
+.swl-completion-badge.is-perfect{--award-ratio:.945}
 .swl-completion-badge.is-perfect:has([data-award-sprite="7"]){--award-ratio:1.167}
-#athleteAchievements>.swl-completion-badge.is-perfect{--award-height:28px}
-.swl-completion-badge.has-award-stack{--award-step:7px;width:max(24px,calc(var(--award-height) * var(--award-ratio) + var(--award-stack-count) * var(--award-step)))}
-.swl-completion-badge.has-award-stack .swl-achievement-emblem{position:relative;width:calc(var(--award-height) * var(--award-ratio) + var(--award-stack-count) * var(--award-step));height:var(--award-height);filter:none}
-.swl-award-layer{position:absolute;right:0;top:50%;display:block;width:calc(var(--award-height) * var(--award-ratio));height:var(--award-height);transform:translate(calc(var(--award-offset) * -1 * var(--award-step)),calc(-50% - var(--award-offset) * .45px));pointer-events:none;filter:brightness(.95) drop-shadow(-1px 1px 1px #090611c9)}
+.swl-completion-badge.has-award-stack{--award-step:7px;--award-stack-ratio:max(var(--award-ratio),.945);width:max(24px,calc(var(--award-height) * var(--award-stack-ratio) + var(--award-stack-count) * var(--award-step)))}
+.swl-completion-badge.has-award-stack:has([data-award-sprite="6"]){--award-stack-ratio:1.22623}
+.swl-completion-badge.has-award-stack .swl-achievement-emblem{position:relative;width:calc(var(--award-height) * var(--award-stack-ratio) + var(--award-stack-count) * var(--award-step));height:var(--award-height);filter:none}
+.swl-award-layer{--award-ratio:.84;position:absolute;right:0;top:50%;display:block;width:calc(var(--award-height) * var(--award-ratio));height:var(--award-height);transform:translate(calc(var(--award-offset) * -1 * var(--award-step)),-50%);pointer-events:none;filter:brightness(.95) drop-shadow(-1px 1px 1px #090611c9)}
+/* A layer keeps its own shape and the same height as its standalone emblem. */
+.swl-award-layer.is-perfect{--award-ratio:.945}
+.swl-award-layer:has([data-award-sprite="6"]){--award-ratio:1.22623}
+.swl-award-layer:has([data-award-sprite="7"]){--award-ratio:1.167}
 .swl-award-layer.swl-award-front{filter:drop-shadow(-1px 1px 1px #090611e6)}
 /* The new double neon frames and broader glass silhouette provide the distinction. */
 .swl-completion-badge.is-perfect:not(.has-award-stack) .swl-award-art,.swl-award-front.is-perfect .swl-award-art,.swl-completion-icon.is-perfect>.swl-award-art,.swl-achievement-large.is-perfect>.swl-award-art{filter:drop-shadow(0 1px 1px #08071477)}
 .swl-completion-icon,.swl-achievement-large.swl-completion-badge{position:relative}
 @media(max-width:600px){
   .swl-completion-badge.has-award-stack{--award-step:6px}
-  .swl-completion-badge.is-perfect{--award-height:24px}
-  #athleteAchievements>.swl-completion-badge.is-perfect{--award-height:26px}
 }
