@@ -4,7 +4,7 @@ GitHub Pages hosts this static app. Google Sheets remains the shared data store 
 
 ## Current experience
 
-Version 5.2’s visual refinement adds sculpted graphite containers with raised header plates, bevelled rims, recessed controls and layered shadows, preserving the existing layout and skill-state colours.
+Version 5.2’s visual refinement keeps the established 5.1 spacing with clean charcoal surfaces, fine borders and selective soft shadows on the primary panels. Repeated rows and nested containers stay flat; skill-state colours and the medal podium retain their meaning.
 
 Version 5.2 gives Letter Duel a fresh random letter bag for each new game and replay, with a different opening from the previous opener and latest letter. Every eligible letter is visited once per bag; returning to an unfinished game preserves that game.
 
