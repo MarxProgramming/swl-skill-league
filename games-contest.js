@@ -14,7 +14,7 @@
   const integer=(v,max=20)=>String(v).trim()&&Number.isInteger(Number(v))&&Number(v)>=1&&Number(v)<=max?Number(v):null;
   function random(max){try{const a=new Uint32Array(1),limit=0x100000000-0x100000000%max;for(let i=0;i<8;i++){window.crypto.getRandomValues(a);if(a[0]<limit)return a[0]%max;}}catch(_){}return Math.floor(Math.random()*max);}
   function shuffle(items){const a=items.slice();for(let i=a.length-1;i>0;i--){const j=random(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
-  let sequence=0;
+  let sequence=0,lastLetterOpening='';
   function session(id){try{if(window.crypto?.randomUUID)return id+'-'+window.crypto.randomUUID();}catch(_){}return `${id}-${Date.now().toString(36)}-${++sequence}-${random(0x100000000).toString(36)}`;}
   function catalogue(value){const seen=new Set();return (Array.isArray(value)?value:[]).filter(s=>s&&typeof s.id==='string'&&s.id.trim()&&typeof s.label==='string'&&s.label.trim()&&!seen.has(s.id)&&seen.add(s.id)).map(s=>({id:s.id,label:s.label.trim(),category:s.category||'',tier:s.tier||''}));}
   function letters(skills){
@@ -55,6 +55,17 @@
     }
     function button(label,action,cls='swl-skill-text-button',disabled=false){const e=node('button',cls,label),generation=renderGeneration;e.type='button';e.disabled=disabled;e.dataset.contestAction=action;e.addEventListener('click',()=>{if(generation===renderGeneration&&!e.disabled)perform(action);});return e;}
     function nextSkill(){if(!bag.length){bag=shuffle(pool);if(bag.length>1&&bag[bag.length-1].id===previous){const j=random(bag.length-1);[bag[j],bag[bag.length-1]]=[bag[bag.length-1],bag[j]];}}const skill=bag.pop();previous=skill.id;return skill;}
+    function startLetterBag(){
+      // Each new game gets a fresh random cycle, including Play again. Keep its
+      // opener different from the previous opener and the most recent draw.
+      bag=shuffle(pool);
+      const end=bag.length-1,avoid=new Set([previous,lastLetterOpening]);
+      if(end>0&&avoid.has(bag[end].id)){
+        const alternatives=bag.map((skill,index)=>({skill,index})).filter(item=>!avoid.has(item.skill.id));
+        if(alternatives.length){const other=alternatives[random(alternatives.length)].index;[bag[end],bag[other]]=[bag[other],bag[end]];}
+      }
+      lastLetterOpening=bag[end]?.id||'';
+    }
     function position(){return START+(TARGET-START)*(1-Math.pow(1-Math.max(0,Math.min(1,1-remaining/duration)),4));}
     function updateReel(tick=false){if(!reel||!track)return;const width=reel.getBoundingClientRect?.().width;if(width>2)reelWidth=width-2;cardWidth=Math.min(310,Math.max(174,reelWidth*.62));reel.style.setProperty('--reel-card-width',`${cardWidth}px`);const p=position(),b=Math.floor(p+.5);if(tick&&b>boundary)sound({kind:'reel-tick',progress:1-remaining/duration,remaining:remaining/1000});boundary=b;offset=reelWidth/2-cardWidth/2-p*(cardWidth+GAP);track.style.transform=`translate3d(${offset}px,0,0)`;}
     function buildReel(){cards=[];boundary=START;for(let i=0;i<32;i++){const a=pool.filter(s=>s.id!==cards[i-1]?.id&&(!(i===TARGET-1||i===TARGET+1)||s.id!==selected.id)),choices=a.length?a:pool;cards.push(i===TARGET?selected:choices[random(choices.length)]);}}
@@ -69,6 +80,7 @@
       if(!integer(rounds,10)||values.some(n=>!n)){error='Use 1–20 gymnasts per team and 1–10 rounds.';render();return;}
       if(new Set(chosen.map(n=>n.toLocaleLowerCase())).size!==chosen.length){error='Give each team a different name.';render();return;}
       podium?.destroy();podium=null;teams=chosen.map((name,i)=>({name,color:COLORS[i],size:values[i],score:0,turns:0,used:[]}));
+      if(letter)startLetterBag();
       round=turn=0;error='';resetPrompt=false;sessionId=session(id);completionSent=false;prepare();render(true);
     }
     function reveal(){cancelTimer();remaining=0;phase='revealed';status=fixedOrder?`${selected.label}. Gymnast ${turn+1} in each active team plays.${stick?' Coach: tap the team with the best stick.':''}`:`${selected.label}. Each team nominates an unused gymnast, then the coach picks the winner.`;render(true);sound({kind:'reel-reveal'});}

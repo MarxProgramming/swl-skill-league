@@ -1,8 +1,14 @@
-# SWL Squad Training 5.1
+# SWL Squad Training 5.2
 
 GitHub Pages hosts this static app. Google Sheets remains the shared data store through the existing Google Apps Script endpoint.
 
 ## Current experience
+
+Version 5.2 gives Letter Duel a fresh random letter bag for each new game and replay, with a different opening from the previous opener and latest letter. Every eligible letter is visited once per bag; returning to an unfinished game preserves that game.
+
+Renewal warnings colour only the Renew control: orange during the last seven days, red on the final day. Skill cells retain their normal status colour and fixed size. At the existing threshold of 50 qualifying Floor points over seven days, the points themselves have a gentle ember highlight and an On a streak caption. Whole-card heat effects are removed; the qualifying progress calculation and score totals do not change.
+
+Major panels have layered shadows, softly lit upper edges and richer dark surfaces. Gymnast cards receive restrained depth; podium metals retain their separate animation. Reduced motion remains supported.
 
 When a training complex is selected in Gymnasts, each squad is ordered by its total ticks in that complex, fewest first. Achieved counts as one tick and Perfect as two. Equal totals are alphabetical; clearing the complex returns to alphabetical order. Attendance-hidden gymnasts remain below the active list.
 
@@ -14,7 +20,7 @@ The main tabs are **Leaderboards**, **Gymnasts** and **Analytics**. **Games** an
 
 The progressive collection contains six cumulative Floor stages: **Achieved Foundations**, **Perfect Foundations**, **Achieved Upgrades**, **Perfect Upgrades**, **Achieved Complete Floor**, and **Perfect Complete Floor**. Their scopes include 9 basic, 18 basic-and-upgraded, and 24 basic-through-Pro skills respectively; handstands are excluded. Vault has separate Achieved and Perfect badges across all 6 skills. Perfect also counts as Achieved. Badge collections and their progress are available within individual profiles rather than at the bottom of the main leaderboard.
 
-Each profile has an inline **Skills / Badges / Placement / Insights** switch below its stable summary card. Placement shows nearby rankings. Personal Insights has independent apparatus controls, priority skills, category progress, weekly gains and a collapsed points-history chart, preserving the main Analytics context. Badges shows every stage, its current progress, saved earned date where available, and an expandable checklist of required skills with single or double ticks. Requirements are read-only. Earned badges use confirmed saved receipts and remain in the collection even if marks later change or Perfect expires; unsaved completion never invents an award. Leaderboard and directory cards show the highest confirmed Floor and Vault badge, while the profile header shows all earned stages. Lexi’s historical 250 emblem remains alongside her category badges. Concealed leaderboard previews do not expose badges. Eight distinct neon artworks use different colours, tier bars and Floor/Vault silhouettes, with tightly aligned, smaller icons on phones.
+Each profile has an inline **Skills / Badges / Placement / Insights** switch below its stable summary card. Placement shows nearby rankings. Personal Insights has independent apparatus controls, priority skills, category progress, weekly gains and a collapsed points-history chart, preserving the main Analytics context. Badges shows every stage, its current progress, saved earned date where available, and an expandable checklist of required skills with single or double ticks. Requirements are read-only. Earned badges use confirmed saved receipts and remain in the collection even if marks later change or Perfect expires; unsaved completion never invents an award. Leaderboard and directory cards show the highest confirmed Floor and Vault badge with any earlier saved stages slightly stacked behind it, using one button per category. The profile header shows all earned stages individually. Perfect emblems have brighter edges and a small diamond accent. Compact badge pop-ups omit dates; saved earned dates remain in the profile Badges panel. Lexi’s historical 250 emblem remains alongside her category badges. Concealed leaderboard previews do not expose badges. Eight distinct neon artworks use different colours, tier bars and Floor/Vault silhouettes, with tightly aligned, smaller icons on phones.
 
 The startup screen shows the SWL logo, violet loading bars and a simple Loading label over a slowly moving purple gradient. The programme menu fills the available viewport with two restrained cards and the existing squad descriptions. It yields as soon as loading completes, supports reduced motion, and provides a bounded fallback and manual exit. The leaderboard no longer repeats its filter summary above the boards; analytics and the directory omit decorative introductory copy. Priority-skill disclosures use vector chevrons.
 
@@ -24,7 +30,7 @@ Awarding or renewing Perfect asks whether the named gymnast performed the named 
 
 The Acro pro complex contains **Round-off flick**, **Double spin** and **Handspring**. Each remains 2.5 points for Achieved and 5 for Perfect, with +1 only for a complete Perfect complex. The two replacement Floor skills have new identifiers; Floor Handspring and Vault Handspring are separate records. The catalogue, profiles, quick marking, analytics and skill-shuffle pools use the same updated definitions.
 
-Lexi Primrose’s historical first-to-250 Floor achievement is a tiny outlined **250** emblem directly after her name. Its accessible button opens the explanation and does not open or alter her skills. Current points do not affect this historical award. Fire emojis are no longer shown; the existing weekly card glow remains.
+Lexi Primrose’s historical first-to-250 Floor achievement is a tiny outlined **250** emblem directly after her name. Its accessible button opens the explanation and does not open or alter her skills. Current points do not affect this historical award. Fire emojis are not shown; weekly streaks now highlight points only.
 
 Backend catalogue 5 archives the two replaced skill records before migration and clears their existing marks and dates, so the new skills must be demonstrated. Unrelated skills, Double spin, Vault marks, dates, game records and earned weekly history are preserved. Older clients can read a compatible view but must refresh before scoring. The shared scoring lock, 30-minute unlock lease, background saving, retry and 30-day Perfect renewal remain unchanged. Release testing uses isolated invented records; it does not tick live gymnasts for tests.
 

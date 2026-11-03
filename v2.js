@@ -29,7 +29,8 @@
     actions.onApparatus?.(value);
   }
   const fireBadge=id=>data.fireBadge?.(id)||'';
-  const heatClass=(id,at)=>{const level=data.heatLevel?.(id,at)||(data.isOnFire(id,at)?'fire':'none');return level==='fire'?'is-on-fire':'';};
+  const streakLabel=id=>data.streakLabel?.(id)||'';
+  const heatClass=(id,at)=>{const level=data.heatLevel?.(id,at)||(data.isOnFire(id,at)?'fire':'none');return level==='fire'?'is-on-streak':'';};
   const ageGroups=()=>data.ageCategories||[];
   const ageOf=g=>data.ageCategory?.(g)||'unknown';
   const ageLabel=c=>c.name+' · '+c.range;
@@ -140,7 +141,7 @@
     return `<div class="directory-quick" role="group" aria-label="${esc(complex.label)} for ${esc(g.name)}"><span class="directory-quick-label">${esc(complex.label)}</span><div class="directory-quick-grid">${complex.skills.map(k=>{
       const level=data.mark(g.id,k.id),fresh=data.skillFreshness(g.id,k.id),status=['Unticked','Achieved','Perfect'][level],next=['Achieved','Perfect','Unticked'][level];
       const renewalDays=fresh.days===null?'Renewal pending':fresh.days===0?'Due now':`${fresh.days} ${fresh.days===1?'day':'days'} left`,renewalId=`quick-days-${g.id}-${k.id}`;
-      return `<div class="directory-quick-cell level-${level}${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${['○','✓','✓✓'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong></button>${fresh.due?`<div class="directory-quick-renewal"><span class="directory-quick-days" id="${esc(renewalId)}">${esc(renewalDays)}</span><button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew Perfect for ${esc(k.name)} for ${esc(g.name)} for 30 days" aria-describedby="${esc(renewalId)}"${data.canEdit===false?' disabled':''}>↻ Renew</button></div>`:''}</div>`;
+      return `<div class="directory-quick-cell level-${level}${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${['○','✓','✓✓'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong></button>${fresh.due?`<div class="directory-quick-renewal"><span class="directory-quick-days" id="${esc(renewalId)}">${esc(renewalDays)}</span><button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-renewal-urgency="${fresh.days<=1?'final':'due'}" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew Perfect for ${esc(k.name)} for ${esc(g.name)} for 30 days" aria-describedby="${esc(renewalId)}"${data.canEdit===false?' disabled':''}>↻ Renew</button></div>`:''}</div>`;
     }).join('')}</div></div>`;
   }
   function renderDirectory() {
@@ -168,7 +169,7 @@
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
       const tickCount=g=>complex ? complex.skills.reduce((total,skill)=>total+data.mark(g.id,skill.id),0) : 0;
       const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>tickCount(a)-tickCount(b)||a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
-      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,'combined'),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><div class="directory-profile-content"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"></button><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)} ${achievementBadge(g)}</strong>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>Combined pts ↗</small></span></div>${window.SWLDirectoryAttendance?.control(g)||''}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
+      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,'combined'),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><div class="directory-profile-content"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"></button><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)} ${achievementBadge(g)}</strong>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${streakLabel(g.id)||'Combined pts ↗'}</small></span></div>${window.SWLDirectoryAttendance?.control(g)||''}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
     window.SWLSearch?.render(data,{group:directoryGroup});
     window.SWLDirectoryAttendance?.refresh();
@@ -181,7 +182,7 @@
     const duePeople=[];
     people.forEach(g=>{
       counts.points+=data.summary(g.id,scoreCategory()).points;let due=0;
-      if(heatClass(g.id,at)==='is-on-fire')counts.onFire++;else if(data.heatLevel?.(g.id,at)==='hot')counts.hot++;
+      if(heatClass(g.id,at)==='is-on-streak')counts.onFire++;else if(data.heatLevel?.(g.id,at)==='hot')counts.hot++;
       counts.weeklyPoints+=data.weeklyPoints?.(g.id,at)||0;
       skills.forEach(skill=>{
         const level=data.mark(g.id,skill.id),fresh=data.skillFreshness(g.id,skill.id,at),cat=categories.find(c=>c.id===skill.category);cat.total++;

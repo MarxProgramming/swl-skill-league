@@ -20,7 +20,6 @@
   const legacyIds = Object.freeze({'floor-achieved':'floor-pro-achieved','floor-perfect':'floor-pro-perfect'});
   const canonicalId = id => Object.hasOwn(legacyIds,id) ? legacyIds[id] : id;
   const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
-  const earnedDate = value => new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',day:'numeric',month:'long',year:'numeric'}).format(new Date(value));
 
   // Each viewport trims the original atlas's empty padding, without redrawing it.
   // Equal visible heights and centred viewports keep unlike shapes in one line.
@@ -34,7 +33,7 @@
     const key = canonicalId(id);
     if (!Object.hasOwn(challenges,key)) return '';
     const challenge = challenges[key];
-    return `<span class="swl-completion-icon swl-completion-badge is-${challenge.level}" aria-hidden="true">${completionEmblem(challenge)}</span>`;
+    return `<span class="swl-completion-icon swl-completion-badge is-${challenge.level}" data-award-kind="${key}" aria-hidden="true">${completionEmblem(challenge)}</span>`;
   }
 
   function badge(gymnast) {
@@ -57,18 +56,32 @@
   }
 
   function highestChallenges(gymnast, completionAchievements) {
-    const highest = new Map();
+    const groups = new Map();
     for (const award of savedChallenges(gymnast, completionAchievements)) {
-      const previous = highest.get(award.challenge.apparatus);
-      if (!previous || award.challenge.rank > previous.challenge.rank) highest.set(award.challenge.apparatus,award);
+      const category = award.challenge.apparatus;
+      if (!groups.has(category)) groups.set(category,[]);
+      groups.get(category).push(award);
     }
-    return [...highest.values()];
+    return [...groups.values()].map(awards => {
+      awards.sort((a,b)=>a.challenge.rank-b.challenge.rank);
+      return {...awards[awards.length-1],previous:awards.slice(0,-1)};
+    });
+  }
+
+  // Saved lower stages peek behind the newest emblem without adding more targets.
+  // Missing receipts never create a decorative badge that has not been earned.
+  function awardArtwork(award, profile = false) {
+    const previous = profile ? [] : award.previous || [];
+    if (!previous.length) return `<span class="swl-achievement-emblem">${completionEmblem(award.challenge)}</span>`;
+    return `<span class="swl-achievement-emblem swl-award-stack">${previous.map(({id,challenge},index) => `<span class="swl-award-layer is-${challenge.level}" data-stacked-award="${id}" style="--award-offset:${previous.length-index}" aria-hidden="true">${completionEmblem(challenge)}</span>`).join('')}<span class="swl-award-layer swl-award-front is-${award.challenge.level}" style="--award-offset:0" aria-hidden="true">${completionEmblem(award.challenge)}</span></span>`;
   }
 
   function challengeButtons(gymnast, awards, profile = false) {
-    return awards.map(({id,challenge,earnedAt}) => {
-      const label = `${gymnast.name}: ${challenge.title}. Earned ${earnedDate(earnedAt)}.`;
-      return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}${profile ? ' is-profile-award' : ''}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></button>`;
+    return awards.map(award => {
+      const {id,challenge,earnedAt} = award;
+      const previous = profile ? [] : award.previous || [];
+      const label = `${gymnast.name}: ${challenge.title}${previous.length ? `; ${previous.length} earlier ${challenge.apparatus} ${previous.length === 1 ? 'badge' : 'badges'}` : ''}.`;
+      return `<button type="button" class="swl-achievement-badge swl-completion-badge is-${challenge.level}${profile ? ' is-profile-award' : ''}${previous.length ? ' has-award-stack' : ''}" style="--award-stack-count:${previous.length}" data-award-kind="${id}" data-swl-achievement="${id}" data-achievement-gymnast="${escape(gymnast.id)}" data-achievement-name="${escape(gymnast.name)}" data-achievement-earned="${escape(earnedAt)}" aria-label="${escape(label)}" aria-haspopup="dialog" title="${escape(challenge.title)}">${awardArtwork(award,profile)}</button>`;
     }).join('');
   }
 
@@ -88,9 +101,10 @@
   // Use inside existing profile buttons: no nested button or dialog trigger.
   function allIcons(gymnast, completionAchievements) {
     const historical = eligible(gymnast) ? `<span class="swl-achievement-icon" role="img" aria-label="Lexi’s achievement: first to 250 Floor points" title="First to 250 Floor points"><span class="swl-achievement-emblem">${emblem}</span></span>` : '';
-    return historical + highestChallenges(gymnast, completionAchievements).map(({challenge,earnedAt}) => {
-      const label = `${gymnast.name}: ${challenge.title}. Earned ${earnedDate(earnedAt)}.`;
-      return `<span class="swl-achievement-icon swl-completion-badge is-${challenge.level}" role="img" aria-label="${escape(label)}" title="${escape(challenge.title)}"><span class="swl-achievement-emblem">${completionEmblem(challenge)}</span></span>`;
+    return historical + highestChallenges(gymnast, completionAchievements).map(award => {
+      const {id,challenge,previous} = award;
+      const label = `${gymnast.name}: ${challenge.title}${previous.length ? `; ${previous.length} earlier ${challenge.apparatus} ${previous.length === 1 ? 'badge' : 'badges'}` : ''}.`;
+      return `<span class="swl-achievement-icon swl-completion-badge is-${challenge.level}${previous.length ? ' has-award-stack' : ''}" style="--award-stack-count:${previous.length}" data-award-kind="${id}" role="img" aria-label="${escape(label)}" title="${escape(challenge.title)}">${awardArtwork(award)}</span>`;
     }).join('');
   }
 
@@ -157,7 +171,7 @@
     const title = historical ? 'First to 250' : challenge.title;
     const description = historical ? 'Lexi was the first gymnast to reach 250 Floor points.' : challenge.description;
     panel.setAttribute('data-award',id);
-    panel.innerHTML = `<button type="button" class="swl-achievement-close" aria-label="Close achievement">×</button><span class="swl-achievement-large${challenge ? ' swl-completion-badge is-'+challenge.level : ''}" aria-hidden="true">${historical ? emblem : completionEmblem(challenge)}</span><p class="swl-achievement-eyebrow">${historical ? 'A place in SWL history' : 'Challenge completed'}</p><h2 id="swlAchievementTitle">${title}</h2><p class="swl-achievement-recipient">${escape(name)}</p><p id="swlAchievementDescription">${description}</p>${historical ? '' : `<p class="swl-achievement-earned">Earned <time datetime="${escape(earnedAt)}">${escape(earnedDate(earnedAt))}</time></p>`}<p class="swl-achievement-note">${historical ? 'A lasting achievement, even as her current points change.' : 'A lasting achievement. This emblem stays even if skills are unticked or Perfect marks expire.'}</p><button type="button" class="swl-achievement-done">${historical ? 'Brilliant work, Lexi' : 'Well earned'}</button>`;
+    panel.innerHTML = `<button type="button" class="swl-achievement-close" aria-label="Close achievement">×</button><span class="swl-achievement-large${challenge ? ' swl-completion-badge is-'+challenge.level : ''}" data-award-kind="${key}" aria-hidden="true">${historical ? emblem : completionEmblem(challenge)}</span><p class="swl-achievement-eyebrow">${historical ? 'A place in SWL history' : 'Challenge completed'}</p><h2 id="swlAchievementTitle">${title}</h2><p class="swl-achievement-recipient">${escape(name)}</p><p id="swlAchievementDescription">${description}</p><p class="swl-achievement-note">${historical ? 'A lasting achievement, even as her current points change.' : 'A lasting achievement. This emblem stays even if skills are unticked or Perfect marks expire.'}</p><button type="button" class="swl-achievement-done">${historical ? 'Brilliant work, Lexi' : 'Well earned'}</button>`;
     panel.querySelector('.swl-achievement-close').addEventListener('click',close);
     panel.querySelector('.swl-achievement-done').addEventListener('click',close);
     return true;

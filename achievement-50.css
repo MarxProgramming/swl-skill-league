@@ -93,3 +93,23 @@ html[data-theme] .swl-achievement-dialog button:focus-visible{outline:2px solid 
 /* Keep earned icons visible in the compact profile switcher on phones. */
 .chooser strong:has(.swl-achievement-icon){white-space:normal;overflow:visible;text-overflow:clip;line-height:1.55}
 #chooserAchievements{display:inline;white-space:normal}
+
+/* 5.2 — earned stages form one small stack per apparatus on everyday cards. */
+.swl-completion-badge.has-award-stack{--award-step:2px;width:max(24px,calc(var(--award-height) * var(--award-ratio) + var(--award-stack-count) * var(--award-step)))}
+.swl-completion-badge.has-award-stack .swl-achievement-emblem{position:relative;width:calc(var(--award-height) * var(--award-ratio) + var(--award-stack-count) * var(--award-step));height:var(--award-height);filter:none}
+.swl-award-layer{position:absolute;right:0;top:50%;display:block;width:calc(var(--award-height) * var(--award-ratio));height:var(--award-height);transform:translate(calc(var(--award-offset) * -1 * var(--award-step)),calc(-50% + var(--award-offset) * .35px));pointer-events:none;filter:brightness(.78) drop-shadow(-1px 0 1px #090611b3)}
+.swl-award-layer.swl-award-front{filter:drop-shadow(-1px 0 1px #090611d9)}
+.swl-completion-badge{--award-glint:#dff9f2}
+.swl-completion-badge[data-award-kind="floor-basics-perfect"]{--award-glint:#b7fff3}
+.swl-completion-badge[data-award-kind="floor-upgrades-perfect"]{--award-glint:#ffe0ef}
+.swl-completion-badge[data-award-kind="floor-pro-perfect"]{--award-glint:#fff2c2}
+.swl-completion-badge[data-award-kind="vault-perfect"]{--award-glint:#d5ffe3}
+/* Perfect keeps its palette, with a polished edge and a small diamond glint. */
+.swl-completion-badge.is-perfect>.swl-achievement-emblem{position:relative}
+.swl-completion-badge.is-perfect:not(.has-award-stack) .swl-award-art,.swl-award-front.is-perfect .swl-award-art,.swl-completion-icon.is-perfect>.swl-award-art,.swl-achievement-large.is-perfect>.swl-award-art{filter:brightness(1.16) saturate(1.1) drop-shadow(0 0 1px var(--award-glint)) drop-shadow(0 0 3px color-mix(in srgb,var(--award-glint) 25%,transparent))}
+.swl-completion-badge.is-perfect>.swl-achievement-emblem::after,.swl-completion-icon.is-perfect::after,.swl-achievement-large.is-perfect::after{content:"";position:absolute;right:5%;top:15%;width:4px;height:4px;background:#fff9f2;border:1px solid var(--award-glint);transform:rotate(45deg);border-radius:1px;box-shadow:0 0 5px color-mix(in srgb,var(--award-glint) 65%,transparent);pointer-events:none}
+.swl-completion-icon,.swl-achievement-large.swl-completion-badge{position:relative}
+.swl-completion-icon.is-perfect::after{width:5px;height:5px;right:13%;top:18%}
+.swl-achievement-large.is-perfect::after{width:7px;height:7px;right:13%;top:18%}
+/* Profile collections retain individual, closely aligned emblems. */
+#athleteAchievements>.swl-completion-badge.is-perfect>.swl-achievement-emblem::after{width:4px;height:4px}

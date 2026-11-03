@@ -37,7 +37,7 @@
       <span class="swlp-row-avatar" aria-hidden="true">${escapeHTML(initials(gymnast.name))}</span>
       <span class="swlp-row-person"><strong>${escapeHTML(gymnast.name)} ${options.coachBadge(gymnast)} ${options.fireBadge(gymnast.id)} ${peek ? '' : options.achievementBadge(gymnast)}</strong>
         <small class="heat-meta"><span class="heat-meta-text">${selected ? (options.isCoachParticipant(gymnast) ? 'Your selected coach' : 'Your selected gymnast') : escapeHTML(options.groupLabel(gymnast.coach || ''))}</span></small></span>
-      <span class="swlp-row-score"><strong>${displayNumber(row.points)}</strong><small>pts</small></span>`;
+      <span class="swlp-row-score"><strong>${displayNumber(row.points)}</strong><small>${!peek ? (options.streakLabel(gymnast.id)||'pts') : 'pts'}</small></span>`;
     if (peek) {
       return `<li class="swlp-row swlp-peek" data-placement-position="${position}" data-placement-peek="${distance < 0 ? 'above' : 'below'}" aria-hidden="true">
         <div class="swlp-peek-content">${details}</div><span class="swlp-peek-label">${distance < 0 ? 'Just above' : 'Just below'}</span></li>`;
@@ -59,11 +59,11 @@
     </article>`;
   }
 
-  function render({ host:targetHost, embedded = false, gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', achievementBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
+  function render({ host:targetHost, embedded = false, gymnast, boards, apparatusLabel = 'Floor', motionOff = false, fireBadge = () => '', streakLabel = () => '', achievementBadge = () => '', coachBadge = () => '', isCoachParticipant = () => false, isOnFire = () => false, heatLevel, groupLabel = value => value, scope = 'All squads', ownGroup = false, selectedScope = ownGroup ? 'own' : 'all', scopeOptions = [{id:'own',label:'Own squad'},{id:'all',label:'All squads'}], participantLabel = 'gymnasts' } = {}) {
     const host = targetHost || document.getElementById('placementContent');
     if (!host || !gymnast || !Array.isArray(boards)) return null;
-    const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-fire':'';};
-    const options = { fireBadge, achievementBadge, coachBadge, isCoachParticipant, heatClass, groupLabel, scope };
+    const heatClass = id => {const level=heatLevel?.(id)||(isOnFire(id)?'fire':'none');return level==='fire'?'is-on-streak':'';};
+    const options = { fireBadge, streakLabel, achievementBadge, coachBadge, isCoachParticipant, heatClass, groupLabel, scope };
     const overall = boards.find(board => board.id === 'overall');
     const overallRows = Array.isArray(overall?.rows) ? overall.rows : [];
     const overallWindow = placementWindow(overallRows, gymnast.id);
