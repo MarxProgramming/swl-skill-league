@@ -38,9 +38,10 @@
     return members.map(person => ({person,series:typeof build === 'function' ? build({progress:data.state?.weeklyProgress,gymnastId:person.id,days,now}) : {available:false,rows:[]}}));
   }
   function weekly(data,members,now) {
+    members=people(members);
     const end = dayIndex(data.state?.weeklyProgress?.day), records = historyFor(data,members,56,now);
     const rows = Array.from({length:8},(_,i) => {
-      if (end === null) return {value:null,recorded:0,partial:false};
+      if (end === null) return {value:null,averageValue:null,recorded:0,partial:false};
       const last = end - (7-i)*7, first = last - 6;
       let value = 0, recorded = 0, complete = 0;
       records.forEach(({series}) => {
@@ -51,7 +52,7 @@
         if (start <= first && finish >= last) complete++;
         value += series.rows.filter(r => !r.baseline && dayIndex(r.day) >= first && dayIndex(r.day) <= last).reduce((sum,r) => sum + finite(r.delta),0);
       });
-      return {first:isoDay(first),last:isoDay(last),label:shortDay(first)+'–'+shortDay(last),value:recorded ? value : null,recorded,complete,partial:recorded > 0 && complete < members.length};
+      return {first:isoDay(first),last:isoDay(last),label:shortDay(first)+'–'+shortDay(last),value:recorded ? value : null,averageValue:recorded && members.length ? value/members.length : null,recorded,complete,partial:recorded > 0 && complete < members.length};
     });
     return {rows,available:rows.some(r => r.value !== null),memberCount:members.length,recordedCount:records.filter(r => r.series.available).length,stale:records.some(r => r.series.stale),end};
   }
@@ -123,11 +124,11 @@
     if (model.scope === 'vault') return empty('Vault point history isn’t recorded yet.');
     const groups = model.members.map(group => weekly(model.data,group,model.now));
     if (!groups.some(g => g.available)) return empty('No recorded Floor point history is available for either selection.');
-    const max = Math.max(1,...groups.flatMap(group => group.rows.map(r => Math.abs(r.value || 0))));
-    return `<div class="acmp-momentum">${groups[0].rows.map((row,i) => pair(model,row.label || `Window ${i+1}`,groups.map(g => g.rows[i].value),{maximum:max,suffix:'net pts',signedValues:true,details:groups.map(g => {
+    const max = Math.max(1,...groups.flatMap(group => group.rows.map(r => Math.abs(r.averageValue || 0))));
+    return `<div class="acmp-momentum">${groups[0].rows.map((row,i) => pair(model,row.label || `Window ${i+1}`,groups.map(g => g.rows[i].averageValue),{maximum:max,suffix:'pts / gymnast',signedValues:true,details:groups.map(g => {
       const item = g.rows[i];
       return item.value === null ? 'No records for this window' : `${item.recorded} / ${g.memberCount} with records${item.partial ? ' · partial coverage' : ''}`;
-    })})).join('')}</div>${note('Floor only · eight seven-day windows ending on the saved history date'+(groups[0].end !== null ? ' ('+shortDay(groups[0].end)+')' : '')+'. Signed totals share one scale: gains are right of zero; reductions are left. Partial coverage excludes unrecorded days or gymnasts; missing history is never treated as zero.')}${note('These are recorded gains and manual corrections for current squad members, not historical total scores. Renewals, automatic expiry and scoring-rule changes are excluded. Larger squads can gain more total points.')}`;
+    })})).join('')}</div>${note('Floor only · eight seven-day windows ending on the saved history date'+(groups[0].end !== null ? ' ('+shortDay(groups[0].end)+')' : '')+'. Average gains per gymnast share one scale: gains are right of zero; reductions are left. Every selected gymnast stays in the divisor, including those without records. Partial coverage means the result is incomplete, not proof of zero progress.')}${note('Saved Floor gains and manual corrections are divided by all current members of each selection. These are average gains, not historical total scores. Renewals, automatic expiry and scoring-rule changes are excluded. Squad size alone does not raise the result.')}`;
   }
   function ageComparison(model) {
     const categories = [...new Map((Array.isArray(model.data.ageCategories) ? model.data.ageCategories : []).filter(c => c && typeof c.id === 'string').map(c => [c.id,c])).values()];

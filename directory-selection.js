@@ -9,10 +9,11 @@
   function control(g){
     if(!active||!g||g.id==null)return '';
     const id=String(g.id),chosen=selected.has(id);
-    return `<button type="button" class="directory-selection-control" data-directory-select="${escape(id)}" aria-pressed="${chosen}" aria-label="${escape((chosen?'Deselect ':'Select ')+g.name)}"><span aria-hidden="true">${chosen?'✓':''}</span></button>`;
+    return `<button type="button" role="checkbox" class="directory-selection-control" data-directory-select="${escape(id)}" aria-checked="${chosen}" aria-label="${escape('Select '+g.name)}"><span aria-hidden="true">${chosen?'✓':''}</span></button>`;
   }
   function refresh(options={}){
     if(!root)return;
+    root.setAttribute('data-directory-selecting',String(active));
     // Only a confirmed, fully loaded roster can remove a remembered selection.
     if(options.loaded===true){
       const known=new Set(people().map(g=>String(g.id)));
@@ -21,7 +22,7 @@
     const host=root.querySelector('#directorySelectionToolbar');if(!host)return;
     const focus=document.activeElement,action=host.contains(focus)?focus?.dataset?.directorySelectionAction:null;
     const count=selected.size,button=(key,label,style='',disabled=false)=>`<button type="button" data-directory-selection-action="${key}" class="${style}"${disabled?' disabled':''}>${label}</button>`;
-    const html=`<div class="directory-selection-bar${active||count?' has-selection':''}" role="group" aria-label="Select gymnasts">${active||count?`<span class="directory-selection-count" role="status" aria-live="polite">${count} selected</span><div class="directory-selection-actions">${button('analyse','Analyse selected','directory-selection-primary',!count)}${button('hide','Hide for 24 hours','',!count||!window.SWLDirectoryAttendance?.hideMany)}${button('clear','Clear','directory-selection-quiet',!count)}${button(active?'done':'start',active?'Done':'Select','directory-selection-quiet')}</div>`:button('start','Select','directory-selection-start')}${active?'<p class="directory-selection-hint">Tap the boxes to select gymnasts. Your selection stays when you change squads or search.</p>':''}</div>`;
+    const html=`<div class="directory-selection-bar${active||count?' has-selection':''}" role="group" aria-label="Select gymnasts">${active||count?`<span class="directory-selection-count" role="status" aria-live="polite">${count} selected</span><div class="directory-selection-actions">${button('analyse','Analyse selected','directory-selection-primary',!count)}${button('hide','Hide for 24 hours','',!count||!window.SWLDirectoryAttendance?.hideMany)}${button('clear','Clear','directory-selection-quiet',!count)}${button(active?'done':'start',active?'Done':'Select','directory-selection-quiet')}</div>`:button('start','Select','directory-selection-start')}${active?'<p class="directory-selection-hint">Tap anywhere on a gymnast’s card to select them. Your selection stays when you change squads or search.</p>':''}</div>`;
     if(host.innerHTML!==html)host.innerHTML=html;
     if(action)[...host.querySelectorAll('[data-directory-selection-action]')].find(b=>b.dataset.directorySelectionAction===action&&!b.disabled)?.focus({preventScroll:true});
   }
@@ -34,17 +35,26 @@
   function focusAction(action){
     [...root.querySelectorAll('[data-directory-selection-action]')].find(b=>b.dataset.directorySelectionAction===action&&!b.disabled)?.focus({preventScroll:true});
   }
+  function toggle(id){
+    if(!active||!people().some(g=>String(g.id)===id))return;
+    if(selected.has(id))selected.delete(id);else selected.add(id);
+    changed('select');
+    [...root.querySelectorAll('[data-directory-select]')].find(b=>b.dataset.directorySelect===id)?.focus({preventScroll:true});
+  }
+  function consume(event){
+    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation?.();
+  }
   function click(event){
+    // Capture before a profile, badge or mark can handle a click of its own.
+    const card=active?event.target.closest?.('[data-directory-gymnast]'):null;
+    if(card&&root.contains(card)){
+      consume(event);toggle(card.dataset.directoryGymnast);return;
+    }
     const button=event.target.closest?.('[data-directory-select],[data-directory-selection-action]');
     if(!button||!root.contains(button)||button.disabled)return;
-    event.preventDefault();event.stopPropagation();
+    consume(event);
     if(button.hasAttribute('data-directory-select')){
-      const id=button.dataset.directorySelect;
-      if(!active||!people().some(g=>String(g.id)===id))return;
-      if(selected.has(id))selected.delete(id);else selected.add(id);
-      changed('select');
-      [...root.querySelectorAll('[data-directory-select]')].find(b=>b.dataset.directorySelect===id)?.focus({preventScroll:true});
-      return;
+      toggle(button.dataset.directorySelect);return;
     }
     switch(button.dataset.directorySelectionAction){
       case 'start':active=true;changed('start');focusAction('done');break;
@@ -57,9 +67,9 @@
     }
   }
   function mount(options){
-    if(root)root.removeEventListener('click',click);
+    if(root)root.removeEventListener('click',click,true);
     root=options.root;getGymnasts=options.getGymnasts||(()=>[]);onChange=options.onChange||(()=>{});onAnalyse=options.onAnalyse||(()=>{});
-    if(root){root.addEventListener('click',click);refresh();}
+    if(root){root.addEventListener('click',click,true);refresh();}
   }
   window.SWLDirectorySelection={mount,refresh,control,isActive:()=>active,ids,clear};
 })();

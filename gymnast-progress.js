@@ -56,6 +56,8 @@
     const first=Math.min(...all.map(series=>dayIndex(series.firstDay))),last=Math.max(...all.map(series=>dayIndex(series.lastDay)));
     shared.firstDay=iso(first);shared.lastDay=iso(last);shared.coverageDays=last-first+1;shared.partial=shared.coverageDays<days;shared.stale=all.some(series=>series.stale);
     for(const group of [primary,comparison].filter(Boolean)){
+      // A shared imported date range can be longer than some members’ records.
+      group.partialHistoryCount=group.records.filter(record=>dayIndex(record.firstDay)>first||dayIndex(record.lastDay)<last).length;
       const daily=new Map();
       group.records.forEach(series=>series.rows.filter(row=>!row.baseline).forEach(row=>daily.set(row.day,round((daily.get(row.day)||0)+row.delta))));
       group.rows=[{day:iso(first-1),delta:0,total:0,baseline:true}];let total=0;
@@ -69,6 +71,20 @@
     }
     shared.rows=primary.rows;shared.hasChanges=primary.hasChanges||Boolean(comparison?.hasChanges);
     return shared;
+  }
+  // Keep raw totals available for auditing; displayed squad curves use the whole
+  // selected cohort as their denominator, never just the people with records.
+  function buildAverageGroupComparison(config={}) {
+    const series=buildGroupComparison(config);
+    const average=group=>{
+      if(!group)return null;
+      const denominator=group.memberCount||1;
+      return {...group,averagePerMember:true,recordedNet:group.net??0,
+        net:round((group.net??0)/denominator),weeklyRate:round((group.weeklyRate??0)/denominator),
+        rows:(group.rows||[]).map(row=>({...row,delta:round(row.delta/denominator),total:round(row.total/denominator)}))};
+    };
+    const primary=average(series.primary),comparison=average(series.comparison);
+    return {...series,averagePerMember:true,primary,comparison,rows:primary.rows};
   }
   function geometry(series,comparisonRows=[]) {
     const values=[...series.rows,...comparisonRows].map(row=>row.total),min=Math.min(0,...values),max=Math.max(0,...values);
@@ -116,22 +132,22 @@
   }
   function groupReading(group,index) {
     if(!group.available)return 'History unavailable';
-    const row=group.rows[index];return signed(row.total)+' points gained'+(row.baseline?'':' · '+signed(row.delta)+' that day');
+    const row=group.rows[index];return signed(row.total)+' points gained per gymnast'+(row.baseline?'':' · '+signed(row.delta)+' per gymnast that day');
   }
   function differenceText(series,index) {
     if(!series.comparison?.available||!series.primary.available)return '';
     const difference=round(series.primary.rows[index].total-series.comparison.rows[index].total);
-    return difference===0?'Same recorded gain':number(Math.abs(difference))+' pts '+(difference>0?'more':'less')+' gained by the selected squad';
+    return difference===0?'Same average recorded gain':number(Math.abs(difference))+' pts '+(difference>0?'more':'less')+' per gymnast gained by the selected group';
   }
   function groupSelectionText(series,index,names) {
     return names.map((name,i)=>name+': '+groupReading(i?series.comparison:series.primary,index)).join('; ')+(series.comparison?'; '+differenceText(series,index):'');
   }
   function renderGroup({people=[],label:groupLabel='Selected squad',comparisonPeople=null,comparisonLabel='',comparisonId='',comparisonOptions=[],progress,days=28,apparatus='floor',now=Date.now()}={}) {
-    const series=buildGroupComparison({progress,people,comparisonPeople,days,now});
+    const series=buildAverageGroupComparison({progress,people,comparisonPeople,days,now});
     const ranges=`<div class="gp-ranges" role="group" aria-label="Progress period">${[[7,'7 days'],[28,'4 weeks'],[56,'8 weeks']].map(([n,text])=>`<button type="button" data-progress-range="${n}" aria-pressed="${series.days===n}">${text}</button>`).join('')}</div>`;
-    const heading=`<div class="gp-head"><div><p class="eyebrow">Squad progress · ${apparatus==='combined'?'Floor only':'Floor'}</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(groupLabel)} · ${series.primary.memberCount} ${series.primary.memberCount===1?'gymnast':'gymnasts'}</p>`;
+    const heading=`<div class="gp-head"><div><p class="eyebrow">Average progress · ${apparatus==='combined'?'Floor only':'Floor'}</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(groupLabel)} · ${series.primary.memberCount} ${series.primary.memberCount===1?'gymnast':'gymnasts'}</p>`;
     const options=(Array.isArray(comparisonOptions)?comparisonOptions:[]).filter(option=>option&&typeof option.id==='string');
-    const compare=`<label class="gp-comparison-control" for="squadProgressComparison"><span>Compare with another squad</span><select id="squadProgressComparison" data-progress-comparison><option value="">No comparison</option>${options.map(option=>`<option value="${esc(option.id)}"${option.id===comparisonId?' selected':''}>${esc(option.name)}</option>`).join('')}</select></label>`;
+    const compare=`<details class="gp-comparison-disclosure" data-analytics-disclosure="progress-compare-control"${comparisonId?' open':''}><summary>Compare with another squad<span aria-hidden="true"></span></summary><label class="gp-comparison-control" for="squadProgressComparison"><span>Comparison squad</span><select id="squadProgressComparison" data-progress-comparison><option value="">No comparison</option>${options.map(option=>`<option value="${esc(option.id)}"${option.id===comparisonId?' selected':''}>${esc(option.name)}</option>`).join('')}</select></label></details>`;
     if(apparatus==='vault'){
       active=null;
       return `<section class="gymnast-progress gp-group analytics-panel analytics-wide"><div class="gp-head"><div><p class="eyebrow">${esc(groupLabel)} · Vault</p><h2>Points over time</h2></div></div><div class="gp-empty"><p>Vault point history isn’t recorded yet.</p><button type="button" class="quiet" data-progress-floor>View Floor progress</button></div></section>`;
@@ -153,20 +169,25 @@
     const curves=groups.map((group,i)=>group.available?`<path class="gp-line${i?' gp-comparison-line':''}" d="${path(group.rows)}"/>`:'').join('');
     const markers=groups.map((group,i)=>group.available?`<span class="gp-marker${i?' gp-comparison-marker':''}" data-progress-group-marker="${i}" aria-hidden="true" style="left:${point.x/720*100}%;top:${geo.y(group.rows[selected].total)/260*100}%"></span>`:'').join('');
     const middle=series.rows[Math.floor(series.rows.length/2)];
-    const stats=groups.map((group,i)=>`<article class="gp-group-stat${i?' gp-comparison-stat':''}"><span class="gp-series-name"><i class="gp-series-key${i?' gp-series-key-comparison':''}" aria-hidden="true"></i>${esc(names[i])}</span><strong>${group.available?signed(group.net):'—'}<small>${group.available?'points gained':'History unavailable'}</small></strong><small>${group.memberCount} ${group.memberCount===1?'gymnast':'gymnasts'}${group.missingCount?' · '+group.recordedCount+' with records':''}${group.available?' · '+signed(group.net/group.recordedCount)+' per recorded gymnast':''}</small></article>`).join('');
+    const stats=groups.map((group,i)=>`<article class="gp-group-stat${i?' gp-comparison-stat':''}"><span class="gp-series-name"><i class="gp-series-key${i?' gp-series-key-comparison':''}" aria-hidden="true"></i>${esc(names[i])}</span><strong>${group.available?signed(group.net):'—'}<small>${group.available?'points gained per gymnast':'History unavailable'}</small></strong><small>${group.memberCount} ${group.memberCount===1?'gymnast':'gymnasts'}${group.missingCount?' · '+group.recordedCount+' with records':''}${group.available?' · average across all '+group.memberCount:''}</small></article>`).join('');
     const readings=groups.map((group,i)=>`<div class="gp-group-reading${i?' gp-group-reading-comparison':''}"><span><i class="gp-series-key${i?' gp-series-key-comparison':''}" aria-hidden="true"></i>${esc(names[i])}</span><strong data-progress-group-reading="${i}">${groupReading(group,selected)}</strong></div>`).join('');
-    const coverage=groups.map((group,i)=>group.missingCount?`${esc(names[i])}: ${group.missingCount} ${group.missingCount===1?'gymnast has':'gymnasts have'} no recorded history and ${group.missingCount===1?'is':'are'} excluded from the line.`:'').filter(Boolean).join(' ');
-    const description=names.map((name,i)=>`${name}: ${groups[i].available?signed(groups[i].net)+' recorded Floor points gained':'history unavailable'}`).join('. ')+`. ${label(series.firstDay)} to ${label(series.lastDay)}. Both lines start at zero for the selected period, on the same scale.`;
+    const coverage=groups.map((group,i)=>{
+      const reasons=[];
+      if(group.missingCount)reasons.push(`${group.missingCount} ${group.missingCount===1?'gymnast has':'gymnasts have'} no recorded history.`);
+      if(group.partialHistoryCount)reasons.push(`${group.partialHistoryCount} ${group.partialHistoryCount===1?'recorded history covers':'recorded histories cover'} only part of the displayed period.`);
+      return reasons.length?`${esc(names[i])}: ${reasons.join(' ')} The average still divides by all ${group.memberCount} selected gymnasts, so this is incomplete recorded progress, not proof of zero progress.`:'';
+    }).filter(Boolean).join(' ');
+    const description=names.map((name,i)=>`${name}: ${groups[i].available?signed(groups[i].net)+' recorded Floor points gained per gymnast':'history unavailable'}`).join('. ')+`. ${label(series.firstDay)} to ${label(series.lastDay)}. Each line shows recorded gains divided by every selected gymnast, starting at zero for this period on the same scale.`;
     return `<section class="gymnast-progress gp-group analytics-panel analytics-wide">${heading}${compare}
       <div class="gp-stats gp-group-stats${series.comparison?' gp-has-comparison':''}">${stats}</div>
-      <p class="gp-axis-label">Combined Floor points gained · ${label(series.firstDay)}–${label(series.lastDay)}</p>
+      <p class="gp-axis-label">Average Floor points gained per gymnast · ${label(series.firstDay)}–${label(series.lastDay)}</p>
       <div class="gp-chart"><div class="gp-y-axis" aria-hidden="true">${tickLabels}</div><div class="gp-plot" data-progress-plot><svg viewBox="0 0 720 260" preserveAspectRatio="none" role="img" aria-label="${esc(description)}">${grid}${!series.comparison&&series.primary.available?`<path class="gp-area" d="${geo.area}"/>`:''}${curves}<line class="gp-selected" x1="${point.x}" x2="${point.x}" y1="0" y2="260"/></svg>${markers}</div><div class="gp-x-axis" aria-hidden="true"><span>${label(series.firstDay)}</span><span>${series.coverageDays>1?label(middle.day):''}</span><span>${label(series.lastDay)}</span></div></div>
       <div class="gp-reading gp-group-readings" aria-live="polite" aria-atomic="true"><strong data-progress-date>${selectedLabel(row,series,true)}</strong>${readings}${series.comparison?`<span class="gp-difference" data-progress-difference>${differenceText(series,selected)}</span>`:''}</div>
       <div class="gp-scrub"><label for="squadProgressScrub">Explore a date</label><input id="squadProgressScrub" type="range" min="0" max="${series.rows.length-1}" step="1" value="${selected}" aria-valuetext="${esc(selectedLabel(row,series,true)+': '+groupSelectionText(series,selected,names))}"></div>
       ${!series.hasChanges?'<p class="gp-empty">No recorded Floor point changes in this period.</p>':''}
       ${coverage?`<p class="gp-note gp-coverage" role="status">${coverage}</p>`:''}
-      <p class="gp-note">${series.partial?'Showing '+series.coverageDays+' days of available records. ':''}${series.stale?'Saved records through '+label(series.lastDay)+'. ':''}Total gains for the current squad members, starting at zero for this period.${series.comparison?' Both lines use the same dates and scale; larger squads may gain more points.':''}${series.overlapCount?' '+series.overlapCount+' '+(series.overlapCount===1?'gymnast belongs':'gymnasts belong')+' to both selections and contributes to each line.':''}${apparatus==='combined'?' Vault history is not included.':''}</p>
-      <details class="gp-values" data-analytics-disclosure="progress-values"><summary>Daily values &amp; how this works</summary><p class="gp-note">The graph adds each current member’s saved Floor gains and manual corrections by date. It shows progress gained, not historical total scores. Renewals, automatic expiry and scoring-rule changes are excluded. Earlier activity may not have been recorded. Previous squad membership is not recorded.</p><table><caption class="gp-table-caption">Cumulative recorded Floor gains</caption><thead><tr><th scope="col">Date</th>${names.map(name=>`<th scope="col">${esc(name)}</th>`).join('')}</tr></thead><tbody>${series.rows.slice(1).map((r,index)=>`<tr><th scope="row">${label(r.day)}</th>${groups.map(group=>`<td>${group.available?signed(group.rows[index+1].total):'—'}</td>`).join('')}</tr>`).join('')}</tbody></table></details></section>`;
+      <p class="gp-note">${series.partial?'Showing '+series.coverageDays+' days of available records. ':''}${series.stale?'Saved records through '+label(series.lastDay)+'. ':''}Recorded gains divided by all current members of each selection, starting at zero for this period.${series.comparison?' Both lines use the same dates and scale, so squad size alone does not raise the result.':''}${series.overlapCount?' '+series.overlapCount+' '+(series.overlapCount===1?'gymnast belongs':'gymnasts belong')+' to both selections and contributes to each line.':''}${apparatus==='combined'?' Vault history is not included.':''}</p>
+      <details class="gp-values" data-analytics-disclosure="progress-values"><summary>Daily values &amp; how this works</summary><p class="gp-note">The graph adds each current member’s saved Floor gains and manual corrections by date, then divides by everyone in that selection. Missing records do not add gains, but those gymnasts remain in the divisor. It shows average progress gained, not historical total scores. Renewals, automatic expiry and scoring-rule changes are excluded. Earlier activity may not have been recorded. Previous squad membership is not recorded.</p><table><caption class="gp-table-caption">Cumulative recorded Floor gains per gymnast</caption><thead><tr><th scope="col">Date</th>${names.map(name=>`<th scope="col">${esc(name)}</th>`).join('')}</tr></thead><tbody>${series.rows.slice(1).map((r,index)=>`<tr><th scope="row">${label(r.day)}</th>${groups.map(group=>`<td>${group.available?signed(group.rows[index+1].total):'—'}</td>`).join('')}</tr>`).join('')}</tbody></table></details></section>`;
   }
   function selectGroup(index) {
     const {series,geo,names}=active,position=Math.max(0,Math.min(series.rows.length-1,Math.round(Number(index)||0))),row=series.rows[position],x=geo.x(position);
@@ -205,5 +226,5 @@
     if(root){root.removeEventListener('input',onInput);root.removeEventListener('click',onClick);}
     root=host;if(root){root.addEventListener('input',onInput);root.addEventListener('click',onClick);}
   }
-  window.SWLGymnastProgress={buildSeries,buildGroupComparison,render,renderGroup,mount};
+  window.SWLGymnastProgress={buildSeries,buildGroupComparison,buildAverageGroupComparison,render,renderGroup,mount};
 })();

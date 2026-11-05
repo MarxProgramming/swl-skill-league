@@ -294,7 +294,7 @@ body.no-motion .gymnast-progress,body.no-motion .gymnast-progress *{animation:no
 
 /* Squad overlays keep both cohorts on one scale and retain a non-colour key. */
 .gymnast-progress.gp-group{--gp-comparison:#8de5d0}
-.gp-group .gp-comparison-control{display:grid;gap:8px;max-width:480px;min-width:0;margin:0 0 22px;color:var(--muted,#aaa5ba);font-size:11px;font-weight:650;line-height:1.5}
+.gp-group .gp-comparison-control{display:grid;gap:7px;max-width:360px;min-width:0;margin:10px 0 0 auto;color:var(--muted,#aaa5ba);font-size:11px;font-weight:650;line-height:1.5}
 .gp-group .gp-comparison-control select{display:block;width:100%;min-width:0;max-width:100%;min-height:46px;padding:11px 34px 11px 13px;border:1px solid var(--p40-edge,#d3bfff25);border-radius:11px;background-color:var(--p40-field,#11121b);color:var(--text,#f6f3fc);font:inherit;font-size:12px;text-overflow:ellipsis;cursor:pointer}
 .gp-group .gp-comparison-control select:focus-visible{outline:2px solid var(--purple,#c5a4ff);outline-offset:3px}
 .gp-group .gp-group-stats{grid-template-columns:minmax(0,1fr);gap:12px}
@@ -328,3 +328,12 @@ body.no-motion .gymnast-progress,body.no-motion .gymnast-progress *{animation:no
   .gp-group .gp-y-tick{font-size:10px}
   .gp-group .gp-x-axis{font-size:10px}
 }
+
+/* A quiet side action; the select appears only when requested. */
+.gp-group .gp-comparison-disclosure{min-width:0;margin:8px 0 18px;padding:0;border:0}
+.gp-group .gp-comparison-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;width:max-content;max-width:100%;min-height:36px;box-sizing:border-box;margin-left:auto;padding:6px 10px;list-style:none;cursor:pointer;border:1px solid #c5a4ff20;border-radius:9px;background:transparent;color:var(--muted,#aaa5ba);font-size:.74rem;font-weight:550;line-height:1.45}
+.gp-group .gp-comparison-disclosure>summary::-webkit-details-marker{display:none}
+.gp-group .gp-comparison-disclosure>summary>span{width:7px;height:7px;flex:0 0 7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin:0 3px 4px}
+.gp-group .gp-comparison-disclosure[open]>summary>span{transform:rotate(225deg);margin-top:6px}
+.gp-group .gp-comparison-disclosure>summary:hover{background:#b896ef12;border-color:#c5a4ff50;color:var(--text,#f6f3fc)}
+@media(pointer:coarse){.gp-group .gp-comparison-disclosure>summary{min-height:44px}}
