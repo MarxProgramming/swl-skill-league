@@ -42,8 +42,36 @@
     const coverageDays=end-first+1;
     return {available:true,days,firstDay:iso(first),lastDay:iso(end),rows,net:total,weeklyRate:round(total*7/coverageDays),coverageDays,partial:coverageDays<days,hasChanges:rows.some(row=>row.delta!==0),stale:end<today};
   }
-  function geometry(series) {
-    const values=series.rows.map(row=>row.total),min=Math.min(0,...values),max=Math.max(0,...values);
+  function buildGroupComparison({progress,people=[],comparisonPeople=null,days=28,now=Date.now()}={}) {
+    days=RANGES.includes(Number(days))?Number(days):28;
+    const unique=list=>[...new Map((Array.isArray(list)?list:[]).filter(person=>person&&typeof person.id==='string'&&person.id).map(person=>[person.id,person])).values()];
+    const collect=list=>{
+      const members=unique(list),records=members.map(person=>buildSeries({progress,gymnastId:person.id,days,now})).filter(series=>series.available);
+      return {memberCount:members.length,recordedCount:records.length,missingCount:members.length-records.length,available:records.length>0,ids:members.map(person=>person.id),records};
+    };
+    const primary=collect(people),comparison=comparisonPeople===null?null:collect(comparisonPeople);
+    const all=[...primary.records,...(comparison?.records||[])];
+    const shared={available:all.length>0,days,primary,comparison,rows:[],coverageDays:0,partial:false,stale:false,hasChanges:false,overlapCount:comparison?primary.ids.filter(id=>comparison.ids.includes(id)).length:0};
+    if(!all.length)return shared;
+    const first=Math.min(...all.map(series=>dayIndex(series.firstDay))),last=Math.max(...all.map(series=>dayIndex(series.lastDay)));
+    shared.firstDay=iso(first);shared.lastDay=iso(last);shared.coverageDays=last-first+1;shared.partial=shared.coverageDays<days;shared.stale=all.some(series=>series.stale);
+    for(const group of [primary,comparison].filter(Boolean)){
+      const daily=new Map();
+      group.records.forEach(series=>series.rows.filter(row=>!row.baseline).forEach(row=>daily.set(row.day,round((daily.get(row.day)||0)+row.delta))));
+      group.rows=[{day:iso(first-1),delta:0,total:0,baseline:true}];let total=0;
+      for(let day=first;day<=last;day++){
+        const date=iso(day),delta=daily.get(date)||0;total=round(total+delta);
+        group.rows.push({day:date,delta,total,baseline:false});
+      }
+      group.net=total;group.weeklyRate=round(total*7/shared.coverageDays);group.hasChanges=group.records.some(series=>series.hasChanges);
+      // Only recorded histories contribute. A missing history is not a zero result.
+      delete group.records;delete group.ids;
+    }
+    shared.rows=primary.rows;shared.hasChanges=primary.hasChanges||Boolean(comparison?.hasChanges);
+    return shared;
+  }
+  function geometry(series,comparisonRows=[]) {
+    const values=[...series.rows,...comparisonRows].map(row=>row.total),min=Math.min(0,...values),max=Math.max(0,...values);
     const span=Math.max(10,max-min),raw=span/4,unit=10**Math.floor(Math.log10(raw));
     const step=[1,2,2.5,5,10].map(n=>n*unit).find(n=>n>=raw)||unit*10;
     const lower=Math.floor(min/step)*step,upper=Math.max(lower+step*2,Math.ceil(max/step)*step);
@@ -86,8 +114,78 @@
       <p class="gp-note">${series.partial?'Showing '+series.coverageDays+' days of available records. ':''}${series.stale?'Saved records through '+label(series.lastDay)+'. ':''}The line starts at zero for the selected period. Average pace uses calendar days.</p>
       <details class="gp-values" data-analytics-disclosure="progress-values"><summary>Daily values &amp; how this works</summary><p class="gp-note">Saved Floor gains minus manual corrections. Renewals, automatic expiry and scoring-rule changes are excluded. Dates reflect when changes reached Google Sheets; earlier activity may not have been recorded.${apparatus==='combined'?' Vault points are not included.':''}</p><table><caption class="gp-table-caption">Recorded Floor progress for ${esc(person.name)}</caption><thead><tr><th scope="col">Date</th><th scope="col">Daily change</th><th scope="col">Gained so far</th></tr></thead><tbody>${series.rows.slice(1).map(r=>`<tr><th scope="row">${label(r.day)}</th><td>${signed(r.delta)}</td><td>${signed(r.total)}</td></tr>`).join('')}</tbody></table></details></section>`;
   }
+  function groupReading(group,index) {
+    if(!group.available)return 'History unavailable';
+    const row=group.rows[index];return signed(row.total)+' points gained'+(row.baseline?'':' · '+signed(row.delta)+' that day');
+  }
+  function differenceText(series,index) {
+    if(!series.comparison?.available||!series.primary.available)return '';
+    const difference=round(series.primary.rows[index].total-series.comparison.rows[index].total);
+    return difference===0?'Same recorded gain':number(Math.abs(difference))+' pts '+(difference>0?'more':'less')+' gained by the selected squad';
+  }
+  function groupSelectionText(series,index,names) {
+    return names.map((name,i)=>name+': '+groupReading(i?series.comparison:series.primary,index)).join('; ')+(series.comparison?'; '+differenceText(series,index):'');
+  }
+  function renderGroup({people=[],label:groupLabel='Selected squad',comparisonPeople=null,comparisonLabel='',comparisonId='',comparisonOptions=[],progress,days=28,apparatus='floor',now=Date.now()}={}) {
+    const series=buildGroupComparison({progress,people,comparisonPeople,days,now});
+    const ranges=`<div class="gp-ranges" role="group" aria-label="Progress period">${[[7,'7 days'],[28,'4 weeks'],[56,'8 weeks']].map(([n,text])=>`<button type="button" data-progress-range="${n}" aria-pressed="${series.days===n}">${text}</button>`).join('')}</div>`;
+    const heading=`<div class="gp-head"><div><p class="eyebrow">Squad progress · ${apparatus==='combined'?'Floor only':'Floor'}</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(groupLabel)} · ${series.primary.memberCount} ${series.primary.memberCount===1?'gymnast':'gymnasts'}</p>`;
+    const options=(Array.isArray(comparisonOptions)?comparisonOptions:[]).filter(option=>option&&typeof option.id==='string');
+    const compare=`<label class="gp-comparison-control" for="squadProgressComparison"><span>Compare with another squad</span><select id="squadProgressComparison" data-progress-comparison><option value="">No comparison</option>${options.map(option=>`<option value="${esc(option.id)}"${option.id===comparisonId?' selected':''}>${esc(option.name)}</option>`).join('')}</select></label>`;
+    if(apparatus==='vault'){
+      active=null;
+      return `<section class="gymnast-progress gp-group analytics-panel analytics-wide"><div class="gp-head"><div><p class="eyebrow">${esc(groupLabel)} · Vault</p><h2>Points over time</h2></div></div><div class="gp-empty"><p>Vault point history isn’t recorded yet.</p><button type="button" class="quiet" data-progress-floor>View Floor progress</button></div></section>`;
+    }
+    if(!series.available){
+      active=null;
+      return `<section class="gymnast-progress gp-group analytics-panel analytics-wide">${heading}${compare}<div class="gp-empty"><p>${series.primary.memberCount?'Point history isn’t available for this selection yet.':'No gymnasts match this view.'}</p></div></section>`;
+    }
+    const names=[groupLabel,...(series.comparison?[comparisonLabel||'Comparison squad']:[])];
+    const groups=[series.primary,...(series.comparison?[series.comparison]:[])];
+    const key='squad|'+people.map(p=>p.id).sort().join(',')+'|'+comparisonId+'|'+series.days;
+    if(key!==selectionKey){selectionKey=key;selectedDay=null;}
+    let selected=selectedDay?series.rows.findIndex(row=>row.day===selectedDay):-1;if(selected<0)selected=series.rows.length-1;
+    const geo=geometry(series,series.comparison?.rows||[]),row=series.rows[selected],point=geo.points[selected];
+    active={type:'group',series,geo,selected,names};
+    const grid=geo.ticks.map(n=>`<line class="${n===0?'gp-zero':'gp-grid'}" x1="0" x2="720" y1="${geo.y(n)}" y2="${geo.y(n)}"/>`).join('');
+    const tickLabels=geo.ticks.map(n=>`<span class="gp-y-tick" style="top:${geo.y(n)/260*100}%">${number(n)}</span>`).join('');
+    const path=rows=>rows.map((r,i)=>(i?'L':'M')+geo.x(i).toFixed(2)+','+geo.y(r.total).toFixed(2)).join(' ');
+    const curves=groups.map((group,i)=>group.available?`<path class="gp-line${i?' gp-comparison-line':''}" d="${path(group.rows)}"/>`:'').join('');
+    const markers=groups.map((group,i)=>group.available?`<span class="gp-marker${i?' gp-comparison-marker':''}" data-progress-group-marker="${i}" aria-hidden="true" style="left:${point.x/720*100}%;top:${geo.y(group.rows[selected].total)/260*100}%"></span>`:'').join('');
+    const middle=series.rows[Math.floor(series.rows.length/2)];
+    const stats=groups.map((group,i)=>`<article class="gp-group-stat${i?' gp-comparison-stat':''}"><span class="gp-series-name"><i class="gp-series-key${i?' gp-series-key-comparison':''}" aria-hidden="true"></i>${esc(names[i])}</span><strong>${group.available?signed(group.net):'—'}<small>${group.available?'points gained':'History unavailable'}</small></strong><small>${group.memberCount} ${group.memberCount===1?'gymnast':'gymnasts'}${group.missingCount?' · '+group.recordedCount+' with records':''}${group.available?' · '+signed(group.net/group.recordedCount)+' per recorded gymnast':''}</small></article>`).join('');
+    const readings=groups.map((group,i)=>`<div class="gp-group-reading${i?' gp-group-reading-comparison':''}"><span><i class="gp-series-key${i?' gp-series-key-comparison':''}" aria-hidden="true"></i>${esc(names[i])}</span><strong data-progress-group-reading="${i}">${groupReading(group,selected)}</strong></div>`).join('');
+    const coverage=groups.map((group,i)=>group.missingCount?`${esc(names[i])}: ${group.missingCount} ${group.missingCount===1?'gymnast has':'gymnasts have'} no recorded history and ${group.missingCount===1?'is':'are'} excluded from the line.`:'').filter(Boolean).join(' ');
+    const description=names.map((name,i)=>`${name}: ${groups[i].available?signed(groups[i].net)+' recorded Floor points gained':'history unavailable'}`).join('. ')+`. ${label(series.firstDay)} to ${label(series.lastDay)}. Both lines start at zero for the selected period, on the same scale.`;
+    return `<section class="gymnast-progress gp-group analytics-panel analytics-wide">${heading}${compare}
+      <div class="gp-stats gp-group-stats${series.comparison?' gp-has-comparison':''}">${stats}</div>
+      <p class="gp-axis-label">Combined Floor points gained · ${label(series.firstDay)}–${label(series.lastDay)}</p>
+      <div class="gp-chart"><div class="gp-y-axis" aria-hidden="true">${tickLabels}</div><div class="gp-plot" data-progress-plot><svg viewBox="0 0 720 260" preserveAspectRatio="none" role="img" aria-label="${esc(description)}">${grid}${!series.comparison&&series.primary.available?`<path class="gp-area" d="${geo.area}"/>`:''}${curves}<line class="gp-selected" x1="${point.x}" x2="${point.x}" y1="0" y2="260"/></svg>${markers}</div><div class="gp-x-axis" aria-hidden="true"><span>${label(series.firstDay)}</span><span>${series.coverageDays>1?label(middle.day):''}</span><span>${label(series.lastDay)}</span></div></div>
+      <div class="gp-reading gp-group-readings" aria-live="polite" aria-atomic="true"><strong data-progress-date>${selectedLabel(row,series,true)}</strong>${readings}${series.comparison?`<span class="gp-difference" data-progress-difference>${differenceText(series,selected)}</span>`:''}</div>
+      <div class="gp-scrub"><label for="squadProgressScrub">Explore a date</label><input id="squadProgressScrub" type="range" min="0" max="${series.rows.length-1}" step="1" value="${selected}" aria-valuetext="${esc(selectedLabel(row,series,true)+': '+groupSelectionText(series,selected,names))}"></div>
+      ${!series.hasChanges?'<p class="gp-empty">No recorded Floor point changes in this period.</p>':''}
+      ${coverage?`<p class="gp-note gp-coverage" role="status">${coverage}</p>`:''}
+      <p class="gp-note">${series.partial?'Showing '+series.coverageDays+' days of available records. ':''}${series.stale?'Saved records through '+label(series.lastDay)+'. ':''}Total gains for the current squad members, starting at zero for this period.${series.comparison?' Both lines use the same dates and scale; larger squads may gain more points.':''}${series.overlapCount?' '+series.overlapCount+' '+(series.overlapCount===1?'gymnast belongs':'gymnasts belong')+' to both selections and contributes to each line.':''}${apparatus==='combined'?' Vault history is not included.':''}</p>
+      <details class="gp-values" data-analytics-disclosure="progress-values"><summary>Daily values &amp; how this works</summary><p class="gp-note">The graph adds each current member’s saved Floor gains and manual corrections by date. It shows progress gained, not historical total scores. Renewals, automatic expiry and scoring-rule changes are excluded. Earlier activity may not have been recorded. Previous squad membership is not recorded.</p><table><caption class="gp-table-caption">Cumulative recorded Floor gains</caption><thead><tr><th scope="col">Date</th>${names.map(name=>`<th scope="col">${esc(name)}</th>`).join('')}</tr></thead><tbody>${series.rows.slice(1).map((r,index)=>`<tr><th scope="row">${label(r.day)}</th>${groups.map(group=>`<td>${group.available?signed(group.rows[index+1].total):'—'}</td>`).join('')}</tr>`).join('')}</tbody></table></details></section>`;
+  }
+  function selectGroup(index) {
+    const {series,geo,names}=active,position=Math.max(0,Math.min(series.rows.length-1,Math.round(Number(index)||0))),row=series.rows[position],x=geo.x(position);
+    active.selected=position;selectedDay=row.day;
+    const host=root.querySelector('.gp-group');if(!host)return;
+    const line=host.querySelector('.gp-selected');if(line){line.setAttribute('x1',String(x));line.setAttribute('x2',String(x));}
+    [series.primary,series.comparison].filter(Boolean).forEach((group,i)=>{
+      const marker=host.querySelector(`[data-progress-group-marker="${i}"]`),reading=host.querySelector(`[data-progress-group-reading="${i}"]`);
+      if(marker){marker.style.left=x/720*100+'%';marker.style.top=geo.y(group.rows[position].total)/260*100+'%';}
+      if(reading)reading.textContent=groupReading(group,position);
+    });
+    const date=host.querySelector('[data-progress-date]'),difference=host.querySelector('[data-progress-difference]'),slider=host.querySelector('#squadProgressScrub');
+    if(date)date.textContent=selectedLabel(row,series,true);
+    if(difference)difference.textContent=differenceText(series,position);
+    if(slider){slider.value=String(position);slider.setAttribute('aria-valuetext',selectedLabel(row,series,true)+': '+groupSelectionText(series,position,names));}
+  }
   function select(index) {
     if(!root||!active)return;
+    if(active.type==='group'){selectGroup(index);return;}
     const {series,geo}=active,position=Math.max(0,Math.min(series.rows.length-1,Math.round(Number(index)||0))),row=series.rows[position],point=geo.points[position];
     active.selected=position;selectedDay=row.day;
     const line=root.querySelector('.gymnast-progress .gp-selected'),marker=root.querySelector('.gymnast-progress .gp-marker'),date=root.querySelector('[data-progress-date]'),reading=root.querySelector('[data-progress-reading]'),slider=root.querySelector('#gymnastProgressScrub');
@@ -97,7 +195,7 @@
     if(reading)reading.textContent=selectedText(row);
     if(slider){slider.value=String(position);slider.setAttribute('aria-valuetext',selectedLabel(row,series,true)+': '+selectedText(row));}
   }
-  const onInput=e=>{if(e.target.id==='gymnastProgressScrub')select(e.target.value);};
+  const onInput=e=>{if(['gymnastProgressScrub','squadProgressScrub'].includes(e.target.id))select(e.target.value);};
   const onClick=e=>{
     const plot=e.target.closest?.('[data-progress-plot]');if(!plot||!active||!root.contains(plot))return;
     const rect=plot.getBoundingClientRect();if(rect.width>0)select((e.clientX-rect.left)/rect.width*(active.series.rows.length-1));
@@ -107,5 +205,5 @@
     if(root){root.removeEventListener('input',onInput);root.removeEventListener('click',onClick);}
     root=host;if(root){root.addEventListener('input',onInput);root.addEventListener('click',onClick);}
   }
-  window.SWLGymnastProgress={buildSeries,render,mount};
+  window.SWLGymnastProgress={buildSeries,buildGroupComparison,render,renderGroup,mount};
 })();
