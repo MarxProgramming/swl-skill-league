@@ -2,7 +2,8 @@
   'use strict';
   const DAY=86400000, esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let directory,analytics,actions,data,directoryGroup='all',directoryComplex='',analyticsGroup='all',analyticsGymnast='all',analyticsAge='all',analyticsComparison='progress',analyticsRankCategory='overall',analyticsRankMetric='points';
-  let progressRange=28,progressComparisonGroup='';
+  let progressRange=28,progressComparisonGroup='',panelComparisonGroups={};
+  let analyticsSelectedIds=[],analyticsDirectorySelection='';
   const DIRECTORY_SQUAD_KEY='swl-directory-squad-v5';
   let directoryGroupChosen=false,analyticsDirectoryGroup=null;
   function rememberDirectoryGroup(group) {
@@ -13,7 +14,7 @@
     const saved=window.localStorage?.getItem(DIRECTORY_SQUAD_KEY);
     if(typeof saved==='string'&&saved.length&&saved.length<=256){directoryGroup=saved;directoryGroupChosen=true;}
   }catch(_){}
-  let priorityPinned=null,priorityScope='',priorityRenderedIds=[];
+  let priorityPinned=null,priorityScope='',priorityRenderedIds=[],priorityShowMore=false;
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
   const initials=name=>name.trim().split(/\s+/).filter((_,i,a)=>i===0||i===a.length-1).map(s=>Array.from(s)[0]).join('');
@@ -39,14 +40,14 @@
   const coachBadge=g=>data.coachBadge?.(g)||'';
   const achievementBadge=g=>g?(data.achievementBadge?.(g)||''):'';
   const inGroup=(g,group)=>data.inGroup?.(g,group)??(group==='overall'||(group==='all'?!isCoach(g):group==='senior'?['Marx','Dan'].includes(g.coach):groupKey(g.coach)===groupKey(group)));
-  const groupName=group=>group==='all'?'All squads':group==='overall'?'Overall · all squads + coaches':group==='coaches'?'Coaches':data.groupLabel(group);
+  const groupName=group=>group==='selection'?'Selected gymnasts ('+analyticsSelectedIds.length+')':group==='all'?'All squads':group==='overall'?'Overall · all squads + coaches':group==='coaches'?'Coaches':data.groupLabel(group);
   const countNoun=(group,n)=>group==='coaches'?(n===1?'coach':'coaches'):group==='overall'?(n===1?'participant':'participants'):(n===1?'gymnast':'gymnasts');
   const memberships=g=>data.squadMemberships?.(g)||[groupKey(g.coach)];
   const personGroups=g=>data.gymnastSquadLabel?.(g)||data.groupLabel(g.coach);
   function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
   const focusControls='button,input,select,summary,a,[tabindex]';
-  const focusData=['swlAchievement','achievementGymnast','gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','analyticsApparatus','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange'];
+  const focusData=['swlAchievement','achievementGymnast','gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','analyticsApparatus','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange','directorySelect','directorySelectionAction','panelComparison','priorityMore'];
   function focusKey(root) {
     const e=document.activeElement;if(!e||!root.contains(e))return null;
     const dataset=Object.fromEntries(focusData.filter(key=>e.dataset?.[key]!==undefined).map(key=>[key,e.dataset[key]]));
@@ -79,7 +80,7 @@
   }
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
-    directory.innerHTML=`<h1 class="sr">Gymnasts</h1><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-squad-tools"><label for="directoryGroups">Choose squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div></div><div class="directory-quick-switch" role="group" aria-label="Quick complex switching"><button type="button" id="directoryComplexPrevious" aria-label="Previous complex" title="Previous complex" disabled>‹</button><div class="directory-quick-switch-choice"><span>Training complex · Floor &amp; Vault</span><strong id="directoryComplexCurrent" aria-live="polite">Choose with the arrows</strong></div><button type="button" id="directoryComplexNext" aria-label="Next complex" title="Next complex" disabled>›</button></div><div class="directory-complex-footer"><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p><button type="button" class="quiet" id="directoryComplexClear" hidden>Clear complex</button></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>More options</strong></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><div id="directoryResults"></div><div id="directoryAttendanceStatus"></div>`;
+    directory.innerHTML=`<h1 class="sr">Gymnasts</h1><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-squad-tools"><label for="directoryGroups">Choose squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div></div><div class="directory-quick-switch" role="group" aria-label="Quick complex switching"><button type="button" id="directoryComplexPrevious" aria-label="Previous complex" title="Previous complex" disabled>‹</button><div class="directory-quick-switch-choice"><span>Training complex · Floor &amp; Vault</span><strong id="directoryComplexCurrent" aria-live="polite">Choose with the arrows</strong></div><button type="button" id="directoryComplexNext" aria-label="Next complex" title="Next complex" disabled>›</button></div><div class="directory-complex-footer"><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p><button type="button" class="quiet" id="directoryComplexClear" hidden>Clear complex</button></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>More options</strong></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><div id="directorySelectionToolbar"></div><div id="directoryResults"></div><div id="directoryAttendanceStatus"></div>`;
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
     directory.querySelector('#directorySearch').addEventListener('input',renderDirectory);
     directory.querySelector('#directoryGroups').addEventListener('change',e=>{rememberDirectoryGroup(e.target.value);renderDirectory();});
@@ -87,10 +88,13 @@
     directory.querySelector('#directoryComplexNext').addEventListener('click',()=>switchComplex(1));
     directory.querySelector('#directoryComplexClear').addEventListener('click',()=>{directoryComplex='';renderDirectory();directory.querySelector('#directoryComplexNext').focus({preventScroll:true});});
     window.SWLDirectoryAttendance?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],achievementIcons:g=>data?.achievementIcons?.(g)||'',onChange:()=>renderDirectory()});
-    analytics.innerHTML=`<div class="analytics-heading analytics-heading-compact"><h1 class="sr">Analytics</h1><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters analytics-controls51"><div class="analytics-apparatus-control"><span class="analytics-control-label">Apparatus</span><div id="analyticsApparatusButtons" class="a31-segments" role="group" aria-label="Analytics apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([value,label])=>`<button type="button" id="analytics-apparatus-${value}" data-analytics-apparatus="${value}" aria-pressed="${value==='floor'}">${label}</button>`).join('')}</div></div><label>Gymnast<select id="analyticsGymnast"></select></label><div class="analytics-following"><span id="analyticsScopeOrigin">Squad from Gymnasts</span><strong id="analyticsSquadScope"></strong></div></div><div id="analyticsDrilldown" class="analytics-drilldown" hidden><button type="button" class="quiet" data-analytics-reset></button></div><div id="analyticsContent"></div>`;
+    window.SWLDirectorySelection?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],onChange:()=>renderDirectory(),onAnalyse:()=>{analyticsFromDirectory();renderAnalytics();actions.setView('analytics');}});
+    analytics.innerHTML=`<div class="analytics-heading analytics-heading-compact"><h1 class="sr">Analytics</h1><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters analytics-controls51"><div class="analytics-apparatus-control"><span class="analytics-control-label">Apparatus</span><div id="analyticsApparatusButtons" class="a31-segments" role="group" aria-label="Analytics apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([value,label])=>`<button type="button" id="analytics-apparatus-${value}" data-analytics-apparatus="${value}" aria-pressed="${value==='floor'}">${label}</button>`).join('')}</div></div><label class="analytics-squad-picker">Analysing<select id="analyticsGroup"></select></label><label>Gymnast<select id="analyticsGymnast"></select></label><div class="sr"><span id="analyticsScopeOrigin"></span><strong id="analyticsSquadScope"></strong></div></div><div id="analyticsDrilldown" class="analytics-drilldown" hidden><button type="button" class="quiet" data-analytics-reset></button></div><div id="analyticsContent"></div>`;
     window.SWLGymnastProgress?.mount(analytics);
+    analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;analyticsSelectedIds=directorySelectionIds();analyticsGymnast='all';analyticsAge='all';priorityPinned=null;panelComparisonGroups={};progressComparisonGroup='';renderAnalytics();});
     analytics.querySelector('#analyticsGymnast').addEventListener('change',e=>{analyticsGymnast=e.target.value;renderAnalytics();});
     analytics.addEventListener('change',e=>{
+      if(e.target.matches?.('[data-panel-comparison]')){panelComparisonGroups[e.target.dataset.panelComparison]=e.target.value;renderAnalytics();}
       if(e.target.id==='analyticsRankMetric'){analyticsRankMetric=e.target.value;renderAnalytics();}
       if(e.target.matches?.('[data-progress-comparison]')){progressComparisonGroup=e.target.value;renderAnalytics();}
     });
@@ -101,6 +105,7 @@
       }else if(priorityPinned){priorityPinned=null;renderAnalytics();}
     },true);
     analytics.addEventListener('click',e=>{
+      if(e.target.closest('[data-priority-more]')){priorityShowMore=!priorityShowMore;if(!priorityShowMore&&![...analytics.querySelectorAll('details[data-priority-detail]')].slice(0,5).some(el=>el.open))priorityPinned=null;renderAnalytics();return;}
       const apparatusButton=e.target.closest('[data-analytics-apparatus]');if(apparatusButton){if(!apparatusButton.disabled)changeApparatus(apparatusButton.dataset.analyticsApparatus);return;}
       if(e.target.closest('[data-analytics-reset]')){analyticsFromDirectory();renderAnalytics();return;}
       const progressButton=e.target.closest('[data-progress-range]');if(progressButton){const days=Number(progressButton.dataset.progressRange);if([7,28,56].includes(days)){progressRange=days;renderAnalytics();}return;}
@@ -144,7 +149,7 @@
     return `<div class="directory-quick" role="group" aria-label="${esc(complex.label)} for ${esc(g.name)}"><span class="directory-quick-label">${esc(complex.label)}</span><div class="directory-quick-grid">${complex.skills.map(k=>{
       const level=data.mark(g.id,k.id),fresh=data.skillFreshness(g.id,k.id),status=['Unticked','Achieved','Perfect'][level],next=['Achieved','Perfect','Unticked'][level];
       const renewalDays=fresh.days===null?'Renewal pending':fresh.days===0?'Due now':`${fresh.days} ${fresh.days===1?'day':'days'} left`,renewalId=`quick-days-${g.id}-${k.id}`;
-      return `<div class="directory-quick-cell level-${level}${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${['○','✓','✓✓'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong></button>${fresh.due?`<div class="directory-quick-renewal"><span class="directory-quick-days" id="${esc(renewalId)}">${esc(renewalDays)}</span><button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-renewal-urgency="${fresh.days<=1?'final':'due'}" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew Perfect for ${esc(k.name)} for ${esc(g.name)} for 30 days" aria-describedby="${esc(renewalId)}"${data.canEdit===false?' disabled':''}>↻ Renew</button></div>`:''}</div>`;
+      return `<div class="directory-quick-cell level-${level}${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false||window.SWLDirectorySelection?.isActive()?' disabled':''}><span aria-hidden="true">${['○','✓','✓✓'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong></button>${fresh.due?`<div class="directory-quick-renewal"><span class="directory-quick-days" id="${esc(renewalId)}">${esc(renewalDays)}</span><button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-renewal-urgency="${fresh.days<=1?'final':'due'}" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew Perfect for ${esc(k.name)} for ${esc(g.name)} for 30 days" aria-describedby="${esc(renewalId)}"${data.canEdit===false||window.SWLDirectorySelection?.isActive()?' disabled':''}>↻ Renew</button></div>`:''}</div>`;
     }).join('')}</div></div>`;
   }
   function renderDirectory() {
@@ -172,10 +177,11 @@
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
       const tickCount=g=>complex ? complex.skills.reduce((total,skill)=>total+data.mark(g.id,skill.id),0) : 0;
       const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>tickCount(a)-tickCount(b)||a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
-      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,'combined'),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><div class="directory-profile-content"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"></button><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)} ${achievementBadge(g)}</strong>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${streakLabel(g.id)||'Combined pts ↗'}</small></span></div>${window.SWLDirectoryAttendance?.control(g)||''}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
+      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,'combined'),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}"><div class="directory-profile-content"><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"></button><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)} ${achievementBadge(g)}</strong>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${streakLabel(g.id)||'Combined pts ↗'}</small></span></div>${window.SWLDirectorySelection?.isActive()?window.SWLDirectorySelection.control(g):(window.SWLDirectoryAttendance?.control(g)||'')}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
     window.SWLSearch?.render(data,{group:directoryGroup});
     window.SWLDirectoryAttendance?.refresh();
+    window.SWLDirectorySelection?.refresh({loaded:Boolean(data.hasLoaded)});
     restore(directory,key);
   }
   function aggregate(people,at=Date.now()) {
@@ -209,16 +215,16 @@
     return `<span class="a31-stack ${extra}" aria-hidden="true"><i class="a31-perfect" style="width:${stats.total?stats.perfect/stats.total*100:0}%"></i><i class="a31-achieved" style="width:${stats.total?stats.achieved/stats.total*100:0}%"></i></span>`;
   }
   function chartKey() {return '<div class="a31-key"><span><i class="a31-perfect"></i>Perfect</span><span><i class="a31-achieved"></i>Achieved</span><span><i></i>Not yet</span></div>';}
-  function squadComparisons(groups) {
+  function squadComparisons(groups,people=data.gymnasts) {
     return groups.map(group=>{
-      const members=data.gymnasts.filter(g=>inGroup(g,group)&&(analyticsAge==='all'||ageOf(g)===analyticsAge));
+      const members=people.filter(g=>inGroup(g,group)&&(analyticsAge==='all'||ageOf(g)===analyticsAge));
       const all=cohortStats(members);
       const value=analyticsComparison==='average'?all.average:analyticsComparison==='retained'?(all.total?all.retained/all.total*100:0):all.progress;
       return {group,members,all,value};
     }).sort((a,b)=>b.value-a.value||groupName(a.group).localeCompare(groupName(b.group),'en-GB'));
   }
-  function renderSquadComparison(groups) {
-    const rows=squadComparisons(groups),active=rows.filter(r=>r.members.length),lead=active[0],max=analyticsComparison==='average'?Math.max(1,...rows.map(r=>r.value)):100;
+  function renderSquadComparison(groups,people) {
+    const rows=squadComparisons(groups,people).filter(r=>r.members.length),active=rows.filter(r=>r.members.length),lead=active[0],max=analyticsComparison==='average'?Math.max(1,...rows.map(r=>r.value)):100;
     const metric=analyticsComparison==='average'?'average points':analyticsComparison==='retained'?'skills retained':'all-skills progress';
     const ageScope=analyticsAge==='all'?'All ages':ageLabel(ageGroups().find(c=>c.id===analyticsAge));
     const suffix=analyticsComparison==='average'?'pts':'%';
@@ -226,7 +232,7 @@
     const insight=lead&&lead.value>0?`${joint?'Joint lead':'Leading'} · ${groupName(lead.group)}`:'A fresh starting line';
     return `<section class="analytics-panel analytics-wide a31-squad-panel"><div class="analytics-panel-head"><div><p class="eyebrow">A fair view of every squad</p><h2>Squad progress</h2></div><span class="a31-panel-index" aria-hidden="true">02 / COMPARE</span></div>
       <div class="a31-comparison-lead"><div><span>${esc(insight)}</span><strong>${lead&&lead.value>0?number(lead.value):'0'}<small>${suffix}</small></strong><p>${esc(metric)}${joint?' · tied at the top':''}</p></div><div class="a31-segments" role="group" aria-label="Squad comparison measure">${[['progress','All skills'],['average','Average points'],['retained','Skills retained']].map(([id,label])=>`<button type="button" data-analytics-comparison="${id}" aria-pressed="${analyticsComparison===id}">${label}</button>`).join('')}</div></div>
-      <p class="a31-chart-scope">${esc(apparatusLabel())} · ${esc(ageScope)} · Whole-squad comparison${analyticsGymnast!=='all'?' · personal selection applies to the other charts':''}</p>
+      <p class="a31-chart-scope">${esc(apparatusLabel())} · ${esc(ageScope)} · ${esc(groupName(analyticsGroup))} · Selected gymnasts only</p>
       <div class="a31-squad-chart">${rows.map((r,i)=>`<button type="button" class="a31-squad-row${r.group===analyticsGroup?' is-selected':''}" data-analytics-group="${esc(r.group)}" aria-pressed="${r.group===analyticsGroup}" aria-label="${esc(groupName(r.group))}: ${number(r.value)} ${metric}, ${r.members.length} ${countNoun(r.group,r.members.length)}. Explore squad."${r.members.length?'':' disabled'}><span class="a31-chart-rank">${String(i+1).padStart(2,'0')}</span><span class="a31-chart-name"><strong>${esc(groupName(r.group))}</strong><small>${r.members.length} ${countNoun(r.group,r.members.length)} · ${number(r.all.average)} average points</small></span><span class="a31-comparison-track" aria-hidden="true"><i style="width:${r.value/max*100}%"></i></span><span class="a31-chart-value">${r.members.length?number(r.value):'—'}<small>${r.members.length?suffix:'no records'}</small></span></button>`).join('')}</div>
       <p class="chart-note">${analyticsComparison==='progress'?('Every skill in the selected '+apparatusLabel()+' programme counts equally, including all upgrades. Achieved counts halfway; Perfect counts fully.'):analyticsComparison==='average'?'Total league points divided by the number of gymnasts in each squad. Completion bonuses are included.':'The percentage of all available skills that are Achieved or Perfect.'} Every gymnast has the same available skills, so a larger squad does not get a size advantage. Choose a squad to update the selected view.</p></section>`;
   }
@@ -249,44 +255,32 @@
     const time=Date.parse(day+'T00:00:00Z');return Number.isFinite(time)&&new Date(time).toISOString().slice(0,10)===day?time/DAY:null;
   }
   function weeklySeries(people) {
-    const progress=data.state.weeklyProgress;
-    const end=dayNumber(londonDay()),values=Array(8).fill(0);
-    const tracked=Boolean(progress&&progress.history&&typeof progress.history==='object');
-    const started=tracked?dayNumber(londonDay(progress.startedAt)):null;
-    const known=values.map((_,i)=>!tracked||started===null||end-(7-i)*7>=started);
-    people.forEach(g=>{
-      if(tracked){
-        const perDay=new Map();
-        (Array.isArray(progress.history[g.id])?progress.history[g.id]:[]).forEach(record=>{
-          const day=dayNumber(record?.day);if(day===null||day>end||day<end-55||!Number.isFinite(record.points))return;
-          perDay.set(day,record.points);
-        });
-        perDay.forEach((points,day)=>{values[7-Math.floor((end-day)/7)]+=points;});
-      }else scopedSkills('floor').forEach(skill=>{
-        if(!data.mark(g.id,skill.id))return;
-        const earned=Date.parse(data.state.skillDates?.[g.id]?.[skill.id]?.earnedAt||'');
-        if(!Number.isFinite(earned)||earned>Date.now())return;
-        const day=dayNumber(londonDay(earned));
-        if(day===null||day>end||day<end-55)return;
-        values[7-Math.floor((end-day)/7)]++;
-      });
-    });
-    return {values,known,tracked,started,end};
+    const result=window.SWLAnalyticsCompare?.weekly(data,people,Date.now());
+    const rows=result?.rows||Array.from({length:8},()=>({value:null,recorded:0,partial:false}));
+    return {...result,rows,values:rows.map(row=>row.value),known:rows.map(row=>row.value!==null),
+      tracked:Boolean(data.state.weeklyProgress?.history),available:Boolean(result?.available),
+      end:result?.end??dayNumber(londonDay()),memberCount:result?.memberCount??people.length,recordedCount:result?.recordedCount??0};
   }
   function renderMomentum(people) {
     if(apparatus()==='vault')return '';
-    const series=weeklySeries(people),max=Math.max(1,...series.values.map(Math.abs));
+    const series=weeklySeries(people),max=Math.max(1,...series.values.map(value=>Math.abs(value||0)));
     const dateLabel=day=>chartDayFormat.format(new Date(day*DAY));
-    const range=i=>`${dateLabel(series.end-(7-i)*7-6)}–${dateLabel(series.end-(7-i)*7)}`;
-    const unit=series.tracked?'net league points':'latest retained gains',total=series.values[7],delta=total-series.values[6];
-    return `<section class="analytics-panel momentum-panel a31-momentum"><div class="analytics-panel-head"><div><p class="eyebrow">Floor · Eight seven-day windows</p><h2>Building momentum</h2></div><span class="analytics-symbol" aria-hidden="true">↗</span></div><div class="momentum-total"><strong>${number(total)}</strong><span>${series.tracked?'net Floor points in the last 7 days':'latest retained Floor gains in 7 days'}${series.known[6]&&series.tracked?`<small class="a31-delta${delta<0?' negative':''}">${delta>0?'+':''}${number(delta)} vs previous 7 days</small>`:''}</span></div><div class="a31-momentum-chart" role="img" aria-label="${esc((series.tracked?'Net league point history':'Retained skill gain dates')+', oldest to newest. '+series.values.map((n,i)=>range(i)+': '+(series.known[i]?number(n)+' '+unit:'not tracked')).join('; '))}">${series.values.map((n,i)=>`<div class="a31-week${i===7?' is-current':''}" title="${esc(range(i)+': '+(series.known[i]?number(n)+' '+unit:'not tracked'))}"><strong>${series.known[i]?number(n):'—'}</strong><span class="a31-week-track" aria-hidden="true"><i style="grid-row:${n<0?2:1};align-self:${n<0?'start':'end'};height:${series.known[i]&&n?Math.max(3,Math.abs(n)/max*72):0}px" class="${n<0?'negative':''}"></i></span><small>${i===7?'Latest':dateLabel(series.end-(7-i)*7)}</small></div>`).join('')}</div><p class="chart-note">${series.tracked?'The chart tracks Floor points only. Vault points are not included. Each bar covers seven days, ending on the date below it; the latest window ends today (London time). Gains sit above zero; reductions sit below. Untracked weeks show —.':'Floor point history is not available in this snapshot. These bars show only each currently retained Floor skill’s latest gain date; they are not a historical point total.'}${series.tracked&&data.state.weeklyProgress.complete===false?' Tracking began partway through the first window, so earlier points are not included.':''}</p></section>`;
+    const range=i=>series.rows[i].label||`${dateLabel(series.end-(7-i)*7-6)}–${dateLabel(series.end-(7-i)*7)}`;
+    const total=series.values[7],previous=series.values[6],delta=total!==null&&previous!==null&&!series.rows[7].partial&&!series.rows[6].partial?total-previous:null;
+    const heading='<div class="analytics-panel-head"><div><p class="eyebrow">Floor · Eight seven-day windows</p><h2>Building momentum</h2></div><span class="analytics-symbol" aria-hidden="true">↗</span></div>';
+    if(!series.available)return `<section class="analytics-panel momentum-panel a31-momentum">${heading}<p class="v2-empty small">No recorded Floor point history is available for this selection.</p></section>`;
+    return `<section class="analytics-panel momentum-panel a31-momentum">${heading}<div class="momentum-total"><strong>${total===null?'—':number(total)}</strong><span>net Floor points · latest 7 saved days<small>Through ${dateLabel(series.end)}</small>${delta!==null?`<small class="a31-delta${delta<0?' negative':''}">${delta>0?'+':''}${number(delta)} vs previous 7 days</small>`:''}</span></div><div class="a31-momentum-chart" role="img" aria-label="${esc('Recorded Floor net points, oldest to newest. '+series.values.map((n,i)=>range(i)+': '+(n!==null?number(n)+' net points'+(series.rows[i].partial?', partial coverage':''):'no recorded history')).join('; '))}">${series.values.map((n,i)=>`<div class="a31-week${i===7?' is-current':''}" title="${esc(range(i)+': '+(n!==null?number(n)+' net points'+(series.rows[i].partial?' · partial coverage':''):'no recorded history'))}"><strong>${n!==null?number(n):'—'}${series.rows[i].partial?'<span aria-hidden="true">*</span>':''}</strong><span class="a31-week-track" aria-hidden="true"><i style="grid-row:${n<0?2:1};align-self:${n<0?'start':'end'};height:${n?Math.max(3,Math.abs(n)/max*72):0}px" class="${n<0?'negative':''}"></i></span><small>${i===7?'Latest':dateLabel(series.end-(7-i)*7)}</small></div>`).join('')}</div><p class="chart-note">Recorded Floor gains and manual corrections only. Each bar covers seven days, ending on the date below it; the latest window ends on the saved history date (${dateLabel(series.end)}). Gains sit above zero; reductions sit below. Missing history shows —.${series.rows.some(row=>row.partial)?' * Partial coverage: only recorded days and gymnasts contribute.':''}${series.recordedCount<series.memberCount?' '+series.recordedCount+' of '+series.memberCount+' gymnasts have recorded history.':''}${series.stale?' No later history is present in this saved record.':''} Vault, renewals, automatic expiry and scoring-rule changes are excluded.</p></section>`;
   }
   function renderCategories(a) {
     return `<section class="analytics-panel a31-categories"><div class="analytics-panel-head"><div><p class="eyebrow">Where the strengths are</p><h2>Across the skills</h2></div><span class="analytics-symbol" aria-hidden="true">≋</span></div>${chartKey()}<div class="a31-category-chart">${a.categories.map(cat=>{const stats={perfect:cat.perfect,achieved:cat.achieved-cat.perfect,total:cat.total};return `<button type="button" data-analytics-category="${esc(cat.id)}" data-v2-focus="category-chart" aria-label="${esc(cat.name)}: ${cat.achieved} of ${cat.total} skills retained, ${cat.perfect} perfect. View full ${esc(cat.name)} standings."><span class="a31-category-label"><strong>${esc(cat.name)}</strong><b>${pct(cat.achieved,cat.total)}<small>%</small></b></span>${stackedTrack(stats)}<span class="a31-category-detail">${cat.achieved}/${cat.total} retained · ${cat.perfect} perfect<span aria-hidden="true">Standings ↗</span></span></button>`;}).join('')}</div><p class="chart-note">Purple is Achieved. Mint is Perfect. Every skill counts once, whatever its points. Select a category to see its full standings.</p></section>`;
   }
   function rankedPeople(people,category='overall',metric='points') {
-    const tracked=Boolean(data.state.weeklyProgress?.history&&typeof data.state.weeklyProgress.history==='object');
-    return people.map(g=>{const score=data.summary(g.id,category==='overall'?scoreCategory():category),weekly=tracked&&apparatus()!=='vault'?weeklySeries([g]).values[7]:null;return {g,score,weekly,value:metric==='weekly'?weekly:score.points};}).sort((a,b)=>(b.value??0)-(a.value??0)||a.g.name.localeCompare(b.g.name,'en-GB'));
+    return people.map(g=>{
+      const score=data.summary(g.id,category==='overall'?scoreCategory():category);
+      const record=metric==='weekly'&&apparatus()!=='vault'?weeklySeries([g]).rows[7]:null;
+      const weekly=record?.value??null;
+      return {g,score,weekly,partial:record?.partial||false,value:metric==='weekly'?weekly:score.points};
+    }).sort((a,b)=>Number(a.value===null)-Number(b.value===null)||(b.value??0)-(a.value??0)||a.g.name.localeCompare(b.g.name,'en-GB'));
   }
   function renderStandings(people,scope) {
     if(apparatus()==='vault'||!['overall',...scopedCategories().map(c=>c.id)].includes(analyticsRankCategory))analyticsRankCategory='overall';
@@ -296,11 +290,11 @@
     const categoryName=category==='overall'?apparatusLabel()+' league':data.categories.find(c=>c.id===category)?.name;
     return `<section class="analytics-panel analytics-wide a31-standings" id="analyticsStandings"><div class="analytics-panel-head"><div><p class="eyebrow">The whole field</p><h2>Every place. Every point.</h2></div><span class="a31-panel-index" aria-hidden="true">03 / STANDINGS</span></div>
       <div class="a31-standing-controls"><div class="a31-segments" role="group" aria-label="Standings category">${[{id:'overall',name:apparatusLabel()},...scopedCategories().filter(c=>apparatus()!=='vault'||c.id!=='vault')].map(c=>`<button type="button" data-analytics-category="${esc(c.id)}" data-v2-focus="standings" aria-pressed="${!weekly&&analyticsRankCategory===c.id}">${esc(c.name)}</button>`).join('')}</div><label>Order by<select id="analyticsRankMetric"><option value="points"${!weekly?' selected':''}>League points</option><option value="weekly"${weekly?' selected':''}${tracked?'':' disabled'}>Last 7 days · Floor net points</option></select></label></div>
-      <p class="a31-chart-scope">${esc(scope)} · ${weekly?'Floor net points in the last 7 days':esc(categoryName)} · highest to lowest</p>
-      ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><div class="a31-standing-identity"><span class="a31-standing-name"><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)} ${fireBadge(r.g.id)}</strong></button>${achievementBadge(r.g)}</span><small>${esc(personGroups(r.g))}</small></div><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${weekly&&r.value>0?'+':''}${number(r.value)}<small>${weekly?'net pts':'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.</p>'}
-      <p class="chart-note">${weekly?'Includes gains and reductions across Floor skills only. Vault points are not included. Each bar shows the size of the net change; reductions are rose-coloured. '+(data.state.weeklyProgress.complete===false?'Tracking began partway through the first window. ':''):'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
+      <p class="a31-chart-scope">${esc(scope)} · ${weekly?'Floor net points · latest 7 saved days'+(dayNumber(data.state.weeklyProgress?.day)!==null?' through '+chartDayFormat.format(new Date(dayNumber(data.state.weeklyProgress.day)*DAY)):''):esc(categoryName)} · highest to lowest</p>
+      ${rows.length?`<div class="a31-standing-list" role="list">${rows.map((r,i)=>`<div class="a31-standing-row${heatClass(r.g.id)?' '+heatClass(r.g.id):''}" role="listitem"><span class="a31-standing-rank">${i+1}</span><div class="a31-standing-identity"><span class="a31-standing-name"><button type="button" class="a31-standing-person" data-analytics-person="${esc(r.g.id)}" aria-label="Explore analytics for ${esc(r.g.name)}"><strong>${esc(r.g.name)} ${coachBadge(r.g)} ${fireBadge(r.g.id)}</strong></button>${achievementBadge(r.g)}</span><small>${esc(personGroups(r.g))}</small></div><span class="a31-standing-bar" aria-hidden="true"><i class="${r.value<0?'negative':''}" style="width:${Math.abs(r.value||0)/max*100}%"></i></span><span class="a31-standing-value${r.value<0?' negative':''}">${r.value===null?'—':(weekly&&r.value>0?'+':'')+number(r.value)}<small>${r.value===null?'no history':weekly?'net pts'+(r.partial?' · partial':''):'pts'}</small></span><button type="button" class="a31-open-profile" data-gymnast="${esc(r.g.id)}" data-v2-focus="standings-profile" aria-label="Open skills for ${esc(r.g.name)}">↗</button></div>`).join('')}</div>`:'<p class="v2-empty small">No gymnasts match this view. Choose another squad with the Analysing menu.</p>'}
+      <p class="chart-note">${weekly?'Includes saved gains and reductions across Floor skills only, ending on the saved history date. Vault points are not included. Each bar shows the size of the net change; reductions are rose-coloured. Missing history is shown as —; partial windows are labelled. ':'Uses the same scores as the league, including completion bonuses. '}Matching scores are ordered alphabetically. Select a name to explore their analytics, or ↗ to open their skills.</p></section>`;
   }
-  function skillPriorities(people,{includeComplete=false,limit=5,scope=apparatus()}={}) {
+  function skillPriorities(people,{includeComplete=false,limit=10,scope=apparatus()}={}) {
     if(!people.length)return [];
     return scopedSkills(scope).filter(skill=>skill.category==='vault'||(['rolls','acro','leaps'].includes(skill.category)&&['base','upgrade','pro'].includes(skill.tier))).map(skill=>{
       const complex=data.skills.filter(k=>k.category===skill.category&&k.tier===skill.tier);
@@ -322,40 +316,66 @@
     }).join('')}</ul></div>`;
   }
   function renderPriorities(people,scope) {
+    const previousScope=priorityScope;
     priorityScope=JSON.stringify([apparatus(),analyticsGroup,analyticsAge,analyticsGymnast,people.map(g=>g.id).sort()]);
+    if(previousScope!==priorityScope)priorityShowMore=false;
     if(priorityPinned?.scope!==priorityScope)priorityPinned=null;
     const allRows=priorityPinned?skillPriorities(people,{includeComplete:true,limit:Infinity}):null;
     const rows=priorityPinned?priorityPinned.ids.map(id=>allRows.find(row=>row.skill.id===id)).filter(Boolean):skillPriorities(people);
     priorityRenderedIds=rows.map(row=>row.skill.id);
     return `<section class="analytics-panel analytics-wide a31-priorities" aria-labelledby="priorityTitle"><div class="analytics-panel-head"><div><p class="eyebrow">Your next training focus</p><h2 id="priorityTitle">Top skills to work on</h2></div><span class="a31-panel-index" aria-hidden="true">01 / FOCUS</span></div>
       <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}${people.length?` · ${people.length===1?'Biggest personal gain':'Biggest combined gain'}`:''}</p>
-      ${rows.length?`<ol class="a31-priority-list">${rows.map(row=>{
+      ${rows.length?`<ol id="analyticsPriorityList" class="a31-priority-list">${rows.slice(0,priorityShowMore?10:5).map(row=>{
         const {skill,achieved,perfect,total,target,availablePoints}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
         return `<li class="v4-priority-entry" data-priority-skill="${esc(skill.id)}"><details data-priority-detail="${esc(skill.id)}" data-analytics-disclosure="priority-${esc(skill.id)}"><summary id="priority-summary-${esc(skill.id)}" class="a31-priority-row"><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3></div><span class="a51-priority-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" focusable="false"><path d="m5 7.5 5 5 5-5"/></svg></span></summary><div class="a51-priority-content${target==='perfect'?' is-polishing':''}"><div class="a51-priority-metrics"><div class="a31-priority-skill"><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">${perfect===total?'All Perfect':`+${number(availablePoints)} pts`} <small>${perfect===total?'complete':'available'}</small></span></div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p></div></div>${priorityMembers(people,skill)}</div></details></li>`;
-      }).join('')}</ol><p class="chart-note">Ranked by the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.'}</p>`}
+      }).join('')}</ol>${rows.length>5?`<button type="button" id="analyticsPriorityMore" class="a31-priority-more" data-priority-more aria-expanded="${priorityShowMore}" aria-controls="analyticsPriorityList">${priorityShowMore?'Show less':'Show more'} <span>${priorityShowMore?'5 of '+rows.length:rows.length-5+' more skills'}</span></button>`:''}<p class="chart-note">Ranked by the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match this view. Choose another squad with the Analysing menu.'}</p>`}
       <p class="a31-priority-includes">${apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Rolls, acro, leaps &amp; vault · Handstands excluded.':'Rolls, acro &amp; leaps · Handstands excluded.'}</p></section>`;
   }
   function analyticsDisclosure(id,title,description,content) {
     if(!content)return '';
     return `<details class="analytics-panel analytics-wide a31-disclosure" data-analytics-disclosure="${id}"><summary><span><span class="a31-disclosure-title">${esc(title)}</span><span class="a31-disclosure-description">${esc(description)}</span></span><span class="a31-disclosure-icon" aria-hidden="true">+</span></summary><div class="a31-disclosure-content">${content}</div></details>`;
   }
+  function directorySelectionIds() {
+    const ids=window.SWLDirectorySelection?.ids()||[];
+    return [...new Set(ids)].filter(id=>!data?.hasLoaded||data.gymnasts.some(g=>g.id===id));
+  }
+  function analyticsSquadOptions(groups) {
+    return [{id:'all',name:'All squads'},{id:'floor',name:'All floor & vault'},{id:'afternoon',name:'All Saturday afternoon floor & vault'},{id:'senior',name:'All senior squad'},...groups.map(id=>({id,name:groupName(id)})),{id:'overall',name:'Overall · all squads + coaches'}];
+  }
+  function withComparison(panel,markup,people,label,options) {
+    if(!markup)return '';
+    let id=panelComparisonGroups[panel]||'';
+    if(!options.some(option=>option.id===id))id=panelComparisonGroups[panel]='';
+    const compared=id?data.gymnasts.filter(g=>inGroup(g,id)&&(analyticsAge==='all'||ageOf(g)===analyticsAge)):[];
+    const control=window.SWLAnalyticsCompare?.render({panel,primaryLabel:label,primaryPeople:people,comparisonLabel:id?groupName(id)+(analyticsAge==='all'?'':' · '+ageLabel(ageGroups().find(c=>c.id===analyticsAge))):'',comparisonPeople:compared,comparisonId:id,options,data,apparatus:apparatus(),rankCategory:analyticsRankCategory,rankMetric:analyticsRankMetric,priorities:skillPriorities})||'';
+    const titleEnd=markup.indexOf('</h2></div>');
+    const position=titleEnd<0?0:markup.indexOf('</div>',titleEnd+11)+6;
+    return markup.slice(0,position)+control+markup.slice(position);
+  }
   function renderAnalytics() {
     if(!data)return;
     analytics.querySelectorAll('[data-analytics-apparatus]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.analyticsApparatus===apparatus()));button.disabled=!data.hasLoaded;});
-    const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','overall'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
+    const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','overall','selection'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
-    const squadPeople=data.gymnasts.filter(g=>inGroup(g,analyticsGroup));
-    const comparisonGroups=groups.filter(group=>group!=='coaches'||['coaches','overall'].includes(analyticsGroup));
+    analyticsSelectedIds=analyticsSelectedIds.filter(id=>!data.hasLoaded||data.gymnasts.some(g=>g.id===id));
+    const squadPeople=data.gymnasts.filter(g=>analyticsGroup==='selection'?analyticsSelectedIds.includes(g.id):inGroup(g,analyticsGroup));
+    const comparisonGroups=groups.filter(group=>group!=='coaches'||['coaches','overall','selection'].includes(analyticsGroup));
     const candidates=squadPeople.filter(g=>analyticsAge==='all'||ageOf(g)===analyticsAge);
     if(analyticsGymnast!=='all'&&!candidates.some(g=>g.id===analyticsGymnast))analyticsGymnast='all';
+    const squadSelect=analytics.querySelector('#analyticsGroup'),selectedIds=directorySelectionIds();
+    const squadOptions=analyticsSquadOptions(groups);
+    if(selectedIds.length||analyticsGroup==='selection')squadOptions.unshift({id:'selection',name:'Selected gymnasts ('+(analyticsGroup==='selection'?analyticsSelectedIds.length:selectedIds.length)+')'});
+    commitHTML(squadSelect,squadOptions.map(option=>`<option value="${esc(option.id)}">${esc(option.name)}</option>`).join(''));
+    squadSelect.value=analyticsGroup;squadSelect.disabled=!data.hasLoaded;
     const personSelect=analytics.querySelector('#analyticsGymnast');
     const pHTML='<option value="all">All gymnasts in this view</option>'+candidates.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>`<option value="${esc(g.id)}">${esc(g.name)}${isCoach(g)?' · Coach':''}</option>`).join('');
     commitHTML(personSelect,pHTML);personSelect.value=analyticsGymnast;personSelect.disabled=!data.hasLoaded;
-    const exploring=analyticsGroup!==directoryGroup||analyticsAge!=='all'||analyticsGymnast!=='all';
+    const directoryDefault=selectedIds.length?'selection':directoryGroup;
+    const exploring=analyticsGroup!==directoryDefault||analyticsAge!=='all'||analyticsGymnast!=='all';
     analytics.querySelector('#analyticsSquadScope').textContent=groupName(analyticsGroup)+(analyticsAge==='all'?'':' · '+ageLabel(ageGroups().find(c=>c.id===analyticsAge)));
     analytics.querySelector('#analyticsScopeOrigin').textContent=analyticsGroup!==directoryGroup||analyticsAge!=='all'?'Exploring':'Squad from Gymnasts';
     const drilldown=analytics.querySelector('#analyticsDrilldown');drilldown.hidden=!exploring;
-    drilldown.querySelector('[data-analytics-reset]').textContent='Back to '+groupName(directoryGroup);
+    drilldown.querySelector('[data-analytics-reset]').textContent='Back to '+(selectedIds.length?'selected gymnasts':groupName(directoryGroup));
     const host=analytics.querySelector('#analyticsContent');if(!data.hasLoaded){commitHTML(host,'<p class="v2-empty" role="status">Loading your training picture…</p>');return;}
     const people=candidates.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast),a=aggregate(people),c=a.counts;
     const scope=analyticsGymnast==='all'?(analyticsGroup==='all'?'All squads':analyticsGroup==='senior'?'All senior squad':analyticsGroup==='overall'?'Overall · all squads + coaches':groupName(analyticsGroup)):people[0]?.name;
@@ -363,21 +383,24 @@
     const cohortPeople=squadPeople.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast);
     const overview=`<div class="analytics-wide a31-selected-scope"><div><p class="analytics-scope${analyticsGymnast!=='all'&&heatClass(analyticsGymnast)?' '+heatClass(analyticsGymnast):''}">${esc(scope)} ${analyticsGymnast!=='all'?coachBadge(people[0])+' '+fireBadge(analyticsGymnast)+' '+achievementBadge(people[0]):''}<span>· ${esc(ageScope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</span></p></div>${analyticsGymnast!=='all'?`<button type="button" class="quiet" data-gymnast="${esc(analyticsGymnast)}">Open skills ↗</button>`:''}</div>
       <div class="analytics-stat-grid analytics-wide a31-stats"><article><span>Average points</span><strong>${number(people.length?c.points/people.length:0)}</strong><p>Per ${analyticsGroup==='coaches'?'coach':'gymnast'} in this view</p></article><article><span>Skills retained</span><strong>${pct(c.achieved+c.perfect,a.total)}<small>%</small></strong><p>${c.achieved+c.perfect} of ${a.total} available skills</p></article><article><span>Perfect marks</span><strong>${c.perfect}</strong><p>${pct(c.perfect,a.total)}% of available skills</p></article><article><span>League points</span><strong>${number(c.points)}</strong><p>Combined points in this view</p></article></div>
-      ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match this view. Choose another squad on Gymnasts or return to your selected squad.</p>':''}`;
+      ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match this view. Choose another squad with the Analysing menu.</p>':''}`;
     const progressPerson=analyticsGymnast!=='all'?people[0]:null;
     const progressCategory=apparatus()==='vault'?'vault':'overall';
     const progressOptions=comparisonGroups.filter(group=>group!==analyticsGroup).map(id=>({id,name:groupName(id)}));
     if(!progressOptions.some(option=>option.id===progressComparisonGroup))progressComparisonGroup='';
     const progressComparisonPeople=progressComparisonGroup?data.gymnasts.filter(g=>inGroup(g,progressComparisonGroup)&&(analyticsAge==='all'||ageOf(g)===analyticsAge)):null;
     const progressChart=progressPerson?window.SWLGymnastProgress?.render({person:progressPerson,progress:data.state.weeklyProgress,currentPoints:data.confirmedPoints?.(progressPerson.id,progressCategory)??data.summary(progressPerson.id,progressCategory).points,days:progressRange,apparatus:apparatus()})||'':window.SWLGymnastProgress?.renderGroup?.({people,label:scope+(analyticsAge==='all'?'':' · '+ageScope),comparisonPeople:progressComparisonPeople,comparisonLabel:progressComparisonGroup?groupName(progressComparisonGroup)+(analyticsAge==='all'?'':' · '+ageScope):'',comparisonId:progressComparisonGroup,comparisonOptions:progressOptions,progress:data.state.weeklyProgress,days:progressRange,apparatus:apparatus()})||'';
-    commitHTML(host,`<div class="analytics-grid a31-grid">${renderPriorities(people,fullScope)}${renderSquadComparison(comparisonGroups)}${renderStandings(people,fullScope)}
-      ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',overview)}
-      ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',renderCategories(a))}
-      ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',renderMomentum(people))}
-      ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',renderAgePanels(cohortPeople))}
+    const panelOptions=analyticsSquadOptions(comparisonGroups).filter(option=>option.id!==analyticsGroup);
+    const compare=(panel,markup,primary=people)=>withComparison(panel,markup,primary,scope+(analyticsAge==='all'?'':' · '+ageScope),panelOptions);
+    const primaryGroups=comparisonGroups.filter(group=>people.some(g=>inGroup(g,group)));
+    commitHTML(host,`<div class="analytics-grid a31-grid">${compare('priorities',renderPriorities(people,fullScope))}${compare('squads',renderSquadComparison(primaryGroups,people))}${compare('standings',renderStandings(people,fullScope))}
+      ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',compare('overview',overview))}
+      ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',compare('categories',renderCategories(a)))}
+      ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',compare('momentum',renderMomentum(people)))}
+      ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',compare('ages',renderAgePanels(people)))}
       ${analyticsDisclosure('personal-progress','Points over time',progressPerson?'Explore this gymnast’s recorded Floor gains':'Combined squad progress · compare with another squad',progressChart)}</div>`);
   }
-  function resetAnalytics() {priorityPinned=null;analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='progress';analyticsRankCategory='overall';analyticsRankMetric='points';progressComparisonGroup='';}
+  function resetAnalytics() {priorityPinned=null;priorityShowMore=false;panelComparisonGroups={};analyticsSelectedIds=[];analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='progress';analyticsRankCategory='overall';analyticsRankMetric='points';progressComparisonGroup='';}
   function setDirectoryGroup(group) {
     // Programme navigation supplies a first default only. The visible squad
     // selector owns this choice after that, including across browser visits.
@@ -386,8 +409,8 @@
     rememberDirectoryGroup(group);
     if(directory)renderDirectory();
   }
-  function analyticsFromDirectory() {resetAnalytics();analyticsGroup=directoryGroup;analyticsDirectoryGroup=directoryGroup;}
-  function syncAnalyticsDirectory() {if(analyticsDirectoryGroup===directoryGroup)return false;analyticsFromDirectory();return true;}
+  function analyticsFromDirectory() {resetAnalytics();analyticsSelectedIds=directorySelectionIds();analyticsGroup=analyticsSelectedIds.length?'selection':directoryGroup;analyticsDirectoryGroup=directoryGroup;analyticsDirectorySelection=JSON.stringify(analyticsSelectedIds.slice().sort());}
+  function syncAnalyticsDirectory(force=false) {const selected=JSON.stringify(directorySelectionIds().sort());if(!force&&analyticsDirectoryGroup===directoryGroup&&analyticsDirectorySelection===selected)return false;analyticsFromDirectory();return true;}
   function selectGymnast(id) {analyticsDirectoryGroup=directoryGroup;priorityPinned=null;analyticsGroup=isCoach(data?.gymnasts.find(g=>g.id===id))?'coaches':'all';analyticsAge='all';analyticsGymnast=id;}
   function showGymnastInDirectory() {
     // Opening any profile must not replace the coach’s working directory squad.

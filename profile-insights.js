@@ -15,7 +15,7 @@
   function build(config={},options={}) {
     const data=config.data,gymnast=data?.gymnasts?.find(g=>g.id===config.gymnastId);
     const scope=scopes.includes(options.scope)?options.scope:'combined',days=ranges.includes(options.days)?options.days:28;
-    const model={gymnast,scope,days,loaded:!!data?.hasLoaded,categories:[],priorities:[],weekly:null,series:null};
+    const model={gymnast,scope,days,showMore:!!options.showMore,loaded:!!data?.hasLoaded,categories:[],priorities:[],weekly:null,series:null};
     if(!gymnast||!model.loaded)return model;
     const skills=skillScope(data.skills||[],scope);
     model.score=data.summary(gymnast.id,category(scope));
@@ -24,8 +24,8 @@
       const achieved=members.filter(s=>data.mark(gymnast.id,s.id)>=1).length;
       return {...c,total:members.length,achieved,perfect,points:data.summary(gymnast.id,c.id).points};
     });
-    const all=config.priorities?.([gymnast],{scope,includeComplete:!!options.pinnedIds?.length,limit:options.pinnedIds?.length?Infinity:5})||[];
-    model.priorities=options.pinnedIds?.length?options.pinnedIds.map(id=>all.find(row=>row.skill.id===id)).filter(Boolean):all;
+    const all=config.priorities?.([gymnast],{scope,includeComplete:!!options.pinnedIds?.length,limit:options.pinnedIds?.length?Infinity:10})||[];
+    model.priorities=(options.pinnedIds?.length?options.pinnedIds.map(id=>all.find(row=>row.skill.id===id)).filter(Boolean):all).slice(0,10);
     model.priorities=model.priorities.map(row=>({...row,level:data.mark(gymnast.id,row.skill.id),category:data.categories.find(c=>c.id===row.skill.category)}));
     model.weekly=window.SWLGymnastProgress?.buildSeries({progress:data.state?.weeklyProgress,gymnastId:gymnast.id,days:7})||null;
     model.series=window.SWLGymnastProgress?.buildSeries({progress:data.state?.weeklyProgress,gymnastId:gymnast.id,days})||null;
@@ -34,10 +34,11 @@
   }
   function stack(achieved,perfect,total){return `<span class="pi-stack" aria-hidden="true"><i class="pi-perfect" style="width:${total?perfect/total*100:0}%"></i><i class="pi-achieved" style="width:${total?(achieved-perfect)/total*100:0}%"></i></span>`;}
   function priorities(model,data){
-    return `<section class="pi-panel pi-priorities"><div class="pi-panel-heading"><h3>Next skills to work on</h3><span>Biggest points gain</span></div>${model.priorities.length?`<ol class="pi-priority-list">${model.priorities.map(row=>{
+    const visible=model.priorities.slice(0,model.showMore?10:5),listId='pi-priorities-'+model.gymnast.id;
+    return `<section class="pi-panel pi-priorities"><div class="pi-panel-heading"><h3>Next skills to work on</h3><span>Biggest points gain</span></div>${model.priorities.length?`<ol class="pi-priority-list" id="${esc(listId)}">${visible.map(row=>{
       const skill=row.skill,key=model.gymnast.id+':priority:'+skill.id,tier=row.category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
       return `<li><details data-personal-detail="${esc(key)}" data-personal-priority="${esc(skill.id)}"><summary data-personal-focus="${esc(key)}"><span>${esc(skill.name)}</span><b class="pi-priority-gain">${row.level===2?'✓✓':`+${number(row.availablePoints)}`}</b><span class="pi-chevron">${arrow}</span></summary><div class="pi-priority-content"><p>${esc(row.category?.name||skill.category)} · ${esc(tier)}</p><div class="pi-priority-status"><span>${markNames[row.level]}${row.level<2?` · ${row.level===1?'Perfect':'Achieve'} next`:''}</span><div class="pi-mark-controls" role="group" aria-label="${esc(skill.name)} for ${esc(model.gymnast.name)}">${markNames.map((name,value)=>`<button type="button" id="pi-mark-${esc(model.gymnast.id)}-${esc(skill.id)}-${value}" class="pi-mark mark-${value}" data-priority-mark="${value}" data-priority-skill="${esc(skill.id)}" data-priority-gymnast="${esc(model.gymnast.id)}" data-personal-focus="mark-${esc(model.gymnast.id)}-${esc(skill.id)}-${value}" aria-label="${esc(skill.name)}: ${name}" aria-pressed="${row.level===value}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${markSymbols[value]}</span></button>`).join('')}</div></div></div></details></li>`;
-    }).join('')}</ol>`:'<p class="pi-empty">All recommended skills in this view are Perfect.</p>'}<p class="pi-note">${data.canEdit===false?'Scoring is locked. Unlock it above to update marks.':'Choose a mark to update this gymnast’s skill.'}${model.scope!=='vault'?' Handstands are excluded from recommendations.':''}</p></section>`;
+    }).join('')}</ol>${model.priorities.length>5?`<button type="button" class="pi-more-button" data-personal-more="true" data-personal-focus="priorities-more" aria-expanded="${model.showMore}" aria-controls="${esc(listId)}">${model.showMore?'Show less':'Show more'}<span class="pi-chevron">${arrow}</span></button>`:''}`:'<p class="pi-empty">All recommended skills in this view are Perfect.</p>'}<p class="pi-note">${data.canEdit===false?'Scoring is locked. Unlock it above to update marks.':'Choose a mark to update this gymnast’s skill.'}${model.scope!=='vault'?' Handstands are excluded from recommendations.':''}</p></section>`;
   }
   function categories(model){
     return `<section class="pi-panel"><div class="pi-panel-heading"><h3>Across the skills</h3></div><div class="pi-key"><span><i class="pi-achieved"></i>Achieved</span><span><i class="pi-perfect"></i>Perfect</span></div><div class="pi-categories">${model.categories.map(c=>`<div class="pi-category"><div><h4>${esc(c.name)}</h4><strong>${number(c.points)} <small>pts</small></strong></div>${stack(c.achieved,c.perfect,c.total)}<p>${c.achieved} / ${c.total} achieved <span>${c.perfect} Perfect</span></p></div>`).join('')}</div></section>`;
@@ -63,7 +64,7 @@
   function capture(host){
     const state=host&&hosts.get(host);if(!state)return null;
     const active=document.activeElement;
-    return {id:state.id,scope:state.scope,days:state.days,pinnedIds:state.pinnedIds?[...state.pinnedIds]:null,open:Array.from(host.querySelectorAll('details[data-personal-detail][open]')).map(e=>e.dataset.personalDetail),focus:host.contains(active)?active?.dataset?.personalFocus||null:null};
+    return {id:state.id,scope:state.scope,days:state.days,showMore:state.showMore,pinnedIds:state.pinnedIds?[...state.pinnedIds]:null,open:Array.from(host.querySelectorAll('details[data-personal-detail][open]')).map(e=>e.dataset.personalDetail),focus:host.contains(active)?active?.dataset?.personalFocus||null:null};
   }
   function restoreDOM(host,snapshot){
     if(!snapshot)return;
@@ -78,6 +79,7 @@
   function restore(host,snapshot){
     const state=host&&hosts.get(host);if(!state||!snapshot||snapshot.id!==state.id)return;
     state.scope=scopes.includes(snapshot.scope)?snapshot.scope:'combined';state.days=ranges.includes(snapshot.days)?snapshot.days:28;
+    state.showMore=!!snapshot.showMore;
     state.pinnedIds=Array.isArray(snapshot.pinnedIds)?snapshot.pinnedIds:null;
     render(host,state.config);restoreDOM(host,snapshot);
   }
@@ -85,11 +87,17 @@
     if(!host)return null;
     let state=hosts.get(host);
     if(!state){
-      state={id:null,scope:'combined',days:28,pinnedIds:null,renderedIds:[],config:null,html:null};hosts.set(host,state);
+      state={id:null,scope:'combined',days:28,showMore:false,pinnedIds:null,renderedIds:[],config:null,html:null};hosts.set(host,state);
       host.addEventListener('click',event=>{
         const control=event.target.closest?.('button');if(!control||!host.contains(control)||control.disabled)return;
-        if(scopes.includes(control.dataset.personalScope)){state.scope=control.dataset.personalScope;state.pinnedIds=null;render(host,state.config);}
+        if(scopes.includes(control.dataset.personalScope)){if(state.scope!==control.dataset.personalScope){state.scope=control.dataset.personalScope;state.pinnedIds=null;state.showMore=false;}render(host,state.config);}
         else if(ranges.includes(Number(control.dataset.personalPeriod))){state.days=Number(control.dataset.personalPeriod);render(host,state.config);}
+        else if(control.dataset.personalMore==='true'){
+          state.showMore=!state.showMore;
+          // Collapsing closes hidden disclosures; keep the order pinned only for visible open rows.
+          if(!state.showMore&&state.pinnedIds&&!Array.from(host.querySelectorAll('details[data-personal-priority]')).some(el=>el.open&&state.renderedIds.slice(0,5).includes(el.dataset.personalPriority)))state.pinnedIds=null;
+          render(host,state.config);
+        }
       });
       host.addEventListener('toggle',event=>{
         if(!event.target.isConnected||!event.target.matches?.('details[data-personal-priority]'))return;
@@ -99,7 +107,7 @@
       },true);
     }
     const same=state.id===config.gymnastId,snapshot=same?capture(host):null;
-    if(!same){state.id=config.gymnastId;state.scope='combined';state.days=28;state.pinnedIds=null;}
+    if(!same){state.id=config.gymnastId;state.scope='combined';state.days=28;state.showMore=false;state.pinnedIds=null;}
     state.config=config;
     const model=build(config,state);state.renderedIds=model.priorities.map(row=>row.skill.id);
     const html=!model.gymnast?'<p class="pi-empty">Choose a gymnast to see their insights.</p>':!model.loaded?'<p class="pi-empty" role="status">Loading personal insights…</p>':`<div class="profile-insights" data-personal-gymnast="${esc(model.gymnast.id)}"><div class="pi-toolbar"><h2>Insights</h2><div class="pi-scopes" role="group" aria-label="Personal insights apparatus">${scopes.map(scope=>`<button type="button" data-personal-scope="${scope}" data-personal-focus="scope-${scope}" aria-pressed="${state.scope===scope}">${label(scope)}</button>`).join('')}</div></div><div class="pi-totals"><div><strong>${number(model.score.points)}</strong><span>${label(state.scope)} points</span></div><div><strong>${model.score.achieved}<small> / ${skillScope(config.data.skills,state.scope).length}</small></strong><span>skills achieved</span></div><div><strong>${model.score.perfect}</strong><span>Perfect</span></div></div>${priorities(model,config.data)}<div class="pi-overview">${categories(model)}${weekly(model)}</div>${graph(model)}</div>`;

@@ -238,3 +238,14 @@ html[data-theme="light"] .v4-mark-controls .mark-2[aria-pressed="true"]{backgrou
 /* Keep the analytics workspace compact once the decorative introduction is removed. */
 #analyticsRoot .analytics-heading-compact{display:flex;justify-content:flex-end;align-items:center;margin:0 0 14px;min-height:36px}
 #analyticsRoot .analytics-heading-compact>.quiet{min-height:36px;font-size:11px}
+
+/* Independent analytics scope and progressively disclosed priorities. */
+.analytics-controls51 .analytics-squad-picker {min-width:0;flex:1 1 250px}
+.analytics-controls51 .analytics-squad-picker select {width:100%;max-width:100%;text-overflow:ellipsis}
+.a31-priority-more {display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:44px;margin:14px 0 8px;padding:10px 16px;border:1px solid rgba(179,149,255,.32);border-radius:12px;background:rgba(154,110,255,.09);color:#e5d9ff;font:inherit;font-weight:700;cursor:pointer}
+.a31-priority-more span {color:#aaa4bb;font-size:.8rem;font-weight:500}
+.a31-priority-more:hover {background:rgba(154,110,255,.16)}
+.a31-priority-more:focus-visible {outline:2px solid #c8a8ff;outline-offset:3px}
+@media(max-width:600px){.analytics-controls51 .analytics-squad-picker{flex-basis:100%;grid-column:1/-1}.analytics-controls51 .analytics-squad-picker select{font-size:16px}}
+
+@media(min-width:901px){#analyticsRoot .analytics-controls51{grid-template-columns:minmax(220px,1.05fr) minmax(220px,1.3fr) minmax(180px,1fr)}}

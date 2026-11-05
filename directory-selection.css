@@ -1,0 +1,19 @@
+/* Same small control footprint as attendance; chosen gymnasts remain readable. */
+#directorySelectionToolbar{margin:6px 0 16px}
+.directory-selection-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.directory-selection-bar.has-selection{padding:12px 14px;border:1px solid var(--p40-soft-edge,#b896ef45);border-radius:16px;background:var(--p40-subtle,#ffffff04)}
+.directory-selection-count{margin-right:auto;white-space:nowrap;color:var(--text,#f6f3fc);font-size:13px;font-weight:700}
+.directory-selection-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.directory-selection-bar button{min-height:44px;padding:9px 13px;border:1px solid var(--p40-edge,#d3bfff25);border-radius:11px;background:var(--p40-raised,#20202d);color:var(--text,#f6f3fc);font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+.directory-selection-bar .directory-selection-primary{background:var(--p40-action,#c5a4ff);border-color:var(--p40-action-edge,#dac6ff);color:var(--p40-action-ink,#241832)}
+.directory-selection-bar .directory-selection-quiet{border-color:transparent;background:transparent;color:var(--purple,#c5a4ff)}
+.directory-selection-bar button:disabled{opacity:.4;cursor:default}
+.directory-selection-hint{flex:1 1 100%;margin:0;color:var(--muted,#aaa5ba);font-size:11px;line-height:1.5}
+#directoryRoot .directory-selection-control{position:absolute;top:6px;right:3px;z-index:2;display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:0;border:0;border-radius:12px;background:transparent;color:var(--p40-action-ink,#241832);font:inherit;cursor:pointer}
+#directoryRoot .directory-selection-control>span{display:grid;place-items:center;width:22px;height:22px;box-sizing:border-box;border:1.5px solid var(--muted,#aaa5ba);border-radius:7px;background:var(--p40-raised,#20202d);font-size:14px;font-weight:800;line-height:1;transition:background .15s,border-color .15s}
+#directoryRoot .directory-selection-control[aria-pressed=true]>span{background:var(--p40-action,#c5a4ff);border-color:var(--p40-action,#c5a4ff)}
+#directoryRoot .directory-card:has(>.directory-selection-control)>.directory-profile-content{padding-right:57px}
+#directoryRoot .directory-card:has(>.directory-selection-control[aria-pressed=true]){border-color:var(--purple,#c5a4ff)}
+:is(.directory-selection-control,.directory-selection-bar button):focus-visible{outline:2px solid var(--purple,#c5a4ff);outline-offset:2px}
+@media(max-width:560px){.directory-selection-bar.has-selection{padding:10px;gap:8px}.directory-selection-count{flex:1 1 100%}.directory-selection-actions{width:100%;justify-content:flex-start;gap:6px}.directory-selection-bar button{padding:9px 10px;font-size:11px}.directory-selection-hint{font-size:10px}}
+@media(prefers-reduced-motion:reduce){#directoryRoot .directory-selection-control>span{transition:none}}

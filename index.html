@@ -1591,7 +1591,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./welcome.css">
 <link rel="stylesheet" href="./skills-catalogue.css?v=20261019v3">
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
-<link rel="stylesheet" href="./analytics-31.css?v=20261101-refined">
+<link rel="stylesheet" href="./directory-selection.css?v=20261105-analytics-selection">
+<link rel="stylesheet" href="./analytics-compare.css?v=20261105-analytics-selection">
+<link rel="stylesheet" href="./analytics-31.css?v=20261105-analytics-selection">
 <link rel="stylesheet" href="./challenge.css?v=20261101-progressive"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
 <link rel="stylesheet" href="./v4-search.css?v=20261029-v4">
@@ -1600,9 +1602,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./apparatus-40.css?v=20261030-vault">
 <link rel="stylesheet" href="./entry-40.css?v=20261101-profile">
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
-<link rel="stylesheet" href="./directory-attendance.css?v=20261031-v5">
+<link rel="stylesheet" href="./directory-attendance.css?v=20261105-analytics-selection">
 <link rel="stylesheet" href="./gymnast-progress.css?v=20261105-squad-progress">
-<link rel="stylesheet" href="./profile-insights.css?v=20261101-profile">
+<link rel="stylesheet" href="./profile-insights.css?v=20261105-analytics-selection">
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-card-sizes">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 <link rel="stylesheet" href="./profile-badges.css?v=20261103-notices">
@@ -1815,10 +1817,12 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games.js?v=20261101-programme"></script>
 <script src="./skills-catalogue.js?v=20261031-v51"></script>
 <script src="./v4-search.js?v=20261101-emblems"></script>
-<script src="./directory-attendance.js?v=20261101-emblems"></script>
+<script src="./directory-attendance.js?v=20261105-analytics-selection"></script>
 <script src="./gymnast-progress.js?v=20261105-squad-progress"></script>
-<script src="./profile-insights.js?v=20261101-profile"></script>
-<script src="./v2.js?v=20261105-squad-progress"></script>
+<script src="./profile-insights.js?v=20261105-analytics-selection"></script>
+<script src="./directory-selection.js?v=20261105-analytics-selection"></script>
+<script src="./analytics-compare.js?v=20261105-analytics-selection"></script>
+<script src="./v2.js?v=20261105-analytics-selection"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
@@ -2907,7 +2911,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('addGymnastButton').disabled = !canEdit();
     $('toastUndo').disabled = !canEdit() || !history.length;
     document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew], button[data-priority-mark]').forEach(button => {
-      button.disabled = !canEdit();
+      button.disabled = !canEdit() || (Boolean(window.SWLDirectorySelection?.isActive()) && (button.hasAttribute('data-quick-skill') || button.hasAttribute('data-quick-renew')));
     });
   }
 
@@ -4194,7 +4198,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           }
         } else if (destination === 'analytics') {
           if (currentView !== 'analytics') {
-            if (v2Api()?.syncAnalyticsDirectory()) analyticsScroll = 0;
+            if (v2Api()?.syncAnalyticsDirectory(['directory','tracker','placement'].includes(currentView))) analyticsScroll = 0;
             setView('analytics', false);
             window.scrollTo({top:analyticsScroll,behavior:'instant'});
           }
@@ -4203,8 +4207,10 @@ html:has(body.no-motion){scroll-behavior:auto}
       } else if (button.hasAttribute('data-priority-mark')) {
         changeSkill(button.dataset.prioritySkill,button,Number(button.dataset.priorityMark),button.dataset.priorityGymnast);
       } else if (button.hasAttribute('data-quick-skill')) {
+        if(window.SWLDirectorySelection?.isActive())return;
         changeSkill(button.dataset.quickSkill,button,undefined,button.dataset.quickGymnast);
       } else if (button.hasAttribute('data-quick-renew')) {
+        if(window.SWLDirectorySelection?.isActive())return;
         renewSkill(button.dataset.quickRenew,button,button.dataset.quickGymnast);
 
       } else if (button.hasAttribute('data-board-group')) {

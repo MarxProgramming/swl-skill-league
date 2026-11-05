@@ -36,9 +36,14 @@
     records.forEach((expiry,id)=>{if(expiry<=now)records.delete(id);});
   }
   function save(id,expiry) {
+    saveMany([[id,expiry]]);
+  }
+  function saveMany(changes) {
     ensureLoaded();mergeLatest();
-    if(expiry===null)records.delete(id);else records.set(id,expiry);
-    pending.set(id,expiry);
+    changes.forEach(([id,expiry])=>{
+      if(expiry===null)records.delete(id);else records.set(id,expiry);
+      pending.set(id,expiry);
+    });
     try {
       window.localStorage.setItem(KEY,JSON.stringify([...records]));
       pending.clear();storageFailed=false;
@@ -95,7 +100,15 @@
     if(!modal)return;
     const info=modal;modal=null;
     if(dialog.open)dialog.close();
-    if(confirmed&&person(info.id)){
+    if(confirmed&&info.ids){
+      const ids=info.ids.filter(id=>person(id));
+      if(ids.length){
+        const expiry=Date.now()+TTL;saveMany(ids.map(id=>[id,expiry]));
+        notify('hideMany');
+        announce(ids.length+' gymnast'+(ids.length===1?' is':'s are')+(storageFailed?' hidden for this visit. This browser could not save the change.':' hidden here for 24 hours.'));
+        info.onComplete?.({ids,persisted:!storageFailed});
+      }
+    }else if(confirmed&&person(info.id)){
       save(info.id,Date.now()+TTL);notify('hide',info.id);
       announce(storageFailed?info.name+' is hidden for this visit. This browser could not save the change.':info.name+' is hidden here for 24 hours.');
     }
@@ -107,13 +120,30 @@
     dialog.setAttribute('aria-labelledby','attendanceDialogTitle');dialog.setAttribute('aria-describedby','attendanceDialogName attendanceDialogDescription');
     const title=document.createElement('h2');title.id='attendanceDialogTitle';title.textContent='Not here today?';
     const name=document.createElement('p');name.className='directory-attendance-name';name.id='attendanceDialogName';
+    const names=document.createElement('ul');names.className='directory-attendance-names';names.id='attendanceDialogNames';names.hidden=true;
     const description=document.createElement('p');description.id='attendanceDialogDescription';description.textContent='Hide this gymnast from this device’s list for 24 hours. Their scores and squads stay the same. You can still find them by searching their name.';
     const actions=document.createElement('div');actions.className='directory-attendance-actions';
     const cancel=document.createElement('button');cancel.type='button';cancel.className='directory-attendance-cancel';cancel.textContent='Keep here';cancel.addEventListener('click',()=>finish(false));
     const confirm=document.createElement('button');confirm.type='button';confirm.className='directory-attendance-confirm';confirm.textContent='Hide for 24 hours';confirm.addEventListener('click',()=>finish(true));
-    actions.append(cancel,confirm);dialog.append(title,name,description,actions);document.body.append(dialog);
+    actions.append(cancel,confirm);dialog.append(title,name,names,description,actions);document.body.append(dialog);
     dialog.addEventListener('cancel',e=>{e.preventDefault();finish(false);});
     dialog.addEventListener('close',()=>{if(modal){const info=modal;modal=null;focusAfter(info);}});
+  }
+  function showConfirmation(info) {
+    buildDialog();if(dialog.open)return false;
+    modal=info;
+    const list=dialog.querySelector('#attendanceDialogNames');list.innerHTML='';list.hidden=!info.ids;
+    dialog.querySelector('#attendanceDialogName').textContent=info.ids?info.ids.length+' gymnast'+(info.ids.length===1?'':'s'):info.name;
+    if(info.ids)info.ids.forEach(id=>{const li=document.createElement('li');li.textContent=String(person(id)?.name||'Gymnast');list.append(li);});
+    dialog.querySelector('#attendanceDialogDescription').textContent=info.ids?'Hide these selected gymnasts from this device’s list for 24 hours. Their scores and squads stay the same. You can still find them by searching their names.':'Hide this gymnast from this device’s list for 24 hours. Their scores and squads stay the same. You can still find them by searching their name.';
+    try{dialog.showModal();dialog.querySelector('.directory-attendance-cancel').focus({preventScroll:true});return true;}
+    catch(_){modal=null;announce('The confirmation could not open. Please try again.');focusAfter(info);return false;}
+  }
+  function hideMany(ids,options={}) {
+    if(!root||!Array.isArray(ids))return false;
+    const valid=[...new Set(ids.map(String))].filter(id=>validId(id)&&person(id));
+    if(!valid.length)return false;
+    return showConfirmation({ids:valid,opener:document.activeElement,index:0,onComplete:typeof options.onComplete==='function'?options.onComplete:null});
   }
   function click(event) {
     const button=event.target.closest?.('[data-attendance-hide],[data-attendance-restore]');
@@ -124,10 +154,7 @@
     const profile=button.closest('.directory-card')?.querySelector('.directory-profile');
     const info={id,name:String(g.name),opener:button,index:Math.max(0,[...root.querySelectorAll('.directory-profile')].indexOf(profile))};
     if(restore){save(id,null);notify('restore',id);announce(g.name+' is back in this view.'+(storageFailed?' This change is for this visit only.':''));focusAfter(info,id);return;}
-    buildDialog();if(dialog.open)return;
-    modal=info;dialog.querySelector('#attendanceDialogName').textContent=info.name;
-    try{dialog.showModal();dialog.querySelector('.directory-attendance-cancel').focus({preventScroll:true});}
-    catch(_){modal=null;announce('The confirmation could not open. Please try again.');focusAfter(info);}
+    showConfirmation(info);
   }
   function mount(options) {
     if(root)root.removeEventListener('click',click);
@@ -136,5 +163,5 @@
     if(!listening){listening=true;window.addEventListener('focus',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check();});window.addEventListener('storage',event=>{if(event.key===KEY||event.key===null)check();});}
     refresh();schedule();
   }
-  window.SWLDirectoryAttendance={mount,isHidden,control,refresh};
+  window.SWLDirectoryAttendance={mount,isHidden,control,refresh,hideMany};
 })();
