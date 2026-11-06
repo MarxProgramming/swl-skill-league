@@ -20,3 +20,17 @@
 @media(prefers-reduced-motion:reduce){.analytics-compare .acmp-chevron{transition:none}}
 
 @media(pointer:coarse){.analytics-compare summary{min-height:44px}}
+
+/* One shared comparison, with matched colours and a readable gap. */
+#analyticsRoot .analytics-controls51{grid-template-columns:repeat(2,minmax(0,1fr))}
+#analyticsRoot .analytics-compare-picker{border-left:2px solid #8de5d099;padding-left:14px}
+.analytics-compare.acmp-overview{margin:0 0 24px;padding:24px;border:1px solid #c5a4ff26;border-radius:20px;background:linear-gradient(125deg,#c5a4ff0a,transparent 65%),var(--p40-surface,#1b1b26)}
+.acmp-overview-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px}.acmp-overview-head h2{margin:4px 0 0;font-size:1.45rem}.acmp-overview-head p{margin:0}.acmp-overview-head button{flex-shrink:0;min-height:44px}
+.acmp-scorecards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.acmp-scorecards>article{border:1px solid #c5a4ff20;border-radius:14px;padding:18px;min-width:0;background:#0c0b141f}.acmp-scorecards h3{font-size:.8rem;margin:0 0 14px;color:var(--muted,#aaa5ba)}
+.acmp-score-values{display:flex;justify-content:space-between;gap:12px;align-items:center}.acmp-score-values>div{display:flex;gap:8px;align-items:center;min-width:0}.analytics-compare .acmp-score-values .acmp-key{margin-top:0}.acmp-score-values strong{font-family:var(--number-font,'Barlow Semi Condensed',sans-serif);font-size:1.9rem;line-height:1.2;font-variant-numeric:tabular-nums}.acmp-score-values>div:first-child strong{color:#c5a4ff}.acmp-score-values>div:nth-child(2) strong{color:#8de5d0}
+.analytics-compare .acmp-gap{font-size:.73rem;line-height:1.5;margin:14px 0 0;color:var(--muted,#aaa5ba);overflow-wrap:anywhere}.analytics-compare .acmp-gap strong{font-weight:650}.analytics-compare .acmp-gap-primary strong{color:#c5a4ff}.analytics-compare .acmp-gap-secondary strong{color:#8de5d0}
+.analytics-compare.acmp-global-panel{margin:0}.analytics-compare.acmp-global-panel .acmp-content{margin-top:0}.analytics-compare.acmp-skill-comparison{padding:16px;border:1px solid #c5a4ff20;border-radius:12px;margin:0 0 18px}.analytics-compare.acmp-skill-comparison h4{font-size:.75rem}
+@media(max-width:900px){.acmp-scorecards{grid-template-columns:minmax(0,1fr)}.acmp-scorecards>article{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,1fr);align-items:center;gap:8px 16px}.acmp-scorecards h3{margin:0}.acmp-scorecards .acmp-gap{grid-column:1/-1;margin-top:3px}.acmp-score-values strong{font-size:1.7rem}}
+@media(max-width:600px){#analyticsRoot .analytics-controls51{grid-template-columns:minmax(0,1fr)}.analytics-compare.acmp-overview{padding:19px}.acmp-overview-head{align-items:flex-start;gap:10px}.acmp-overview-head h2{font-size:1.25rem}.acmp-overview-head button{font-size:.7rem;max-width:105px}.acmp-scorecards>article{padding:14px;grid-template-columns:minmax(0,1fr)}.acmp-score-values{justify-content:flex-start;gap:32px}.acmp-scorecards h3{margin-bottom:4px}.analytics-compare .acmp-legend{flex-direction:row;gap:12px 22px}.analytics-compare .acmp-legend>span{flex:1 1 130px}}
+
+.analytics-compare .acmp-drill{appearance:none;background:none;border:0;border-radius:6px;color:inherit;font:inherit;font-weight:inherit;text-align:left;padding:4px 0;cursor:pointer}.analytics-compare .acmp-drill:hover{color:#d5bdff}.analytics-compare .acmp-drill:focus-visible{outline:2px solid #b89bff;outline-offset:4px}.analytics-compare .acmp-drill>span{color:#b89bff}
