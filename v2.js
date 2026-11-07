@@ -119,7 +119,7 @@
   const shortSkills={
     'rolls-base-0':'HS → fwd roll','rolls-base-full-turn':'Full turn jump','rolls-base-2':'Bwd roll → support',
     'rolls-upgrade-0':'HS roll → pike','rolls-upgrade-1':'1½ turn jump','rolls-upgrade-2':'Bwd roll → HS',
-    'rolls-pro-0':'HS pir. → fwd roll','rolls-pro-1':'Split jump','rolls-pro-2':'Bwd roll → HS pir.',
+    'rolls-pro-0':'HS pir. → fwd roll','rolls-pro-1':'Split jump','rolls-pro-hold3':'Bwd roll → HS 3s',
     'acro-base-0':'Bwd walkover','acro-base-full-spin':'Full spin','acro-base-2':'Fwd walkover',
     'acro-upgrade-0':'Split flick','acro-upgrade-1':'1½ spin','acro-upgrade-2':'Chassé free CW',
     'acro-pro-roundoff-flick':'Round-off → flick','acro-pro-1':'Double spin','acro-pro-handspring':'Handspring',

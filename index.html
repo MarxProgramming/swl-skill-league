@@ -1593,6 +1593,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./v3-rankings.css?v=20261019podium">
 <link rel="stylesheet" href="./directory-selection.css?v=20261105-fair-comparison">
 <link rel="stylesheet" href="./analytics-31.css?v=20261105-analytics-selection">
+<link rel="stylesheet" href="./roster-management.css?v=20261107-roster">
 <link rel="stylesheet" href="./analytics-compare.css?v=20261106-shared-comparison">
 <link rel="stylesheet" href="./challenge.css?v=20261101-progressive"><link rel="stylesheet" href="./squads.css?v=20261020-dropdown">
 <link rel="stylesheet" href="./theme.css?v=20261026b">
@@ -1728,8 +1729,8 @@ html:has(body.no-motion){scroll-behavior:auto}
             <form id="addGymnastForm">
               <label for="gymnastName">Gymnast’s name</label>
               <input id="gymnastName" name="name" required maxlength="100" autocomplete="off" placeholder="Full name">
-              <label for="gymnastCoach">Coach <span class="muted">(optional)</span></label>
-              <input id="gymnastCoach" name="coach" list="coachOptions" value="Marx" maxlength="100" autocomplete="off">
+              <label>Squad(s)</label><div id="newGymnastSquads"></div>
+              <input id="gymnastCoach" type="hidden" value="Marx">
               <datalist id="coachOptions"><option value="Marx"></option><option value="Dan"></option></datalist>
               <p class="form-error" id="addGymnastError" role="alert" hidden></p>
               <button class="primary" type="submit" id="addGymnastButton">Add gymnast <span aria-hidden="true">＋</span></button>
@@ -1822,7 +1823,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./profile-insights.js?v=20261105-analytics-selection"></script>
 <script src="./directory-selection.js?v=20261105-fair-comparison"></script>
 <script src="./analytics-compare.js?v=20261106-shared-comparison"></script>
-<script src="./v2.js?v=20261106-shared-comparison"></script>
+<script src="./roster-management.js?v=20261107-roster"></script>
+<script src="./v2.js?v=20261107-roster"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
@@ -1889,7 +1891,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           [
             'Handstand pirouette to handstand forwards roll',
             'Split jump',
-            'Backwards roll to handstand into handstand pirouette'
+            'Backwards roll to handstand hold 3 seconds'
           ]
         ]
       ]
@@ -1971,6 +1973,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   // IDs identify the actual skill, even when it moves to a different tier.
   const SKILL_ID_OVERRIDES = {
+    'Backwards roll to handstand hold 3 seconds': 'rolls-pro-hold3',
     'Full turn jump': 'rolls-base-full-turn',
     'Round-off flick': 'acro-pro-roundoff-flick',
     'Full spin': 'acro-base-full-spin',
@@ -1980,7 +1983,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     'Cat leap full turn': 'leaps-base-1',
     'W hop': 'leaps-upgrade-w-hop'
   };
-  const RETIRED_SKILL_IDS = new Set(['rolls-base-1', 'acro-base-1', 'acro-pro-0', 'acro-pro-2']);
+  const RETIRED_SKILL_IDS = new Set(['rolls-base-1', 'acro-base-1', 'acro-pro-0', 'acro-pro-2', 'rolls-pro-2']);
   const SKILLS = CATEGORIES.flatMap(category =>
     category.tiers.flatMap(([tier, label, names]) =>
       names.map((name, index) => ({
@@ -2514,6 +2517,12 @@ html:has(body.no-motion){scroll-behavior:auto}
       const gymnast = cleanGymnast(value);
       return { type: 'add_gymnast', ...gymnast };
     }
+    if (value.type === 'archive_gymnast' && validGymnastId(value.gymnastId)) return {type:value.type,gymnastId:value.gymnastId};
+    if (value.type === 'set_squads' && validGymnastId(value.gymnastId) && Array.isArray(value.squads) && value.squads.length && value.squads.length<=6) {
+      const g=cleanGymnast({id:value.gymnastId,name:'Roster edit',coach:value.squads[0],squads:value.squads});
+      if(g.squads.includes('Coaches')&&g.squads.length>1)throw Error('Coaches must be in the Coaches category only.');
+      return {type:value.type,gymnastId:value.gymnastId,squads:g.squads};
+    }
     if (value.type === 'set_mark' && validGymnastId(value.gymnastId) &&
         (SKILL_IDS.has(value.skillId) || RETIRED_SKILL_IDS.has(value.skillId)) && Number.isInteger(value.value) &&
         value.value >= 0 && value.value <= 2) {
@@ -2541,6 +2550,14 @@ html:has(body.no-motion){scroll-behavior:auto}
           next.gymnasts.push({ id: operation.id, name: operation.name, coach: operation.coach, ...(operation.squads ? {squads:operation.squads} : {}) });
           ids.add(operation.id);
         }
+      } else if (operation.type === 'set_squads' && ids.has(operation.gymnastId)) {
+        const gymnast=next.gymnasts.find(g=>g.id===operation.gymnastId);gymnast.squads=operation.squads.slice();gymnast.coach=operation.squads[0];
+      } else if (operation.type === 'archive_gymnast') {
+        next.gymnasts=next.gymnasts.filter(g=>g.id!==operation.gymnastId);ids.delete(operation.gymnastId);
+        for(const key of ['marks','skillDates','linking','prizes','completionAchievements'])if(next[key])delete next[key][operation.gymnastId];
+        for(const key of ['points','heat','history','heatPoints','heatHistory'])if(next.weeklyProgress?.[key])delete next.weeklyProgress[key][operation.gymnastId];
+        if(next.dailyProgress?.points)delete next.dailyProgress.points[operation.gymnastId];
+        if(next.challenge?.finishers)next.challenge.finishers=next.challenge.finishers.filter(row=>row.gymnastId!==operation.gymnastId);
       } else if (operation.type === 'set_link' && ids.has(operation.gymnastId)) {
         next.linking[operation.gymnastId] ??= {};
         next.linking[operation.gymnastId][operation.complexId] = operation.value;
@@ -2909,6 +2926,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('exportButton').disabled = !hasLoaded && damagedRecovery === null;
     $('exportButton').textContent = damagedRecovery !== null ? 'Download recovery data' : 'Download unsaved backup';
     $('addGymnastButton').disabled = !canEdit();
+    window.SWLRosterManagement?.refresh();
     $('toastUndo').disabled = !canEdit() || !history.length;
     document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew], button[data-priority-mark]').forEach(button => {
       button.disabled = !canEdit() || (Boolean(window.SWLDirectorySelection?.isActive()) && (button.hasAttribute('data-quick-skill') || button.hasAttribute('data-quick-renew')));
@@ -2953,7 +2971,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       const response = await fetch(scoresEndpoint(), {
         method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2 }),
+        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2, rollHoldVersion: 1 }),
         signal: controller.signal
       });
       let payload;
@@ -3626,6 +3644,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         </section>
       `).join('')}
       </div>
+      ${window.SWLRosterManagement?.footer(gymnast)||''}
     `;
 
     updateAthlete(false);
@@ -4323,14 +4342,23 @@ html:has(body.no-motion){scroll-behavior:auto}
     toast(hasPending() ? 'Backup includes the unsaved changes shown here.' : 'Backup download requested.');
   });
 
+  window.SWLRosterManagement?.init({people:()=>GYMNASTS,editable:canEdit,save:operation=>{
+    if(!canEdit())throw Error('Unlock scoring first.');
+    enqueueOperation(operation);
+    if(operation.type==='archive_gymnast')setView('directory');
+    renderAll();
+    toast(operation.type==='archive_gymnast'?'Gymnast removed. Saving…':'Squads updated. Saving…');
+  }});
+
   $('addGymnastForm').addEventListener('submit', event => {
     event.preventDefault();
     if (!canEdit()) return;
     const errorElement = $('addGymnastError');
     try {
       if (GYMNASTS.length >= 500) throw Error('The league has reached its 500-gymnast limit.');
+      const squads = window.SWLRosterManagement.readNewSquads();
       const gymnast = cleanGymnast({ id: 'g_' + crypto.randomUUID(),
-        name: $('gymnastName').value, coach: $('gymnastCoach').value || 'Unassigned' });
+        name: $('gymnastName').value, coach: squads[0], squads });
       const duplicate = GYMNASTS.find(item => normalizeName(item.name) === normalizeName(gymnast.name));
       if (duplicate) throw Error(`${duplicate.name} is already in the ${duplicate.coach} group. Find them in Gymnasts.`);
       enqueueOperation({ type: 'add_gymnast', ...gymnast });
