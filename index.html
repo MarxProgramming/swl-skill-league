@@ -26,7 +26,7 @@
 <link rel="preload" href="./jakarta-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./barlow-semi-700.woff2" as="font" type="font/woff2" crossorigin>
 <script src="./theme.js?v=20261031-v5"></script>
-<script src="./config.js?v=20261105-personal-drive"></script>
+<script src="./config.js?v=20261108-supabase"></script>
 <link rel="stylesheet" href="./lock.css">
 
 <style>
@@ -1780,7 +1780,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <footer class="wrap footer">
   <strong>SWL · TRAIN WITH PURPOSE</strong>
   <div class="footer-sync">
-    <span id="saveStatus" role="status">Connecting to Google Sheets…</span>
+    <span id="saveStatus" role="status">Connecting to the scores service…</span>
     <button class="quiet main-menu-button" type="button" data-view="home">Main menu</button>
     <button class="quiet" type="button" data-open-welcome>About this app</button>
     <button class="quiet" id="retrySavingButton" type="button">↻ Retry saving</button>
@@ -2934,18 +2934,18 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('saveStatus').textContent = damagedRecovery !== null ? 'Local recovery data needs attention · download recovery data'
       : unsaved
       ? (retryNeeded ? 'Unsaved changes · retry needed'
-        : sending ? 'Saving changes to Google Sheets…'
+        : sending ? 'Saving changes to the scores service…'
           : recoveredPending ? 'Recovered unsaved changes · connecting…'
             : 'Changes queued · saving shortly…')
       : recoveryFailureWarning ? 'Some local recovery data is protected · reload to recover'
       : recoveryOtherWarning ? 'Other tabs have protected unsaved edits · reload after closing them'
       : gameSave.pendingSaveCount ? (gameSave.retryNeeded ? 'Game data pending here · retry saving' : 'Saving game ratings and plays…')
-      : importing ? 'Restoring backup to Google Sheets…'
+      : importing ? 'Restoring backup to the scores service…'
         : saveError ? 'Backup restore unconfirmed · refresh scores'
-        : reading && !hasLoaded ? 'Loading scores from Google Sheets…'
+        : reading && !hasLoaded ? 'Loading scores from the scores service…'
           : !hasLoaded ? 'Scores not loaded · refresh to reconnect'
             : !connected ? 'Offline · changes will be kept on this device'
-              : `All changes saved to Google Sheets${time ? ' · ' + time : ''}`;
+              : `All changes saved to the scores service${time ? ' · ' + time : ''}`;
 
     $('refreshButton').disabled = reading;
     $('refreshButton').textContent = reading ? '↻ Refreshing…' : '↻ Refresh scores';
@@ -2961,33 +2961,39 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   const API_MESSAGES = {
+    coach_session_required: 'Enter the coach code to unlock scoring on this device.',
     locked: 'Scoring is locked. Unlock scoring before retrying your saved edits.',
     invalid_pin: 'That code is not correct. Try again.',
     pin_rate_limited: 'Too many attempts. Please wait a minute before trying again.',
-    conflict: 'This save can no longer be confirmed safely. Review the latest Google Sheet and download an unsaved backup before discarding or re-entering these edits.',
+    conflict: 'This save can no longer be confirmed safely. Review the latest scores database and download an unsaved backup before discarding or re-entering these edits.',
     replayed_request: 'That save has already been processed. Reload the latest scores.',
     update_required: 'Version 5.2 is ready. Reload this page to use the latest app.',
     invalid_request: 'The scores could not be saved because the request was invalid.',
     invalid_state: 'The scores include an unknown gymnast, skill or status.',
     duplicate_gymnast: 'A gymnast with that name already exists. Refresh the roster before adding them again.',
     roster_full: 'The roster has reached its limit of 500 gymnasts.',
-    busy: 'The Google Sheet is busy. Please try again shortly.',
-    sheet_invalid: 'The Google Sheet structure or a score needs attention. Check the Scores, Linking and Meta tabs.',
-    unauthorized: 'The Google Sheets connection needs attention. Its public web app may need updating.',
-    setup_required: 'The Google Sheets connection has not been configured yet.',
-    provider_error: 'The Google Sheet could not be reached. Your changes have not been confirmed.'
+    busy: 'The scores database is busy. Please try again shortly.',
+    sheet_invalid: 'The scores database structure or a score needs attention. Check the Scores, Linking and Meta tabs.',
+    unauthorized: 'The the scores service connection needs attention. Its public web app may need updating.',
+    setup_required: 'The the scores service connection has not been configured yet.',
+    provider_error: 'The scores database could not be reached. Your changes have not been confirmed.'
   };
 
   function scoresEndpoint() {
-    try {
-      const url = new URL(window.SWL_CONFIG?.appsScriptUrl || '');
-      if (url.protocol === 'https:' && url.hostname === 'script.google.com' &&
-          !url.port && !url.username && !url.password && !url.search && !url.hash &&
-          /^\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url.pathname)) return url.href;
-    } catch {}
-    const error = new Error(API_MESSAGES.setup_required);
-    error.code = 'setup_required';
-    throw error;
+    const url = new URL(window.SWL_CONFIG?.apiUrl || '');
+    if (url.protocol === 'https:' && url.hostname === 'vizyukifjkzniwzhunpf.supabase.co' &&
+        url.pathname === '/functions/v1/swl-api' && !url.search && !url.hash && !url.username && !url.password) return url.href;
+    throw new Error('The scores connection has not been configured.');
+  }
+  let coachSession = null;
+  try { coachSession = JSON.parse(sessionStorage.getItem('swl-coach-session-v1') || 'null'); } catch {}
+  function currentCoachSession() {
+    if (!coachSession || !/^[a-f0-9]{64}$/.test(coachSession.token || '') || Date.parse(coachSession.expiresAt) <= Date.now()) return null;
+    return coachSession;
+  }
+  function saveCoachSession(value) {
+    coachSession = value;
+    try { if (value) sessionStorage.setItem('swl-coach-session-v1', JSON.stringify(value)); else sessionStorage.removeItem('swl-coach-session-v1'); } catch {}
   }
 
   async function scoresRequest(body) {
@@ -2997,7 +3003,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     try {
       const response = await fetch(scoresEndpoint(), {
         method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        headers: { 'Content-Type': 'application/json', 'apikey': window.SWL_CONFIG.publicKey, 'Authorization': 'Bearer ' + window.SWL_CONFIG.publicKey, ...(currentCoachSession() ? {'x-swl-coach': currentCoachSession().token} : {}) },
         body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2, rollHoldVersion: 1 }),
         signal: controller.signal
       });
@@ -3005,8 +3011,11 @@ html:has(body.no-motion){scroll-behavior:auto}
       try { payload = await response.json(); }
       catch { throw new Error('The scores service returned an unreadable response.'); }
       if (!isObject(payload)) throw new Error('The scores service returned an unreadable response.');
+      if (payload.code === 'coach_session_required') saveCoachSession(null);
+      if (payload.ok && payload.coachSession) saveCoachSession(payload.coachSession);
+      if (payload.ok && body.action === 'lock') saveCoachSession(null);
       if (!response.ok || !payload.ok) {
-        const error = new Error(API_MESSAGES[payload.code] || payload.message || 'Google Sheets could not be reached.');
+        const error = new Error(API_MESSAGES[payload.code] || payload.message || 'the scores service could not be reached.');
         error.code = payload.code || 'REQUEST_FAILED';
         if(payload.lock && !['read_game_ratings','rate_game','record_game_play'].includes(body.action)) acceptLock({...payload.lock, requestedAt});
         throw error;
@@ -3019,7 +3028,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
       return { state: parseState(JSON.stringify(payload.state)), revision: payload.revision, lock };
     } catch (error) {
-      if (error.name === 'AbortError') throw new Error('Google Sheets is taking too long to respond. Refresh scores to reconnect; unsaved edits are kept here.');
+      if (error.name === 'AbortError') throw new Error('the scores service is taking too long to respond. Refresh scores to reconnect; unsaved edits are kept here.');
       throw error;
     } finally { clearTimeout(timeout); }
   }
@@ -3094,9 +3103,9 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (startedEpoch < baseEpoch) return false;
       connected = false;
       const message = error.code === 'setup_required'
-        ? 'The Google Sheets connection is not ready yet.' : error.message;
+        ? 'The the scores service connection is not ready yet.' : error.message;
       readError = hasLoaded
-        ? 'Could not refresh Google Sheets. Your changes are still here. ' + message
+        ? 'Could not refresh the scores service. Your changes are still here. ' + message
         : 'Scores could not be loaded. Use Refresh scores to try again. ' + message;
       if (hasPending()) {
         retryNeeded = true;
@@ -3238,7 +3247,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('lockButtonLabel').textContent = lockChanging ? 'Updating…'
       : !lockKnown ? 'Checking lock…' : locked ? 'Unlock scoring' : 'Lock scoring';
     button.setAttribute('aria-label', !lockKnown ? 'Checking scoring access'
-      : locked ? 'Unlock scoring for everyone' : 'Lock scoring for everyone');
+      : locked ? 'Unlock scoring on this device' : 'Lock scoring for everyone');
     button.dataset.locked = String(locked);
     $('lockStatus').textContent = lockChanging ? 'Updating scoring access for everyone…'
       : !lockKnown ? 'Scoring paused · checking access. You can still browse.'
@@ -3290,7 +3299,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         toast('Scoring was unlocked again on another device.');
         return { ok: false, message: 'Scoring was unlocked again on another device.' };
       }
-      toast(scoringLock.locked ? 'Scoring is locked for everyone.' : 'Scoring is unlocked for everyone.');
+      toast(scoringLock.locked ? 'Scoring is locked for everyone.' : 'Scoring is unlocked on this device.');
       return { ok: true };
     } catch (error) {
       // A lost response can still have reached the Sheet. Refresh, but never replay a PIN automatically.
@@ -3374,8 +3383,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!hasLoaded) {
       $('emptyNote').hidden = true;
       stableHTML($('boards'), `<p class="note" role="status">${reading
-        ? 'Loading the standings from Google Sheets…'
-        : 'Connect Google Sheets to load the standings.'}</p>`);
+        ? 'Loading the standings from the scores service…'
+        : 'Connect the scores service to load the standings.'}</p>`);
       return;
     }
     $('emptyNote').hidden = all.some(g => g.points > 0);
@@ -4401,7 +4410,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       renderBoards();
       renderSaveStatus();
       persistRecovery();
-      toast(`${gymnast.name} added. Saving to Google Sheets…`);
+      toast(`${gymnast.name} added. Saving to the scores service…`);
     } catch (error) {
       errorElement.textContent = error.message;
       errorElement.hidden = false;
@@ -4422,14 +4431,14 @@ html:has(body.no-motion){scroll-behavior:auto}
         : hasPending() || gameSave.pendingSaveCount ? 'Some changes are still waiting. Keep this page open and retry saving.'
         : recoveryFailureWarning ? 'Some local recovery data still needs attention. Reload this page to recover it safely.'
         : recoveryOtherWarning ? 'Other tabs still have protected unsaved edits. Return there, or reload after closing them.'
-        : connected ? 'Everything is saved to Google Sheets.' : 'Could not reconnect yet. Please try again.');
+        : connected ? 'Everything is saved to the scores service.' : 'Could not reconnect yet. Please try again.');
     } finally { retryingSaves = false; renderSaveStatus(); }
   }
   $('retryButton').addEventListener('click', retrySaving);
   $('retrySavingButton').addEventListener('click', retrySaving);
   $('discardPendingButton').addEventListener('click', async () => {
     if (sending || importing) return;
-    if (!confirm('Discard the unsaved edits kept on this device and reload Google Sheets? ' +
+    if (!confirm('Discard the unsaved edits kept on this device and reload the scores service? ' +
       'A request that timed out may already have saved to the Sheet. Export a backup first if you want to keep these edits.')) return;
     cancelFlushTimers();
     inFlight = null;
