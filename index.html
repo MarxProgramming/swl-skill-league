@@ -1729,6 +1729,9 @@ html:has(body.no-motion){scroll-behavior:auto}
             <form id="addGymnastForm">
               <label for="gymnastName">Gymnast’s name</label>
               <input id="gymnastName" name="name" required maxlength="100" autocomplete="off" placeholder="Full name">
+              <label for="gymnastBirthday">Date of birth</label>
+              <input id="gymnastBirthday" name="dateOfBirth" type="date" min="1900-01-01" aria-describedby="gymnastBirthdayHelp">
+              <small id="gymnastBirthdayHelp">For age groups and birthday cards. You can leave this blank if unknown.</small>
               <label>Squad(s)</label><div id="newGymnastSquads"></div>
               <input id="gymnastCoach" type="hidden" value="Marx">
               <datalist id="coachOptions"><option value="Marx"></option><option value="Dan"></option></datalist>
@@ -1823,8 +1826,10 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./profile-insights.js?v=20261105-analytics-selection"></script>
 <script src="./directory-selection.js?v=20261105-fair-comparison"></script>
 <script src="./analytics-compare.js?v=20261106-shared-comparison"></script>
+<link rel="stylesheet" href="./birthday.css?v=20261108">
+<script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261107-roster"></script>
-<script src="./v2.js?v=20261107-roster"></script>
+<script src="./v2.js?v=20261108-birthday"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
@@ -2115,7 +2120,8 @@ html:has(body.no-motion){scroll-behavior:auto}
       }
       clean.gymnasts = data.gymnasts.map(value => {
         const gymnast = cleanGymnast(value);
-        // Only the three explicitly public age fields survive parsing.
+        // Only public age fields and the limited birthday window survive parsing.
+        gymnast.birthday = window.SWLBirthday.clean(value.birthday);
         if (value.ageYear !== undefined || value.competitionAge !== undefined || value.ageCategoryId !== undefined) {
           gymnast.ageYear = Number.isInteger(value.ageYear) && value.ageYear >= 2000 && value.ageYear <= 9999 ? value.ageYear : null;
           gymnast.competitionAge = Number.isInteger(value.competitionAge) && value.competitionAge >= 0 && value.competitionAge <= 120 ? value.competitionAge : null;
@@ -2475,17 +2481,19 @@ html:has(body.no-motion){scroll-behavior:auto}
     return points >= 50 ? 'fire' : points >= 30 ? 'hot' : 'none';
   }
   const isOnFire = (id, at = Date.now()) => heatLevel(id, at) === 'fire';
-  const heatClass = id => isOnFire(id) ? ' is-on-streak' : '';
+  const birthdayNote = id => window.SWLBirthday.note(GYMNASTS.find(g=>g.id===id)?.birthday);
+  const birthdayClass = id => window.SWLBirthday.className(GYMNASTS.find(g=>g.id===id)?.birthday);
+  const heatClass = id => (isOnFire(id) ? ' is-on-streak' : '') + birthdayClass(id);
   const streakLabel = id => isOnFire(id) ? '<span class="streak-label" title="50+ qualifying Floor points in the last seven days">On a streak</span>' : '';
   // Weekly progress keeps its >=50-point threshold; only the score is highlighted.
-  const fireBadge = () => '';
+  const fireBadge = id => birthdayNote(id);
   const achievementBadge = gymnast => window.SWLAchievements?.allBadges(gymnast, confirmedState.completionAchievements) || '';
   const achievementIcons = gymnast => window.SWLAchievements?.allIcons(gymnast, confirmedState.completionAchievements) || '';
   const profileAchievementBadges = gymnast => window.SWLAchievements?.fullProfileBadges(gymnast, confirmedState.completionAchievements) || '';
   function renderV2() {
     const challengeConfig = {gymnasts:GYMNASTS,skills:SKILLS,mark,summary,apparatus,activeChallenge,achievementBadge,completionAchievements:confirmedState.completionAchievements,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,streakLabel,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected};
     window.SWLChallenge?.render($('challengeRoot'), challengeConfig);
-    v2Api()?.render({state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,birthdayClass,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
@@ -2515,7 +2523,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!isObject(value)) throw Error('A saved change could not be read.');
     if (value.type === 'add_gymnast') {
       const gymnast = cleanGymnast(value);
-      return { type: 'add_gymnast', ...gymnast };
+      const birth=value.dateOfBirth;
+      if(birth && (typeof birth!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(birth) || !Number.isFinite(Date.parse(birth+'T12:00:00Z')) || new Date(birth+'T12:00:00Z').toISOString().slice(0,10)!==birth || birth<'1900-01-01' || birth>londonDay()))throw Error('Enter a valid date of birth that is not in the future.');
+      return { type: 'add_gymnast', ...gymnast, ...(birth?{dateOfBirth:birth}:{}) };
     }
     if (value.type === 'archive_gymnast' && validGymnastId(value.gymnastId)) return {type:value.type,gymnastId:value.gymnastId};
     if (value.type === 'set_squads' && validGymnastId(value.gymnastId) && Array.isArray(value.squads) && value.squads.length && value.squads.length<=6) {
@@ -3550,6 +3560,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           <h2 id="athleteTitle" tabindex="-1">
             ${escapeHTML(gymnast.name)} ${coachBadge(gymnast)} <span id="athleteAchievements">${profileAchievementBadges(gymnast)}</span>
           </h2>
+          ${birthdayNote(gymnast.id)}
 
           <div class="mini-stats">
             <span>
@@ -4350,6 +4361,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     toast(operation.type==='archive_gymnast'?'Gymnast removed. Saving…':'Squads updated. Saving…');
   }});
 
+  $('gymnastBirthday').max=londonDay();
   $('addGymnastForm').addEventListener('submit', event => {
     event.preventDefault();
     if (!canEdit()) return;
@@ -4361,9 +4373,10 @@ html:has(body.no-motion){scroll-behavior:auto}
         name: $('gymnastName').value, coach: squads[0], squads });
       const duplicate = GYMNASTS.find(item => normalizeName(item.name) === normalizeName(gymnast.name));
       if (duplicate) throw Error(`${duplicate.name} is already in the ${duplicate.coach} group. Find them in Gymnasts.`);
-      enqueueOperation({ type: 'add_gymnast', ...gymnast });
+      enqueueOperation({ type: 'add_gymnast', ...gymnast, dateOfBirth:$('gymnastBirthday').value });
       errorElement.hidden = true;
       $('gymnastName').value = '';
+      $('gymnastBirthday').value = '';
       $('addGymnastDetails').open = false;
       $('search').value = '';
       coachFilter = 'all';

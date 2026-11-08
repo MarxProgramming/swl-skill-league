@@ -1,0 +1,11 @@
+/* A birthday is a single-day accent, with readable dark surfaces retained. */
+.birthday-note{display:block;width:100%;font-size:10px!important;font-weight:600;line-height:1.5;letter-spacing:.02em;color:#c8b6f5;margin-top:3px;white-space:normal}
+.birthday-note-today{color:#f4d5ff}
+.athlete-info>.birthday-note{font-size:12px!important;margin-top:7px}
+.directory-card.is-birthday,.rank-row.is-birthday,.athlete-summary.is-birthday,.gymnast.is-birthday,.challenge-person.is-birthday{border-color:transparent!important;background:linear-gradient(120deg,#302345,#382737,#273345) padding-box,linear-gradient(115deg,#bca2ff,#f095cb,#f3c78f,#8edbd0,#9cb7ff,#bca2ff) border-box!important;background-size:100% 100%,300% 300%!important;box-shadow:0 0 24px rgba(188,132,242,.14),inset 0 0 22px rgba(206,128,211,.08)!important;animation:birthday-colours 12s ease-in-out infinite!important}
+.rank-row.is-birthday .podium-light,.rank-row.is-birthday .podium-edge{opacity:.18}
+@keyframes birthday-colours{0%,100%{background-position:0 0,0% 50%}50%{background-position:0 0,100% 50%}}
+@media(prefers-reduced-motion:reduce){.is-birthday{animation:none!important}}
+@media(max-width:480px){.birthday-note{font-size:9px!important}.directory-person .birthday-note{line-height:1.35}}
+
+#gymnastBirthday{color-scheme:dark;width:100%;min-height:44px}#gymnastBirthdayHelp{display:block;color:var(--muted);font-size:11px;line-height:1.5;margin:-2px 0 10px}
