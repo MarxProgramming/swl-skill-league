@@ -1,0 +1,35 @@
+/* Quiet, darker shells. No decorative header rules or medal side stripes. */
+html:root:root[data-theme="dark"] :is(.board, .athlete-summary, .directory-tools,
+ .complex, .catalogue-complex, .swlp-board, .pi-panel, .analytics-filters,
+ .a31-disclosure, .game-card:not(.is-hottest)) {
+ background:radial-gradient(ellipse at 5% 0%,#28233350,transparent 58%),
+ radial-gradient(ellipse at 100% 100%,#20273540,transparent 60%),
+ linear-gradient(145deg,#17171f,#12131a 70%,#16151e);
+ border-color:#cfc0ed1c;border-radius:13px;
+ box-shadow:0 10px 24px -22px #000b;
+}
+html:root:root[data-theme="dark"] #analyticsRoot :is(.analytics-panel,.a31-priorities,.a31-squad-panel,.a31-stats article) {
+ background:radial-gradient(ellipse at 0% 0%,#28233340,transparent 60%),linear-gradient(145deg,#181820,#12131a 80%);
+ border-color:#cfc0ed1c;border-radius:13px;box-shadow:0 10px 24px -22px #000b;
+}
+html:root:root[data-theme="dark"] #analyticsRoot .a31-disclosure-content>.analytics-panel {background:transparent;border:0;box-shadow:none}
+html .board::before {display:none!important}
+html .board:not(.overall) .rank-row.medal {border-left-width:1px;border-left-color:#ffffff12!important}
+/* Memberships stay on the gymnast's own profile, rather than every card. */
+.multi-squad-badge {display:none!important}
+.athlete-summary .multi-squad-badge {display:inline-flex!important}
+/* Birthday notes occupy existing card space, never an extra name/badge line. */
+.rank-row .birthday-note {
+ position:absolute;bottom:0;left:0;width:100%;margin:0;
+ font-size:9px!important;line-height:1.4;white-space:nowrap;
+}
+.rank-row .person:has(.birthday-note)>small {visibility:hidden}
+.overall.v3-board .v3-podium .rank-row.medal .birthday-note {font-size:9px!important;bottom:0}
+.directory-profile-content .directory-person {position:static}
+.directory-profile-content .birthday-note {
+ position:absolute;bottom:4px;left:14px;right:14px;width:auto;margin:0;
+ text-align:center;line-height:1.3;font-size:9px!important;white-space:nowrap;
+}
+/* Other compact name lists also keep the notice in their existing subtitle slot. */
+.gymnast .birthday-note {position:absolute;bottom:3px;left:10px;right:10px;width:auto;margin:0;text-align:center;font-size:8px!important}
+.athlete-summary .birthday-note {position:static;white-space:normal}
