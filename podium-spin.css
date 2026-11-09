@@ -2,3 +2,12 @@
 .spin-medal:active{cursor:grabbing!important}.spin-medal:focus-visible{outline:2px solid var(--purple);outline-offset:5px}
 .directory-squad-tools #renameSquadButton{font-size:11px;min-height:30px;padding:5px 9px;justify-self:end}
 @media(prefers-reduced-motion:reduce){.spin-medal{transition:none!important}}
+
+/* A closed CSS 3D coin: two faces and 32 edge facets. */
+.overall.v3-board .v3-podium .avatar.spin-medal{--coin:66px;--metal:#d7ac52;--metal-light:#ffe6a3;width:var(--coin)!important;height:var(--coin)!important;border:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;isolation:auto;font-size:21px;flex-shrink:0}
+.overall.v3-board .v3-podium .silver .spin-medal{--metal:#a9b3cb;--metal-light:#edf3ff}
+.overall.v3-board .v3-podium .bronze .spin-medal{--metal:#bd805d;--metal-light:#f3c29b}
+.spin-medal .medal-face{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;backface-visibility:hidden;background:radial-gradient(circle at 30% 20%,var(--metal-light),var(--metal) 55%,#514132);border:3px double var(--metal-light);box-shadow:inset 0 0 0 4px #0003,inset 0 2px 3px #fff8;color:#30221c;text-shadow:0 1px #fff6;font-weight:800;pointer-events:none}
+.spin-medal .medal-front{transform:translateZ(6px)}.spin-medal .medal-back{transform:rotateY(180deg) translateZ(6px);font-size:16px;letter-spacing:1px}
+.spin-medal .medal-rim{position:absolute;left:calc(50% - 3.5px);top:calc(50% - 6px);width:7px;height:12px;background:linear-gradient(90deg,var(--metal),var(--metal-light),var(--metal));transform:rotateZ(var(--edge-angle)) translateY(calc(var(--coin) / 2 - 1px)) rotateX(90deg);pointer-events:none}
+@media(max-width:600px){.overall.v3-board .v3-podium .avatar.spin-medal{--coin:58px;font-size:18px}}

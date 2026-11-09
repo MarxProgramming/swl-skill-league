@@ -14,7 +14,7 @@ body.programme-menu-open .utilities { margin-left: auto; }
 .programme-menu[hidden] { display: none; }
 .programme-heading { margin-bottom: 26px; }
 .programme-heading h1 { font-size: clamp(30px, 4vw, 42px); font-weight: 750; line-height: 1.15; letter-spacing: -.045em; margin: 0; }
-.programme-cards { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.programme-cards { flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .programme-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 20px; grid-template-rows: auto auto; align-content: center; align-items: start; column-gap: 14px; row-gap: 11px; min-width: 0; min-height: 240px; padding: clamp(25px, 4vw, 48px); border: 1px solid var(--p40-soft-edge); border-radius: 17px; background: var(--p40-surface); color: var(--text); font-family: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 16px #00000014; transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
 .programme-card-title { grid-column: 1; grid-row: 1; font-size: clamp(26px, 3.2vw, 36px); font-weight: 750; letter-spacing: -.035em; line-height: 1.2; }
 .programme-card-copy { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 13px; font-weight: 450; line-height: 1.7; }
@@ -45,9 +45,9 @@ body.programme-menu-open .utilities { margin-left: auto; }
  body.programme-menu-open > main { padding-block: 18px; }
  .programme-menu { padding-block: 14px; }
  .programme-heading { margin-bottom: 22px; }
- .programme-cards { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 12px; }
- .programme-card { min-height: 150px; padding: 24px; border-radius: 15px; row-gap: 9px; }
- .programme-card-title { font-size: 26px; }
+ .programme-cards { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(3, minmax(112px, 1fr)); gap: 10px; }
+ .programme-card { min-height: 112px; padding: 18px; border-radius: 15px; row-gap: 9px; }
+ .programme-card-title { font-size: 24px; }
  .programme-card-copy { font-size: 12px; }
  .entry-filters > summary { gap: 10px; padding: 12px 14px; }
  .entry-filter-summary { font-size: 10px; }
