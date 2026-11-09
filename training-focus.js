@@ -4,6 +4,9 @@
  const source='https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-CODE-OF-POINTS-2026.pdf#page=9';
  const regional='Regional pathway only';
  const iga={
+ 'rolls-pro-0':{grade:'C + A',note:'Handstand pirouette + forwards roll'},'rolls-pro-hold3':{grade:'C'},
+ 'acro-pro-roundoff-flick':{grade:'B + B',note:'Round-off + flick'},
+ 'vault-vaults-0':{grade:'2.0',note:'Vault difficulty · coach supplied'},'vault-vaults-1':{grade:'2.4',note:'Vault difficulty · coach supplied'},'vault-vaults-2':{grade:'2.8',note:'Vault difficulty · provisional coach value'},
  'rolls-base-0':{grade:'A'},'rolls-base-full-turn':{grade:'B'},'rolls-base-2':{grade:'B'},
  'rolls-upgrade-dive':{grade:'B',note:regional+' · Flighted forward roll'},'rolls-upgrade-1':{grade:'D'},'rolls-upgrade-2':{grade:'C'},
  'rolls-pro-1':{grade:'B'},'acro-base-0':{grade:'B'},'acro-base-full-spin':{grade:'B'},'acro-base-one-hand':{grade:'B',note:regional},
@@ -14,7 +17,7 @@
  };
  const foundationIds=['acro-base-full-spin','leaps-base-0','leaps-base-cat','rolls-base-0','rolls-base-full-turn'];
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- function tag(skill){const v=iga[skill.id];return v?`<span class="skill-iga" title="IGA floor difficulty ${v.grade}${v.note?' · '+esc(v.note):''}. Separate from league points.">IGA-${v.grade}${v.note?.startsWith(regional)?'<small> · regional</small>':''}</span>`:'';}
+ function tag(skill){const v=iga[skill.id];return v?`<span class="skill-iga" title="IGA difficulty ${v.grade}${v.note?' · '+esc(v.note):''}. Separate from league points.">IGA-${v.grade}${v.note?.startsWith(regional)?'<small> · regional</small>':''}</span>`:'';}
  const exercises={
  bridge:{name:'Bridge rocks',dose:'10 × 3 sets',cue:'Gently rock towards straight arms, keeping your feet planted. Only use a bridge your coach has already approved.'},
  splits:{name:'Front splits',dose:'15 seconds each leg',cue:'Support yourself with your hands. Keep hips square and stay in a comfortable range; never force it.'},
