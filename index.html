@@ -1685,6 +1685,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <div class="programme-cards">
       <button type="button" class="programme-card" data-programme="floor"><span class="programme-card-title">Floor &amp; vault</span><span class="programme-card-copy">Morning and afternoon squads.<br>One place to see your progress.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button type="button" class="programme-card" data-programme="senior"><span class="programme-card-title">Senior squad</span><span class="programme-card-copy">Marx’s and Dan’s groups.<br>Build on every achievement.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="programme-card" data-programme="junior"><span class="programme-card-title">Junior squads</span><span class="programme-card-copy">Monday, Tuesday, Friday and Saturday.<br>Build on every achievement.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </section>
 
@@ -1836,6 +1837,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-addon.js?v=20261020"></script>
 <script src="./games-ratings.js?v=20261022-contest"></script>
 <script src="./games.js?v=20261101-programme"></script>
+<link rel="stylesheet" href="./podium-spin.css?v=20261109">
+<script src="./podium-spin.js?v=20261109"></script>
+<script src="./hold-clear.js?v=20261109"></script>
 <script src="./training-focus.js?v=20261109b"></script>
 <script src="./skills-catalogue.js?v=20261109b"></script>
 <script src="./v4-search.js?v=20261101-emblems"></script>
@@ -1849,7 +1853,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./surface-tidy.css?v=20261108">
 <link rel="stylesheet" href="./training-focus.css?v=20261109">
 <script src="./birthday.js?v=20261108"></script>
-<script src="./roster-management.js?v=20261107-roster"></script>
+<script src="./roster-management.js?v=20261109-20261107-roster"></script>
 <script src="./v2.js?v=20261109"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
@@ -2137,6 +2141,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       throw Error('Choose an SWL Skill League backup.');
     }
     const clean = freshState();
+    clean.squadLabels = Object.fromEntries(Object.entries(isObject(data.squadLabels)?data.squadLabels:{}).filter(([k,v])=>typeof v==='string'&&v.length<=80));
     if (data.gymnasts !== undefined) {
       if (!Array.isArray(data.gymnasts) || data.gymnasts.length > 2000) {
         throw Error('The gymnast roster could not be read.');
@@ -2291,8 +2296,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   const isCoachParticipant = gymnast => squadMemberships(gymnast).includes('coaches');
   const isFloorGroup = group => /floor.*vault/i.test(group);
   const isAfternoonFloorGroup = group => isFloorGroup(group) && (/Saturday Afternoon/i.test(group) || group === 'Saturday Floor and Vault');
-  const groupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'floor' ? 'All floor & vault squads' : coach === 'afternoon' ? 'All Saturday afternoon floor & vault' : coach === 'senior' ? 'All senior squad' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach === 'Saturday Floor and Vault' ? 'Saturday Afternoon Floor and Vault' : coach;
-  const shortGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /Saturday Morning/i.test(coach) ? 'Marx · Saturday morning floor & vault' : /Saturday Afternoon/i.test(coach) ? coach.replace('’s Saturday Afternoon Floor and Vault',' · Saturday afternoon floor & vault').replace('Saturday Afternoon Floor and Vault','Saturday afternoon · unassigned') : groupLabel(coach);
+  const defaultGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'floor' ? 'All floor & vault squads' : coach === 'afternoon' ? 'All Saturday afternoon floor & vault' : coach === 'junior' ? 'All junior squads' : coach === 'senior' ? 'All senior squad' : coach === 'Dan' ? 'Dan’s senior squad' : coach === 'Marx' ? 'Marx’s senior squad' : coach === 'Saturday Floor and Vault' ? 'Saturday Afternoon Floor and Vault' : coach;
+  const groupLabel = coach => state?.squadLabels?.[coach] || defaultGroupLabel(coach);
+  const defaultShortGroupLabel = coach => coachingGroupKey(coach) === 'coaches' ? 'Coaches' : coach === 'Dan' ? 'Dan · senior squad' : coach === 'Marx' ? 'Marx · senior squad' : /hannah.*floor.*vault/i.test(coach) ? 'Hannah · floor & vault' : /Saturday Morning/i.test(coach) ? 'Marx · Saturday morning floor & vault' : /Saturday Afternoon/i.test(coach) ? coach.replace('’s Saturday Afternoon Floor and Vault',' · Saturday afternoon floor & vault').replace('Saturday Afternoon Floor and Vault','Saturday afternoon · unassigned') : groupLabel(coach);
+  const shortGroupLabel = coach => state?.squadLabels?.[coach] || defaultShortGroupLabel(coach);
   const gymnastSquadLabel = gymnast => squadMemberships(gymnast).map(groupLabel).join(' + ');
   const coachBadge = gymnast => isCoachParticipant(gymnast) ? '<span class="coach-badge">COACH</span>' : squadMemberships(gymnast).length > 1 ? `<span class="multi-squad-badge" title="${escapeHTML(gymnastSquadLabel(gymnast))}" aria-label="Member of ${escapeHTML(gymnastSquadLabel(gymnast))}">${squadMemberships(gymnast).length} SQUADS</span>` : '';
   const rosterGroupOptions = () => [...new Set(GYMNASTS.flatMap(squadMemberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));
@@ -2519,7 +2526,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     v2Api()?.render({state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,birthdayClass,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
-    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
+    return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'junior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g=>/Junior (Squad|Advanced)/i.test(g)) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
   }
   function profileGymnasts(gymnast = GYMNASTS.find(g => g.id === selectedId)) {
     return GYMNASTS.filter(g => isCoachParticipant(g) === isCoachParticipant(gymnast));
@@ -2550,6 +2557,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       if(birth && (typeof birth!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(birth) || !Number.isFinite(Date.parse(birth+'T12:00:00Z')) || new Date(birth+'T12:00:00Z').toISOString().slice(0,10)!==birth || birth<'1900-01-01' || birth>londonDay()))throw Error('Enter a valid date of birth that is not in the future.');
       return { type: 'add_gymnast', ...gymnast, ...(birth?{dateOfBirth:birth}:{}) };
     }
+    if(value.type==='rename_squad'&&typeof value.squad==='string'&&typeof value.label==='string'&&value.label.trim()&&value.label.trim().length<=80)return {type:value.type,squad:value.squad,label:value.label.trim()};
     if (value.type === 'archive_gymnast' && validGymnastId(value.gymnastId)) return {type:value.type,gymnastId:value.gymnastId};
     if (value.type === 'set_squads' && validGymnastId(value.gymnastId) && Array.isArray(value.squads) && value.squads.length && value.squads.length<=6) {
       const g=cleanGymnast({id:value.gymnastId,name:'Roster edit',coach:value.squads[0],squads:value.squads});
@@ -2583,6 +2591,8 @@ html:has(body.no-motion){scroll-behavior:auto}
           next.gymnasts.push({ id: operation.id, name: operation.name, coach: operation.coach, ...(operation.squads ? {squads:operation.squads} : {}) });
           ids.add(operation.id);
         }
+      } else if(operation.type==='rename_squad'){
+        next.squadLabels??={};next.squadLabels[operation.squad]=operation.label;
       } else if (operation.type === 'set_squads' && ids.has(operation.gymnastId)) {
         const gymnast=next.gymnasts.find(g=>g.id===operation.gymnastId);gymnast.squads=operation.squads.slice();gymnast.coach=operation.squads[0];
       } else if (operation.type === 'archive_gymnast') {
@@ -3363,9 +3373,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('apparatusNote').textContent = apparatus === 'vault' ? 'Vault scores stand alone.' : apparatus === 'combined' ? 'Floor + Vault totals together.' : 'Floor scoring · compare foundations and progress.';
     if (currentView === 'placement' || (currentView === 'tracker' && profilePane === 'placement')) renderPlacementProfile();
     const groups = rosterGroupOptions();
-    if (!['all','floor','afternoon','senior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
+    if (!['all','floor','afternoon','senior','junior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
     if ($('leaderboardGroup')) {
-      const options=[['all','Overall · all squads'],['floor','All floor & vault squads'],['afternoon','All Saturday afternoon floor & vault'],['senior','All senior squad'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
+      const options=[['all','Overall · all squads'],['floor','All floor & vault squads'],['afternoon','All Saturday afternoon floor & vault'],['senior','All senior squad'],['junior','All junior squads'],...groups.map(g=>[g,shortGroupLabel(g)]),['overall','Overall · all squads + coaches']].map(([id,label])=>`<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`).join('');
       stableHTML($('leaderboardGroup'),options);
       $('leaderboardGroup').value=leaderboardGroup;
       $('leaderboardGroup').disabled=!hasLoaded;
@@ -3830,7 +3840,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function selectProgramme(programme) {
-    if (!['floor','senior'].includes(programme)) return;
+    if (!['floor','senior','junior'].includes(programme)) return;
     leaderboardGroup = programme;
     leaderboardAge = 'all';
     apparatus = 'combined';
@@ -4384,7 +4394,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     toast(hasPending() ? 'Backup includes the unsaved changes shown here.' : 'Backup download requested.');
   });
 
-  window.SWLRosterManagement?.init({people:()=>GYMNASTS,editable:canEdit,save:operation=>{
+  window.SWLHoldClear?.init({editable:canEdit,target:b=>{const id=b.dataset.quickGymnast||b.dataset.priorityGymnast||selectedId,skillId=b.dataset.skill||b.dataset.quickSkill||b.dataset.prioritySkill;const g=GYMNASTS.find(g=>g.id===id),s=SKILLS.find(s=>s.id===skillId);return g&&s?{id,skillId,name:g.name,skill:s.name,value:mark(id,skillId),button:b}:null;},clear:t=>{if(mark(t.id,t.skillId)!==t.value){toast('This skill changed. Check it and try again.');return;}changeSkill(t.skillId,t.button,0,t.id);}});
+  window.SWLRosterManagement?.init({people:()=>GYMNASTS,label:groupLabel,editable:canEdit,save:operation=>{
     if(!canEdit())throw Error('Unlock scoring first.');
     enqueueOperation(operation);
     if(operation.type==='archive_gymnast')setView('directory');

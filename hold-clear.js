@@ -1,0 +1,11 @@
+/* Hold to clear a mark. Scrolling cancels; saving uses the existing scoring path. */
+(()=>{'use strict';let api,press=null,suppress=null,dialog,pending;
+function cancel(){if(press)clearTimeout(press.timer);press=null;}
+function close(){dialog.close();pending=null;}
+function open(b){const t=api.target(b);if(!t||!api.editable()||!t.value)return;pending=t;dialog.querySelector('[data-clear-name]').textContent=t.name;dialog.querySelector('[data-clear-skill]').textContent=t.skill;dialog.showModal();}
+function init(config){api=config;dialog=document.createElement('dialog');dialog.className='perfect-confirm';dialog.innerHTML='<h2>Remove this tick?</h2><p data-clear-name></p><p data-clear-skill></p><p>Are you sure you want to remove the tick?</p><div class="perfect-confirm-actions"><button type="button" data-clear-cancel autofocus>Keep tick</button><button type="button" data-clear-yes>Remove tick</button></div>';document.body.append(dialog);dialog.querySelector('[data-clear-cancel]').onclick=close;dialog.querySelector('[data-clear-yes]').onclick=()=>{const t=pending;close();if(t&&api.editable())api.clear(t);};dialog.addEventListener('cancel',()=>pending=null);
+document.addEventListener('pointerdown',e=>{cancel();if(e.button!==0||window.SWLDirectorySelection?.isActive())return;const b=e.target.closest('button[data-skill],button[data-quick-skill],button[data-priority-mark]');if(!b||b.disabled||!api.editable())return;const t=api.target(b);if(!t?.value)return;press={x:e.clientX,y:e.clientY,b,timer:setTimeout(()=>{suppress={b,until:Date.now()+1200};cancel();open(b);},650)};},true);
+document.addEventListener('pointermove',e=>{if(press&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)cancel();},true);for(const ev of ['pointerup','pointercancel','scroll'])document.addEventListener(ev,cancel,true);
+document.addEventListener('click',e=>{if(suppress&&Date.now()<suppress.until&&suppress.b.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();suppress=null;}},true);
+document.addEventListener('contextmenu',e=>{const b=e.target.closest('button[data-skill],button[data-quick-skill]');if(b&&api.editable()){e.preventDefault();cancel();open(b);}},true);
+}window.SWLHoldClear={init};})();

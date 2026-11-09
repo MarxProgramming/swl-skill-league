@@ -163,7 +163,7 @@
     const clear=directory.querySelector('#directoryComplexClear');if(clear){clear.hidden=!complex;clear.disabled=!data.hasLoaded;}
     directory.querySelector('#directoryComplexHint').textContent=complex?(data.canEdit===false?'Scoring is locked. You can view the three marks below each name.':'✓ Achieved · ✓✓ Perfect. HS = handstand · CW = cartwheel.'): 'One complex at a time. Your choice appears below every gymnast.';
     const squadSelect=directory.querySelector('#directoryGroups');
-    const squadOptions=[['all','All squads'],['floor','All floor & vault'],['afternoon','All Saturday afternoon floor & vault'],['senior','All senior squad'],...groups.map(g=>[g,g==='coaches'?'Coaches':data.shortGroupLabel(g)]),['overall','Overall · all squads + coaches']];
+    const squadOptions=[['all','All squads'],['floor','All floor & vault'],['afternoon','All Saturday afternoon floor & vault'],['senior','All senior squad'],['junior','All junior squads'],...groups.map(g=>[g,g==='coaches'?'Coaches':data.shortGroupLabel(g)]),['overall','Overall · all squads + coaches']];
     if(!squadOptions.some(([id])=>id===directoryGroup))squadOptions.push([directoryGroup,groupName(directoryGroup)]);
     commitHTML(squadSelect,squadOptions.map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join(''));
     squadSelect.value=directoryGroup;squadSelect.disabled=!data.hasLoaded;
@@ -340,7 +340,7 @@
     return [...new Set(ids)].filter(id=>!data?.hasLoaded||data.gymnasts.some(g=>g.id===id));
   }
   function analyticsSquadOptions(groups) {
-    return [{id:'all',name:'All squads'},{id:'floor',name:'All floor & vault'},{id:'afternoon',name:'All Saturday afternoon floor & vault'},{id:'senior',name:'All senior squad'},...groups.map(id=>({id,name:groupName(id)})),{id:'overall',name:'Overall · all squads + coaches'}];
+    return [{id:'all',name:'All squads'},{id:'floor',name:'All floor & vault'},{id:'afternoon',name:'All Saturday afternoon floor & vault'},{id:'senior',name:'All senior squad'},{id:'junior',name:'All junior squads'},...groups.map(id=>({id,name:groupName(id)})),{id:'overall',name:'Overall · all squads + coaches'}];
   }
   function comparisonPeople() {
     return analyticsCompareGroup?data.gymnasts.filter(g=>inGroup(g,analyticsCompareGroup)&&(analyticsAge==='all'||ageOf(g)===analyticsAge)):[];
@@ -366,7 +366,7 @@
   function renderAnalytics() {
     if(!data)return;
     analytics.querySelectorAll('[data-analytics-apparatus]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.analyticsApparatus===apparatus()));button.disabled=!data.hasLoaded;});
-    const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','overall','selection'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
+    const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','junior','overall','selection'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
     analyticsSelectedIds=analyticsSelectedIds.filter(id=>!data.hasLoaded||data.gymnasts.some(g=>g.id===id));
     const squadPeople=data.gymnasts.filter(g=>analyticsGroup==='selection'?analyticsSelectedIds.includes(g.id):inGroup(g,analyticsGroup));
