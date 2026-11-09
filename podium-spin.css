@@ -1,5 +1,5 @@
-.overall.v3-board .v3-podium .avatar.spin-medal{position:relative;z-index:5;pointer-events:auto!important;touch-action:pan-y;cursor:grab;transform-style:preserve-3d;transition:transform .15s ease-out;border:3px double currentColor!important;box-shadow:inset 0 0 0 4px #ffffff12,inset 0 -5px 9px #0008,0 6px 12px #0005;isolation:isolate;background-image:linear-gradient(135deg,#fff3,transparent 40%,#0005)!important}
-.spin-medal:active{cursor:grabbing!important}.spin-medal:focus-visible{outline:2px solid var(--purple);outline-offset:5px}
+.overall.v3-board .v3-podium .avatar.spin-medal{position:relative;z-index:5;pointer-events:auto!important;touch-action:pan-y;cursor:pointer;transform-style:preserve-3d;transition:none;border:3px double currentColor!important;box-shadow:inset 0 0 0 4px #ffffff12,inset 0 -5px 9px #0008,0 6px 12px #0005;isolation:isolate;background-image:linear-gradient(135deg,#fff3,transparent 40%,#0005)!important}
+.spin-medal:active{cursor:pointer!important}.spin-medal:focus-visible{outline:2px solid var(--purple);outline-offset:5px}
 .directory-squad-tools #renameSquadButton{font-size:11px;min-height:30px;padding:5px 9px;justify-self:end}
 @media(prefers-reduced-motion:reduce){.spin-medal{transition:none!important}}
 
