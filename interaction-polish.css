@@ -1,0 +1,9 @@
+/* Tactile feedback uses scale independently of existing transforms. */
+button:not(:disabled){transition:scale 140ms cubic-bezier(.2,.8,.2,1),background-color 160ms,border-color 160ms}
+button.ui-pressed:not(:disabled):not(.spin-medal){scale:.975}
+button:focus-visible{outline-offset:4px}
+.directory-quick{overflow:hidden}
+.skill-unlock-hint{position:fixed;z-index:10020;display:flex;align-items:center;gap:10px;padding:10px 12px;max-width:calc(100vw - 24px);border:1px solid #b998ef66;border-radius:14px;background:#211a30;color:#f4edff;box-shadow:0 8px 28px #0007;font-size:12px}
+.skill-unlock-hint>span:first-child{font-size:22px;color:#caa9ff}.skill-unlock-hint button{min-height:36px;padding:6px 10px;font-size:12px;background:#45305f;border:1px solid #ad83e85c;border-radius:9px;color:#fff}.skill-unlock-hint [data-hint-close]{background:transparent;border:0;font-size:20px;padding-inline:7px}
+@media(prefers-reduced-motion:reduce){button:not(:disabled){transition:none}button.ui-pressed:not(:disabled){scale:1}}
+body.no-motion button.ui-pressed{scale:1}

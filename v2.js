@@ -137,7 +137,7 @@
     const options=complexOptions();if(!options.length)return;
     const current=options.findIndex(c=>c.id===directoryComplex);
     const next=current<0?(direction>0?0:options.length-1):(current+direction+options.length)%options.length;
-    directoryComplex=options[next].id;renderDirectory();
+    directoryComplex=options[next].id;renderDirectory();window.SWLInteractionPolish?.complex(direction);
   }
   const normaliseName=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('en-GB').replace(/[’']/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
   function nameMatches(g,query) {

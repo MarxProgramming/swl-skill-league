@@ -1839,6 +1839,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games.js?v=20261101-programme"></script>
 <link rel="stylesheet" href="./podium-spin.css?v=20261109-tap">
 <script src="./podium-spin.js?v=20261109-tap"></script>
+<link rel="stylesheet" href="./interaction-polish.css?v=20261109">
+<script src="./interaction-polish.js?v=20261109"></script>
 <script src="./hold-clear.js?v=20261109"></script>
 <script src="./training-focus.js?v=20261109b"></script>
 <script src="./skills-catalogue.js?v=20261109b"></script>
@@ -1854,7 +1856,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./training-focus.css?v=20261109">
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261109-20261107-roster"></script>
-<script src="./v2.js?v=20261109"></script>
+<script src="./v2.js?v=20261109-motion"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
@@ -3955,6 +3957,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     window.scrollTo({top:0,behavior:'instant'});
 
     $('athleteTitle').focus({ preventScroll: true });
+    window.SWLInteractionPolish?.profile();
   }
 
   function toast(message, undo = false) {
@@ -4394,6 +4397,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     toast(hasPending() ? 'Backup includes the unsaved changes shown here.' : 'Backup download requested.');
   });
 
+  window.SWLInteractionPolish?.init({editable:canEdit,unlock:()=>{if(lockKnown&&!lockChanging&&scoringLock.locked)$('lockButton').click();}});
   window.SWLHoldClear?.init({editable:canEdit,target:b=>{const id=b.dataset.quickGymnast||b.dataset.priorityGymnast||selectedId,skillId=b.dataset.skill||b.dataset.quickSkill||b.dataset.prioritySkill;const g=GYMNASTS.find(g=>g.id===id),s=SKILLS.find(s=>s.id===skillId);return g&&s?{id,skillId,name:g.name,skill:s.name,value:mark(id,skillId),button:b}:null;},clear:t=>{if(mark(t.id,t.skillId)!==t.value){toast('This skill changed. Check it and try again.');return;}changeSkill(t.skillId,t.button,0,t.id);}});
   window.SWLRosterManagement?.init({people:()=>GYMNASTS,label:groupLabel,editable:canEdit,save:operation=>{
     if(!canEdit())throw Error('Unlock scoring first.');
