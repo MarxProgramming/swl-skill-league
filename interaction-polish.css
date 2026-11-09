@@ -1,5 +1,5 @@
 /* Tactile feedback uses scale independently of existing transforms. */
-button:not(:disabled){transition:scale 140ms cubic-bezier(.2,.8,.2,1),background-color 160ms,border-color 160ms}
+button:not(:disabled){transition:scale 240ms cubic-bezier(.22,.61,.36,1),background-color 320ms,border-color 320ms}
 button.ui-pressed:not(:disabled):not(.spin-medal){scale:.975}
 button:focus-visible{outline-offset:4px}
 .directory-quick{overflow:hidden}
@@ -7,3 +7,15 @@ button:focus-visible{outline-offset:4px}
 .skill-unlock-hint>span:first-child{font-size:22px;color:#caa9ff}.skill-unlock-hint button{min-height:36px;padding:6px 10px;font-size:12px;background:#45305f;border:1px solid #ad83e85c;border-radius:9px;color:#fff}.skill-unlock-hint [data-hint-close]{background:transparent;border:0;font-size:20px;padding-inline:7px}
 @media(prefers-reduced-motion:reduce){button:not(:disabled){transition:none}button.ui-pressed:not(:disabled){scale:1}}
 body.no-motion button.ui-pressed{scale:1}
+
+/* A consistent, more legible rhythm throughout navigation and controls. */
+@media(prefers-reduced-motion:no-preference){
+ body:not(.no-motion) .nav:before{transition:transform 560ms cubic-bezier(.22,.61,.36,1),opacity 360ms}
+ body:not(.no-motion) :is(select,input){transition:border-color 320ms,background-color 320ms,box-shadow 320ms}
+ body:not(.no-motion) :is(.skill-cell,.directory-quick-cell,.directory-card){transition:background-color 400ms,border-color 400ms,box-shadow 400ms}
+ body:not(.no-motion) :is(.entry-filter-chevron,.a51-priority-chevron,.a31-disclosure-icon){transition:transform 480ms cubic-bezier(.22,.61,.36,1),color 320ms}
+ body:not(.no-motion) dialog[open]{animation:swl-dialog-arrive 480ms cubic-bezier(.22,.61,.36,1) both}
+ body:not(.no-motion) dialog[open]::backdrop{animation:swl-backdrop-arrive 400ms ease both}
+}
+@keyframes swl-dialog-arrive{from{opacity:0;translate:0 16px;scale:.97}to{opacity:1;translate:0 0;scale:1}}
+@keyframes swl-backdrop-arrive{from{opacity:0}to{opacity:1}}

@@ -1839,8 +1839,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games.js?v=20261101-programme"></script>
 <link rel="stylesheet" href="./podium-spin.css?v=20261109-tap">
 <script src="./podium-spin.js?v=20261109-tap"></script>
-<link rel="stylesheet" href="./interaction-polish.css?v=20261109">
-<script src="./interaction-polish.js?v=20261109"></script>
+<link rel="stylesheet" href="./interaction-polish.css?v=20261109-smooth">
+<script src="./interaction-polish.js?v=20261109-smooth"></script>
 <script src="./hold-clear.js?v=20261109"></script>
 <script src="./training-focus.js?v=20261109b"></script>
 <script src="./skills-catalogue.js?v=20261109b"></script>
@@ -3552,6 +3552,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function setProfilePane(value) {
     if (!['skills','badges','placement','insights'].includes(value)) return;
     if (value !== profilePane) { window.SWLPerfectConfirm?.cancel(); profileBadgeVisit = {id:null,fresh:{}}; }
+    const paneChanged = value !== profilePane;
     profilePane = value;
     for (const [pane,id] of Object.entries({skills:'profileSkills',badges:'profileBadgeProgress',placement:'profilePlacement',insights:'profileInsights'})) {
       if ($(id)) $(id).hidden = value !== pane;
@@ -3560,6 +3561,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       button.setAttribute('aria-pressed',String(button.dataset.profilePane === value));
     });
     renderProfilePane();
+    if(paneChanged)window.SWLInteractionPolish?.scene({skills:'profileSkills',badges:'profileBadgeProgress',placement:'profilePlacement',insights:'profileInsights'}[value]);
   }
 
   function renderAthlete() {
@@ -3858,7 +3860,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!['home', 'dashboard', 'tracker', 'placement', 'games', 'directory', 'analytics', 'catalogue', 'challenge'].includes(view)) return;
     // Earlier placement entry points now reveal the same gymnast's inline pane.
     if (view === 'placement') { view = 'tracker'; setProfilePane('placement'); }
-    if (view !== currentView) {
+    const viewChanged = view !== currentView;
+    if (viewChanged) {
       profileBadgeVisit = {id:null,fresh:{}};
       window.SWLPerfectConfirm?.cancel();
       if (currentView === 'directory') directoryScroll = window.scrollY;
@@ -3898,6 +3901,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     });
 
     $('dashboard').classList.toggle('enter', view === 'dashboard');
+    if(viewChanged && view !== 'tracker')window.SWLInteractionPolish?.scene({home:'programmeMenu',dashboard:'dashboard',directory:'directory',analytics:'analytics',games:'games',catalogue:'allSkills',challenge:'challenge'}[view]);
     if (view === 'tracker') syncBadgeNotices();
 
     if (scroll) {
