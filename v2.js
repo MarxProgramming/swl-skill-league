@@ -118,9 +118,9 @@
   function render(next) {data=next;if(!directory)return;renderDirectory();renderAnalytics();}
   const shortSkills={
     'rolls-base-0':'HS → fwd roll','rolls-base-full-turn':'Full turn jump','rolls-base-2':'Bwd roll → support',
-    'rolls-upgrade-0':'HS roll → pike','rolls-upgrade-1':'1½ turn jump','rolls-upgrade-2':'Bwd roll → HS',
+    'rolls-upgrade-dive':'Dive roll','rolls-upgrade-1':'1½ turn jump','rolls-upgrade-2':'Bwd roll → HS',
     'rolls-pro-0':'HS pir. → fwd roll','rolls-pro-1':'Split jump','rolls-pro-hold3':'Bwd roll → HS 3s',
-    'acro-base-0':'Bwd walkover','acro-base-full-spin':'Full spin','acro-base-2':'Fwd walkover',
+    'acro-base-0':'Bwd walkover','acro-base-full-spin':'Full spin','acro-base-one-hand':'1-hand cartwheel',
     'acro-upgrade-0':'Split flick','acro-upgrade-1':'1½ spin','acro-upgrade-2':'Chassé free CW',
     'acro-pro-roundoff-flick':'Round-off → flick','acro-pro-1':'Double spin','acro-pro-handspring':'Handspring',
     'leaps-base-0':'Split leap','leaps-base-cat':'Cat leap','leaps-base-scissor':'Scissor kick',
@@ -305,8 +305,8 @@
         const gain=Number(skill.points)+bonus;
         nextPoints=Math.max(nextPoints,gain);minNextPoints=Math.min(minNextPoints,gain);availablePoints+=gain;bonusCount+=bonus;
       });
-      return {skill,achieved,perfect,total:people.length,target:achieved===people.length?'perfect':'achieved',nextPoints,minNextPoints:perfect===people.length?0:minNextPoints,availablePoints,bonusCount,toAchieve:people.length-achieved,toPerfect:achieved-perfect};
-    }).filter(row=>includeComplete||row.perfect<row.total).sort((a,b)=>b.availablePoints-a.availablePoints||b.nextPoints-a.nextPoints||String(a.skill.name||a.skill.id).localeCompare(String(b.skill.name||b.skill.id),'en-GB')||a.skill.id.localeCompare(b.skill.id)).slice(0,limit);
+      return {foundationMissing:window.SWLTrainingFocus?.foundationIds.includes(skill.id)?people.length-achieved:0,skill,achieved,perfect,total:people.length,target:achieved===people.length?'perfect':'achieved',nextPoints,minNextPoints:perfect===people.length?0:minNextPoints,availablePoints,bonusCount,toAchieve:people.length-achieved,toPerfect:achieved-perfect};
+    }).filter(row=>includeComplete||row.perfect<row.total).sort((a,b)=>Number(b.foundationMissing>0)-Number(a.foundationMissing>0)||b.foundationMissing-a.foundationMissing||b.availablePoints-a.availablePoints||b.nextPoints-a.nextPoints||String(a.skill.name||a.skill.id).localeCompare(String(b.skill.name||b.skill.id),'en-GB')||a.skill.id.localeCompare(b.skill.id)).slice(0,limit);
   }
   function priorityMembers(people,skill) {
     const status=['Unticked','Achieved','Perfect'],symbols=['○','✓','✓✓'];
@@ -324,11 +324,11 @@
     const rows=priorityPinned?priorityPinned.ids.map(id=>allRows.find(row=>row.skill.id===id)).filter(Boolean):skillPriorities(people);
     priorityRenderedIds=rows.map(row=>row.skill.id);
     return `<section class="analytics-panel analytics-wide a31-priorities" aria-labelledby="priorityTitle"><div class="analytics-panel-head"><div><p class="eyebrow">Your next training focus</p><h2 id="priorityTitle">Top skills to work on</h2></div><span class="a31-panel-index" aria-hidden="true">01 / FOCUS</span></div>
-      <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}${people.length?` · ${people.length===1?'Biggest personal gain':'Biggest combined gain'}`:''}</p>
+      <p class="a31-priority-scope">${esc(scope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}${people.length?` · ${people.length===1?'Essentials first':'Essentials first'}`:''}</p>
       ${rows.length?`<ol id="analyticsPriorityList" class="a31-priority-list">${rows.slice(0,priorityShowMore?10:5).map(row=>{
         const {skill,achieved,perfect,total,target,availablePoints}=row,category=data.categories.find(c=>c.id===skill.category),tier=category?.tiers.find(t=>t[0]===skill.tier)?.[1]||skill.tier;
         return `<li class="v4-priority-entry" data-priority-skill="${esc(skill.id)}"><details data-priority-detail="${esc(skill.id)}" data-analytics-disclosure="priority-${esc(skill.id)}"><summary id="priority-summary-${esc(skill.id)}" class="a31-priority-row"><div class="a31-priority-skill"><h3>${esc(skill.name||skill.id)}</h3></div><span class="a51-priority-chevron" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" focusable="false"><path d="m5 7.5 5 5 5-5"/></svg></span></summary><div class="a51-priority-content${target==='perfect'?' is-polishing':''}"><div class="a51-priority-metrics"><div class="a31-priority-skill"><p>${esc(category?.name||skill.category)} · ${esc(tier)}</p><span class="a31-priority-gain">${perfect===total?'All Perfect':`+${number(availablePoints)} pts`} <small>${perfect===total?'complete':'available'}</small></span></div><div class="a31-priority-progress"><p class="a31-priority-count"><strong>${target==='perfect'?perfect:achieved}<span> / ${total}</span></strong><span>${target==='perfect'?'perfected':'achieved'}</span></p>${stackedTrack({perfect,achieved:achieved-perfect,total})}<p class="a31-priority-detail">${target==='perfect'?`${achieved} of ${total} achieved`:`${perfect} of ${total} perfected`}</p></div></div>${analyticsCompareGroup?window.SWLAnalyticsCompare?.renderSkill({...comparisonConfig(people,analyticsGymnast==='all'?groupName(analyticsGroup):people[0]?.name),skill})||'':''}${priorityMembers(people,skill)}</div></details></li>`;
-      }).join('')}</ol>${rows.length>5?`<button type="button" id="analyticsPriorityMore" class="a31-priority-more" data-priority-more aria-expanded="${priorityShowMore}" aria-controls="analyticsPriorityList">${priorityShowMore?'Show less':'Show more'} <span>${priorityShowMore?'5 of '+rows.length:rows.length-5+' more skills'}</span></button>`:''}<p class="chart-note">Ranked by the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match this view. Choose another squad with the Analysing menu.'}</p>`}
+      }).join('')}</ol>${rows.length>5?`<button type="button" id="analyticsPriorityMore" class="a31-priority-more" data-priority-more aria-expanded="${priorityShowMore}" aria-controls="analyticsPriorityList">${priorityShowMore?'Show less':'Show more'} <span>${priorityShowMore?'5 of '+rows.length:rows.length-5+' more skills'}</span></button>`:''}<p class="chart-note">Unachieved essentials first, then the points available from each gymnast’s next mark.</p>`:`<p class="v2-empty small" role="status">${people.length?'Every included skill is Perfect for this selection. A complete set.':'No gymnasts match this view. Choose another squad with the Analysing menu.'}</p>`}
       <p class="a31-priority-includes">${apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Rolls, acro, leaps &amp; vault · Handstands excluded.':'Rolls, acro &amp; leaps · Handstands excluded.'}</p></section>`;
   }
   function analyticsDisclosure(id,title,description,content) {

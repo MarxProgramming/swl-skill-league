@@ -1836,19 +1836,21 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./games-addon.js?v=20261020"></script>
 <script src="./games-ratings.js?v=20261022-contest"></script>
 <script src="./games.js?v=20261101-programme"></script>
-<script src="./skills-catalogue.js?v=20261031-v51"></script>
+<script src="./training-focus.js?v=20261109"></script>
+<script src="./skills-catalogue.js?v=20261109"></script>
 <script src="./v4-search.js?v=20261101-emblems"></script>
 <script src="./directory-attendance.js?v=20261105-analytics-selection"></script>
 <script src="./gymnast-progress.js?v=20261106-shared-comparison"></script>
-<script src="./profile-insights.js?v=20261105-analytics-selection"></script>
+<script src="./profile-insights.js?v=20261109"></script>
 <script src="./directory-selection.js?v=20261105-fair-comparison"></script>
 <script src="./analytics-compare.js?v=20261106-shared-comparison"></script>
 <link rel="stylesheet" href="./birthday.css?v=20261108">
 <link rel="stylesheet" href="./podium-stage.css?v=20261108">
 <link rel="stylesheet" href="./surface-tidy.css?v=20261108">
+<link rel="stylesheet" href="./training-focus.css?v=20261109">
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261107-roster"></script>
-<script src="./v2.js?v=20261108-birthday"></script>
+<script src="./v2.js?v=20261109"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
@@ -1904,7 +1906,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           'upgrade',
           'Upgrades',
           [
-            'Handstand forwards roll pike stand',
+            'Dive forwards roll',
             '1½ turn jump',
             'Backwards roll to handstand'
           ]
@@ -1932,7 +1934,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           [
             'Backwards walkover',
             'Full spin',
-            'Forwards walkover'
+            'One-handed cartwheel'
           ]
         ],
         [
@@ -1997,6 +1999,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   // IDs identify the actual skill, even when it moves to a different tier.
   const SKILL_ID_OVERRIDES = {
+    'Dive forwards roll': 'rolls-upgrade-dive',
+    'One-handed cartwheel': 'acro-base-one-hand',
     'Backwards roll to handstand hold 3 seconds': 'rolls-pro-hold3',
     'Full turn jump': 'rolls-base-full-turn',
     'Round-off flick': 'acro-pro-roundoff-flick',
@@ -2007,7 +2011,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     'Cat leap full turn': 'leaps-base-1',
     'W hop': 'leaps-upgrade-w-hop'
   };
-  const RETIRED_SKILL_IDS = new Set(['rolls-base-1', 'acro-base-1', 'acro-pro-0', 'acro-pro-2', 'rolls-pro-2']);
+  const RETIRED_SKILL_IDS = new Set(['rolls-upgrade-0', 'acro-base-2', 'rolls-base-1', 'acro-base-1', 'acro-pro-0', 'acro-pro-2', 'rolls-pro-2']);
   const SKILLS = CATEGORIES.flatMap(category =>
     category.tiers.flatMap(([tier, label, names]) =>
       names.map((name, index) => ({
@@ -2346,7 +2350,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let catalogueReturnView = 'dashboard';
   let catalogueReturnScroll = 0;
   let coachFilter = 'all';
-  let apparatus = 'floor';
+  let apparatus = 'combined';
   let leaderboardGroup = 'all';
   let leaderboardAge = 'all';
   let placementGroup = 'own';
@@ -3006,7 +3010,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       const response = await fetch(scoresEndpoint(), {
         method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow',
         headers: { 'Content-Type': 'application/json', 'apikey': window.SWL_CONFIG.publicKey, 'Authorization': 'Bearer ' + window.SWL_CONFIG.publicKey, ...(currentCoachSession() ? {'x-swl-coach': currentCoachSession().token} : {}) },
-        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2, rollHoldVersion: 1 }),
+        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2, rollHoldVersion: 1, trainingVersion: 1 }),
         signal: controller.signal
       });
       let payload;
@@ -3474,8 +3478,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         aria-label="${escapeHTML(skill.name)}: Not yet. Click to mark achieved.">
         <span class="skill-top">
           <span class="skill-index">
-            SKILL
-            0${index + 1}
+            ${window.SWLTrainingFocus?.tag(skill)||`SKILL 0${index + 1}`}
           </span>
 
           <strong class="skill-points">
@@ -3830,7 +3833,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (!['floor','senior'].includes(programme)) return;
     leaderboardGroup = programme;
     leaderboardAge = 'all';
-    apparatus = 'floor';
+    apparatus = 'combined';
     categoryFilter = 'all';
     $('leaderboardFilters').open = false;
     v2Api()?.setDirectoryGroup(programme);
