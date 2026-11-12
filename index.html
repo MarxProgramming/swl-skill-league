@@ -1629,6 +1629,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
 <link rel="stylesheet" href="./release-52.css?v=20261103-52d">
+<style>.previous-perfect{position:absolute;right:12px;top:32px;font-size:9px;color:#c0b1d9;font-weight:500}.directory-quick-skill .previous-perfect{position:static;font-size:8px;line-height:1.2}#directoryReorder{margin:0 0 14px;font-size:12px}</style>
 </head>
 
 <body class="programme-menu-open">
@@ -1856,7 +1857,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./training-focus.css?v=20261109">
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261109-20261107-roster"></script>
-<script src="./v2.js?v=20261109-motion"></script>
+<script src="./v2.js?v=20261112-training"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
@@ -2143,6 +2144,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       throw Error('Choose an SWL Skill League backup.');
     }
     const clean = freshState();
+    clean.expiredPerfect = isObject(data.expiredPerfect)?data.expiredPerfect:{};
     clean.squadLabels = Object.fromEntries(Object.entries(isObject(data.squadLabels)?data.squadLabels:{}).filter(([k,v])=>typeof v==='string'&&v.length<=80));
     if (data.gymnasts !== undefined) {
       if (!Array.isArray(data.gymnasts) || data.gymnasts.length > 2000) {
@@ -2470,7 +2472,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     const level = mark(id, skill), renewedAt = state.skillDates?.[id]?.[skill]?.renewedAt;
     const expiry = level === 2 && renewedAt ? Date.parse(renewedAt) + 30 * 86400000 : null;
     const remaining = expiry === null ? null : expiry - at;
-    return {level, expiry, days: remaining === null ? null : Math.max(0, Math.ceil(remaining / 86400000)), due:level === 2 && remaining !== null && remaining <= 7 * 86400000};
+    return {level, expiry, previouslyExpired:level<2&&Boolean(state.expiredPerfect?.[id]?.[skill]), days: remaining === null ? null : Math.max(0, Math.ceil(remaining / 86400000)), due:level === 2 && remaining !== null && remaining <= 7 * 86400000};
   }
   // Retained-skill count remains available for the momentum chart; heat is points-based.
   function fireCount(id, at = Date.now()) {
@@ -3761,6 +3763,9 @@ html:has(body.no-motion){scroll-behavior:auto}
         renew.disabled=!canEdit(); renew.setAttribute('aria-label','Renew Perfect for '+skill.name+' for 30 days');
       }
 
+      let previous=card.querySelector('.previous-perfect');
+      if(fresh.previouslyExpired&&!previous){previous=document.createElement('small');previous.className='previous-perfect';previous.textContent='Previously Perfect';previous.title='A previous Perfect mark expired';card.append(previous);}
+      if(!fresh.previouslyExpired)previous?.remove();
       card.querySelector('.skill-status').textContent = SYMBOL[value];
 
       card.querySelector('.skill-points').innerHTML =
@@ -3862,6 +3867,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (view === 'placement') { view = 'tracker'; setProfilePane('placement'); }
     const viewChanged = view !== currentView;
     if (viewChanged) {
+      if(view==='directory')v2Api()?.enterDirectory?.();
       profileBadgeVisit = {id:null,fresh:{}};
       window.SWLPerfectConfirm?.cancel();
       if (currentView === 'directory') directoryScroll = window.scrollY;
