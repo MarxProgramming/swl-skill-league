@@ -150,7 +150,7 @@
   }
   function quickMarks(g,complex) {
     if(!complex)return '';
-    if(complex.personal){if(!nextSkillCache.has(g.id))nextSkillCache.set(g.id,skillPriorities([g],{limit:3,scope:'combined'}).map(r=>r.skill));complex={...complex,skills:nextSkillCache.get(g.id)};if(!complex.skills.length)return '<div class="directory-quick">All eligible skills are Perfect</div>';} 
+    if(complex.personal){if(!nextSkillCache.has(g.id))nextSkillCache.set(g.id,skillPriorities([g],{limit:3,scope:'floor'}).map(r=>r.skill));complex={...complex,skills:nextSkillCache.get(g.id)};if(!complex.skills.length)return '<div class="directory-quick">All eligible skills are Perfect</div>';} 
     return `<div class="directory-quick"${window.SWLDirectorySelection?.isActive()?' inert':''} role="group" aria-label="${esc(complex.label)} for ${esc(g.name)}"><span class="directory-quick-label">${esc(complex.label)}</span><div class="directory-quick-grid">${complex.skills.map(k=>{
       const level=data.mark(g.id,k.id),fresh=data.skillFreshness(g.id,k.id),status=['Unticked','Achieved','Perfect'][level],next=['Achieved','Perfect','Unticked'][level];
       const renewalDays=fresh.days===null?'Renewal pending':fresh.days===0?'Due now':`${fresh.days} ${fresh.days===1?'day':'days'} left`,renewalId=`quick-days-${g.id}-${k.id}`;
@@ -163,7 +163,7 @@
     if(directoryComplex&&!complexes.some(c=>c.id===directoryComplex))directoryComplex='';
     const complex=complexes.find(c=>c.id===directoryComplex);
     const scope=directoryGroup+'|'+directoryComplex;if(scope!==orderScope){resetDirectoryOrder();orderScope=scope;}
-    if(data.hasLoaded&&orderRanks.size===0){const count=g=>complex?.personal?skillPriorities([g],{limit:3,scope:'combined'}).reduce((n,r)=>n+data.mark(g.id,r.skill.id),0):complex?complex.skills.reduce((n,k)=>n+data.mark(g.id,k.id),0):0;[...data.gymnasts].sort((a,b)=>count(a)-count(b)||a.name.localeCompare(b.name,'en-GB')).forEach((g,i)=>orderRanks.set(g.id,i));}
+    if(data.hasLoaded&&orderRanks.size===0){const count=g=>complex?.personal?skillPriorities([g],{limit:3,scope:'floor'}).reduce((n,r)=>n+data.mark(g.id,r.skill.id),0):complex?complex.skills.reduce((n,k)=>n+data.mark(g.id,k.id),0):0;[...data.gymnasts].sort((a,b)=>count(a)-count(b)||a.name.localeCompare(b.name,'en-GB')).forEach((g,i)=>orderRanks.set(g.id,i));}
     const currentLabel=directory.querySelector('#directoryComplexCurrent');
     if(currentLabel)currentLabel.textContent=complex?.label||'Choose with the arrows';
     ['Previous','Next'].forEach(part=>{const button=directory.querySelector('#directoryComplex'+part);if(button)button.disabled=!data.hasLoaded||!complexes.length;});
