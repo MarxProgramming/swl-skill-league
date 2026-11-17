@@ -1626,6 +1626,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-card-sizes">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 <link rel="stylesheet" href="./profile-badges.css?v=20261103-notices">
+<link rel="stylesheet" href="./competition-awards.css?v=20261117-awards">
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
 <link rel="stylesheet" href="./release-52.css?v=20261103-52d">
@@ -1861,7 +1862,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261103-notices"></script>
-<script src="./profile-badges.js?v=20261103-notices"></script>
+<script src="./competition-results.js?v=20261117-awards"></script>
+<script src="./competition-awards.js?v=20261117-awards"></script>
+<script src="./profile-badges.js?v=20261117-awards"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <script>
@@ -3522,9 +3525,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     const button = $('athletePanel').querySelector('[data-profile-pane="badges"]');
     if (!button) return;
     const count = Object.keys(window.SWLBadgeNotices?.unread(GYMNASTS.find(g => g.id === selectedId),confirmedState.completionAchievements) || {}).length;
-    const html = 'Badges' + (count ? '<span class="pb-tab-new" aria-hidden="true">New</span>' : '');
+    const html = 'Awards' + (count ? '<span class="pb-tab-new" aria-hidden="true">New</span>' : '');
     if (button.innerHTML !== html) button.innerHTML = html;
-    button.setAttribute('aria-label',count ? `Badges, ${count} new ${count === 1 ? 'badge' : 'badges'}` : 'Badges');
+    button.setAttribute('aria-label',count ? `Awards, ${count} new ${count === 1 ? 'badge' : 'badges'}` : 'Awards');
   }
 
   function syncBadgeNotices() {
@@ -3638,13 +3641,13 @@ html:has(body.no-motion){scroll-behavior:auto}
         </div>
         <div class="profile-pane-switch" role="group" aria-label="Profile view">
           <button type="button" data-profile-pane="skills" aria-pressed="${profilePane === 'skills'}" aria-controls="profileSkills">Skills</button>
-          <button type="button" data-profile-pane="badges" aria-pressed="${profilePane === 'badges'}" aria-controls="profileBadgeProgress">Badges</button>
+          <button type="button" data-profile-pane="badges" aria-pressed="${profilePane === 'badges'}" aria-controls="profileBadgeProgress">Awards</button>
           <button type="button" data-profile-pane="placement" aria-pressed="${profilePane === 'placement'}" aria-controls="profilePlacement">Placement</button>
           <button type="button" data-profile-pane="insights" aria-pressed="${profilePane === 'insights'}" aria-controls="profileInsights">Insights</button>
         </div>
       </section>
 
-      <div id="profileBadgeProgress" aria-label="Badge progress"${profilePane === 'badges' ? '' : ' hidden'}></div>
+      <div id="profileBadgeProgress" aria-label="Awards and badge progress"${profilePane === 'badges' ? '' : ' hidden'}></div>
       <div id="profilePlacement" aria-label="Personal placement"${profilePane === 'placement' ? '' : ' hidden'}></div>
       <div id="profileInsights" aria-label="Personal insights"${profilePane === 'insights' ? '' : ' hidden'}></div>
       <div id="profileSkills"${profilePane === 'skills' ? '' : ' hidden'}>
