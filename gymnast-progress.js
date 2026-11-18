@@ -108,7 +108,7 @@
     }
     const series=buildSeries({progress,gymnastId:person.id,days,now});
     const ranges=`<div class="gp-ranges" role="group" aria-label="Progress period">${[[7,'7 days'],[28,'4 weeks'],[56,'8 weeks']].map(([n,text])=>`<button type="button" data-progress-range="${n}" aria-pressed="${series.days===n}">${text}</button>`).join('')}</div>`;
-    const heading=`<div class="gp-head"><div><p class="eyebrow">Personal progress · ${apparatus==='combined'?'Floor only':'Floor'}</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(person.name)}</p>`;
+    const heading=`<div class="gp-head"><div><p class="eyebrow">Personal progress · Floor history</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(person.name)}</p>`;
     if(!series.available){active=null;return `<section class="gymnast-progress analytics-panel analytics-wide">${heading}<div class="gp-empty"><p>Point history isn’t available in this saved record yet.</p><p>Current saved Floor score: <strong>${number(currentPoints)}</strong>.</p></div></section>`;}
     const key=person.id+'|'+series.days;
     if(key!==selectionKey){selectionKey=key;selectedDay=null;}
@@ -128,7 +128,7 @@
       <div class="gp-scrub"><label for="gymnastProgressScrub">Explore a date</label><input id="gymnastProgressScrub" type="range" min="0" max="${series.rows.length-1}" step="1" value="${selected}" aria-valuetext="${esc(selectedLabel(row,series,true)+': '+selectedText(row))}"></div>
       ${!series.hasChanges?'<p class="gp-empty">No recorded Floor point changes in this period.</p>':''}
       <p class="gp-note">${series.partial?'Showing '+series.coverageDays+' days of available records. ':''}${series.stale?'Saved records through '+label(series.lastDay)+'. ':''}The line starts at zero for the selected period. Average pace uses calendar days.</p>
-      <details class="gp-values" data-analytics-disclosure="progress-values"><summary>Daily values &amp; how this works</summary><p class="gp-note">Saved Floor gains minus manual corrections. Renewals, automatic expiry and scoring-rule changes are excluded. Dates reflect when changes reached Google Sheets; earlier activity may not have been recorded.${apparatus==='combined'?' Vault points are not included.':''}</p><table><caption class="gp-table-caption">Recorded Floor progress for ${esc(person.name)}</caption><thead><tr><th scope="col">Date</th><th scope="col">Daily change</th><th scope="col">Gained so far</th></tr></thead><tbody>${series.rows.slice(1).map(r=>`<tr><th scope="row">${label(r.day)}</th><td>${signed(r.delta)}</td><td>${signed(r.total)}</td></tr>`).join('')}</tbody></table></details></section>`;
+      <details class="gp-values" data-analytics-disclosure="progress-values"><summary>Daily values &amp; how this works</summary><p class="gp-note">Saved Floor gains minus manual corrections. Renewals, automatic expiry and scoring-rule changes are excluded. Dates reflect when changes were saved; earlier activity may not have been recorded.${apparatus==='combined'?' Vault points are not included.':''}</p><table><caption class="gp-table-caption">Recorded Floor progress for ${esc(person.name)}</caption><thead><tr><th scope="col">Date</th><th scope="col">Daily change</th><th scope="col">Gained so far</th></tr></thead><tbody>${series.rows.slice(1).map(r=>`<tr><th scope="row">${label(r.day)}</th><td>${signed(r.delta)}</td><td>${signed(r.total)}</td></tr>`).join('')}</tbody></table></details></section>`;
   }
   function groupReading(group,index) {
     if(!group.available)return 'History unavailable';
@@ -145,7 +145,7 @@
   function renderGroup({people=[],label:groupLabel='Selected squad',comparisonPeople=null,comparisonLabel='',comparisonId='',comparisonOptions=[],hideComparisonControl=false,progress,days=28,apparatus='floor',now=Date.now()}={}) {
     const series=buildAverageGroupComparison({progress,people,comparisonPeople,days,now});
     const ranges=`<div class="gp-ranges" role="group" aria-label="Progress period">${[[7,'7 days'],[28,'4 weeks'],[56,'8 weeks']].map(([n,text])=>`<button type="button" data-progress-range="${n}" aria-pressed="${series.days===n}">${text}</button>`).join('')}</div>`;
-    const heading=`<div class="gp-head"><div><p class="eyebrow">Average progress · ${apparatus==='combined'?'Floor only':'Floor'}</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(groupLabel)} · ${series.primary.memberCount} ${series.primary.memberCount===1?'gymnast':'gymnasts'}</p>`;
+    const heading=`<div class="gp-head"><div><p class="eyebrow">Average progress · Floor history</p><h2>Points over time</h2></div>${ranges}</div><p class="gp-person">${esc(groupLabel)} · ${series.primary.memberCount} ${series.primary.memberCount===1?'gymnast':'gymnasts'}</p>`;
     const options=(Array.isArray(comparisonOptions)?comparisonOptions:[]).filter(option=>option&&typeof option.id==='string');
     const compare=hideComparisonControl?'':`<details class="gp-comparison-disclosure" data-analytics-disclosure="progress-compare-control"${comparisonId?' open':''}><summary>Compare with another squad<span aria-hidden="true"></span></summary><label class="gp-comparison-control" for="squadProgressComparison"><span>Comparison squad</span><select id="squadProgressComparison" data-progress-comparison><option value="">No comparison</option>${options.map(option=>`<option value="${esc(option.id)}"${option.id===comparisonId?' selected':''}>${esc(option.name)}</option>`).join('')}</select></label></details>`;
     if(apparatus==='vault'){
@@ -221,10 +221,15 @@
     const plot=e.target.closest?.('[data-progress-plot]');if(!plot||!active||!root.contains(plot))return;
     const rect=plot.getBoundingClientRect();if(rect.width>0)select((e.clientX-rect.left)/rect.width*(active.series.rows.length-1));
   };
+  const onPointerDown=e=>{
+    const plot=e.target.closest?.('[data-progress-plot]');if(!plot||!root?.contains(plot)||e.button>0)return;
+    onClick(e);plot.setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove=e=>{if(e.pointerType==='mouse'||e.buttons)onClick(e);};
   function mount(host) {
     if(root===host)return;
-    if(root){root.removeEventListener('input',onInput);root.removeEventListener('click',onClick);}
-    root=host;if(root){root.addEventListener('input',onInput);root.addEventListener('click',onClick);}
+    if(root){root.removeEventListener('input',onInput);root.removeEventListener('click',onClick);root.removeEventListener('pointerdown',onPointerDown);root.removeEventListener('pointermove',onPointerMove);}
+    root=host;if(root){root.addEventListener('input',onInput);root.addEventListener('click',onClick);root.addEventListener('pointerdown',onPointerDown);root.addEventListener('pointermove',onPointerMove);}
   }
   window.SWLGymnastProgress={buildSeries,buildGroupComparison,buildAverageGroupComparison,render,renderGroup,mount};
 })();

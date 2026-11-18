@@ -1,6 +1,7 @@
 /* A personal, read-only view of the progressive badge collection. */
 (() => {
   'use strict';
+  const sightings = new WeakMap();
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const isCoach = gymnast => [gymnast?.coach,...(Array.isArray(gymnast?.squads) ? gymnast.squads : [])].some(value => String(value || '').trim().toLowerCase() === 'coaches');
   const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
@@ -35,13 +36,14 @@
     if (!gymnast?.id || excluded || !window.SWLChallenge?.buildCompletion) return result;
     const receipts = config.completionAchievements || config.state?.completionAchievements;
     const mark = markReader(config);
+    const expiredPerfect = config.expiredPerfect || config.state?.expiredPerfect || {};
     for (const definition of window.SWLChallenge.definitions) {
       const completion = window.SWLChallenge.buildCompletion({gymnasts:[gymnast],skills:config.skills || [],mark,hasLoaded:loaded},definition.id);
       const row = completion?.rows?.[0];
       if (!row) continue;
       const savedAt = earnedAt(gymnast,receipts,definition.id);
       const threshold = definition.status === 'perfect' ? 2 : 1;
-      result.badges.push({definition,...row,earnedAt:savedAt,earned:!!savedAt,isNew:!!savedAt && config.newAwards?.[definition.id] === savedAt,needed:row.skillMarks.filter(item => item.level < threshold)});
+      result.badges.push({definition,...row,skillMarks:row.skillMarks.map(item=>({...item,previouslyPerfect:item.level<2&&!!expiredPerfect[gymnast.id]?.[item.skill.id]})),earnedAt:savedAt,earned:!!savedAt,isNew:!!savedAt && config.newAwards?.[definition.id] === savedAt,needed:row.skillMarks.filter(item => item.level < threshold)});
     }
     result.earnedCount = result.badges.filter(badge => badge.earned).length;
     return result;
@@ -58,7 +60,7 @@
       groups.get(group).push(item);
     }
     const action = badge.remaining ? `${badge.remaining} ${badge.remaining === 1 ? 'skill' : 'skills'} to ${perfect ? 'perfect' : 'achieve'}` : 'View all skills';
-    return `<details class="pb-requirements" data-profile-badge-details="${esc(key)}"><summary data-profile-badge-toggle="${esc(key)}"><span>${action}</span><span class="pb-chevron">${chevron}</span></summary><div class="pb-requirement-content"><p class="pb-requirement-rule">${perfect ? 'Every skill below needs two ticks.' : 'One or two ticks on every skill below.'}${badge.earned ? ' Your earned badge stays in your collection.' : ''}</p>${Array.from(groups.values()).map(items => `<section class="pb-skill-group"><h4>${categoryNames[items[0].skill.category] || esc(items[0].skill.category)} <span>· ${tierNames[items[0].skill.tier] || esc(items[0].skill.tier)}</span></h4><ul>${items.map(({skill,level}) => `<li class="pb-skill is-${level === 2 ? 'perfect' : level === 1 ? 'achieved' : 'unachieved'}${level >= (perfect ? 2 : 1) ? ' meets-requirement' : ' needs-work'}"><span class="pb-skill-mark" aria-label="${level === 2 ? 'Perfect' : level === 1 ? 'Achieved' : 'Not achieved'}">${level === 2 ? '✓✓' : level === 1 ? '✓' : '—'}</span><span class="pb-skill-name">${esc(skill.name)}</span>${level < (perfect ? 2 : 1) ? `<small>${level === 1 ? 'Perfect next' : 'Achieve'+(perfect ? ' + perfect' : '')}</small>` : ''}</li>`).join('')}</ul></section>`).join('')}</div></details>`;
+    return `<details class="pb-requirements" data-profile-badge-details="${esc(key)}"><summary data-profile-badge-toggle="${esc(key)}"><span>${action}</span><span class="pb-chevron">${chevron}</span></summary><div class="pb-requirement-content"><p class="pb-requirement-rule">${perfect ? 'Every skill below needs two ticks.' : 'One or two ticks on every skill below.'}${badge.earned ? ' Your earned badge stays in your collection.' : ''}</p>${Array.from(groups.values()).map(items => `<section class="pb-skill-group"><h4>${categoryNames[items[0].skill.category] || esc(items[0].skill.category)} <span>· ${tierNames[items[0].skill.tier] || esc(items[0].skill.tier)}</span></h4><ul>${items.map(({skill,level,previouslyPerfect}) => `<li class="pb-skill is-${level === 2 ? 'perfect' : level === 1 ? 'achieved' : 'unachieved'}${level >= (perfect ? 2 : 1) ? ' meets-requirement' : ' needs-work'}"><span class="pb-skill-mark" aria-label="${level === 2 ? 'Perfect' : level === 1 ? 'Achieved' : 'Not achieved'}">${level === 2 ? '✓✓' : level === 1 ? '✓' : '—'}</span><span class="pb-skill-name">${esc(skill.name)}${previouslyPerfect?'<span class="pb-previous-perfect">Previously Perfect</span>':''}</span>${level < (perfect ? 2 : 1) ? `<small>${level === 1 ? 'Perfect next' : 'Achieve'+(perfect ? ' + perfect' : '')}</small>` : ''}</li>`).join('')}</ul></section>`).join('')}</div></details>`;
   }
 
   function badgeCard(badge, model) {
@@ -71,7 +73,7 @@
     const artwork = window.SWLAchievements?.challengeIcon?.(definition.id) || `<span class="pb-icon-fallback">${floor ? 'F' : 'V'}</span>`;
     const state = badge.isNew ? '<span class="pb-new-label" aria-label="Newly earned badge">New</span>' : badge.earned ? `<span class="pb-earned"><span aria-hidden="true">✓</span> Earned</span>` : badge.complete ? '<span class="pb-pending">Confirming…</span>' : `<span class="pb-progress-label">${badge.completed}<small> / ${badge.maximum}</small></span>`;
     const caption = badge.earned ? `Earned <time datetime="${esc(badge.earnedAt)}">${dateLabel(badge.earnedAt)}</time>` : badge.complete ? (model.pending ? 'Saving this achievement' : 'Waiting for saved confirmation') : `${badge.completed} of ${badge.maximum} ${perfect ? 'Perfect' : 'achieved'}`;
-    return `<article class="pb-card is-${definition.status}${badge.earned ? ' is-earned' : ''}${badge.isNew ? ' is-new' : ''}" data-profile-badge="${definition.id}" data-badge-stage="${definition.level || 'vault'}"><div class="pb-card-head"><span class="pb-art" aria-hidden="true">${artwork}</span><div class="pb-card-title"><h3>${title}</h3></div>${state}</div><p class="pb-scope">${scope}</p><div class="pb-progress" role="progressbar" aria-label="${esc(title+': current marks')}" aria-valuemin="0" aria-valuemax="${badge.maximum || 1}" aria-valuenow="${badge.completed}" aria-valuetext="${badge.completed} of ${badge.maximum} ${perfect ? 'Perfect' : 'achieved'}${badge.earned ? '. Badge already earned.' : ''}"><span style="width:${badge.progress}%"></span></div><p class="pb-caption">${caption}${badge.earned && !badge.complete ? `<span>Current marks ${badge.completed}/${badge.maximum}</span>` : ''}</p>${requirements(badge,model.gymnast)}</article>`;
+    return `<article class="pb-card is-${definition.status}${badge.earned ? ' is-earned' : ''}${badge.isNew ? ' is-new' : ''}" data-profile-badge="${definition.id}" data-badge-stage="${definition.level || 'vault'}"><div class="pb-card-head"><span class="pb-art" aria-hidden="true">${artwork}</span><div class="pb-card-title"><h3>${title}</h3></div>${state}</div><p class="pb-scope">${scope}</p><div class="pb-progress" role="progressbar" aria-label="${esc(title+': current marks')}" aria-valuemin="0" aria-valuemax="${badge.maximum || 1}" aria-valuenow="${badge.completed}" aria-valuetext="${badge.completed} of ${badge.maximum} ${perfect ? 'Perfect' : 'achieved'}${badge.earned ? '. Badge already earned.' : ''}"><span style="width:${badge.progress}%"></span></div><p class="pb-caption">${caption}${badge.earned ? `<span class="pb-current-marks">Current marks ${badge.completed}/${badge.maximum}</span>` : ''}</p>${badge.earned&&!badge.complete?'<p class="pb-earned-note">Badge earned and kept. The bar shows your current marks.</p>':''}${requirements(badge,model.gymnast)}</article>`;
   }
 
   function capture(host) {
@@ -98,6 +100,49 @@
     restore(host,state);
   }
 
+  function watchVisible(host,config){
+    const Observer=window.IntersectionObserver;
+    if(typeof Observer!=='function'||typeof config.onBadgeSeen!=='function')return;
+    let sight=sightings.get(host);
+    if(!sight){
+      sight={config:null,observer:null,entries:new Map(),timers:new Map(),seen:new Set()};
+      const eligible=card=>{
+        if(!card?.isConnected||document.hidden||card.closest?.('[hidden]')||sight.config?.visible===false)return false;
+        const box=card.getBoundingClientRect(),header=document.querySelector?.('header, [role="banner"]');
+        const top=Math.max(0,header?.getBoundingClientRect().bottom||0),bottom=window.innerHeight||document.documentElement?.clientHeight||0;
+        const width=window.innerWidth||document.documentElement?.clientWidth||0;
+        const visibleHeight=Math.max(0,Math.min(box.bottom,bottom-70)-Math.max(box.top,top));
+        const visibleWidth=Math.max(0,Math.min(box.right,width)-Math.max(box.left,0));
+        return box.width>0&&box.height>0&&visibleWidth*visibleHeight/(box.width*box.height)>=.5;
+      };
+      sight.observer=new Observer(entries=>{
+        for(const entry of entries){
+          const card=entry.target,key=sight.entries.get(card);
+          if(!key)continue;
+          if(!card.isConnected){clearTimeout(sight.timers.get(card));sight.timers.delete(card);sight.entries.delete(card);sight.observer.unobserve(card);continue;}
+          if(!entry.isIntersecting||entry.intersectionRatio<.5){clearTimeout(sight.timers.get(card));sight.timers.delete(card);continue;}
+          if(sight.seen.has(key)||sight.timers.has(card))continue;
+          sight.timers.set(card,setTimeout(()=>{
+            sight.timers.delete(card);
+            if(sight.entries.get(card)!==key||!eligible(card))return;
+            sight.seen.add(key);sight.observer.unobserve(card);
+            sight.config.onBadgeSeen(card.dataset.profileBadge);
+          },650));
+        }
+      },{threshold:[0,.5],rootMargin:'-80px 0px -70px 0px'});
+      sightings.set(host,sight);
+    }
+    sight.config=config;
+    for(const [card] of sight.entries)if(!card.isConnected||!host.contains(card)){
+      clearTimeout(sight.timers.get(card));sight.timers.delete(card);sight.observer.unobserve(card);sight.entries.delete(card);
+    }
+    for(const card of host.querySelectorAll('.pb-card.is-new[data-profile-badge]')){
+      const id=card.dataset.profileBadge,at=config.newAwards?.[id];
+      const key=config.gymnast?.id+':'+id+':'+at;
+      if(!at||sight.seen.has(key)||sight.entries.get(card)===key)continue;
+      sight.entries.set(card,key);sight.observer.observe(card);
+    }
+  }
   function render(host, config = {}) {
     if (!host) return null;
     const model = build(config);
@@ -106,6 +151,7 @@
     if (!model.loaded) { replace(host,'<p class="pb-empty" role="status">Loading badge progress…</p>'); return model; }
     if (!model.badges.length) { replace(host,'<p class="pb-empty" role="status">Badge progress is unavailable right now.</p>'); return model; }
     replace(host,`${window.SWLCompetitionAwards?.html(model.gymnast) || ''}<div class="profile-badge-collection"><div class="pb-heading"><h2>Skill badges</h2><span>${model.earnedCount} of ${model.badges.length} earned</span></div>${['floor','vault'].map(apparatus => `<section class="pb-journey" aria-label="${apparatus === 'floor' ? 'Floor' : 'Vault'} badge progress"><div class="pb-journey-heading"><h2>${apparatus === 'floor' ? 'Floor' : 'Vault'}</h2>${apparatus === 'floor' ? '<p>Build through each level · handstands excluded</p>' : '<p>A separate collection</p>'}</div><div class="pb-grid">${model.badges.filter(badge => badge.definition.apparatus === apparatus).map(badge => badgeCard(badge,model)).join('')}</div></section>`).join('')}</div>`);
+    watchVisible(host,config);
     return model;
   }
 

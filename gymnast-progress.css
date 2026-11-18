@@ -337,3 +337,7 @@ body.no-motion .gymnast-progress,body.no-motion .gymnast-progress *{animation:no
 .gp-group .gp-comparison-disclosure[open]>summary>span{transform:rotate(225deg);margin-top:6px}
 .gp-group .gp-comparison-disclosure>summary:hover{background:#b896ef12;border-color:#c5a4ff50;color:var(--text,#f6f3fc)}
 @media(pointer:coarse){.gp-group .gp-comparison-disclosure>summary{min-height:44px}}
+
+/* Explore dates directly on the chart; vertical page scrolling stays native. */
+.gymnast-progress .gp-plot{touch-action:pan-y;cursor:crosshair}
+.gymnast-progress .gp-reading{min-height:52px}

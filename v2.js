@@ -16,7 +16,8 @@
   }catch(_){}
   let orderScope='',orderRanks=new Map(),nextSkillCache=new Map();
   function resetDirectoryOrder(){orderScope='';orderRanks.clear();nextSkillCache.clear();}
-  function enterDirectory(){resetDirectoryOrder();if(directory&&data)renderDirectory();}
+  function viewIsVisible(name,host){return Boolean(host)&& (typeof data?.view==='string'?data.view===name:!host.hidden);}
+  function enterDirectory(){resetDirectoryOrder();if(data&&viewIsVisible('directory',directory))renderDirectory();}
   let priorityPinned=null,priorityScope='',priorityRenderedIds=[],priorityShowMore=false;
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
@@ -49,6 +50,38 @@
   const personGroups=g=>data.gymnastSquadLabel?.(g)||data.groupLabel(g.coach);
   function groupOptions() {return [...new Set(data.gymnasts.flatMap(memberships))].sort((a,b)=>Number(a==='coaches')-Number(b==='coaches'));}
   const htmlCache=new WeakMap();
+  const lazyAnalytics=new Map(),openAnalytics=new Set();
+  // These roots contain delegated controls. Reconcile their owned markup rather
+  // than discarding focused controls and every untouched gymnast after a tick.
+  function nodeKey(node) {
+    if(node.nodeType!==1)return '';
+    for(const name of ['id','data-directory-gymnast','data-directory-section','data-analytics-disclosure','data-priority-row','data-priority-skill']){
+      const value=node.getAttribute(name);if(value!==null)return name+':'+value;
+    }
+    return '';
+  }
+  function patchNode(current,next) {
+    if(current.isEqualNode(next))return;
+    htmlCache.delete(current);
+    if(current.nodeType!==1){if(current.nodeValue!==next.nodeValue)current.nodeValue=next.nodeValue;return;}
+    const preserveOpen=current.tagName==='DETAILS';
+    for(const attribute of [...current.attributes])if(!(preserveOpen&&attribute.name==='open')&&!next.hasAttribute(attribute.name))current.removeAttribute(attribute.name);
+    for(const attribute of [...next.attributes])if(!(preserveOpen&&attribute.name==='open')&&current.getAttribute(attribute.name)!==attribute.value)current.setAttribute(attribute.name,attribute.value);
+    patchChildren(current,next);
+  }
+  function patchChildren(current,next) {
+    let cursor=current.firstChild;
+    for(const wanted of [...next.childNodes]){
+      const key=nodeKey(wanted);
+      let candidate=cursor;
+      if(key&&nodeKey(candidate||{})!==key)candidate=[...current.childNodes].find(node=>nodeKey(node)===key)||null;
+      const compatible=candidate&&candidate.nodeType===wanted.nodeType&&candidate.nodeName===wanted.nodeName&&nodeKey(candidate)===key;
+      if(!compatible){const added=wanted.cloneNode(true);current.insertBefore(added,cursor);cursor=added.nextSibling;continue;}
+      if(candidate!==cursor)current.insertBefore(candidate,cursor);
+      patchNode(candidate,wanted);cursor=candidate.nextSibling;
+    }
+    while(cursor){const next=cursor.nextSibling;current.removeChild(cursor);cursor=next;}
+  }
   const focusControls='button,input,select,summary,a,[tabindex]';
   const focusData=['swlAchievement','achievementGymnast','gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','analyticsApparatus','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange','directorySelect','directorySelectionAction','panelComparison','priorityMore'];
   function focusKey(root) {
@@ -75,11 +108,19 @@
     const scroll=[...host.querySelectorAll('.skill-map-scroll')].map(el=>({left:el.scrollLeft,top:el.scrollTop}));
     const legends=[...host.querySelectorAll('details.map-legend')].map(el=>el.open);
     const disclosures=new Map([...host.querySelectorAll('details[data-analytics-disclosure]')].map(el=>[el.dataset.analyticsDisclosure,el.open]));
-    host.innerHTML=html;htmlCache.set(host,html);
+    const patchable=['directoryResults','analyticsContent'].includes(host.id)&&typeof document.createElement==='function'&&typeof host.insertBefore==='function';
+    if(patchable){const template=document.createElement('template');template.innerHTML=html;patchChildren(host,template.content);}else host.innerHTML=html;
+    htmlCache.set(host,html);
     host.querySelectorAll('.skill-map-scroll').forEach((el,i)=>{if(scroll[i]){el.scrollLeft=scroll[i].left;el.scrollTop=scroll[i].top;}});
     host.querySelectorAll('details.map-legend').forEach((el,i)=>{if(legends[i]!==undefined)el.open=legends[i];});
     host.querySelectorAll('details[data-analytics-disclosure]').forEach(el=>{if(disclosures.has(el.dataset.analyticsDisclosure))el.open=disclosures.get(el.dataset.analyticsDisclosure);});
     restore(host,focus);return true;
+  }
+  function refreshLazyAnalytics(details) {
+    const id=details?.dataset?.analyticsDisclosure,factory=lazyAnalytics.get(id);
+    if(!factory)return;
+    if(details.open){openAnalytics.add(id);commitHTML(details.querySelector('.a31-disclosure-content'),factory()||'<p class="v2-empty small">No recorded information for this view yet.</p>');window.SWLInteractionPolish?.refresh(details);}
+    else openAnalytics.delete(id);
   }
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
@@ -92,7 +133,7 @@
     directory.querySelector('#directoryComplexNext').addEventListener('click',()=>switchComplex(1));
     directory.querySelector('#directoryComplexClear').addEventListener('click',()=>{directoryComplex='';renderDirectory();directory.querySelector('#directoryComplexNext').focus({preventScroll:true});});
     window.SWLDirectoryAttendance?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],achievementIcons:g=>data?.achievementIcons?.(g)||'',onChange:()=>renderDirectory()});
-    window.SWLDirectorySelection?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],onChange:()=>renderDirectory(),onAnalyse:()=>{analyticsFromDirectory();renderAnalytics();actions.setView('analytics');}});
+    window.SWLDirectorySelection?.mount({root:directory,getGymnasts:()=>data?.gymnasts||[],onChange:()=>renderDirectory(),onAnalyse:()=>{analyticsFromDirectory();actions.setView('analytics');}});
     analytics.innerHTML=`<div class="analytics-heading analytics-heading-compact"><h1 class="sr">Analytics</h1><button class="quiet" data-view="dashboard">← Leaderboards</button></div><div class="analytics-filters analytics-controls51"><label class="analytics-squad-picker">Analysing<select id="analyticsGroup"></select></label><label class="analytics-compare-picker">Compare with<select id="analyticsCompareGroup"><option value="">No comparison</option></select></label><div class="analytics-apparatus-control"><span class="analytics-control-label">Apparatus</span><div id="analyticsApparatusButtons" class="a31-segments" role="group" aria-label="Analytics apparatus">${[['floor','Floor'],['vault','Vault'],['combined','Combined']].map(([value,label])=>`<button type="button" id="analytics-apparatus-${value}" data-analytics-apparatus="${value}" aria-pressed="${value==='floor'}">${label}</button>`).join('')}</div></div><label>Gymnast<select id="analyticsGymnast"></select></label><div class="sr"><span id="analyticsScopeOrigin"></span><strong id="analyticsSquadScope"></strong></div></div><div id="analyticsDrilldown" class="analytics-drilldown" hidden><button type="button" class="quiet" data-analytics-reset></button></div><div id="analyticsComparisonSummary"></div><div id="analyticsContent"></div>`;
     window.SWLGymnastProgress?.mount(analytics);
     analytics.querySelector('#analyticsGroup').addEventListener('change',e=>{analyticsGroup=e.target.value;analyticsSelectedIds=directorySelectionIds();analyticsGymnast='all';analyticsAge='all';priorityPinned=null;renderAnalytics();});
@@ -102,6 +143,7 @@
       if(e.target.id==='analyticsRankMetric'){analyticsRankMetric=e.target.value;renderAnalytics();}
     });
     analytics.addEventListener('toggle',e=>{
+      if(e.target.isConnected&&lazyAnalytics.has(e.target.dataset?.analyticsDisclosure)){refreshLazyAnalytics(e.target);return;}
       if(!e.target.isConnected||!e.target.matches?.('details[data-priority-detail]'))return;
       if([...analytics.querySelectorAll('details[data-priority-detail]')].some(el=>el.open)){
         if(!priorityPinned)priorityPinned={scope:priorityScope,ids:[...priorityRenderedIds]};
@@ -119,7 +161,7 @@
       const person=e.target.closest('[data-analytics-person]');if(person){selectGymnast(person.dataset.analyticsPerson);renderAnalytics();analytics.scrollIntoView({behavior:'instant',block:'start'});return;}
       const age=e.target.closest('[data-analytics-age]');if(age){analyticsAge=age.dataset.analyticsAge;analyticsGymnast='all';renderAnalytics();analytics.scrollIntoView({behavior:'instant',block:'start'});return;}const b=e.target.closest('[data-analytics-group]');if(b){analyticsGroup=b.dataset.analyticsGroup;if(analyticsGroup==='coaches')analyticsAge='all';analyticsGymnast='all';renderAnalytics();analytics.scrollIntoView({behavior:'instant',block:'start'});}});
   }
-  function render(next) {data=next;if(!directory)return;renderDirectory();renderAnalytics();}
+  function render(next) {data=next;if(!directory)return;if(viewIsVisible('directory',directory))renderDirectory();if(viewIsVisible('analytics',analytics))renderAnalytics();}
   const shortSkills={
     'rolls-base-0':'HS → fwd roll','rolls-base-full-turn':'Full turn jump','rolls-base-2':'Bwd roll → support',
     'rolls-upgrade-dive':'Dive roll','rolls-upgrade-1':'1½ turn jump','rolls-upgrade-2':'Bwd roll → HS',
@@ -184,11 +226,12 @@
     commitHTML(directory.querySelector('#directoryResults'),!data.hasLoaded?'<p class="v2-empty" role="status">Loading your squads…</p>':people.length?groups.map(group=>{
       const tickCount=g=>complex ? complex.skills.reduce((total,skill)=>total+data.mark(g.id,skill.id),0) : 0;
       const gymnasts=people.filter(g=>groups.includes(directoryGroup) ? group===directoryGroup&&inGroup(g,group) : groupKey(g.coach)===group).sort((a,b)=>(orderRanks.get(a.id)??9999)-(orderRanks.get(b.id)??9999)||a.name.localeCompare(b.name,'en-GB'));if(!gymnasts.length)return'';
-      return `<section class="directory-section"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,'combined'),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${data.birthdayClass?.(g.id)||''}${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}" data-directory-gymnast="${esc(g.id)}"><div class="directory-profile-content"${window.SWLDirectorySelection?.isActive()?' inert':''}><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"></button><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)} ${achievementBadge(g)}</strong>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${streakLabel(g.id)||'Combined pts ↗'}</small></span></div>${window.SWLDirectorySelection?.isActive()?window.SWLDirectorySelection.control(g):(window.SWLDirectoryAttendance?.control(g)||'')}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
+      return `<section class="directory-section" data-directory-section="${esc(group)}"><div class="directory-section-head"><h2>${esc(groupName(group))}</h2><span>${gymnasts.length} ${countNoun(group,gymnasts.length)}</span></div><div class="directory-grid">${gymnasts.map(g=>{const s=data.summary(g.id,'combined'),due=skills.filter(k=>data.skillFreshness(g.id,k.id).due).length;return `<article class="directory-card${data.birthdayClass?.(g.id)||''}${heatClass(g.id)?' '+heatClass(g.id):''}${complex?' has-complex':''}" data-directory-gymnast="${esc(g.id)}"><div class="directory-profile-content"${window.SWLDirectorySelection?.isActive()?' inert':''}><button type="button" class="directory-profile" data-gymnast="${esc(g.id)}" aria-label="Open skills for ${esc(g.name)}${isCoach(g)?', coach':''}"></button><span class="directory-avatar" aria-hidden="true">${esc(initials(g.name))}</span><span class="directory-person"><strong>${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)} ${achievementBadge(g)}</strong>${due?`<span class="due-badge">${due} due for renewal</span>`:''}</span><span class="directory-points"><b>${number(s.points)}</b><small>${streakLabel(g.id)||'Combined pts ↗'}</small></span></div>${window.SWLDirectorySelection?.isActive()?window.SWLDirectorySelection.control(g):(window.SWLDirectoryAttendance?.control(g)||'')}${quickMarks(g,complex)}</article>`;}).join('')}</div></section>`;
     }).join(''):'<p class="v2-empty" role="status">No matching gymnasts. Try another name or squad.</p>');
     window.SWLSearch?.render(data,{group:directoryGroup});
     window.SWLDirectoryAttendance?.refresh();
     window.SWLDirectorySelection?.refresh({loaded:Boolean(data.hasLoaded)});
+    window.SWLInteractionPolish?.refresh(directory);
     restore(directory,key);
   }
   function aggregate(people,at=Date.now()) {
@@ -319,7 +362,7 @@
     const status=['Unticked','Achieved','Perfect'],symbols=['○','✓','✓✓'];
     return `<div class="v4-priority-members"><p class="v4-priority-help">${data.canEdit===false?'Scoring is locked. Unlock scoring at the top to update marks.':'Choose ○ Unticked, ✓ Achieved or ✓✓ Perfect. Changes save automatically.'} Order stays put until you close the skills.</p><ul class="v4-mark-list">${people.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>{
       const level=data.mark(g.id,skill.id),fresh=data.skillFreshness(g.id,skill.id);
-      return `<li class="v4-mark-row level-${level}"><div class="v4-mark-person"><button type="button" data-gymnast="${esc(g.id)}" data-v2-focus="priority-${esc(skill.id)}" aria-label="Open skills for ${esc(g.name)}">${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)}</button>${achievementBadge(g)}<small>${status[level]}${level===2&&fresh.due?' · renewal due':''}</small></div><div class="v4-mark-controls" role="group" aria-label="${esc(skill.name||skill.id)} for ${esc(g.name)}">${status.map((label,value)=>`<button type="button" id="priority-mark-${esc(g.id)}-${esc(skill.id)}-${value}" class="v4-mark-button mark-${value}" data-priority-mark="${value}" data-priority-skill="${esc(skill.id)}" data-priority-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(skill.name||skill.id)}: ${label}" aria-pressed="${level===value}" title="${label}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${symbols[value]}</span><span class="sr">${label}</span></button>`).join('')}</div></li>`;
+      return `<li class="v4-mark-row level-${level}" data-priority-row="${esc(skill.id)}-${esc(g.id)}"><div class="v4-mark-person"><button type="button" data-gymnast="${esc(g.id)}" data-v2-focus="priority-${esc(skill.id)}" aria-label="Open skills for ${esc(g.name)}">${esc(g.name)} ${coachBadge(g)} ${fireBadge(g.id)}</button>${achievementBadge(g)}<small>${status[level]}${level===2&&fresh.due?' · renewal due':''}</small>${fresh.previouslyExpired?'<small class="previous-perfect" title="A previous Perfect mark expired">Previously Perfect</small>':''}</div><div class="v4-mark-controls" role="group" aria-label="${esc(skill.name||skill.id)} for ${esc(g.name)}">${status.map((label,value)=>`<button type="button" id="priority-mark-${esc(g.id)}-${esc(skill.id)}-${value}" class="v4-mark-button mark-${value}" data-priority-mark="${value}" data-priority-skill="${esc(skill.id)}" data-priority-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(skill.name||skill.id)}: ${label}" aria-pressed="${level===value}" title="${label}"${data.canEdit===false?' disabled':''}><span aria-hidden="true">${symbols[value]}</span><span class="sr">${label}</span></button>`).join('')}</div></li>`;
     }).join('')}</ul></div>`;
   }
   function renderPriorities(people,scope) {
@@ -339,8 +382,11 @@
       <p class="a31-priority-includes">${apparatus()==='vault'?'Run and vault skills.':apparatus()==='combined'?'Rolls, acro, leaps &amp; vault · Handstands excluded.':'Rolls, acro &amp; leaps · Handstands excluded.'}</p></section>`;
   }
   function analyticsDisclosure(id,title,description,content) {
-    if(!content)return '';
-    return `<details class="analytics-panel analytics-wide a31-disclosure" data-analytics-disclosure="${id}"><summary><span><span class="a31-disclosure-title">${esc(title)}</span><span class="a31-disclosure-description">${esc(description)}</span></span><span class="a31-disclosure-icon" aria-hidden="true">+</span></summary><div class="a31-disclosure-content">${content}</div></details>`;
+    const lazy=typeof content==='function';
+    if(lazy)lazyAnalytics.set(id,content);
+    const markup=lazy?(openAnalytics.has(id)?content():''):content;
+    if(!lazy&&!markup)return '';
+    return `<details class="analytics-panel analytics-wide a31-disclosure" data-analytics-disclosure="${id}"${openAnalytics.has(id)?' open':''}><summary><span><span class="a31-disclosure-title">${esc(title)}</span><span class="a31-disclosure-description">${esc(description)}</span></span><span class="a31-disclosure-icon" aria-hidden="true">+</span></summary><div class="a31-disclosure-content">${markup||''}</div></details>`;
   }
   function directorySelectionIds() {
     const ids=window.SWLDirectorySelection?.ids()||[];
@@ -372,6 +418,8 @@
   }
   function renderAnalytics() {
     if(!data)return;
+    analytics.querySelectorAll('details[data-analytics-disclosure]').forEach(details=>{if(lazyAnalytics.has(details.dataset.analyticsDisclosure)){if(details.open)openAnalytics.add(details.dataset.analyticsDisclosure);else openAnalytics.delete(details.dataset.analyticsDisclosure);}});
+    lazyAnalytics.clear();
     analytics.querySelectorAll('[data-analytics-apparatus]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.analyticsApparatus===apparatus()));button.disabled=!data.hasLoaded;});
     const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','junior','overall','selection'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
@@ -395,13 +443,14 @@
     const drilldown=analytics.querySelector('#analyticsDrilldown');drilldown.hidden=!exploring;
     drilldown.querySelector('[data-analytics-reset]').textContent='Back to '+(selectedIds.length?'selected gymnasts':groupName(directoryGroup));
     const host=analytics.querySelector('#analyticsContent');if(!data.hasLoaded){analytics.querySelector('#analyticsCompareGroup').disabled=true;commitHTML(analytics.querySelector('#analyticsComparisonSummary'),'');commitHTML(host,'<p class="v2-empty" role="status">Loading your training picture…</p>');return;}
-    const people=candidates.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast),a=aggregate(people),c=a.counts;
+    const people=candidates.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast);
+    let aggregated;const getAggregate=()=>aggregated||(aggregated=aggregate(people));
     const scope=analyticsGymnast==='all'?(analyticsGroup==='all'?'All squads':analyticsGroup==='senior'?'All senior squad':analyticsGroup==='overall'?'Overall · all squads + coaches':groupName(analyticsGroup)):people[0]?.name;
     const ageScope=analyticsAge==='all'?'All ages':ageLabel(ageGroups().find(c=>c.id===analyticsAge)),fullScope=apparatusLabel()+' · '+scope+' · '+ageScope;
     const cohortPeople=squadPeople.filter(g=>analyticsGymnast==='all'||g.id===analyticsGymnast);
-    const overview=`<div class="analytics-wide a31-selected-scope"><div><p class="analytics-scope${analyticsGymnast!=='all'&&heatClass(analyticsGymnast)?' '+heatClass(analyticsGymnast):''}">${esc(scope)} ${analyticsGymnast!=='all'?coachBadge(people[0])+' '+fireBadge(analyticsGymnast)+' '+achievementBadge(people[0]):''}<span>· ${esc(ageScope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</span></p></div>${analyticsGymnast!=='all'?`<button type="button" class="quiet" data-gymnast="${esc(analyticsGymnast)}">Open skills ↗</button>`:''}</div>
+    const overview=()=>{const a=getAggregate(),c=a.counts;return `<div class="analytics-wide a31-selected-scope"><div><p class="analytics-scope${analyticsGymnast!=='all'&&heatClass(analyticsGymnast)?' '+heatClass(analyticsGymnast):''}">${esc(scope)} ${analyticsGymnast!=='all'?coachBadge(people[0])+' '+fireBadge(analyticsGymnast)+' '+achievementBadge(people[0]):''}<span>· ${esc(ageScope)} · ${people.length} ${countNoun(analyticsGroup,people.length)}</span></p></div>${analyticsGymnast!=='all'?`<button type="button" class="quiet" data-gymnast="${esc(analyticsGymnast)}">Open skills ↗</button>`:''}</div>
       <div class="analytics-stat-grid analytics-wide a31-stats"><article><span>Average points</span><strong>${number(people.length?c.points/people.length:0)}</strong><p>Per ${analyticsGroup==='coaches'?'coach':'gymnast'} in this view</p></article><article><span>Skills retained</span><strong>${pct(c.achieved+c.perfect,a.total)}<small>%</small></strong><p>${c.achieved+c.perfect} of ${a.total} available skills</p></article><article><span>Perfect marks</span><strong>${c.perfect}</strong><p>${pct(c.perfect,a.total)}% of available skills</p></article><article><span>League points</span><strong>${number(c.points)}</strong><p>Combined points in this view</p></article></div>
-      ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match this view. Choose another squad with the Analysing menu.</p>':''}`;
+      ${!people.length?'<p class="v2-empty analytics-wide" role="status">No gymnasts match this view. Choose another squad with the Analysing menu.</p>':''}`;};
     const progressPerson=analyticsGymnast!=='all'?people[0]:null;
     const progressCategory=apparatus()==='vault'?'vault':'overall';
     const panelOptions=analyticsSquadOptions(comparisonGroups).filter(option=>option.id!==analyticsGroup||analyticsGymnast!=='all');
@@ -411,15 +460,16 @@
     compareSelect.value=analyticsCompareGroup;compareSelect.disabled=false;
     const primaryLabel=scope+(analyticsAge==='all'?'':' · '+ageScope);
     commitHTML(analytics.querySelector('#analyticsComparisonSummary'),analyticsCompareGroup?window.SWLAnalyticsCompare?.renderOverview(comparisonConfig(people,primaryLabel))||'':'');
-    const progressChart=progressPerson&&!analyticsCompareGroup?window.SWLGymnastProgress?.render({person:progressPerson,progress:data.state.weeklyProgress,currentPoints:data.confirmedPoints?.(progressPerson.id,progressCategory)??data.summary(progressPerson.id,progressCategory).points,days:progressRange,apparatus:apparatus()})||'':window.SWLGymnastProgress?.renderGroup?.({people,label:primaryLabel,comparisonPeople:analyticsCompareGroup?comparisonPeople():null,comparisonLabel:analyticsCompareGroup?groupName(analyticsCompareGroup)+(analyticsAge==='all'?'':' · '+ageScope):'',comparisonId:analyticsCompareGroup,hideComparisonControl:true,progress:data.state.weeklyProgress,days:progressRange,apparatus:apparatus()})||'';
+    const progressChart=()=>progressPerson&&!analyticsCompareGroup?window.SWLGymnastProgress?.render({person:progressPerson,progress:data.state.weeklyProgress,currentPoints:data.confirmedPoints?.(progressPerson.id,progressCategory)??data.summary(progressPerson.id,progressCategory).points,days:progressRange,apparatus:apparatus()})||'':window.SWLGymnastProgress?.renderGroup?.({people,label:primaryLabel,comparisonPeople:analyticsCompareGroup?comparisonPeople():null,comparisonLabel:analyticsCompareGroup?groupName(analyticsCompareGroup)+(analyticsAge==='all'?'':' · '+ageScope):'',comparisonId:analyticsCompareGroup,hideComparisonControl:true,progress:data.state.weeklyProgress,days:progressRange,apparatus:apparatus()})||'';
     const compare=(panel,markup,primary=people)=>withComparison(panel,markup,primary,primaryLabel);
     const primaryGroups=comparisonGroups.filter(group=>people.some(g=>inGroup(g,group)));
     commitHTML(host,`<div class="analytics-grid a31-grid">${compare('priorities',renderPriorities(people,fullScope))}${compare('squads',renderSquadComparison(primaryGroups,people))}${compare('standings',renderStandings(people,fullScope))}
-      ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',compare('overview',overview))}
-      ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',compare('categories',renderCategories(a)))}
-      ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',compare('momentum',renderMomentum(people)))}
-      ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',compare('ages',renderAgePanels(people)))}
+      ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',()=>compare('overview',overview()))}
+      ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',()=>compare('categories',renderCategories(getAggregate())))}
+      ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',()=>compare('momentum',renderMomentum(people)))}
+      ${analyticsDisclosure('ages','Progress by age','Compare progress across age groups',()=>compare('ages',renderAgePanels(people)))}
       ${analyticsDisclosure('personal-progress','Points over time',progressPerson?'Explore this gymnast’s recorded Floor gains':'Average progress per gymnast · compare squads',progressChart)}</div>`);
+    window.SWLInteractionPolish?.refresh(analytics);
   }
   function resetAnalytics() {priorityPinned=null;priorityShowMore=false;analyticsCompareGroup='';analyticsSelectedIds=[];analyticsGroup='all';analyticsGymnast='all';analyticsAge='all';analyticsComparison='progress';analyticsRankCategory='overall';analyticsRankMetric='points';}
   function setDirectoryGroup(group) {
@@ -428,7 +478,7 @@
     if(directoryGroupChosen)return;
     if(typeof group!=='string'||!group.length||group.length>256)return;
     rememberDirectoryGroup(group);
-    if(directory)renderDirectory();
+    if(viewIsVisible('directory',directory))renderDirectory();
   }
   function analyticsFromDirectory() {resetAnalytics();analyticsSelectedIds=directorySelectionIds();analyticsGroup=analyticsSelectedIds.length?'selection':directoryGroup;analyticsDirectoryGroup=directoryGroup;analyticsDirectorySelection=JSON.stringify(analyticsSelectedIds.slice().sort());}
   function syncAnalyticsDirectory(force=false) {const selected=JSON.stringify(directorySelectionIds().sort());if(!force&&analyticsDirectoryGroup===directoryGroup&&analyticsDirectorySelection===selected)return false;analyticsFromDirectory();return true;}

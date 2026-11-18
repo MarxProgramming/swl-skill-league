@@ -61,8 +61,10 @@
       for (const [id,at] of Object.entries(awards(gymnast,receipts))) if (!seen[gymnast.id]?.[id]?.includes(at)) result[id] = at;
       return result;
     }
-    function markSeen(gymnast, receipts) {
+    function markSeen(gymnast, receipts, badgeIds) {
       const pending = unread(gymnast,receipts);
+      // A visible badge acknowledges only its own receipt. An empty selection is a no-op.
+      if (Array.isArray(badgeIds)) for (const id of Object.keys(pending)) if (!badgeIds.includes(id)) delete pending[id];
       for (const [id,at] of Object.entries(pending)) remember(gymnast.id,id,at);
       if (Object.keys(pending).length) persist();
       return pending;

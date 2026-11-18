@@ -129,3 +129,9 @@ html[data-theme] #athleteSummary{overflow:clip}
 }
 @media(max-width:600px){.pb-new-label{font-size:9px;padding:4px 7px}}
 @media(max-width:380px){.profile-pane-switch .pb-tab-new{right:3px;top:2px;padding-inline:3px;font-size:7.5px;line-height:10px}}
+
+/* Receipts and current marks describe different things: preserve both clearly. */
+.pb-caption .pb-current-marks{font-size:10px;color:#c0b0d2;font-variant-numeric:tabular-nums}
+.pb-earned-note{margin:-4px 0 13px;color:#b9a9c9;font-size:10px;line-height:1.5}
+.pb-previous-perfect{display:block;margin-top:2px;font-size:10px;font-weight:600;line-height:1.4;color:#c5b3df}
+.pb-skill .pb-previous-perfect{max-width:none;text-align:left}
