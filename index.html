@@ -1621,11 +1621,11 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./entry-40.css?v=20261109-junior-mobile">
 <link rel="stylesheet" href="./entry-directory-40.css?v=20261031-v5">
 <link rel="stylesheet" href="./directory-attendance.css?v=20261105-analytics-selection">
-<link rel="stylesheet" href="./gymnast-progress.css?v=20261105-fair-comparison">
-<link rel="stylesheet" href="./profile-insights.css?v=20261105-analytics-selection">
+<link rel="stylesheet" href="./gymnast-progress.css?v=20261118-polish">
+<link rel="stylesheet" href="./profile-insights.css?v=20261118-polish">
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-card-sizes">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
-<link rel="stylesheet" href="./profile-badges.css?v=20261103-notices">
+<link rel="stylesheet" href="./profile-badges.css?v=20261118-polish">
 <link rel="stylesheet" href="./competition-awards.css?v=20261117-awards">
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
@@ -1659,6 +1659,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <div class="utilities">
       <button class="quiet all-skills-button" id="allSkillsButton" type="button" data-open-skills aria-controls="allSkills">All skills</button>
       <button class="quiet games-entry-button" id="gamesButton" type="button" data-view="games" aria-controls="games" aria-pressed="false">Games</button>
+      <button class="sync-indicator" id="syncIndicator" type="button" data-state="loading" aria-label="Loading scores" title="Loading scores"><span class="sync-dot" aria-hidden="true"></span><span class="sync-label">Loading</span></button>
       <button class="quiet scoring-lock-button" id="lockButton" type="button" disabled aria-describedby="lockStatus"><span aria-hidden="true">◇</span> <span id="lockButtonLabel">Checking lock…</span></button>
     </div>
 
@@ -1802,7 +1803,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Floor and Vault.</strong> Floor is selected when the app opens. Vault has its own leaderboard: 10 points for each Achieved skill, 20 for Perfect, and +1 when all three in a group are Perfect. Combined adds floor and vault together. Weekly streaks use floor progress only.</li>
+    <li><strong>Floor and Vault.</strong> Combined is selected when the app opens. Vault has its own leaderboard: 10 points for each Achieved skill, 20 for Perfect, and +1 when all three in a group are Perfect. Combined adds floor and vault together. Weekly streaks use floor progress only.</li>
     <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, only its Renew button turns orange; on the last day it turns red. Renewals do not add points. At 50 qualifying points in the last seven days, your points glow gently and show “On a streak”. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. The points highlight follows the qualifying points earned in the current seven-day window.</li>
     <li><strong>Find your place.</strong> On a gymnast’s profile, choose Placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
   </ul>
@@ -1830,43 +1831,36 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./celebration.js?v=20261031-v5"></script>
 <script src="./v3-rankings.js?v=20261103-52"></script>
 <script src="./placement.js?v=20261103-52"></script>
-<script src="./games-wheel.js?v=20261019v3"></script>
-<script src="./games-team.js?v=20261020"></script>
-<script src="./games-skill.js?v=20261022-contest"></script>
-<script src="./games-contest.js?v=20261103-52"></script>
-<script src="./games-draft.js?v=20261020"></script>
-<script src="./games-timing.js?v=20261101-programme"></script>
-<script src="./games-addon.js?v=20261020"></script>
-<script src="./games-ratings.js?v=20261022-contest"></script>
-<script src="./games.js?v=20261101-programme"></script>
+<script src="./games-loader.js?v=20261118-polish"></script>
 <link rel="stylesheet" href="./podium-spin.css?v=20261109-tap">
-<script src="./podium-spin.js?v=20261109-tap"></script>
-<link rel="stylesheet" href="./interaction-polish.css?v=20261109-instant-filters">
-<script src="./interaction-polish.js?v=20261109-instant-filters"></script>
+<script src="./podium-spin.js?v=20261118-polish"></script>
+<link rel="stylesheet" href="./interaction-polish.css?v=20261118-polish">
+<script src="./interaction-polish.js?v=20261118-polish"></script>
 <script src="./hold-clear.js?v=20261109"></script>
-<script src="./training-focus.js?v=20261109b"></script>
+<script src="./training-focus.js?v=20261118-polish"></script>
 <script src="./skills-catalogue.js?v=20261109b"></script>
 <script src="./v4-search.js?v=20261101-emblems"></script>
 <script src="./directory-attendance.js?v=20261105-analytics-selection"></script>
-<script src="./gymnast-progress.js?v=20261106-shared-comparison"></script>
-<script src="./profile-insights.js?v=20261109"></script>
+<script src="./gymnast-progress.js?v=20261118-polish"></script>
+<script src="./profile-insights.js?v=20261118-polish"></script>
 <script src="./directory-selection.js?v=20261105-fair-comparison"></script>
 <script src="./analytics-compare.js?v=20261106-shared-comparison"></script>
 <link rel="stylesheet" href="./birthday.css?v=20261108">
 <link rel="stylesheet" href="./podium-stage.css?v=20261109-fix-20261108">
 <link rel="stylesheet" href="./surface-tidy.css?v=20261108">
-<link rel="stylesheet" href="./training-focus.css?v=20261109">
+<link rel="stylesheet" href="./training-focus.css?v=20261118-polish">
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261109-20261107-roster"></script>
-<script src="./v2.js?v=20261112-floor-priorities"></script>
+<script src="./v2.js?v=20261118-polish"></script>
 <script src="./achievement-50.js?v=20261103-card-sizes"></script>
 <script src="./challenge.js?v=20261103-52"></script>
-<script src="./badge-notices.js?v=20261103-notices"></script>
+<script src="./badge-notices.js?v=20261118-polish"></script>
 <script src="./competition-results.js?v=20261117-awards"></script>
 <script src="./competition-awards.js?v=20261117-awards"></script>
-<script src="./profile-badges.js?v=20261117-awards"></script>
+<script src="./profile-badges.js?v=20261118-polish"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
+<link rel="stylesheet" href="./ui-polish.css?v=20261118-polish">
 <script>
 (() => {
   'use strict';
@@ -2356,6 +2350,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let selectedId = null;
   let profilePane = 'skills';
   let profileBadgeVisit = {id:null,fresh:{}};
+  let gamesLoading=null, gamesMounted=false, gamesLoadError='';
   let currentView = 'home';
   let activeChallenge = null;
   let directoryScroll = 0;
@@ -2529,8 +2524,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   const profileAchievementBadges = gymnast => window.SWLAchievements?.fullProfileBadges(gymnast, confirmedState.completionAchievements) || '';
   function renderV2() {
     const challengeConfig = {gymnasts:GYMNASTS,skills:SKILLS,mark,summary,apparatus,activeChallenge,achievementBadge,completionAchievements:confirmedState.completionAchievements,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,streakLabel,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected};
-    window.SWLChallenge?.render($('challengeRoot'), challengeConfig);
-    v2Api()?.render({state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,birthdayClass,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
+    if (currentView === 'challenge') window.SWLChallenge?.render($('challengeRoot'), challengeConfig);
+    v2Api()?.render({view:currentView,state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,birthdayClass,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'junior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g=>/Junior (Squad|Advanced)/i.test(g)) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
@@ -2935,10 +2930,15 @@ html:has(body.no-motion){scroll-behavior:auto}
     else scheduleFlush();
   }
 
+  function gameSavingState() {
+    if (gamesMounted) return window.SWLGames?.getSavingState?.() || {};
+    if (window.SWLGameLoader?.hasPending()) return {pendingSaveCount:1,recovering:true,retryNeeded:!!gamesLoadError,saveError:gamesLoadError};
+    return {};
+  }
   function renderSaveStatus() {
     renderLockStatus();
     const unsaved = hasPending();
-    const gameSave = window.SWLGames?.getSavingState?.() || {};
+    const gameSave = gameSavingState();
     const warning = [saveError, readError, recoveryWarning, gameSave.saveError, gameSave.storageWarning].filter(Boolean).join(' ');
     $('storageWarning').hidden = !warning;
     $('storageMessage').textContent = warning;
@@ -2962,6 +2962,7 @@ html:has(body.no-motion){scroll-behavior:auto}
             : 'Changes queued · saving shortly…')
       : recoveryFailureWarning ? 'Some local recovery data is protected · reload to recover'
       : recoveryOtherWarning ? 'Other tabs have protected unsaved edits · reload after closing them'
+      : gameSave.recovering ? (gameSave.retryNeeded ? 'Game feedback is kept here · retry saving' : 'Recovering saved game feedback…')
       : gameSave.pendingSaveCount ? (gameSave.retryNeeded ? 'Game data pending here · retry saving' : 'Saving game ratings and plays…')
       : importing ? 'Restoring backup to the scores service…'
         : saveError ? 'Backup restore unconfirmed · refresh scores'
@@ -2970,6 +2971,19 @@ html:has(body.no-motion){scroll-behavior:auto}
             : !connected ? 'Offline · changes will be kept on this device'
               : `All changes saved to the scores service${time ? ' · ' + time : ''}`;
 
+    const sync = $('syncIndicator');
+    if (sync) {
+      const attention = Boolean(warning || damagedRecovery !== null || (retryNeeded && unsaved) || gameSave.retryNeeded);
+      const busy = Boolean(unsaved || gameSave.pendingSaveCount || importing || retryingSaves);
+      const mode = attention ? 'error' : !hasLoaded ? 'loading' : !connected ? 'offline' : busy ? 'saving' : 'saved';
+      sync.dataset.state = mode;
+      const label = {error:'Retry',loading:'Loading',offline:'Offline',saving:'Saving',saved:'Saved'}[mode];
+      const text = sync.querySelector('.sync-label');
+      if (text.textContent !== label) text.textContent = label;
+      sync.title = $('saveStatus').textContent;
+      sync.setAttribute('aria-label', $('saveStatus').textContent + (mode === 'error' || mode === 'offline' ? '. Tap to retry.' : '. Tap for details.'));
+      sync.disabled = retryingSaves;
+    }
     $('refreshButton').disabled = reading;
     $('refreshButton').textContent = reading ? '↻ Refreshing…' : '↻ Refresh scores';
     $('exportButton').hidden = !(retryNeeded && unsaved) && damagedRecovery === null;
@@ -3095,11 +3109,13 @@ html:has(body.no-motion){scroll-behavior:auto}
     scoreViewSignature=signature;
     renderBoards();
     renderRoster();
+    if (currentView === 'tracker') {
     const gymnastInfo = selectedId ? JSON.stringify(GYMNASTS.find(g => g.id === selectedId)) : '';
     if (!hasLoaded || !$('athletePoints') || $('athletePanel').dataset.gymnastInfo !== gymnastInfo) {
       renderAthlete();
     } else {
       updateAthlete(false);
+    }
     }
     renderSaveStatus();
   }
@@ -3376,9 +3392,9 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
   function renderBoards() {
     renderV2();
+    if (currentView !== 'dashboard') return;
     stableHTML($('leaderboardApparatus'), apparatusSwitch());
     $('apparatusNote').textContent = apparatus === 'vault' ? 'Vault scores stand alone.' : apparatus === 'combined' ? 'Floor + Vault totals together.' : 'Floor scoring · compare foundations and progress.';
-    if (currentView === 'placement' || (currentView === 'tracker' && profilePane === 'placement')) renderPlacementProfile();
     const groups = rosterGroupOptions();
     if (!['all','floor','afternoon','senior','junior','overall'].includes(leaderboardGroup) && !groups.includes(leaderboardGroup)) leaderboardGroup = 'all';
     if ($('leaderboardGroup')) {
@@ -3421,10 +3437,14 @@ html:has(body.no-motion){scroll-behavior:auto}
       groupLabel, initials, coachBadge, fireBadge, streakLabel, heatClass, isCoachParticipant, achievementBadge
     })).join('');
     window.SWLRankings.commit($('boards'),boardHTML);
+    window.SWLPodiumSpin?.mount();
+    window.SWLInteractionPolish?.refresh($('boards'));
   }
 
 
   function renderRoster() {
+    // This legacy chooser is permanently hidden; the Gymnasts tab owns the roster.
+    if ($('rosterBox').hidden) return;
     const query = $('search')
       .value
       .trim()
@@ -3518,6 +3538,8 @@ html:has(body.no-motion){scroll-behavior:auto}
   function profileBadgeConfig() {
     return {gymnast:GYMNASTS.find(g => g.id === selectedId),skills:SKILLS,mark,
       completionAchievements:confirmedState.completionAchievements,hasLoaded,pending:hasPending(),
+      expiredPerfect:state.expiredPerfect,visible:currentView==='tracker' && profilePane==='badges',
+      onBadgeSeen:id => { window.SWLBadgeNotices?.markSeen(GYMNASTS.find(g => g.id === selectedId),confirmedState.completionAchievements,[id]); updateBadgeNotice(); },
       newAwards:profileBadgeVisit.id === selectedId ? profileBadgeVisit.fresh : {}};
   }
 
@@ -3545,9 +3567,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         Object.assign(profileBadgeVisit.fresh,window.SWLBadgeNotices?.unread(gymnast,confirmedState.completionAchievements));
       }
       const model = window.SWLProfileBadges?.update(host,profileBadgeConfig());
-      // Only acknowledge the collection after it is rendered in the visible profile.
-      // Rendering hidden panes for disclosure restoration must never consume a notice.
-      if (visible && model?.loaded && !model.excluded && model.badges.length) window.SWLBadgeNotices?.markSeen(gymnast,confirmedState.completionAchievements);
+      // Each new badge is acknowledged by its visibility observer, after it is seen.
     }
     else if (profilePane === 'placement') renderPlacementProfile();
     else if (profilePane === 'insights') v2Api()?.renderPersonalInsights?.($('profileInsights'),selectedId);
@@ -3659,12 +3679,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           <div class="complex-head">
 <div>
               <h3>${escapeHTML(category.name)}</h3>
-              <p>${
-                category.id === 'leaps'
-                  ? 'Make room to fly'
-                  : category.id === 'vault' ? 'Build the approach. Refine the vault.' : category.id === 'handstands' ? 'Hold steady. Build control.'
-                  : 'Build it. Refine it. Keep progressing.'
-              }</p>
+
             </div>
 
             <span
@@ -3718,7 +3733,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function updateAthlete(animate = true) {
-    if (!selectedId) return;
+    if (!selectedId || currentView !== 'tracker') return;
 
     const total = summary(selectedId, 'combined');
 
@@ -3752,8 +3767,11 @@ html:has(body.no-motion){scroll-behavior:auto}
 
       const value = mark(selectedId, skill.id);
 
-      card.dataset.status = value;
       const fresh = skillFreshness(selectedId,skill.id), cell=card.closest('.skill-cell');
+      const renderKey=JSON.stringify([value,fresh.days,fresh.expiry,fresh.due,fresh.previouslyExpired,canEdit()]);
+      if (card.dataset.renderKey === renderKey) continue;
+      card.dataset.renderKey = renderKey;
+      card.dataset.status = value;
       if (cell) {
         cell.dataset.status = String(value);
         cell.dataset.due = String(fresh.due);
@@ -3776,7 +3794,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
       card.disabled = !canEdit();
       const nextAction = ['mark achieved', 'mark perfect', 'reset'][value];
-      card.setAttribute('aria-label', `${skill.name}: ${STATUS[value]}. Click to ${nextAction}.`);
+      card.setAttribute('aria-label', `${skill.name}: ${STATUS[value]}.${fresh.previouslyExpired ? " Previously Perfect; the mark expired." : ""} Click to ${nextAction}.`);
     }
 
     for (const category of CATEGORIES) {
@@ -3810,6 +3828,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     applyFilters();
     renderProfilePane();
+    window.SWLInteractionPolish?.refresh($('athletePanel'));
   }
 
   function applyFilters() {
@@ -3900,7 +3919,14 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('nav').style.setProperty('--nav-index', activeTab === 'analytics' ? '2' : activeTab === 'directory' ? '1' : '0');
     $('gamesButton')?.setAttribute('aria-pressed',String(view === 'games'));
     renderV2();
-    window.SWLGames?.setActive(view === 'games');
+    if (view === 'dashboard') renderBoards();
+    if (view === 'tracker') {
+      const info=selectedId ? JSON.stringify(GYMNASTS.find(g=>g.id===selectedId)) : '';
+      if (!$('athletePoints') || $('athletePanel').dataset.gymnastInfo !== info) renderAthlete();
+      else updateAthlete(false);
+    }
+    if (view === 'games') ensureGames();
+    else window.SWLGames?.setActive(false);
 
     document.querySelectorAll('.nav [data-view]').forEach(button => {
       button.setAttribute(
@@ -3964,8 +3990,6 @@ html:has(body.no-motion){scroll-behavior:auto}
     v2Api()?.showGymnastInDirectory?.(id);
 
     setView('tracker', false);
-    renderRoster();
-    renderAthlete();
 
     window.scrollTo({top:0,behavior:'instant'});
 
@@ -4141,9 +4165,9 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     if (history.length > 50) history.shift();
 
+    renderBoards();
     updateAthlete();
     renderRoster();
-    renderBoards();
     renderSaveStatus();
     restoreControlFocus(button);
 
@@ -4196,7 +4220,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       onConfirm:() => {
         if (!canEdit() || !GYMNAST_IDS.has(gymnastId) || !SKILL_IDS.has(skillId) || mark(gymnastId,skillId) !== 2) return;
         enqueueOperation({type:'renew_mark',gymnastId,skillId});
-        updateAthlete(false); renderBoards(); renderRoster(); renderSaveStatus();
+        renderBoards(); updateAthlete(false); renderRoster(); renderSaveStatus();
         restoreControlFocus(button);
         toast('Renewed for 30 days · level and points kept.');
       },
@@ -4241,7 +4265,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderAll() {
     renderBoards();
     renderRoster();
-    renderAthlete();
+    if (currentView === 'tracker') renderAthlete();
     renderSaveStatus();
   }
 
@@ -4458,8 +4482,12 @@ html:has(body.no-motion){scroll-behavior:auto}
     try {
       if (!hasLoaded || !connected) await readScores();
       if (hasPending()) await flushQueue(true);
+      if (!gamesMounted && window.SWLGameLoader?.hasPending()) {
+        await ensureGames();
+        if (!gamesMounted) { toast('Your game feedback is kept here. Games could not load; check the connection and retry saving.'); return; }
+      }
       await window.SWLGames?.retrySaves?.();
-      const gameSave = window.SWLGames?.getSavingState?.() || {};
+      const gameSave = gameSavingState();
       toast(damagedRecovery !== null ? 'Local recovery data needs attention. Download recovery data before discarding anything.'
         : hasPending() || gameSave.pendingSaveCount ? 'Some changes are still waiting. Keep this page open and retry saving.'
         : recoveryFailureWarning ? 'Some local recovery data still needs attention. Reload this page to recover it safely.'
@@ -4469,6 +4497,10 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
   $('retryButton').addEventListener('click', retrySaving);
   $('retrySavingButton').addEventListener('click', retrySaving);
+  $('syncIndicator').addEventListener('click', () => {
+    if (['error','offline'].includes($('syncIndicator').dataset.state)) retrySaving();
+    else toast($('saveStatus').textContent);
+  });
   $('discardPendingButton').addEventListener('click', async () => {
     if (sending || importing) return;
     if (!confirm('Discard the unsaved edits kept on this device and reload the scores service? ' +
@@ -4538,13 +4570,33 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   window.SWLAchievements?.mount();
-  window.SWLGames?.mount($('gamesRoot'), {
-    skills: SKILLS.filter(skill => skill.category !== 'vault').map(skill => ({id:skill.id,label:skill.name,category:skill.category,tier:skill.tier})),
-    requestRatings: body => scoresRequest(body),
-    onSaveChange: () => renderSaveStatus(),
-    motionOff: reducedMotion,
-    playSound: details => window.SWLCelebration?.gameSound(details)
-  });
+
+  function ensureGames() {
+    if (gamesMounted) { window.SWLGames.setActive(currentView === 'games'); return Promise.resolve(); }
+    if (gamesLoading) return gamesLoading;
+    const host=$('gamesRoot');
+    gamesLoadError='';
+    host.innerHTML='<div class="games-loading" role="status"><span class="games-loading-orbit" aria-hidden="true"></span><h2>Loading games</h2><p>Getting the squad ready…</p></div>';
+    host.setAttribute('aria-busy','true');
+    gamesLoading=window.SWLGameLoader.load().then(() => {
+      host.replaceChildren();
+      window.SWLGames.mount(host, {
+        skills: SKILLS.filter(skill => skill.category !== 'vault').map(skill => ({id:skill.id,label:skill.name,category:skill.category,tier:skill.tier})),
+        requestRatings: body => scoresRequest(body),
+        onSaveChange: () => renderSaveStatus(),
+        motionOff: reducedMotion,
+        playSound: details => window.SWLCelebration?.gameSound(details)
+      });
+      gamesMounted=true;
+      window.SWLGames.setActive(currentView === 'games');
+      renderSaveStatus();
+    }).catch(() => {
+      gamesLoadError='Game feedback could not be restored yet. It is kept on this device; retry saving when connected.';
+      host.innerHTML='<div class="games-loading" role="status"><h2>Games could not load</h2><p>Check your connection and try again.</p><button type="button" class="quiet" data-retry-games>Try again</button></div>';
+      host.querySelector('[data-retry-games]').addEventListener('click',ensureGames);
+    }).finally(() => { host.removeAttribute('aria-busy'); gamesLoading=null; renderSaveStatus(); });
+    return gamesLoading;
+  }
   v2Api()?.mount({directory:$('directoryRoot'),analytics:$('analyticsRoot'),openGymnast,setView,onApparatus:setApparatus});
   $('directoryRoot').querySelector('.directory-extra-tools')?.append($('addGymnastDetails'));
   window.SWLSkillsCatalogue?.mount($('allSkillsRoot'),{categories:CATEGORIES,skills:SKILLS});
@@ -4556,7 +4608,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   window.addEventListener('swl:startup-finished', () => {
     if (currentView === 'home') window.scrollTo({top:0,behavior:'instant'});
   }, {once:true});
-  recovery.then(() => readScores()).finally(() => window.SWLStartup?.finish({ error: !hasLoaded }));
+  recovery.then(() => readScores()).finally(() => { window.SWLStartup?.finish({ error: !hasLoaded }); if (window.SWLGameLoader.hasPending()) ensureGames(); });
 })();
 </script>
 </body>
