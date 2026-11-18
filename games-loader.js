@@ -2,10 +2,10 @@
 (() => {
   'use strict';
   const files = [
-    ['games-wheel.js','20261019v3'],['games-team.js','20261020'],
-    ['games-skill.js','20261022-contest'],['games-contest.js','20261103-52'],
-    ['games-draft.js','20261020'],['games-timing.js','20261101-programme'],
-    ['games-addon.js','20261020'],['games-ratings.js','20261022-contest'],['games.js','20261101-programme']
+    ['games-wheel.js','20261019v3'],['games-team.js','coach-flow-1'],
+    ['games-skill.js','20261022-contest'],['games-contest.js','coach-flow-1'],
+    ['games-draft.js','coach-flow-1'],['games-timing.js','coach-flow-1'],
+    ['games-addon.js','coach-flow-1'],['games-ratings.js','20261022-contest'],['games.js','coach-flow-1']
   ];
   const loaded = new Map();
   let pending = null;

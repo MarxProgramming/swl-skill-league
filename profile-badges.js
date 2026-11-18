@@ -54,13 +54,15 @@
     const key = `${gymnast.id}:${definition.id}`;
     const perfect = definition.status === 'perfect';
     const groups = new Map();
-    for (const item of badge.skillMarks) {
-      const group = `${item.skill.category}:${item.skill.tier}`;
+    const target = perfect ? 2 : 1;
+    const ordered = [...badge.skillMarks].sort((a,b)=>Number(a.level>=target)-Number(b.level>=target));
+    for (const item of ordered) {
+      const group = `${item.level>=target}:${item.skill.category}:${item.skill.tier}`;
       if (!groups.has(group)) groups.set(group,[]);
       groups.get(group).push(item);
     }
     const action = badge.remaining ? `${badge.remaining} ${badge.remaining === 1 ? 'skill' : 'skills'} to ${perfect ? 'perfect' : 'achieve'}` : 'View all skills';
-    return `<details class="pb-requirements" data-profile-badge-details="${esc(key)}"><summary data-profile-badge-toggle="${esc(key)}"><span>${action}</span><span class="pb-chevron">${chevron}</span></summary><div class="pb-requirement-content"><p class="pb-requirement-rule">${perfect ? 'Every skill below needs two ticks.' : 'One or two ticks on every skill below.'}${badge.earned ? ' Your earned badge stays in your collection.' : ''}</p>${Array.from(groups.values()).map(items => `<section class="pb-skill-group"><h4>${categoryNames[items[0].skill.category] || esc(items[0].skill.category)} <span>· ${tierNames[items[0].skill.tier] || esc(items[0].skill.tier)}</span></h4><ul>${items.map(({skill,level,previouslyPerfect}) => `<li class="pb-skill is-${level === 2 ? 'perfect' : level === 1 ? 'achieved' : 'unachieved'}${level >= (perfect ? 2 : 1) ? ' meets-requirement' : ' needs-work'}"><span class="pb-skill-mark" aria-label="${level === 2 ? 'Perfect' : level === 1 ? 'Achieved' : 'Not achieved'}">${level === 2 ? '✓✓' : level === 1 ? '✓' : '—'}</span><span class="pb-skill-name">${esc(skill.name)}${previouslyPerfect?'<span class="pb-previous-perfect">Previously Perfect</span>':''}</span>${level < (perfect ? 2 : 1) ? `<small>${level === 1 ? 'Perfect next' : 'Achieve'+(perfect ? ' + perfect' : '')}</small>` : ''}</li>`).join('')}</ul></section>`).join('')}</div></details>`;
+    return `<details class="pb-requirements" data-profile-badge-details="${esc(key)}"><summary data-profile-badge-toggle="${esc(key)}"><span>${action}</span><span class="pb-chevron">${chevron}</span></summary><div class="pb-requirement-content"><p class="pb-requirement-rule">${perfect ? 'Every skill below needs two ticks.' : 'One or two ticks on every skill below.'}${badge.earned ? ' Your earned badge stays in your collection.' : ''}</p>${Array.from(groups.values()).map(items => `<section class="pb-skill-group"><h4>${categoryNames[items[0].skill.category] || esc(items[0].skill.category)} <span>· ${tierNames[items[0].skill.tier] || esc(items[0].skill.tier)}</span></h4><ul>${items.map(({skill,level,previouslyPerfect}) => `<li class="pb-skill is-${level === 2 ? 'perfect' : level === 1 ? 'achieved' : 'unachieved'}${level >= (perfect ? 2 : 1) ? ' meets-requirement' : ' needs-work'}"><span class="pb-skill-mark" aria-label="${level === 2 ? 'Perfect' : level === 1 ? 'Achieved' : 'Not achieved'}">${level === 2 ? '✓✓' : level === 1 ? '✓' : '—'}</span><button type="button" class="pb-skill-name coach-skill-link" data-badge-skill="${esc(skill.id)}">${esc(skill.name)}${previouslyPerfect?'<span class="pb-previous-perfect">Previously Perfect</span>':''}</button>${level < (perfect ? 2 : 1) ? `<small>${level === 1 ? 'Perfect next' : 'Achieve'+(perfect ? ' + perfect' : '')}</small>` : ''}</li>`).join('')}</ul></section>`).join('')}</div></details>`;
   }
 
   function badgeCard(badge, model) {

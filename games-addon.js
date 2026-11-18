@@ -35,6 +35,12 @@
   function create(container, supplied) {
     let options = supplied || {}, pool = catalogue(options.skills), active = true, destroyed = false, phase = 'setup';
     let names = NAMES.slice(), sizes = NAMES.map(()=>'5'), teamCount = 2, teams = [], order = [], turn = 0;
+    const roster = supplied?.teamRoster;
+    if (roster?.length) {
+      teamCount = roster.length;
+      roster.forEach((team,index)=>{names[index]=team.name;});
+      roster.forEach((team,index)=>{sizes[index]=String(team.size);});
+    }
     let choices = [], previousChoices = [], awardValue = 0, awardedTeam = null, resetPrompt = false, error = '', status = '', generation = 0, stage = null;
     let session = null, completionSent = false, podium = null;
     const teamIndex = () => order[turn] ?? 0;

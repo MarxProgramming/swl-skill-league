@@ -21,6 +21,12 @@
   function create(container, config) {
     let options = config, skills = catalogue(config.skills), difficulty='hard', pool=window.SWLShuffleShowcase.poolFor(skills,difficulty), bag = [], previous = '', podium=null;
     let phase = 'setup', active = true, destroyed = false, teamCount = 2, size = '5', names = DEFAULTS.slice(), teams = [];
+    const roster = config?.teamRoster;
+    if (roster?.length) {
+      teamCount = roster.length;
+      roster.forEach((team,index)=>{names[index]=team.name;});
+      size = String(roster[0].size);
+    }
     let round = 0, selected = null, winner = null, remaining = DURATION, lastTime = 0, timer = null, timerGeneration = 0, renderGeneration = 0;
     let sessionId = null, completionSent = false, resetPrompt = false, error = '', status = '', root, stage, reel, track, cards = [], boundary = START;
     let reelWidth = 360, cardWidth = 223.2, offset = 0, ownsImmersive = false;

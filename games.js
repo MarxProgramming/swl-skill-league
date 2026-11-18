@@ -3,7 +3,8 @@
   let root, options, current = null, active = false, lobby, arena, stage, title, cards, ratingsApi, ratingsSummary = {}, pendingCount = 0, sortMode = 'hottest', liveRating, livePlays, liveHot, cardsSignature = '';
   const sortButtons = [];
   const ratingButtons = [];
-  const mounted = new Map();
+  const mounted = new Map(), controllers = new Map();
+  let handoff;
   const descriptions = [
     {id:'wheel',name:'Conditioning wheel',tag:'Whole squad',description:'Work the wheel down together. Good rounds remove a challenge, okay rounds halve it, and a round that needs work adds another.',module:'SWLWheel',art:'wheel'},
     {id:'team',name:'Team Challenge',tag:'2–5 teams',description:'Four rounds of floor shapes, jumps to stick, conditioning and coaching impressions. Ten seconds to meet each challenge.',module:'SWLTeam',art:'team'},
@@ -35,16 +36,44 @@
     mounted.forEach(el=>{el.hidden=true;});
     root.querySelector('.game-card-play')?.focus({preventScroll:true});
   }
-  function openGame(id) {
+  function openGame(id,teamRoster=null) {
     const info=descriptions.find(x=>x.id===id);if(!info||!active)return;
     if(current&&current!==id)moduleFor(current)?.deactivate();
     const gameModule=moduleFor(id);if(!gameModule?.mount)return;
     if(!mounted.has(id)) {const host=node('div','game-stage');host.id='game-'+id;stage.append(host);mounted.set(id,host);}
     current=id;ratingsApi?.setContext(id);lobby.hidden=true;arena.hidden=false;title.textContent=info.name;updateGameStats();
     mounted.forEach((el,key)=>{el.hidden=key!==id;});
-    gameModule.mount(mounted.get(id),options);
+    if(teamRoster)gameModule.destroy();
+    controllers.set(id,gameModule.mount(mounted.get(id),{...options,teamRoster}));
+    handoff.hidden = id==='wheel';
     arena.querySelector('.games-back').focus({preventScroll:true});
     root.scrollIntoView({behavior:options.motionOff?.()?'instant':'smooth',block:'start'});
+  }
+  function changeGameWithTeams() {
+    const roster=controllers.get(current)?.getState?.().teams?.map(({name,size})=>({name,size}));
+    const panel=document.createElement('dialog');
+    panel.className='coach-dialog';
+    panel.setAttribute('aria-label','Same teams, different game');
+    const head=node('header'), close=node('button','quiet','Close');
+    close.onclick=()=>panel.close();head.append(node('h2','','Same teams, different game'),close);
+    panel.append(head);
+    if(!roster?.length)panel.append(node('p','','Start your first game to set the teams.'));
+    else {
+      panel.append(node('p','',roster.map(t=>t.name+' · '+t.size).join('   /   ')));
+      const grid=node('div','coach-grid');
+      descriptions.filter(g=>g.id!=='wheel'&&g.id!==current).forEach(game=>{
+        const pick=node('button','quiet',game.name), state=controllers.get(game.id)?.getState?.();
+        if(game.id==='draft'&&(roster.length>4||new Set(roster.map(t=>t.size)).size!==1)){
+          pick.disabled=true;pick.textContent+=' · 2–4 equal teams';
+        }else if(state && !['setup','finished'].includes(state.phase)){
+          pick.disabled=true;pick.textContent+=' · game in progress';
+        }
+        pick.onclick=()=>{panel.close();openGame(game.id,roster);};
+        grid.append(pick);
+      });
+      panel.append(grid);
+    }
+    document.body.append(panel);panel.addEventListener('close',()=>panel.remove(),{once:true});panel.showModal();
   }
   function average(id){const rating=ratingsSummary[id];return rating?.votes?rating.sum/rating.votes:-1;}
   function hottestId(){const rated=descriptions.filter(info=>ratingsSummary[info.id]?.votes);return rated.sort((a,b)=>average(b.id)-average(a.id)||(ratingsSummary[b.id].votes-ratingsSummary[a.id].votes))[0]?.id||null;}
@@ -88,7 +117,8 @@
     ratingBar.append(sorts,node('span','games-sort-note','Class ratings · games played'),ratingButton());
     lobby.append(head,ratingBar,cards,note);
     arena=node('div','games-arena');arena.hidden=true;const bar=node('div','games-toolbar'),back=node('button','quiet games-back','← All games');back.type='button';back.addEventListener('click',showLobby);title=node('span','games-session-label');liveRating=node('button','quiet games-live-rating','☆ Rate this game');liveRating.type='button';liveRating.addEventListener('click',()=>rateGame(current));livePlays=node('span','games-live-plays');liveHot=node('span','games-live-hot','🔥 Hottest game');liveHot.hidden=true;
-    bar.append(back,title,liveHot,livePlays,liveRating,ratingButton());stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
+    handoff=node('button','quiet coach-handoff','Same teams, different game');handoff.type='button';handoff.setAttribute('aria-label','Same teams, different game');handoff.title='Same teams, different game';handoff.append(node('span','coach-handoff-short','Same teams ↗'));handoff.onclick=changeGameWithTeams;
+    bar.append(back,handoff,title,liveHot,livePlays,liveRating,ratingButton());stage=node('div','games-stage');arena.append(bar,stage);root.append(lobby,arena);
     if(window.SWLGameRatings&&typeof config.requestRatings==='function')ratingsApi=window.SWLGameRatings.create({games:descriptions,request:config.requestRatings,onChange:(summary,pending)=>{ratingsSummary=summary;pendingCount=pending;ratingButtons.forEach(button=>{button.hidden=!pending;button.textContent=`Finish ratings${pending>1?' ('+pending+')':''}`;});if(!current)renderCards();else updateGameStats();config.onSaveChange?.();}});
   }
   function setActive(value) {

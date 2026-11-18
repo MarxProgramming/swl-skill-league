@@ -26,6 +26,12 @@
     const letter=id==='letters',stick=id==='stickit',fixedOrder=letter||stick,title=TITLES[id],duration=letter?1300:4000;
     let options=supplied,skills=stick?LANDINGS:catalogue(options.skills),difficulty=stick?'easy':'hard',pool=[],bag=[],previous='';
     let phase='setup',active=true,destroyed=false,names=NAMES.slice(),sizes=NAMES.map(()=>'4'),teamCount=3,rounds='2';
+    const roster = supplied?.teamRoster;
+    if (roster?.length) {
+      teamCount = roster.length;
+      roster.forEach((team,index)=>{names[index]=team.name;});
+      roster.forEach((team,index)=>{sizes[index]=String(team.size);});
+    }
     let teams=[],round=0,turn=0,nominees=[],selected=null,winner=null,remaining=duration,lastTime=0,podium=null;
     let sessionId=null,completionSent=false,resetPrompt=false,error='',status='',hints=false;
     let root,stage,reel,track,cards=[],boundary=START,reelWidth=360,cardWidth=223.2,offset=0;

@@ -232,7 +232,12 @@
     function mount(container,config={}){
       if(!container||typeof container.append!=='function')throw TypeError(info.name+' needs a container.');
       if(host===container&&root?.isConnected){options=config;active=true;render();return api;}
-      destroy();host=container;options=config;active=true;destroyed=false;state=fresh();root=node('section','swl-timing-game');root.addEventListener('keydown',event=>{if(event.key==='Escape'&&confirming&&canAct()){event.preventDefault();event.stopPropagation();perform('cancel-dialog');}});document.addEventListener('visibilitychange',visibility);if(kind==='handstand'){window.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('scroll',updateLayout);}container.append(root);render();return api;
+      destroy();host=container;options=config;active=true;destroyed=false;
+      if(config.teamRoster?.length){
+        count=config.teamRoster.length;
+        config.teamRoster.forEach((team,index)=>{names[index]=team.name;sizes[index]=String(team.size);});
+      }
+      state=fresh();root=node('section','swl-timing-game');root.addEventListener('keydown',event=>{if(event.key==='Escape'&&confirming&&canAct()){event.preventDefault();event.stopPropagation();perform('cancel-dialog');}});document.addEventListener('visibilitychange',visibility);if(kind==='handstand'){window.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('resize',updateLayout);window.visualViewport?.addEventListener?.('scroll',updateLayout);}container.append(root);render();return api;
     }
     const api=Object.freeze({version:1,mount,deactivate,destroy,getState(){if(!state)return null;return{...clone(state),podium:podium?.getState()||null,teamCount:count,active,confirming,mode,format,rounds,taskId,gameId:kind,currentTeam:teamIndex(),currentGymnast:isGroup()?null:Math.min(gymnastIndex()+1,currentTeam()?.size??1),currentRound:isGroup()?groupRound():null,elapsedMs:elapsed(),draftScore:draftUnits()/factor,canUndo:!isRelay&&Boolean(undoRecord)&&['confirmed','finished'].includes(state.phase),participantCount:state.teams.reduce((sum,team)=>sum+team.size,0),winners:state.phase==='finished'?winnerIndices():[],teams:state.teams.map(team=>({...team,score:team.totalUnits/factor,average:team.turns?team.totalUnits/factor/team.turns:0}))};}});
     return api;

@@ -110,7 +110,7 @@
   }
 
   function allBadges(gymnast, completionAchievements) {
-    const awards = badge(gymnast) + challengeButtons(gymnast,highestChallenges(gymnast,completionAchievements));
+    const awards = allIcons(gymnast,completionAchievements);
     return awards ? `<span class="swl-card-awards">${awards}</span>` : '';
   }
 

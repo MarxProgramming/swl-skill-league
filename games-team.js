@@ -426,6 +426,12 @@
     let options = initialOptions || {}, active = true, destroyed = false;
     let phase = 'setup', teamCount = 2, names = DEFAULTS.slice();
     let renderGeneration=0;let sessionId = '', completionSent = false, podium=null,sizes=DEFAULTS.map(()=>'5');
+    const roster = initialOptions?.teamRoster;
+    if (roster?.length) {
+      teamCount = roster.length;
+      roster.forEach((team,index)=>{names[index]=team.name;});
+      roster.forEach((team,index)=>{sizes[index]=String(team.size);});
+    }
     let teams = [], turn = 0, card = null, awardedStars = 0;
     let remainingMs = 0, timer = null, lastTick = 0, observedSeconds = 10, timerGeneration = 0;
     let statusText = '', errorText = '', resetPrompt = false, wasPlayingBeforePrompt = false;
