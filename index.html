@@ -1631,6 +1631,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
 <link rel="stylesheet" href="./release-52.css?v=20261103-52d">
 <style>.previous-perfect{position:absolute;right:12px;top:32px;font-size:9px;color:#c0b1d9;font-weight:500}.directory-quick-skill .previous-perfect{position:static;font-size:8px;line-height:1.2}#directoryReorder{margin:0 0 14px;font-size:12px}</style>
+<link rel="stylesheet" href="./coaching.css?v=1">
 </head>
 
 <body class="programme-menu-open">
@@ -1831,7 +1832,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./celebration.js?v=20261031-v5"></script>
 <script src="./v3-rankings.js?v=20261103-52"></script>
 <script src="./placement.js?v=20261103-52"></script>
-<script src="./games-loader.js?v=20261118-polish"></script>
+<script src="./games-loader.js?v=coach-flow-1"></script>
 <link rel="stylesheet" href="./podium-spin.css?v=20261109-tap">
 <script src="./podium-spin.js?v=20261118-polish"></script>
 <link rel="stylesheet" href="./interaction-polish.css?v=20261118-polish">
@@ -1851,13 +1852,14 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./training-focus.css?v=20261118-polish">
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261109-20261107-roster"></script>
-<script src="./v2.js?v=20261118-polish"></script>
-<script src="./achievement-50.js?v=20261103-card-sizes"></script>
+<script src="./coaching.js?v=1"></script>
+<script src="./v2.js?v=coach-flow-1"></script>
+<script src="./achievement-50.js?v=coach-flow-1"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261118-polish"></script>
 <script src="./competition-results.js?v=20261117-awards"></script>
 <script src="./competition-awards.js?v=20261117-awards"></script>
-<script src="./profile-badges.js?v=20261118-polish"></script>
+<script src="./profile-badges.js?v=coach-flow-1"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=20261118-polish">
@@ -2353,7 +2355,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   let gamesLoading=null, gamesMounted=false, gamesLoadError='';
   let currentView = 'home';
   let activeChallenge = null;
-  let directoryScroll = 0;
+  let directoryScroll = 0, directoryAnchor = null;
   let gymnastTabView = 'directory', gymnastTabScroll = 0, analyticsScroll = 0;
   let analyticsVisited = false;
   let catalogueReturnView = 'dashboard';
@@ -3642,7 +3644,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           </div>
         </div>
 
-        <div class="ring" id="progressRing" role="img">
+        <button class="ring" id="progressRing" type="button" aria-haspopup="dialog">
           <svg viewBox="0 0 100 100" aria-hidden="true">
             <circle cx="50" cy="50" r="44"/>
             <circle
@@ -3658,7 +3660,7 @@ html:has(body.no-motion){scroll-behavior:auto}
             <strong id="athletePoints">0</strong>
             <small id="athletePointCaption">${streakLabel(gymnast.id)||`of ${summary(selectedId, 'combined').max} pts`}</small>
           </div>
-        </div>
+        </button>
         <div class="profile-pane-switch" role="group" aria-label="Profile view">
           <button type="button" data-profile-pane="skills" aria-pressed="${profilePane === 'skills'}" aria-controls="profileSkills">Skills</button>
           <button type="button" data-profile-pane="badges" aria-pressed="${profilePane === 'badges'}" aria-controls="profileBadgeProgress">Awards</button>
@@ -3757,7 +3759,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
     $('progressRing').setAttribute(
       'aria-label',
-      `${total.points} of ${total.max} points${isOnFire(selectedId) ? ", on a streak: 50 or more qualifying Floor points this week" : ""}`
+      `View points breakdown, ${total.points} of ${total.max} points${isOnFire(selectedId) ? ", on a streak: 50 or more qualifying Floor points this week" : ""}`
     );
 
     for (const skill of SKILLS) {
@@ -3842,6 +3844,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     setView('directory', false);
     window.scrollTo({top:directoryScroll,behavior:'instant'});
     const card = Array.from($('directoryRoot').querySelectorAll('[data-gymnast]')).find(button => button.dataset.gymnast === selectedId);
+    const row = card?.closest('[data-directory-gymnast]');
+    if (row && directoryAnchor?.id === selectedId) {
+      window.scrollBy({top:row.getBoundingClientRect().top-directoryAnchor.top,behavior:'instant'});
+      window.SWLCoaching.highlight(row);
+    }
     (card || $('directorySearch') || $('main')).focus({preventScroll:true});
   }
 
@@ -3888,6 +3895,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     // Earlier placement entry points now reveal the same gymnast's inline pane.
     if (view === 'placement') { view = 'tracker'; setProfilePane('placement'); }
     const viewChanged = view !== currentView;
+    if (viewChanged) window.SWLCoaching?.clearUndo();
     if (viewChanged) {
       if(view==='directory')v2Api()?.enterDirectory?.();
       profileBadgeVisit = {id:null,fresh:{}};
@@ -3985,6 +3993,11 @@ html:has(body.no-motion){scroll-behavior:auto}
   function openGymnast(id) {
     if (!GYMNAST_IDS.has(id)) return;
 
+    directoryAnchor = null;
+    if (currentView === 'directory') {
+      const row = $('directoryRoot').querySelector('[data-directory-gymnast="'+CSS.escape(id)+'"]');
+      if (row) directoryAnchor = {id,top:row.getBoundingClientRect().top};
+    }
     if (selectedId !== id) { profileBadgeVisit = {id:null,fresh:{}}; window.SWLPerfectConfirm?.cancel(); placementGroup = 'own'; profilePane = 'skills'; }
     selectedId = id;
     v2Api()?.showGymnastInDirectory?.(id);
@@ -4186,6 +4199,13 @@ html:has(body.no-motion){scroll-behavior:auto}
       true
     );
 
+    const entry = history[history.length-1];
+    window.SWLCoaching?.offerUndo({
+      button, gymnastId, skillId, label:GYMNASTS.find(g=>g.id===gymnastId).name+' · '+skill.name,
+      valid:()=>history[history.length-1]===entry && canEdit() && mark(gymnastId,skillId)===after,
+      run:undo
+    });
+
     // Only a new, locally completed three-skill complex gets the brief message.
     // Loading, refreshing, importing and undoing scores never replay it.
     const complex = SKILLS.filter(item => item.category === skill.category && item.tier === skill.tier);
@@ -4231,6 +4251,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function undo() {
+    window.SWLCoaching?.clearUndo();
     if (!history.length || !canEdit()) return;
 
     const last = history[history.length - 1];
@@ -4282,7 +4303,20 @@ html:has(body.no-motion){scroll-behavior:auto}
     const button = event.target.closest('button');
 
     if (button && !button.disabled) {
-      if (button.hasAttribute('data-programme')) {
+      if (button.id === 'progressRing') {
+        window.SWLCoaching.points(GYMNASTS.find(g=>g.id===selectedId).name,summary(selectedId,'overall'),summary(selectedId,'vault'));
+      } else if (button.hasAttribute('data-badge-skill')) {
+        const id=button.dataset.badgeSkill;
+        if (!SKILL_IDS.has(id)) return;
+        setProfilePane('skills');
+        const cell=$('profileSkills').querySelector('[data-skill-cell="'+CSS.escape(id)+'"]');
+        if (cell) {
+          cell.tabIndex=-1;
+          cell.focus({preventScroll:true});
+          cell.scrollIntoView({block:'center',behavior:'instant'});
+          window.SWLCoaching.highlight(cell);
+        }
+      } else if (button.hasAttribute('data-programme')) {
         selectProgramme(button.dataset.programme);
       } else if (button.hasAttribute('data-apparatus')) {
         setApparatus(button.dataset.apparatus);
