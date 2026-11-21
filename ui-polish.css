@@ -121,3 +121,99 @@ body.programme-menu-open .sync-indicator{display:none}
 body.no-motion .games-loading-orbit{animation:none}
 @media(max-width:360px){.header .utilities>.quiet{padding-inline:7px;font-size:10px}}
 .v4-mark-person .previous-perfect{position:static;display:block;max-width:100%;margin-top:3px;color:#cbb9e5;font-size:11px;font-weight:550;line-height:1.4}
+
+/* Finishing pass: icon geometry, restrained controls and consistent spacing.
+   Deliberately scoped to coaching screens; games keep their existing styling. */
+:is(#closeCircuit,.score-guide-close,.swl-achievement-close,.swl-welcome-close,.roster-modal-head>[data-roster-close]){
+  display:grid;place-items:center;flex:none;padding:0;line-height:1;font-size:0;
+  width:40px;height:40px;min-width:40px;min-height:40px;
+}
+:is(#closeCircuit,.score-guide-close,.swl-achievement-close,.swl-welcome-close,.roster-modal-head>[data-roster-close])::before,
+#directoryRoot [data-attendance-hide]>span::before{
+  content:"";display:block;width:14px;height:14px;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' d='m5 5 10 10M15 5 5 15'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' d='m5 5 10 10M15 5 5 15'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+#directoryRoot [data-attendance-hide]>span{font-size:0;line-height:1}
+#directoryRoot #closeCircuit{border-radius:10px;color:#c5b4d8;align-self:center}
+#directoryRoot #squadCircuit .circuit-heading{min-height:40px;gap:16px;margin-bottom:14px}
+#directoryRoot #squadCircuit .circuit-heading h2{line-height:1.2;letter-spacing:-.025em}
+#directoryRoot .directory-quick-switch>button:not(.directory-quick-switch-choice){display:grid;place-items:center;line-height:1;padding:0;align-self:stretch}
+#directoryRoot .directory-quick-switch>button:not(.directory-quick-switch-choice):focus:not(:focus-visible),
+#directoryRoot #closeCircuit:focus:not(:focus-visible){outline:none}
+#directoryRoot .directory-squad-tools>label{line-height:1.4;margin:0}
+#directoryRoot .directory-secondary-tools{align-items:center;gap:8px 16px}
+#directoryRoot #directoryComplexClear{line-height:1.3}
+#directoryRoot .circuit-skill-list summary>svg{align-self:center;stroke-linecap:round;stroke-linejoin:round}
+#directoryRoot .circuit-members .v4-mark-button{display:grid;place-items:center;line-height:1;letter-spacing:-.04em}
+#directoryRoot .circuit-members li>strong{overflow-wrap:anywhere}
+#directoryRoot .circuit-context{line-height:1.5;margin:15px 0 12px}
+:is(#directoryRoot,#analyticsRoot,#athletePanel) select{line-height:1.4}
+:is(#directoryRoot,#analyticsRoot,#athletePanel) :is(button,summary):focus-visible{outline:2px solid #d7baff;outline-offset:3px}
+:is(#directoryRoot,#analyticsRoot,#athletePanel) summary{scroll-margin-top:calc(var(--header-height,76px) + 16px)}
+
+/* Readiness belongs after the personal award collection, collapsed initially. */
+#profileBadgeProgress>.regional-disclosure{margin-top:26px;border:1px solid #b49ad42b;border-radius:14px;background:linear-gradient(120deg,#b08ed508,transparent 70%),#17131d;overflow:hidden}
+.regional-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:76px;padding:17px 20px;list-style:none;cursor:pointer}
+.regional-disclosure>summary::-webkit-details-marker{display:none}
+.regional-disclosure>summary>span:first-child{display:grid;gap:5px;min-width:0}
+.regional-disclosure>summary strong{font-size:15px;line-height:1.4;font-weight:650;color:#e4d8ef}
+.regional-disclosure>summary small{font-size:11px;line-height:1.45;color:#a99ab8}
+.regional-disclosure>summary .pb-chevron{margin:0;flex:none;width:26px;height:26px;display:grid;place-items:center;border:1px solid #b9a1d523;border-radius:8px;background:#b292d408}
+.regional-disclosure>summary .pb-chevron svg{width:16px;height:16px;fill:none;stroke:#c5a7e3;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.regional-disclosure[open]>summary{border-bottom:1px solid #b69cd21a}
+.regional-disclosure[open]>summary .pb-chevron svg{transform:rotate(180deg)}
+.regional-disclosure>.regional-award{margin:0;padding:18px 20px 20px;border:0;border-radius:0;background:transparent}
+.regional-method{font-size:11px;color:#ac9abd;line-height:1.5;margin:0 0 15px}
+.regional-target-heading{flex-wrap:wrap;row-gap:9px}
+.regional-target-status{line-height:1.4}
+.regional-target-level .regional-result{min-height:36px}
+#athletePanel .profile-pane-switch{align-items:stretch}
+#athletePanel .profile-pane-switch>button{display:flex;justify-content:center;align-items:center;line-height:1.3;min-height:44px}
+#athletePanel .pb-journey-heading{gap:12px;align-items:baseline}
+#athletePanel .pb-heading{gap:12px;align-items:baseline}
+#athletePanel .pb-skill-name{line-height:1.5}
+@media(max-width:600px){
+  .regional-disclosure>summary{padding:15px 16px;min-height:72px}
+  .regional-disclosure>.regional-award{padding:15px}
+  .regional-disclosure>summary strong{font-size:14px}
+  .regional-target-heading{column-gap:9px}
+  #directoryRoot .circuit-skill-list summary{min-height:72px}
+  #directoryRoot .circuit-members .v4-mark-button{min-width:38px;width:38px;min-height:40px;height:40px}
+}
+@media(prefers-reduced-motion:no-preference){.regional-disclosure>summary .pb-chevron svg{transition:transform .2s ease}}
+/* Flex avoids an anonymous second grid row left behind by the hidden × text. */
+:is(#closeCircuit,.score-guide-close,.swl-achievement-close,.swl-welcome-close,.roster-modal-head>[data-roster-close]),
+#directoryRoot [data-attendance-hide]>span{display:flex;align-items:center;justify-content:center;gap:0}
+:is(#closeCircuit,.score-guide-close,.swl-achievement-close,.swl-welcome-close,.roster-modal-head>[data-roster-close])::before,
+#directoryRoot [data-attendance-hide]>span::before{flex:none}
+/* Matching chevrons keep switching and disclosure controls optically centred. */
+#directoryRoot :is(#directoryComplexPrevious,#directoryComplexNext){display:flex;align-items:center;justify-content:center;font-size:0;line-height:0;gap:0}
+#directoryRoot :is(#directoryComplexPrevious,#directoryComplexNext)::before{
+ content:"";display:block;flex:none;width:18px;height:18px;background:currentColor;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m8 5 5 5-5 5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+#directoryRoot #directoryComplexPrevious::before{transform:rotate(180deg)}
+#directoryRoot #complexJump strong::after{
+ content:"";display:inline-block;vertical-align:middle;width:12px;height:12px;margin-inline-start:7px;background:#c9adef;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5 7 5 5 5-5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+#analyticsRoot .analytics-compare-picker{border-left:0;padding-left:0}
+#analyticsRoot .analytics-controls51{gap:16px}
+#analyticsRoot .analytics-controls51 label{gap:8px;line-height:1.4}
+#analyticsRoot .v4-mark-row{align-items:center}
+#analyticsRoot .v4-mark-person small{line-height:1.45}
+#profilePlacement .swlp-scope{gap:8px}
+#profilePlacement .swlp-scope button{display:flex;align-items:center;justify-content:center;text-align:center}
+@media(max-width:600px){
+ #profilePlacement .swlp-scope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #profilePlacement .swlp-scope button{width:100%;min-width:0;padding:9px;min-height:44px;font-size:11px}
+ #allSkills .catalogue-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ #allSkills .catalogue-filters button{width:100%;min-width:0;padding:9px 5px;min-height:44px;line-height:1.4;font-size:11px;text-align:center}
+}
+/* Long fractional totals must fit inside the compact ring on smaller phones. */
+@media(max-width:380px){
+ #athleteSummary>.ring strong{font-size:21px;line-height:1.05;letter-spacing:-.045em}
+ #athleteSummary>.ring small{font-size:8px;line-height:1.2;white-space:nowrap}
+ #athleteSummary>.ring>div{max-width:60px}
+}
