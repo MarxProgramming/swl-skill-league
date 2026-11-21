@@ -136,8 +136,12 @@
     directory.innerHTML=`<h1 class="sr">Gymnasts</h1><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-squad-tools"><label for="directoryGroups">Choose squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div></div><div class="directory-quick-switch" role="group" aria-label="Quick complex switching"><button type="button" id="directoryComplexPrevious" aria-label="Previous complex" title="Previous complex" disabled>‹</button><button type="button" id="complexJump" class="directory-quick-switch-choice" aria-haspopup="dialog"><span>Training complex · Floor &amp; Vault</span><strong id="directoryComplexCurrent" aria-live="polite">Choose a complex</strong></button><button type="button" id="directoryComplexNext" aria-label="Next complex" title="Next complex" disabled>›</button></div><div class="directory-complex-footer"><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p><button type="button" class="quiet" id="directoryComplexClear" hidden>Clear complex</button></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>More options</strong></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><button type="button" id="directoryReorder" class="quiet">↻ Reorder</button><div id="directorySelectionToolbar"></div><div id="directoryResults"></div><div id="directoryAttendanceStatus"></div>`;
     const options=directory.querySelector('.directory-filter-content');
     for(const selector of ['.directory-complex-footer','#directoryReorder','#directorySelectionToolbar'])options.append(directory.querySelector(selector));
+    directory.querySelector('#directoryFilters').insertAdjacentHTML('beforebegin','<div class="directory-secondary-tools" id="directorySecondary"></div>');
+    const secondary=directory.querySelector('#directorySecondary');
+    secondary.append(directory.querySelector('#directoryComplexClear'));
+    secondary.append(directory.querySelector('#directoryFilters'));
     const primary=directory.querySelector('.directory-primary-tools');
-    primary.style.gridTemplateColumns='minmax(0,1fr) auto';
+    primary.style.gridTemplateColumns='minmax(0,1fr) 44px auto';
     primary.insertAdjacentHTML('beforeend','<button type="button" id="findName" class="quiet" aria-label="Search gymnasts" aria-expanded="false" aria-controls="nameSearchBox"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg></button>');
     primary.insertAdjacentHTML('afterend','<div id="nameSearchBox" style="position:relative" hidden></div>');
     const searchBox=directory.querySelector('#nameSearchBox'),find=directory.querySelector('#findName');
@@ -148,10 +152,16 @@
       const input=directory.querySelector('#directorySearch');
       if(searchBox.hidden){input.value='';input.dispatchEvent(new Event('input'));}else input.focus();
     });
-    directory.querySelector('#directoryFilters').insertAdjacentHTML('beforebegin','<div><button type="button" class="quiet" id="circuitButton" aria-expanded="false" aria-controls="squadCircuit">Floor circuits</button><div id="squadCircuit" hidden><div class="a31-segments" role="group" aria-label="Choose circuit">'+['All-round','Foundations','Polish'].map((label,i)=>`<button type="button" data-plan="${i}" aria-pressed="${i===0}">${label}</button>`).join('')+'</div><div id="circuitStations"></div></div></div>');
+    primary.insertAdjacentHTML('beforeend','<button type="button" class="quiet" id="circuitButton" aria-expanded="false" aria-controls="squadCircuit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M9 6h7a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8M6 9v3m12 3v-2"/></svg><span>Circuits</span></button>');
+    directory.querySelector('#directorySecondary').insertAdjacentHTML('beforebegin','<section id="squadCircuit" hidden aria-label="Floor circuit ideas"><header class="circuit-heading"><div><small>SQUAD TRAINING</small><h2>Floor circuits</h2></div><span id="circuitDuration">3 stations · 6 minutes</span></header><div class="circuit-plans" role="group" aria-label="Choose circuit">'+['Priorities','Foundations','Perfecting'].map((label,i)=>`<button type="button" data-plan="${i}" aria-pressed="${i===0}">${label}</button>`).join('')+'</div><div id="circuitStations"></div></section>');
     const circuit=directory.querySelector('#squadCircuit'),trigger=directory.querySelector('#circuitButton');
     trigger.addEventListener('click',()=>{circuit.hidden=!circuit.hidden;trigger.setAttribute('aria-expanded',String(!circuit.hidden));renderSquadCircuit();});
-    circuit.addEventListener('click',e=>{const choice=e.target.closest('[data-plan]');if(!choice)return;circuit.dataset.plan=choice.dataset.plan;circuit.querySelectorAll('[data-plan]').forEach(b=>b.setAttribute('aria-pressed',String(b===choice)));renderSquadCircuit();});
+    circuit.addEventListener('click',e=>{
+      const station=e.target.closest('[data-circuit-complex]');
+      if(station){chooseComplex(station.dataset.circuitComplex);return;}
+      const choice=e.target.closest('[data-plan]');if(!choice)return;
+      circuit.dataset.plan=choice.dataset.plan;circuit.querySelectorAll('[data-plan]').forEach(b=>b.setAttribute('aria-pressed',String(b===choice)));renderSquadCircuit();
+    });
     directory.refreshPicker = window.SWLCoaching?.mountPicker(directory, {options:complexOptions,selected:()=>directoryComplex,choose:chooseComplex,step:switchComplex});
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
     directory.querySelector('#directoryReorder').addEventListener('click',enterDirectory);
@@ -231,19 +241,31 @@
   function renderSquadCircuit() {
     const panel=directory.querySelector('#squadCircuit');
     if(panel.hidden||!data)return;
-    const people=data?.gymnasts.filter(g=>inGroup(g,directoryGroup)&&!window.SWLDirectoryAttendance?.isHidden(g.id))||[];
+    const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&!window.SWLDirectoryAttendance?.isHidden(g.id));
     const plan=panel.dataset.plan||'0';
     let rows=data.hasLoaded?skillPriorities(people,{scope:'floor',limit:Infinity}):[];
     if(plan==='1')rows=rows.filter(r=>r.skill.tier==='base');
-    if(plan==='2')rows=rows.filter(r=>r.toPerfect).sort((a,b)=>b.toPerfect-a.toPerfect);
+    if(plan==='2')rows=rows.filter(r=>r.toPerfect).sort((a,b)=>b.toPerfect-a.toPerfect||b.availablePoints-a.availablePoints);
     const seen=new Set(),stations=[];
     for(const row of rows){if(!seen.has(row.skill.category)){stations.push(row);seen.add(row.skill.category);}}
     for(const row of rows){if(stations.length>=3)break;if(!stations.includes(row))stations.push(row);}
-    const cue=name=>/spin/i.test(name)?'Spot the finish and hold.':/jump/i.test(name)?'Stick the landing for two seconds.':/leap|scissor|hop/i.test(name)?'Show the shape at the top.':/roll/i.test(name)?'Keep the entry and exit controlled.':'Rehearse the entry, then hold the finish.';
-    commitHTML(directory.querySelector('#circuitStations'),stations.length?`<p>${esc(groupName(directoryGroup))} · 2 min per station</p><ol>${stations.slice(0,3).map(r=>`<li><strong>${esc(r.skill.name)}</strong> · ${cue(r.skill.name)}</li>`).join('')}</ol>`:!data.hasLoaded?'Loading…':!people.length?'No gymnasts present.':plan==='2'?'No achieved skills waiting for Perfect.':'All skills in this circuit are Perfect.');
+    const cue=name=>/spin/i.test(name)?'Spot your finish. Hold for two seconds.':/jump/i.test(name)?'Show the shape. Stick the landing.':/leap|split change|scissor|hop/i.test(name)?'Show the shape at the top. Land with control.':/roll/i.test(name)?'Keep the shape through the roll and control the exit.':'Rehearse the entry. Finish with control.';
+    const duration=directory.querySelector('#circuitDuration');
+    if(duration)duration.textContent=stations.length?`${Math.min(3,stations.length)} stations · ${Math.min(3,stations.length)*2} minutes`:'Floor skills only';
+    const target=plan==='2'?'Refine achieved skills towards Perfect.':plan==='1'?'Build the squad’s floor foundations.':'Work on the squad’s biggest floor gaps.';
+    const html=stations.length?`<p class="circuit-context">${esc(groupName(directoryGroup))} · ${people.length} gymnasts</p><p class="circuit-intro">${target} Rotate every two minutes.</p><ol class="circuit-stations">${stations.slice(0,3).map((r,i)=>{
+      const complex=r.skill.category+'-'+r.skill.tier,active=directoryComplex===complex;
+      const need=plan==='2'?r.toPerfect:r.toAchieve||r.toPerfect;
+      const goal=plan==='2'||!r.toAchieve?'to perfect':'to achieve';
+      return `<li><div class="circuit-station-top"><span>${String(i+1).padStart(2,'0')}</span><small>2 MIN</small></div><h3>${esc(r.skill.name)}</h3><p>${cue(r.skill.name)}</p><div class="circuit-need"><strong>${need}/${r.total}</strong> ${goal}</div><button type="button" data-circuit-complex="${esc(complex)}" aria-pressed="${active}">${active?'✓ Complex showing':'Show complex'}<span aria-hidden="true">↗</span></button></li>`;
+    }).join('')}</ol><p class="circuit-footnote">Choose progressions for each gymnast; coach flighted and inverted skills.</p>`:!data.hasLoaded?'<p class="circuit-empty">Loading squad skills…</p>':!people.length?'<p class="circuit-empty">No gymnasts present in this squad.</p>':plan==='2'?'<p class="circuit-empty">No achieved skills waiting for Perfect. Try Foundations.</p>':'<p class="circuit-empty">Everything in this plan is Perfect. Choose another plan.</p>';
+    commitHTML(directory.querySelector('#circuitStations'),html);
   }
   function renderDirectory() {
-    if(!data)return;const key=focusKey(directory),groups=groupOptions(),skills=data.skills;
+    if(!data)return;
+    const rename=directory.querySelector('#renameSquadButton');
+    if(rename&&rename.parentElement?.classList?.contains('directory-squad-tools'))directory.querySelector('.directory-extra-tools').append(rename);
+    const key=focusKey(directory),groups=groupOptions(),skills=data.skills;
     const complexes=complexOptions();
     if(directoryComplex&&!complexes.some(c=>c.id===directoryComplex))directoryComplex='';
     const complex=complexes.find(c=>c.id===directoryComplex);
