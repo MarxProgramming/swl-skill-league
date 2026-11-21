@@ -27,6 +27,7 @@
   function resetDirectoryOrder(){orderScope='';orderRanks.clear();nextSkillCache.clear();}
   function viewIsVisible(name,host){return Boolean(host)&& (typeof data?.view==='string'?data.view===name:!host.hidden);}
   function enterDirectory(){resetDirectoryOrder();if(data&&viewIsVisible('directory',directory))renderDirectory();}
+  let circuitPinned=null;
   let priorityPinned=null,priorityScope='',priorityRenderedIds=[],priorityShowMore=false;
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
@@ -117,7 +118,7 @@
     const scroll=[...host.querySelectorAll('.skill-map-scroll')].map(el=>({left:el.scrollLeft,top:el.scrollTop}));
     const legends=[...host.querySelectorAll('details.map-legend')].map(el=>el.open);
     const disclosures=new Map([...host.querySelectorAll('details[data-analytics-disclosure]')].map(el=>[el.dataset.analyticsDisclosure,el.open]));
-    const patchable=['directoryResults','analyticsContent'].includes(host.id)&&typeof document.createElement==='function'&&typeof host.insertBefore==='function';
+    const patchable=['directoryResults','analyticsContent','circuitStations'].includes(host.id)&&typeof document.createElement==='function'&&typeof host.insertBefore==='function';
     if(patchable){const template=document.createElement('template');template.innerHTML=html;patchChildren(host,template.content);}else host.innerHTML=html;
     htmlCache.set(host,html);
     host.querySelectorAll('.skill-map-scroll').forEach((el,i)=>{if(scroll[i]){el.scrollLeft=scroll[i].left;el.scrollTop=scroll[i].top;}});
@@ -153,12 +154,11 @@
       if(searchBox.hidden){input.value='';input.dispatchEvent(new Event('input'));}else input.focus();
     });
     primary.insertAdjacentHTML('beforeend','<button type="button" class="quiet" id="circuitButton" aria-expanded="false" aria-controls="squadCircuit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M9 6h7a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8M6 9v3m12 3v-2"/></svg><span>Circuits</span></button>');
-    directory.querySelector('#directorySecondary').insertAdjacentHTML('beforebegin','<section id="squadCircuit" hidden aria-label="Floor circuit ideas"><header class="circuit-heading"><div><small>SQUAD TRAINING</small><h2>Floor circuits</h2></div><span id="circuitDuration">3 stations · 6 minutes</span></header><div class="circuit-plans" role="group" aria-label="Choose circuit">'+['Priorities','Foundations','Perfecting'].map((label,i)=>`<button type="button" data-plan="${i}" aria-pressed="${i===0}">${label}</button>`).join('')+'</div><div id="circuitStations"></div></section>');
+    directory.querySelector('#directorySecondary').insertAdjacentHTML('beforebegin','<section id="squadCircuit" hidden aria-label="Floor circuit ideas"><header class="circuit-heading"><div><h2>Floor circuits</h2></div><button type="button" id="closeCircuit" class="quiet" aria-label="Close circuits">×</button></header><div class="circuit-plans" role="group" aria-label="Choose circuit">'+['Priorities','Foundations','Perfecting'].map((label,i)=>`<button type="button" data-plan="${i}" aria-pressed="${i===0}">${label}</button>`).join('')+'</div><div id="circuitStations"></div></section>');
     const circuit=directory.querySelector('#squadCircuit'),trigger=directory.querySelector('#circuitButton');
-    trigger.addEventListener('click',()=>{circuit.hidden=!circuit.hidden;trigger.setAttribute('aria-expanded',String(!circuit.hidden));renderSquadCircuit();});
+    trigger.addEventListener('click',()=>{circuitPinned=null;circuit.hidden=!circuit.hidden;trigger.setAttribute('aria-expanded',String(!circuit.hidden));renderSquadCircuit();});
     circuit.addEventListener('click',e=>{
-      const station=e.target.closest('[data-circuit-complex]');
-      if(station){chooseComplex(station.dataset.circuitComplex);return;}
+      if(e.target.closest('#closeCircuit')){circuit.hidden=true;circuitPinned=null;trigger.setAttribute('aria-expanded','false');trigger.focus({preventScroll:true});return;}
       const choice=e.target.closest('[data-plan]');if(!choice)return;
       circuit.dataset.plan=choice.dataset.plan;circuit.querySelectorAll('[data-plan]').forEach(b=>b.setAttribute('aria-pressed',String(b===choice)));renderSquadCircuit();
     });
@@ -238,27 +238,37 @@
       return `<div class="directory-quick-cell level-${level}${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false||window.SWLDirectorySelection?.isActive()?' disabled':''}><span aria-hidden="true">${['○','✓','✓✓'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong>${fresh.previouslyExpired?'<small class="previous-perfect" title="A previous Perfect mark expired">Previously Perfect</small>':''}</button>${fresh.due?`<div class="directory-quick-renewal"><span class="directory-quick-days" id="${esc(renewalId)}">${esc(renewalDays)}</span><button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-renewal-urgency="${fresh.days<=1?'final':'due'}" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew Perfect for ${esc(k.name)} for ${esc(g.name)} for 30 days" aria-describedby="${esc(renewalId)}"${data.canEdit===false||window.SWLDirectorySelection?.isActive()?' disabled':''}>↻ Renew</button></div>`:''}</div>`;
     }).join('')}</div></div>`;
   }
+  function circuitMembers(people,skill) {
+    const status=['Unticked','Achieved','Perfect'],symbols=['○','✓','✓✓'];
+    return `<div class="circuit-members"><p>${data.canEdit===false?'Unlock scoring to update marks.':'✓ Achieved · ✓✓ Perfect'}</p><ul>${people.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-GB')).map(g=>{
+      const level=data.mark(g.id,skill.id);
+      return `<li id="circuit-person-${esc(skill.id)}-${esc(g.id)}"><strong>${esc(g.name)}</strong><div class="v4-mark-controls" role="group" aria-label="${esc(skill.name)} for ${esc(g.name)}">${status.map((label,value)=>`<button type="button" id="circuit-mark-${esc(g.id)}-${esc(skill.id)}-${value}" class="v4-mark-button mark-${value}" data-priority-mark="${value}" data-priority-skill="${esc(skill.id)}" data-priority-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(skill.name)}: ${label}" aria-pressed="${level===value}"${data.canEdit===false?' disabled':''}>${symbols[value]}</button>`).join('')}</div></li>`;
+    }).join('')}</ul></div>`;
+  }
   function renderSquadCircuit() {
     const panel=directory.querySelector('#squadCircuit');
     if(panel.hidden||!data)return;
     const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&!window.SWLDirectoryAttendance?.isHidden(g.id));
     const plan=panel.dataset.plan||'0';
-    let rows=data.hasLoaded?skillPriorities(people,{scope:'floor',limit:Infinity}):[];
-    if(plan==='1')rows=rows.filter(r=>r.skill.tier==='base');
-    if(plan==='2')rows=rows.filter(r=>r.toPerfect).sort((a,b)=>b.toPerfect-a.toPerfect||b.availablePoints-a.availablePoints);
-    const seen=new Set(),stations=[];
-    for(const row of rows){if(!seen.has(row.skill.category)){stations.push(row);seen.add(row.skill.category);}}
-    for(const row of rows){if(stations.length>=3)break;if(!stations.includes(row))stations.push(row);}
-    const cue=name=>/spin/i.test(name)?'Spot your finish. Hold for two seconds.':/jump/i.test(name)?'Show the shape. Stick the landing.':/leap|split change|scissor|hop/i.test(name)?'Show the shape at the top. Land with control.':/roll/i.test(name)?'Keep the shape through the roll and control the exit.':'Rehearse the entry. Finish with control.';
-    const duration=directory.querySelector('#circuitDuration');
-    if(duration)duration.textContent=stations.length?`${Math.min(3,stations.length)} stations · ${Math.min(3,stations.length)*2} minutes`:'Floor skills only';
-    const target=plan==='2'?'Refine achieved skills towards Perfect.':plan==='1'?'Build the squad’s floor foundations.':'Work on the squad’s biggest floor gaps.';
-    const html=stations.length?`<p class="circuit-context">${esc(groupName(directoryGroup))} · ${people.length} gymnasts</p><p class="circuit-intro">${target} Rotate every two minutes.</p><ol class="circuit-stations">${stations.slice(0,3).map((r,i)=>{
-      const complex=r.skill.category+'-'+r.skill.tier,active=directoryComplex===complex;
+    const scope=directoryGroup+'|'+plan+'|'+people.map(g=>g.id).sort().join(',');
+    if(circuitPinned?.scope!==scope)circuitPinned=null;
+    let rows=data.hasLoaded?skillPriorities(people,{scope:'floor',limit:Infinity,includeComplete:Boolean(circuitPinned)}):[];
+    let stations=[];
+    if(circuitPinned)stations=circuitPinned.ids.map(id=>rows.find(r=>r.skill.id===id)).filter(Boolean);
+    else {
+      if(plan==='1')rows=rows.filter(r=>r.skill.tier==='base');
+      if(plan==='2')rows=rows.filter(r=>r.toPerfect).sort((a,b)=>b.toPerfect-a.toPerfect||b.availablePoints-a.availablePoints);
+      const seen=new Set();
+      for(const row of rows)if(!seen.has(row.skill.category)){stations.push(row);seen.add(row.skill.category);}
+      for(const row of rows){if(stations.length>=3)break;if(!stations.includes(row))stations.push(row);}
+      stations=stations.slice(0,3);
+      if(data.hasLoaded)circuitPinned={scope,ids:stations.map(r=>r.skill.id)};
+    }
+    const html=stations.length?`<p class="circuit-context">${esc(groupName(directoryGroup))} · ${people.length} gymnasts</p><div class="circuit-skill-list">${stations.map((r,i)=>{
       const need=plan==='2'?r.toPerfect:r.toAchieve||r.toPerfect;
       const goal=plan==='2'||!r.toAchieve?'to perfect':'to achieve';
-      return `<li><div class="circuit-station-top"><span>${String(i+1).padStart(2,'0')}</span><small>2 MIN</small></div><h3>${esc(r.skill.name)}</h3><p>${cue(r.skill.name)}</p><div class="circuit-need"><strong>${need}/${r.total}</strong> ${goal}</div><button type="button" data-circuit-complex="${esc(complex)}" aria-pressed="${active}">${active?'✓ Complex showing':'Show complex'}<span aria-hidden="true">↗</span></button></li>`;
-    }).join('')}</ol><p class="circuit-footnote">Choose progressions for each gymnast; coach flighted and inverted skills.</p>`:!data.hasLoaded?'<p class="circuit-empty">Loading squad skills…</p>':!people.length?'<p class="circuit-empty">No gymnasts present in this squad.</p>':plan==='2'?'<p class="circuit-empty">No achieved skills waiting for Perfect. Try Foundations.</p>':'<p class="circuit-empty">Everything in this plan is Perfect. Choose another plan.</p>';
+      return `<details data-analytics-disclosure="circuit-${esc(scope)}-${esc(r.skill.id)}"><summary><span class="circuit-number">${i+1}</span><div><strong>${esc(r.skill.name)}</strong><small>${r.perfect===r.total?'All perfect':`${need}/${r.total} ${goal}`}</small></div><span class="circuit-view">Gymnasts</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg></summary>${circuitMembers(people,r.skill)}</details>`;
+    }).join('')}</div>`:!data.hasLoaded?'<p class="circuit-empty">Loading squad skills…</p>':!people.length?'<p class="circuit-empty">No gymnasts present in this squad.</p>':plan==='2'?'<p class="circuit-empty">No achieved skills waiting for Perfect. Try Foundations.</p>':'<p class="circuit-empty">Everything in this plan is Perfect. Choose another plan.</p>';
     commitHTML(directory.querySelector('#circuitStations'),html);
   }
   function renderDirectory() {
