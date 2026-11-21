@@ -273,6 +273,7 @@
   }
   function renderDirectory() {
     if(!data)return;
+    window.SWLSquadThemes?.mount(directory,directoryGroup,groupName(directoryGroup));
     const rename=directory.querySelector('#renameSquadButton');
     if(rename&&rename.parentElement?.classList?.contains('directory-squad-tools'))directory.querySelector('.directory-extra-tools').append(rename);
     const key=focusKey(directory),groups=groupOptions(),skills=data.skills;
@@ -499,6 +500,7 @@
     lazyAnalytics.clear();
     analytics.querySelectorAll('[data-analytics-apparatus]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.analyticsApparatus===apparatus()));button.disabled=!data.hasLoaded;});
     const groups=groupOptions();if(data.hasLoaded&&!['all','floor','afternoon','senior','junior','overall','selection'].includes(analyticsGroup)&&!groups.includes(analyticsGroup))analyticsGroup='all';
+    window.SWLSquadThemes?.mount(analytics,analyticsGroup,groupName(analyticsGroup));
     if(analyticsAge!=='all'&&!ageGroups().some(c=>c.id===analyticsAge))analyticsAge='all';
     analyticsSelectedIds=analyticsSelectedIds.filter(id=>!data.hasLoaded||data.gymnasts.some(g=>g.id===id));
     const squadPeople=data.gymnasts.filter(g=>analyticsGroup==='selection'?analyticsSelectedIds.includes(g.id):inGroup(g,analyticsGroup));
