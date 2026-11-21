@@ -708,3 +708,46 @@ body.squad-theme-open{overflow:hidden}
 /* Review fixes: directory uses a two-column parent; banner spans both. */
 .squad-themed>.squad-banner{grid-column:1/-1;box-sizing:border-box;width:100%;min-width:0}
 #squadThemeDialog .squad-theme-actions button[data-theme-save]{background:#c5acff;border-color:#c5acff;color:#191126}
+
+/* Expanded squad atmosphere — full page, quiet texture, unchanged mark colours. */
+body.squad-atmosphere-active{isolation:isolate}
+#squadAtmosphere{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 100% 0,rgba(var(--squad-rgb),.22),transparent 65%),radial-gradient(ellipse at 0 90%,rgba(var(--squad-secondary),.18),transparent 70%),#0d0e13}
+#squadAtmosphere[hidden]{display:none}
+#squadAtmosphere::after{content:"";position:absolute;inset:0;background-image:var(--squad-pattern-image);background-size:var(--squad-pattern-size,auto);opacity:.8;mask-image:linear-gradient(90deg,#000,transparent 48%,#000)}
+[data-squad-pattern="halo"]{--squad-pattern-image:repeating-radial-gradient(circle at 88% 18%,transparent 0 109px,rgba(var(--squad-rgb),.09) 110px 111px,transparent 112px 180px);--squad-pattern-size:auto}
+[data-squad-pattern="contour"]{--squad-pattern-image:repeating-radial-gradient(ellipse at -25% 115%,transparent 0 43px,rgba(var(--squad-rgb),.10) 44px 45px,transparent 46px 72px);--squad-pattern-size:auto}
+[data-squad-pattern="ribbon"]{--squad-pattern-image:repeating-linear-gradient(125deg,transparent 0 105px,rgba(var(--squad-rgb),.055) 106px 150px,transparent 151px 240px);--squad-pattern-size:auto}
+[data-squad-pattern="grid"]{--squad-pattern-image:linear-gradient(rgba(var(--squad-rgb),.07) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--squad-rgb),.07) 1px,transparent 1px);--squad-pattern-size:40px 40px}
+[data-squad-pattern="stars"]{--squad-pattern-image:radial-gradient(circle,rgba(var(--squad-rgb),.24) 1px,transparent 1.5px),radial-gradient(circle,rgba(var(--squad-secondary),.21) 1px,transparent 1.5px);--squad-pattern-size:43px 47px,79px 67px}
+[data-squad-pattern="mist"]{--squad-pattern-image:linear-gradient(150deg,rgba(var(--squad-rgb),.025),transparent 70%);--squad-pattern-size:auto}
+.squad-themed::before{display:none}
+.squad-themed>.squad-banner{background:radial-gradient(ellipse at 90% 0,rgba(var(--squad-rgb),.29),transparent 70%),radial-gradient(ellipse at 15% 110%,rgba(var(--squad-secondary),.22),transparent 70%),#14141e;border-color:rgba(var(--squad-rgb),.30)}
+.squad-banner::before{inset:0;width:auto;height:auto;border:0;border-radius:0;box-shadow:none;background-image:var(--squad-pattern-image);background-size:var(--squad-pattern-size,auto);opacity:.8}
+.squad-banner .squad-customise{position:relative;min-height:28px;height:28px;padding:5px 8px;gap:5px;border-radius:7px;font-size:10px;font-weight:550;background:#0c0c143d;border-color:rgba(var(--squad-rgb),.22)}
+.squad-customise::after{content:"";position:absolute;inset:-8px -4px}
+.squad-customise svg{width:13px;height:13px}
+html:root:root[data-theme="dark"] body.squad-atmosphere-active :is(.board,.athlete-summary,.directory-tools,.complex,.catalogue-complex,.swlp-board,.pi-panel,.analytics-filters,.a31-disclosure),
+html:root:root[data-theme="dark"] body.squad-atmosphere-active #analyticsRoot :is(.analytics-panel,.a31-priorities,.a31-squad-panel,.a31-stats article){background:linear-gradient(125deg,rgba(var(--squad-rgb),.105),transparent 70%),linear-gradient(315deg,rgba(var(--squad-secondary),.09),transparent 70%),#13141d;border-color:rgba(var(--squad-rgb),.23)}
+html:root:root[data-theme="dark"] body.squad-atmosphere-active #directoryRoot .directory-card:not(.is-birthday){background:linear-gradient(130deg,rgba(var(--squad-rgb),.065),transparent 85%),#14141e;border-color:rgba(var(--squad-rgb),.20)}
+html:root:root[data-theme="dark"] body.squad-atmosphere-active #analyticsRoot .a31-disclosure-content>.analytics-panel{background:transparent;border:0;box-shadow:none}
+html:root:root[data-theme="dark"] body.squad-atmosphere-active :is(.directory-section-head h2,.complex-head h3,.catalogue-complex-head h3){color:var(--squad-accent)}
+#squadThemeDialog{width:min(850px,calc(100% - 32px))}
+.squad-theme-tabs{display:flex;gap:7px;margin:0 0 16px}
+#squadThemeDialog .squad-theme-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 15px;border:1px solid #ffffff1d;border-radius:9px;background:#ffffff04;color:#bcb7cb;font:inherit;font-size:12px;font-weight:600;box-shadow:none}
+#squadThemeDialog .squad-theme-tabs button[aria-pressed=true]{color:#f2eafb;border-color:#c6acff66;background:#c6acff12}
+.squad-theme-tabs button span{font-size:10px;opacity:.65}
+.squad-theme-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+#squadThemeDialog .squad-theme-choice{padding-bottom:10px}
+.squad-theme-choice>small{font-size:9px}
+.squad-theme-swatch{height:60px}
+.squad-theme-swatch::after{inset:0;width:auto;height:auto;border:0;border-radius:0;box-shadow:none;background-image:var(--squad-pattern-image);background-size:var(--squad-pattern-size,auto);opacity:1}
+.squad-theme-swatch b{z-index:1}
+.squad-theme-footer{position:sticky;bottom:-26px;margin-inline:-26px;margin-bottom:-26px;padding:16px 26px;background:#15151ff7;backdrop-filter:blur(12px);z-index:2}
+.squad-pattern-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#squadThemeDialog [hidden]{display:none!important}
+.squad-pattern-swatch{position:relative;display:block;height:110px;border-radius:8px;overflow:hidden;background:radial-gradient(ellipse at 100% 0,rgba(var(--squad-rgb),.35),transparent 80%),#161622}
+.squad-pattern-swatch::after{content:"";position:absolute;inset:0;background-image:var(--squad-pattern-image);background-size:var(--squad-pattern-size,auto)}
+.squad-pattern-swatch b{position:absolute;z-index:1;right:7px;bottom:7px;width:21px;height:21px;display:grid;place-items:center;background:var(--squad-accent);color:#171322;border-radius:50%;visibility:hidden;font-size:12px}
+[aria-pressed=true]>.squad-pattern-swatch b{visibility:visible}
+@media(max-width:700px){.squad-theme-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:480px){#squadThemeDialog{width:calc(100% - 24px)}.squad-theme-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}#squadThemeDialog .squad-theme-choice{padding:5px 5px 9px;gap:6px}.squad-theme-choice>strong{font-size:10px}.squad-theme-choice>small{display:none}.squad-theme-swatch{height:49px}.squad-theme-swatch b{height:17px;width:17px;font-size:10px}.squad-pattern-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.squad-pattern-swatch{height:93px}.squad-theme-footer{bottom:-19px;margin-inline:-19px;margin-bottom:-19px;padding:14px 19px}.squad-theme-tabs button{flex:1}.squad-banner .squad-customise{min-height:28px;height:28px;padding:5px 8px;font-size:10px}.squad-banner::before{inset:0}}
