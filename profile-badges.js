@@ -145,43 +145,36 @@
       sight.entries.set(card,key);sight.observer.observe(card);
     }
   }
-  const regionalGuide='https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-Regional-Pathway-Handbook-Information-04.02-2_compressed.pdf';
-  // Current marks are evidence of individual skills, not of an unrecorded routine.
-  // Keep review states distinct from both an achieved requirement and a missing skill.
+  // SWL coach-defined individual-skill targets. Connections are assumed.
+  const levelEightFloor=[
+    ['acro-pro-roundoff-flick','Round-off flick'],
+    ['leaps-base-0','Split leap'],
+    ['leaps-base-1','Cat leap full turn'],
+    ['acro-base-0','Backwards walkover'],
+    ['rolls-base-full-turn','Full turn jump'],
+    ['acro-upgrade-1','1½ spin']
+  ];
   function regionalAssessment(config) {
     const mark=markReader(config),id=config.gymnast.id;
-    const skills=config.skills||[];
-    const has=key=>mark(id,key)>0;
-    const names=keys=>keys.map(key=>skills.find(s=>s.id===key)?.name||key).join(' + ');
-    const acro=['acro-base-0','acro-base-one-hand','rolls-base-0','rolls-base-2','rolls-upgrade-dive','rolls-upgrade-2','acro-upgrade-0','acro-upgrade-2','acro-pro-handspring'];
-    const dance=['leaps-base-0','leaps-base-cat','leaps-base-scissor','leaps-base-2','leaps-base-1','leaps-upgrade-w-hop','rolls-pro-1','rolls-base-full-turn'];
-    const split=['leaps-base-0','leaps-base-2','rolls-pro-1'].find(has);
-    const second=dance.find(key=>key!==split&&has(key));
-    const acros=acro.filter(has),dances=dance.filter(has);
-    const row=(title,status,detail)=>({title,status,detail});
+    const has=key=>Boolean(key)&&mark(id,key)>0;
     return [8,7,6].map(level=>{
-      const line=level===6
-        ?row('Three-element backward line with a salto','review','This connected line is not recorded in the app. A coach must assess it.')
-        :has('acro-pro-roundoff-flick')
-          ?row(level===8?'Two-element acro line':'Backward flighted acro line','met',names(['acro-pro-roundoff-flick']))
-          :row(level===8?'Two-element acro line':'Backward flighted acro line',level===8&&acros.length>=2?'review':'missing',level===8&&acros.length>=2?'Individual acro skills recorded; check the connection.':level===8?'Achieve two connected acro elements.':'Round-off flick is not yet recorded. Other qualifying lines need coach review.');
-      const series=row('Dance series with a split',split&&second?'review':'missing',split&&second?names([split,second])+' recorded separately; check the connection.':!split?'Achieve a split leap, split change or split jump, plus a second dance element.':'Achieve a second dance element to connect to the split element.');
-      const mixed=level===6
-        ?row('Forward flighted acro · B or higher',has('acro-pro-handspring')?'met':'missing',has('acro-pro-handspring')?names(['acro-pro-handspring']):'Handspring is not yet recorded. Other qualifying skills need coach review.')
-        :row('Mixed dance + acro series',acros.length&&dances.length?'review':'missing',acros.length&&dances.length?'Dance and acro skills recorded; check them as a connected series.':'Achieve a dance element and an acro element, then connect them.');
-      const spinKeys=level===8?['acro-base-full-spin']:level===7?['acro-upgrade-1']:['acro-upgrade-1','acro-pro-1'];
-      const spin=spinKeys.find(has);
-      const floor=[line,series,mixed,row(level===8?'B spin':level===7?'C spin':'C spin or higher',spin?'met':'missing',spin?names([spin]):level===8?'Full spin is not yet recorded.':level===7?'1½ spin is not yet recorded.':'1½ spin or double spin is not yet recorded.')];
-      const vaultKeys=level===6?['vault-vaults-0','vault-vaults-1','vault-vaults-2']:['vault-vaults-0','vault-vaults-1'];
-      const vaults=vaultKeys.filter(has),height=level===8?'1.00 m':level===7?'1.10 m':'1.15 m';
-      const vault=[row('An eligible vault',vaults.length?'met':'missing',vaults.length?names(vaults):level===6?'Achieve Handspring, Half on, or Half on half off.':'Achieve Handspring or Half on. Half on half off is not eligible at this level.'),row('Competition setup','review','Two of the same vault at '+height+'. Height and repeated attempts are not recorded.')];
-      return {level,floor,vault,height,met:floor.filter(r=>r.status==='met').length,missing:floor.some(r=>r.status==='missing')||!vaults.length,status:floor.some(r=>r.status==='missing')||!vaults.length?'Not yet':'Coach review',range:level===8?'A–C · max four C · no saltos':level===7?'A–C':'A–D · max two D'};
+      const required=[...levelEightFloor];
+      if(level<=7)required.push(['leaps-base-2','Split change']);
+      if(level===6)required.push(['acro-pro-handspring','Handspring'],[null,'Backward somersault']);
+      const floor=required.map(([key,title])=>({key,title,status:key?(has(key)?'met':'missing'):'untracked',detail:key?'':'Not tracked in the app yet.'}));
+      const vaultKeys=level===8?['vault-vaults-0','vault-vaults-1','vault-vaults-2']:level===7?['vault-vaults-1','vault-vaults-2']:['vault-vaults-2'];
+      const vault=[{title:level===8?'Handspring or higher':level===7?'Half on or higher':'Half on half off',status:vaultKeys.some(has)?'met':'missing',detail:''}];
+      const met=floor.filter(r=>r.status==='met').length;
+      const untracked=floor.some(r=>r.status==='untracked');
+      const missing=floor.some(r=>r.status==='missing')||vault[0].status==='missing';
+      return {level,floor,vault,met,total:floor.length,missing,status:missing?'Skills to build':untracked?'Not fully tracked':'Skills ready',ready:!missing&&!untracked};
     });
   }
   function regionalCard(config) {
     const levels=regionalAssessment(config);
-    const requirement=r=>`<li class="regional-result is-${r.status}"><span class="regional-status" aria-label="${r.status==='met'?'Recorded':r.status==='review'?'Coach check':'Not recorded'}">${r.status==='met'?'✓':r.status==='review'?'◌':'−'}</span><div><strong>${esc(r.title)}</strong><p>${esc(r.detail)}</p></div></li>`;
-    return `<section class="regional-award" aria-label="Regional floor and vault readiness"><header class="regional-head"><div><small>IGA REGIONAL · 2026</small><h2>Competition readiness</h2><p>Floor &amp; vault · calculated from current skills</p></div><span class="regional-auto">Live assessment</span></header><div class="regional-levels">${levels.map(l=>`<details data-profile-badge-details="${esc(config.gymnast.id)}:regional:${l.level}"><summary><span class="regional-level-number">${l.level}</span><div class="regional-level-title"><b>Level ${l.level}</b><small>Floor ${l.met}/4 recorded · Vault ${l.vault[0].status==='met'?'skill recorded':'not yet'}</small></div><span class="regional-outcome ${l.missing?'':'is-review'}">${l.status}</span><span class="pb-chevron">${chevron}</span></summary><div class="regional-apparatus"><section><h3>Floor <small>${l.range}</small></h3><ul>${l.floor.map(requirement).join('')}</ul></section><section><h3>Vault <small>${l.height} table</small></h3><ul>${l.vault.map(requirement).join('')}</ul><div class="regional-routine"><strong>Full routine check</strong><p>Coach to review eight counting elements, connections without reusing an element for different requirements, music and routine composition.</p></div></section></div></details>`).join('')}</div><footer><span>Recorded skills guide readiness. Untracked requirements still need a coach. Floor &amp; vault only.</span><a href="${regionalGuide}" target="_blank" rel="noopener">IGA rules ↗</a></footer></section>`;
+    const requirement=r=>`<li class="regional-result is-${r.status}"><span class="regional-status" aria-label="${r.status==='met'?'Achieved':r.status==='untracked'?'Not tracked':'Not yet achieved'}">${r.status==='met'?'✓':r.status==='untracked'?'·':'−'}</span><div><strong>${esc(r.title)}</strong>${r.detail?`<p>${esc(r.detail)}</p>`:''}</div></li>`;
+    const levelCard=l=>`<section class="regional-target-level ${l.ready?'is-ready':''}"><header class="regional-target-heading"><span class="regional-level-number">${l.level}</span><div><h3>Level ${l.level}</h3><p>${l.met}/${l.total} floor skills · ${l.vault[0].status==='met'?'Vault achieved':'Vault to achieve'}</p></div><span class="regional-target-status">${l.ready?'✓ ':''}${l.status}</span></header><div class="regional-apparatus"><section><h3>Floor</h3><ul>${l.floor.map(requirement).join('')}</ul></section><section><h3>Vault</h3><ul>${l.vault.map(requirement).join('')}</ul></section></div></section>`;
+    return `<section class="regional-award" aria-label="Floor and vault skill readiness"><header class="regional-head"><div><small>SWL SKILL TARGETS · REGIONAL</small><h2>Competition readiness</h2><p>Individual skills only · connections assumed</p></div></header>${levelCard(levels[0])}<details class="regional-other-levels" data-profile-badge-details="${esc(config.gymnast.id)}:other-levels"><summary><span>Levels 7 &amp; 6</span><span class="pb-chevron">${chevron}</span></summary><div class="regional-levels">${levels.slice(1).map(levelCard).join('')}</div></details></section>`;
   }
   function render(host, config = {}) {
     if (!host) return null;
