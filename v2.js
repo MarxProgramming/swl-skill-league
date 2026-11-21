@@ -134,6 +134,11 @@
   function mount(config) {
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
     directory.innerHTML=`<h1 class="sr">Gymnasts</h1><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-squad-tools"><label for="directoryGroups">Choose squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div></div><div class="directory-quick-switch" role="group" aria-label="Quick complex switching"><button type="button" id="directoryComplexPrevious" aria-label="Previous complex" title="Previous complex" disabled>‹</button><button type="button" id="complexJump" class="directory-quick-switch-choice" aria-haspopup="dialog"><span>Training complex · Floor &amp; Vault</span><strong id="directoryComplexCurrent" aria-live="polite">Choose a complex</strong></button><button type="button" id="directoryComplexNext" aria-label="Next complex" title="Next complex" disabled>›</button></div><div class="directory-complex-footer"><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p><button type="button" class="quiet" id="directoryComplexClear" hidden>Clear complex</button></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>More options</strong></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><button type="button" id="directoryReorder" class="quiet">↻ Reorder</button><div id="directorySelectionToolbar"></div><div id="directoryResults"></div><div id="directoryAttendanceStatus"></div>`;
+    const options=directory.querySelector('.directory-filter-content');
+    for(const selector of ['.directory-search','.directory-complex-footer','#directoryReorder','#directorySelectionToolbar'])options.append(directory.querySelector(selector));
+    directory.querySelector('.directory-primary-tools').style.gridTemplateColumns='1fr';
+    directory.querySelector('#directoryFilters').insertAdjacentHTML('beforebegin','<details id="squadCircuit" class="directory-filter-panel"><summary><strong>Squad circuit ideas</strong><span aria-hidden="true">⌄</span></summary><div id="circuitStations" class="directory-filter-content"></div></details>');
+    directory.querySelector('#squadCircuit').addEventListener('toggle',renderSquadCircuit);
     directory.refreshPicker = window.SWLCoaching?.mountPicker(directory, {options:complexOptions,selected:()=>directoryComplex,choose:chooseComplex,step:switchComplex});
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
     directory.querySelector('#directoryReorder').addEventListener('click',enterDirectory);
@@ -210,6 +215,34 @@
       return `<div class="directory-quick-cell level-${level}${fresh.due?' is-due':''}"><button type="button" id="quick-${esc(g.id)}-${esc(k.id)}" class="directory-quick-skill level-${level}" data-quick-skill="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(k.name)}: ${status}. Mark ${next}${fresh.due?'. Renewal due':''}" title="${esc(k.name)} · ${status}${fresh.due?' · due for renewal':''}"${data.canEdit===false||window.SWLDirectorySelection?.isActive()?' disabled':''}><span aria-hidden="true">${['○','✓','✓✓'][level]}</span><strong>${esc(shortSkills[k.id]||k.name)}</strong>${fresh.previouslyExpired?'<small class="previous-perfect" title="A previous Perfect mark expired">Previously Perfect</small>':''}</button>${fresh.due?`<div class="directory-quick-renewal"><span class="directory-quick-days" id="${esc(renewalId)}">${esc(renewalDays)}</span><button type="button" id="quick-renew-${esc(g.id)}-${esc(k.id)}" class="directory-quick-renew" data-renewal-urgency="${fresh.days<=1?'final':'due'}" data-quick-renew="${esc(k.id)}" data-quick-gymnast="${esc(g.id)}" aria-label="Renew Perfect for ${esc(k.name)} for ${esc(g.name)} for 30 days" aria-describedby="${esc(renewalId)}"${data.canEdit===false||window.SWLDirectorySelection?.isActive()?' disabled':''}>↻ Renew</button></div>`:''}</div>`;
     }).join('')}</div></div>`;
   }
+  function renderSquadCircuit() {
+    const panel=directory.querySelector('#squadCircuit');
+    if(!panel.open)return;
+    const people=data?.gymnasts.filter(g=>inGroup(g,directoryGroup)&&!window.SWLDirectoryAttendance?.isHidden(g.id))||[];
+    const rows=data?.hasLoaded?skillPriorities(people,{scope:'combined',limit:Infinity}):[];
+    const seen=new Set();
+    const stations=rows.filter(({skill})=>{
+      if(seen.has(skill.category))return false;
+      seen.add(skill.category);return true;
+    }).slice(0,3);
+    const drills={
+      rolls:'Rock back and return to a balanced squat three times, then practise the selected roll progression with the coach.',
+      leaps:'Mark the take-off and landing on a floor line. Practise the footwork, then try the leap and hold the finish.',
+      acro:'Mark the start and finish on a floor line. Rehearse the entry, then perform the coach-selected progression and hold the finish.',
+      vault:'Mark the approach and hurdle on the floor. Rehearse the rhythm, then practise the selected phase at the coached vault station.'
+    };
+    function drill(skill){
+      const name=skill.name.toLowerCase();
+      if(/jump/.test(name)&&skill.category==='rolls')return 'Use a floor line as your landing target. Start with a straight jump and a two-second stick, then repeat with the jump shown.';
+      if(/spin/.test(name))return 'Choose a spot at eye level. Rise into the turning position, hold your balance, then practise the turn to a controlled finish.';
+      if(/cartwheel/.test(name))return 'Follow a floor line through the hand and foot placements. Work towards finishing in a lunge on the line.';
+      if(/walkover/.test(name))return 'Rehearse the entry lunge and split-leg finish separately, then join them in a coach-supported progression.';
+      if(/arm swing|hurdle|^run$/.test(name))return 'Use a marked approach lane. Repeat three approaches, focusing on the named phase and keeping the rhythm consistent.';
+      return drills[skill.category];
+    }
+    const content=directory.querySelector('#circuitStations');
+    commitHTML(content,stations.length?`<strong>${esc(groupName(directoryGroup))} · ${people.length} present</strong><p>Split into ${stations.length} station${stations.length===1?'':'s'}. Rotate every two minutes.</p><ol>${stations.map(r=>`<li><strong>${esc(r.skill.name)}</strong><p>${r.toAchieve?r.toAchieve+' working towards Achieved':r.toPerfect+' working towards Perfect'} · ${esc(drill(r.skill))}</p></li>`).join('')}</ol>`:!data?.hasLoaded?'Loading squad marks…':people.length?'All circuit skills are Perfect.':'No gymnasts present in this squad.');
+  }
   function renderDirectory() {
     if(!data)return;const key=focusKey(directory),groups=groupOptions(),skills=data.skills;
     const complexes=complexOptions();
@@ -217,6 +250,7 @@
     const complex=complexes.find(c=>c.id===directoryComplex);
     const scope=directoryGroup+'|'+directoryComplex;if(scope!==orderScope){resetDirectoryOrder();orderScope=scope;}
     if(data.hasLoaded&&orderRanks.size===0){const count=g=>complex?.personal?skillPriorities([g],{limit:3,scope:'floor'}).reduce((n,r)=>n+data.mark(g.id,r.skill.id),0):complex?complex.skills.reduce((n,k)=>n+data.mark(g.id,k.id),0):0;[...data.gymnasts].sort((a,b)=>count(a)-count(b)||a.name.localeCompare(b.name,'en-GB')).forEach((g,i)=>orderRanks.set(g.id,i));}
+    renderSquadCircuit();
     const currentLabel=directory.querySelector('#directoryComplexCurrent');
     if(currentLabel)currentLabel.textContent=complex?.label||'Choose a complex';
     directory.refreshPicker?.(complex?.label || 'Choose a complex',data.hasLoaded);
