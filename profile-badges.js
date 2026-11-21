@@ -145,6 +145,51 @@
       sight.entries.set(card,key);sight.observer.observe(card);
     }
   }
+  const splitSeries='Dance series including a split element';
+  const mixedSeries='Connect a dance element and an acrobatic element';
+  const regionalLevels=[
+    {level:8,colour:'#c4adff',range:'A–C · up to four C elements · no saltos',checks:[
+      'Connect two acrobatic elements',splitSeries,mixedSeries,'Perform a B spin']},
+    {level:7,colour:'#8cd9ef',range:'A–C · full floor with music',checks:[
+      'Show a backward flighted acro line of at least two elements',splitSeries,mixedSeries,'Perform a C spin']},
+    {level:6,colour:'#eeb2a8',range:'A–D · up to two D elements · full floor with music',checks:[
+      'Connect three backward acro elements including a somersault',splitSeries,'Perform forward flighted acro valued B or higher','Perform a C spin or higher']}
+  ];
+  const regionalGuide='https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-Regional-Pathway-Handbook-Information-04.02-2_compressed.pdf';
+  const routineCheck='Review the full routine and its eight counting skills';
+  function reviewKey(id,level,i){return 'swl-regional-floor-2026:'+id+':'+level+':'+i;}
+  function observed(id,level,i){try{return localStorage.getItem(reviewKey(id,level,i))==='1';}catch{return false;}}
+  function reviewEditable(){
+    const lock=document.getElementById?.('lockButton');
+    return lock?.dataset.locked==='false'&&!lock.disabled&&!document.body.classList.contains('scoring-locked');
+  }
+  function crest(level,earned){
+    return `<svg class="regional-crest" viewBox="0 0 80 86" aria-hidden="true"><path fill="currentColor" opacity=".14" d="M40 3 71 16v28Q71 64 40 82 9 64 9 44V16Z"/><g fill="none" stroke="currentColor"><path stroke-width="2" d="M40 5 69 17v26q0 20-29 36Q11 63 11 43V17Z"/><path opacity=".45" d="m40 11 23 10v23q0 15-23 29-23-14-23-29V21Z"/><path d="m26 24 14-5 14 5M32 62l8 5 8-5"/></g><text x="40" y="54" text-anchor="middle" font-size="32" font-weight="800" fill="currentColor">${level}</text></svg>`;
+  }
+  function regionalCard(config) {
+    const id=config.gymnast.id,mark=markReader(config);
+    const unlocked=reviewEditable();
+    const levels=regionalLevels.map(l=>({...l,items:[...l.checks,routineCheck],count:Array.from({length:5},(_,i)=>Number(observed(id,l.level,i))).reduce((a,b)=>a+b,0)}));
+    const highest=levels.filter(l=>l.count===5).pop();
+    return `<section class="regional-award" aria-label="Regional floor readiness"><div class="regional-head"><div style="color:${highest?.colour||'#b5a1db'}">${crest(highest?.level||'F',!!highest)}</div><div><small>SWL AWARDS · REGIONAL 2026</small><h2>${highest?'Level '+highest.level+' floor ready':'Floor readiness'}</h2><p>${highest?'Routine confirmed by a coach':'Coach assessment · Levels 8, 7 and 6'}</p></div></div><div class="regional-levels">${levels.map(l=>{
+      const spinId=l.level===8?'acro-base-full-spin':'acro-upgrade-1';
+      const logged=mark(id,spinId)>0?(l.level===8?'Full spin':'1½ spin'):'';
+      return `<details style="--level-ink:${l.colour}" data-profile-badge-details="${esc(id)}:regional:${l.level}"><summary><b>Level ${l.level}</b><span>${l.count===5?'✓ Ready':l.count+' / 5'}</span><i aria-hidden="true">⌄</i></summary><div class="regional-checks"><p>${l.range}</p>${logged?`<p>Recorded skill · ${logged}</p>`:''}${l.items.map((label,i)=>`<label><input type="checkbox" data-regional-check="${i}" data-level="${l.level}" data-person="${esc(id)}" ${observed(id,l.level,i)?'checked':''} ${unlocked?'':'disabled'}><span>${label}</span></label>`).join('')}</div></details>`;
+    }).join('')}</div><footer><span>${unlocked?'Tick what you have seen':'Unlock scoring to assess'} · Saved on this device</span><a href="${regionalGuide}" target="_blank" rel="noopener">IGA guide ↗</a></footer></section>`;
+  }
+  const reviewConfigs=new WeakMap();
+  function bindRegional(host,config){
+    if(!reviewConfigs.has(host))host.addEventListener?.('change',event=>{
+      const box=event.target,active=reviewConfigs.get(host);
+      if(!box.matches?.('[data-regional-check]')||!active)return;
+      if(!reviewEditable()||box.dataset.person!==active.gymnast.id){box.checked=!box.checked;return;}
+      try{localStorage.setItem(reviewKey(active.gymnast.id,box.dataset.level,box.dataset.regionalCheck),box.checked?'1':'0');}
+      catch{box.checked=!box.checked;window.alert('This browser could not save the assessment.');return;}
+      render(host,active);
+      host.querySelector(`input[data-level="${box.dataset.level}"][data-regional-check="${box.dataset.regionalCheck}"]`)?.focus({preventScroll:true});
+    });
+    reviewConfigs.set(host,config);
+  }
   function render(host, config = {}) {
     if (!host) return null;
     const model = build(config);
@@ -152,7 +197,8 @@
     if (model.excluded) { replace(host,'<section class="pb-empty"><h2>Gymnast badges</h2><p>These challenges are for gymnasts. Coaches can still track all their skills.</p></section>'); return model; }
     if (!model.loaded) { replace(host,'<p class="pb-empty" role="status">Loading badge progress…</p>'); return model; }
     if (!model.badges.length) { replace(host,'<p class="pb-empty" role="status">Badge progress is unavailable right now.</p>'); return model; }
-    replace(host,`${window.SWLCompetitionAwards?.html(model.gymnast) || ''}<div class="profile-badge-collection"><div class="pb-heading"><h2>Skill badges</h2><span>${model.earnedCount} of ${model.badges.length} earned</span></div>${['floor','vault'].map(apparatus => `<section class="pb-journey" aria-label="${apparatus === 'floor' ? 'Floor' : 'Vault'} badge progress"><div class="pb-journey-heading"><h2>${apparatus === 'floor' ? 'Floor' : 'Vault'}</h2>${apparatus === 'floor' ? '<p>Build through each level · handstands excluded</p>' : '<p>A separate collection</p>'}</div><div class="pb-grid">${model.badges.filter(badge => badge.definition.apparatus === apparatus).map(badge => badgeCard(badge,model)).join('')}</div></section>`).join('')}</div>`);
+    bindRegional(host,config);
+    replace(host,`${regionalCard(config)}${window.SWLCompetitionAwards?.html(model.gymnast) || ''}<div class="profile-badge-collection"><div class="pb-heading"><h2>Skill badges</h2><span>${model.earnedCount} of ${model.badges.length} earned</span></div>${['floor','vault'].map(apparatus => `<section class="pb-journey" aria-label="${apparatus === 'floor' ? 'Floor' : 'Vault'} badge progress"><div class="pb-journey-heading"><h2>${apparatus === 'floor' ? 'Floor' : 'Vault'}</h2>${apparatus === 'floor' ? '<p>Build through each level · handstands excluded</p>' : '<p>A separate collection</p>'}</div><div class="pb-grid">${model.badges.filter(badge => badge.definition.apparatus === apparatus).map(badge => badgeCard(badge,model)).join('')}</div></section>`).join('')}</div>`);
     watchVisible(host,config);
     return model;
   }
