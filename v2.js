@@ -135,10 +135,23 @@
     if(directory)return;actions=config;directory=config.directory;analytics=config.analytics;
     directory.innerHTML=`<h1 class="sr">Gymnasts</h1><div class="directory-tools"><div class="directory-primary-tools"><label class="directory-search" for="directorySearch"><span aria-hidden="true">⌕</span><input id="directorySearch" type="search" aria-label="Search gymnasts" placeholder="Search any gymnast…" autocomplete="off"></label><div class="directory-squad-tools"><label for="directoryGroups">Choose squad</label><select id="directoryGroups"><option value="all">All squads</option></select></div></div><div class="directory-quick-switch" role="group" aria-label="Quick complex switching"><button type="button" id="directoryComplexPrevious" aria-label="Previous complex" title="Previous complex" disabled>‹</button><button type="button" id="complexJump" class="directory-quick-switch-choice" aria-haspopup="dialog"><span>Training complex · Floor &amp; Vault</span><strong id="directoryComplexCurrent" aria-live="polite">Choose a complex</strong></button><button type="button" id="directoryComplexNext" aria-label="Next complex" title="Next complex" disabled>›</button></div><div class="directory-complex-footer"><p id="directoryComplexHint">One complex at a time. Your choice appears below every gymnast.</p><button type="button" class="quiet" id="directoryComplexClear" hidden>Clear complex</button></div><details class="directory-filter-panel" id="directoryFilters"><summary><span class="directory-filter-copy"><strong>More options</strong></span><span class="directory-filter-chevron" aria-hidden="true">⌄</span></summary><div class="directory-filter-content"><div class="directory-extra-tools"><button type="button" class="quiet directory-change-programme" data-view="home">Change programme</button></div></div></details></div><button type="button" id="directoryReorder" class="quiet">↻ Reorder</button><div id="directorySelectionToolbar"></div><div id="directoryResults"></div><div id="directoryAttendanceStatus"></div>`;
     const options=directory.querySelector('.directory-filter-content');
-    for(const selector of ['.directory-search','.directory-complex-footer','#directoryReorder','#directorySelectionToolbar'])options.append(directory.querySelector(selector));
-    directory.querySelector('.directory-primary-tools').style.gridTemplateColumns='1fr';
-    directory.querySelector('#directoryFilters').insertAdjacentHTML('beforebegin','<details id="squadCircuit" class="directory-filter-panel"><summary><strong>Squad circuit ideas</strong><span aria-hidden="true">⌄</span></summary><div id="circuitStations" class="directory-filter-content"></div></details>');
-    directory.querySelector('#squadCircuit').addEventListener('toggle',renderSquadCircuit);
+    for(const selector of ['.directory-complex-footer','#directoryReorder','#directorySelectionToolbar'])options.append(directory.querySelector(selector));
+    const primary=directory.querySelector('.directory-primary-tools');
+    primary.style.gridTemplateColumns='minmax(0,1fr) auto';
+    primary.insertAdjacentHTML('beforeend','<button type="button" id="findName" class="quiet" aria-label="Search gymnasts" aria-expanded="false" aria-controls="nameSearchBox"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg></button>');
+    primary.insertAdjacentHTML('afterend','<div id="nameSearchBox" style="position:relative" hidden></div>');
+    const searchBox=directory.querySelector('#nameSearchBox'),find=directory.querySelector('#findName');
+    searchBox.append(directory.querySelector('.directory-search'));
+    find.addEventListener('click',()=>{
+      searchBox.hidden=!searchBox.hidden;
+      find.setAttribute('aria-expanded',String(!searchBox.hidden));
+      const input=directory.querySelector('#directorySearch');
+      if(searchBox.hidden){input.value='';input.dispatchEvent(new Event('input'));}else input.focus();
+    });
+    directory.querySelector('#directoryFilters').insertAdjacentHTML('beforebegin','<div><button type="button" class="quiet" id="circuitButton" aria-expanded="false" aria-controls="squadCircuit">Floor circuits</button><div id="squadCircuit" hidden><div class="a31-segments" role="group" aria-label="Choose circuit">'+['All-round','Foundations','Polish'].map((label,i)=>`<button type="button" data-plan="${i}" aria-pressed="${i===0}">${label}</button>`).join('')+'</div><div id="circuitStations"></div></div></div>');
+    const circuit=directory.querySelector('#squadCircuit'),trigger=directory.querySelector('#circuitButton');
+    trigger.addEventListener('click',()=>{circuit.hidden=!circuit.hidden;trigger.setAttribute('aria-expanded',String(!circuit.hidden));renderSquadCircuit();});
+    circuit.addEventListener('click',e=>{const choice=e.target.closest('[data-plan]');if(!choice)return;circuit.dataset.plan=choice.dataset.plan;circuit.querySelectorAll('[data-plan]').forEach(b=>b.setAttribute('aria-pressed',String(b===choice)));renderSquadCircuit();});
     directory.refreshPicker = window.SWLCoaching?.mountPicker(directory, {options:complexOptions,selected:()=>directoryComplex,choose:chooseComplex,step:switchComplex});
     window.SWLSearch?.mount({input:directory.querySelector('#directorySearch'),onSelect:id=>actions.openGymnast(id)});
     directory.querySelector('#directoryReorder').addEventListener('click',enterDirectory);
@@ -217,31 +230,17 @@
   }
   function renderSquadCircuit() {
     const panel=directory.querySelector('#squadCircuit');
-    if(!panel.open)return;
+    if(panel.hidden||!data)return;
     const people=data?.gymnasts.filter(g=>inGroup(g,directoryGroup)&&!window.SWLDirectoryAttendance?.isHidden(g.id))||[];
-    const rows=data?.hasLoaded?skillPriorities(people,{scope:'combined',limit:Infinity}):[];
-    const seen=new Set();
-    const stations=rows.filter(({skill})=>{
-      if(seen.has(skill.category))return false;
-      seen.add(skill.category);return true;
-    }).slice(0,3);
-    const drills={
-      rolls:'Rock back and return to a balanced squat three times, then practise the selected roll progression with the coach.',
-      leaps:'Mark the take-off and landing on a floor line. Practise the footwork, then try the leap and hold the finish.',
-      acro:'Mark the start and finish on a floor line. Rehearse the entry, then perform the coach-selected progression and hold the finish.',
-      vault:'Mark the approach and hurdle on the floor. Rehearse the rhythm, then practise the selected phase at the coached vault station.'
-    };
-    function drill(skill){
-      const name=skill.name.toLowerCase();
-      if(/jump/.test(name)&&skill.category==='rolls')return 'Use a floor line as your landing target. Start with a straight jump and a two-second stick, then repeat with the jump shown.';
-      if(/spin/.test(name))return 'Choose a spot at eye level. Rise into the turning position, hold your balance, then practise the turn to a controlled finish.';
-      if(/cartwheel/.test(name))return 'Follow a floor line through the hand and foot placements. Work towards finishing in a lunge on the line.';
-      if(/walkover/.test(name))return 'Rehearse the entry lunge and split-leg finish separately, then join them in a coach-supported progression.';
-      if(/arm swing|hurdle|^run$/.test(name))return 'Use a marked approach lane. Repeat three approaches, focusing on the named phase and keeping the rhythm consistent.';
-      return drills[skill.category];
-    }
-    const content=directory.querySelector('#circuitStations');
-    commitHTML(content,stations.length?`<strong>${esc(groupName(directoryGroup))} · ${people.length} present</strong><p>Split into ${stations.length} station${stations.length===1?'':'s'}. Rotate every two minutes.</p><ol>${stations.map(r=>`<li><strong>${esc(r.skill.name)}</strong><p>${r.toAchieve?r.toAchieve+' working towards Achieved':r.toPerfect+' working towards Perfect'} · ${esc(drill(r.skill))}</p></li>`).join('')}</ol>`:!data?.hasLoaded?'Loading squad marks…':people.length?'All circuit skills are Perfect.':'No gymnasts present in this squad.');
+    const plan=panel.dataset.plan||'0';
+    let rows=data.hasLoaded?skillPriorities(people,{scope:'floor',limit:Infinity}):[];
+    if(plan==='1')rows=rows.filter(r=>r.skill.tier==='base');
+    if(plan==='2')rows=rows.filter(r=>r.toPerfect).sort((a,b)=>b.toPerfect-a.toPerfect);
+    const seen=new Set(),stations=[];
+    for(const row of rows){if(!seen.has(row.skill.category)){stations.push(row);seen.add(row.skill.category);}}
+    for(const row of rows){if(stations.length>=3)break;if(!stations.includes(row))stations.push(row);}
+    const cue=name=>/spin/i.test(name)?'Spot the finish and hold.':/jump/i.test(name)?'Stick the landing for two seconds.':/leap|scissor|hop/i.test(name)?'Show the shape at the top.':/roll/i.test(name)?'Keep the entry and exit controlled.':'Rehearse the entry, then hold the finish.';
+    commitHTML(directory.querySelector('#circuitStations'),stations.length?`<p>${esc(groupName(directoryGroup))} · 2 min per station</p><ol>${stations.slice(0,3).map(r=>`<li><strong>${esc(r.skill.name)}</strong> · ${cue(r.skill.name)}</li>`).join('')}</ol>`:!data.hasLoaded?'Loading…':!people.length?'No gymnasts present.':plan==='2'?'No achieved skills waiting for Perfect.':'All skills in this circuit are Perfect.');
   }
   function renderDirectory() {
     if(!data)return;const key=focusKey(directory),groups=groupOptions(),skills=data.skills;
