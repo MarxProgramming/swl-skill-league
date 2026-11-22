@@ -73,3 +73,9 @@
 .pg-a-summary{padding:20px;background:linear-gradient(130deg,#171120,#0e0b15);border-color:#b99cdb18}.pg-a-percent{font-size:32px;letter-spacing:-.03em}.pg-a-track{height:5px}.pg-a-person{background:linear-gradient(120deg,#231c30,#191420);border-color:#c1a1e61a;transition:background .2s,border-color .2s}.pg-a-person:hover{border-color:#c1a1e64a}.pg-a-piece>summary,.pg-a-gymnasts>summary{min-height:56px}
 @media(max-width:680px){.pg-overview{padding:18px;gap:16px 12px}.pg-total{padding:9px 10px}.pg-overview h2{font-size:20px}.pg-plan-switch button{min-height:60px;padding:10px 7px}.pg-plan-switch button strong{font-size:13px}.pg-plan-switch button>span{font-size:10px}.pg-cr>summary{min-height:64px;padding:12px;gap:9px}.pg-cr-title>span{font-size:14px}.pg-cr[open]>.pg-cr-body{padding:10px}.pg-option-skills{grid-template-columns:1fr;padding:9px}.pg-option-label{font-size:12px}.pg-option-progress{font-size:9px;padding:4px 5px}.pg-progress-dots i{width:5px;height:5px}.pg-apparatus-progress{gap:7px}.pg-apparatus>header>span{font-size:10px}.pg-a-summary{padding:16px}}
 @media(prefers-reduced-motion:reduce){.pg-cr,.pg-plan-switch button,.pg-cr>summary>svg,.pg-a-person{transition:none}}
+
+/* Readiness ranking: achieved, ready, and fully perfected. */
+.pg-a-person.pg-readiness-achieved{background:linear-gradient(115deg,#352346,#21182e);border-color:#b88be366}.pg-readiness-achieved .pg-readiness-label{color:#d5b2ff}
+.pg-a-person.pg-readiness-ready{background:linear-gradient(115deg,#203c31,#162720);border-color:#77d5a566}.pg-readiness-ready .pg-readiness-label{color:#97edbf}
+.pg-a-person.pg-readiness-super{background:linear-gradient(115deg,#44351b,#292215);border-color:#edc76b77}.pg-readiness-super .pg-readiness-label,.pg-a-person.pg-readiness-super>b{color:#f5d886}
+.pg-a-person .pg-readiness-label{font-weight:700;font-size:12px}
