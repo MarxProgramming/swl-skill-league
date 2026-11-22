@@ -215,7 +215,8 @@
     'vault-vaults-0':'Handspring','vault-vaults-1':'Half on','vault-vaults-2':'½ on ½ off'
   };
   function complexOptions() {
-    return data.categories.flatMap(c=>c.tiers.map(([tier,label])=>({id:c.id+'-'+tier,label:c.name+' · '+label,skills:data.skills.filter(k=>k.category===c.id&&k.tier===tier)}))).filter(c=>c.skills.length===3).concat([{id:'next-three',label:'Next three skills',skills:[],personal:true}]);
+    const tierOrder={base:0,run:0,upgrade:1,vaults:1,pro:2};
+    return data.categories.flatMap(c=>c.tiers.map(([tier,label])=>({id:c.id+'-'+tier,tier,label:c.name+' · '+label,skills:data.skills.filter(k=>k.category===c.id&&k.tier===tier)}))).filter(c=>c.skills.length===3).sort((a,b)=>(tierOrder[a.tier]??3)-(tierOrder[b.tier]??3)).concat([{id:'next-three',label:'Next three skills',skills:[],personal:true}]);
   }
   function switchComplex(direction) {
     if(!data?.hasLoaded)return;
