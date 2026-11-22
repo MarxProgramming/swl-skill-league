@@ -8,8 +8,9 @@
   function mount(root, {categories,skills}) {
     if (!root || root.dataset.mounted) return;
     root.dataset.mounted = 'true';
-    const tierOrder={base:0,run:0,upgrade:1,vaults:1,pro:2};
-    const complexes=categories.flatMap(c=>c.tiers.map(([tier,label])=>({c,tier,label}))).sort((a,b)=>(tierOrder[a.tier]??3)-(tierOrder[b.tier]??3));
+    const tierOrder={base:0,upgrade:1,pro:2};
+    const order=complex=>complex.c.id==='handstands'?3:complex.c.id==='vault'?(complex.tier==='run'?4:5):(tierOrder[complex.tier]??6);
+    const complexes=categories.flatMap(c=>c.tiers.map(([tier,label])=>({c,tier,label}))).sort((a,b)=>order(a)-order(b));
     root.innerHTML = `<div class="catalogue-back"><button class="quiet" type="button" data-close-skills>← Back</button><span>THE SKILL COLLECTION</span></div><div class="catalogue-head"><p class="eyebrow">Strong foundations. Room to grow.</p><h1 id="allSkillsTitle" tabindex="-1">All the skills.</h1><p>Floor and vault, in one place. Vault points have their own leaderboard. Browse the skills, then head to Gymnasts to record progress.</p></div><div class="catalogue-filters" role="group" aria-label="Filter skill catalogue"><button type="button" data-catalogue-category="all" aria-pressed="true">All complexes</button>${categories.map(c=>`<button type="button" data-catalogue-category="${esc(c.id)}" aria-pressed="false">${esc(c.name)}</button>`).join('')}</div><div class="catalogue-grid">${complexes.map(({c,tier,label})=>{
       const group=skills.filter(k=>k.category===c.id&&k.tier===tier);
       return `<article class="catalogue-complex" data-catalogue-group="${esc(c.id)}"><div class="catalogue-complex-head"><div><p>${esc(c.name)}</p><h2>${esc(label)}</h2></div><span class="catalogue-points">${group[0]?.points||0}<small>pts / skill</small></span></div><ol>${group.map(k=>`<li><span>${esc(k.name)}${IGA[k.id]?.note?`<small class="catalogue-skill-note">${esc(IGA[k.id].note)}</small>`:''}</span>${IGA[k.id]?`<small class="iga-grade">IGA-${esc(IGA[k.id].grade)}</small>`:''}</li>`).join('')}</ol><p class="catalogue-bonus">All three Perfect <b>+1 point</b></p></article>`;
