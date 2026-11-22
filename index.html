@@ -1626,6 +1626,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-card-sizes">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 <link rel="stylesheet" href="./profile-badges.css?v=skill-targets-circuits-20261121">
+<link rel="stylesheet" href="./profile-goals.css?v=20261122a">
 <link rel="stylesheet" href="./competition-awards.css?v=20261117-awards">
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
@@ -1860,7 +1861,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./badge-notices.js?v=20261118-polish"></script>
 <script src="./competition-results.js?v=20261117-awards"></script>
 <script src="./competition-awards.js?v=20261117-awards"></script>
-<script src="./profile-badges.js?v=awards-polish-20261121"></script>
+<script src="./profile-badges.js?v=profile-goals-20261122"></script>
+<script src="./profile-goals.js?v=20261122a"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=awards-polish-20261121">
@@ -2099,6 +2101,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     updatedAt: null,
     gymnasts: SEED_GYMNASTS.map(gymnast => ({ ...gymnast })),
     marks: {},
+    goalMarks: {},
     linking: {},
     skillDates: {},
     expiryDays: 30,
@@ -2165,6 +2168,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
     const ids = new Set(clean.gymnasts.map(g => g.id));
     if (ids.size !== clean.gymnasts.length) throw Error('The roster contains duplicate gymnast IDs.');
+    clean.goalMarks = window.SWLProfileGoals.cleanMarks(data.goalMarks,ids);
     clean.updatedAt = typeof data.updatedAt === 'string' && Number.isFinite(Date.parse(data.updatedAt))
       ? data.updatedAt : null;
     for (const [id, marks] of Object.entries(data.marks)) {
@@ -2570,6 +2574,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       if(g.squads.includes('Coaches')&&g.squads.length>1)throw Error('Coaches must be in the Coaches category only.');
       return {type:value.type,gymnastId:value.gymnastId,squads:g.squads};
     }
+    if (value.type === 'set_goal' && validGymnastId(value.gymnastId) && window.SWLProfileGoals.extraIds.includes(value.goalId) && Number.isInteger(value.value) && value.value>=0 && value.value<=2) return {type:'set_goal',gymnastId:value.gymnastId,goalId:value.goalId,value:value.value,clientAt:typeof value.clientAt==='string' && Number.isFinite(Date.parse(value.clientAt))?value.clientAt:new Date().toISOString()};
     if (value.type === 'set_mark' && validGymnastId(value.gymnastId) &&
         (SKILL_IDS.has(value.skillId) || RETIRED_SKILL_IDS.has(value.skillId)) && Number.isInteger(value.value) &&
         value.value >= 0 && value.value <= 2) {
@@ -2603,10 +2608,13 @@ html:has(body.no-motion){scroll-behavior:auto}
         const gymnast=next.gymnasts.find(g=>g.id===operation.gymnastId);gymnast.squads=operation.squads.slice();gymnast.coach=operation.squads[0];
       } else if (operation.type === 'archive_gymnast') {
         next.gymnasts=next.gymnasts.filter(g=>g.id!==operation.gymnastId);ids.delete(operation.gymnastId);
-        for(const key of ['marks','skillDates','linking','prizes','completionAchievements'])if(next[key])delete next[key][operation.gymnastId];
+        for(const key of ['marks','goalMarks','skillDates','linking','prizes','completionAchievements'])if(next[key])delete next[key][operation.gymnastId];
         for(const key of ['points','heat','history','heatPoints','heatHistory'])if(next.weeklyProgress?.[key])delete next.weeklyProgress[key][operation.gymnastId];
         if(next.dailyProgress?.points)delete next.dailyProgress.points[operation.gymnastId];
         if(next.challenge?.finishers)next.challenge.finishers=next.challenge.finishers.filter(row=>row.gymnastId!==operation.gymnastId);
+      } else if (operation.type === 'set_goal' && ids.has(operation.gymnastId)) {
+        next.goalMarks ??= {};next.goalMarks[operation.gymnastId] ??= {};
+        next.goalMarks[operation.gymnastId][operation.goalId] = {value:operation.value,updatedAt:operation.clientAt};
       } else if (operation.type === 'set_link' && ids.has(operation.gymnastId)) {
         next.linking[operation.gymnastId] ??= {};
         next.linking[operation.gymnastId][operation.complexId] = operation.value;
@@ -2996,7 +3004,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     $('addGymnastButton').disabled = !canEdit();
     window.SWLRosterManagement?.refresh();
     $('toastUndo').disabled = !canEdit() || !history.length;
-    document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew], button[data-priority-mark]').forEach(button => {
+    document.querySelectorAll('button[data-skill], button[data-link-complex], button[data-quick-skill], button[data-quick-renew], button[data-priority-mark], button[data-goal-id]').forEach(button => {
       button.disabled = !canEdit() || (Boolean(window.SWLDirectorySelection?.isActive()) && (button.hasAttribute('data-quick-skill') || button.hasAttribute('data-quick-renew')));
     });
   }
@@ -3108,7 +3116,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   let scoreViewSignature='';
   function refreshScoreViews() {
-    const signature=JSON.stringify([state.gymnasts,state.marks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,confirmedState.completionAchievements,confirmedState.challenge,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,apparatus,londonDay()]);
+    const signature=JSON.stringify([state.gymnasts,state.marks,state.goalMarks,state.linking,state.skillDates,state.weeklyProgress,state.prizes,confirmedState.completionAchievements,confirmedState.challenge,hasLoaded,canEdit(),selectedId,currentView,leaderboardGroup,leaderboardAge,apparatus,londonDay()]);
     if(signature===scoreViewSignature){renderSaveStatus();syncBadgeNotices();return;}
     scoreViewSignature=signature;
     renderBoards();
@@ -3563,6 +3571,26 @@ html:has(body.no-motion){scroll-behavior:auto}
     else updateBadgeNotice();
   }
 
+  function renderGoals(plan) {
+    return window.SWLProfileGoals.update($('profileGoals'),{gymnast:GYMNASTS.find(g=>g.id===selectedId),mark,goalMarks:state.goalMarks,canEdit:canEdit(),plan});
+  }
+  function changeGoal(goalId,button) {
+    const gymnastId=selectedId,gymnast=GYMNASTS.find(g=>g.id===gymnastId),api=window.SWLProfileGoals;
+    if(!canEdit()||!gymnast||api.assignment(gymnast)!=='senior'||!api.extraIds.includes(goalId))return;
+    const before=api.goalValue(state.goalMarks?.[gymnastId]?.[goalId]),after=(before+1)%3;
+    const current=()=>canEdit()&&GYMNAST_IDS.has(gymnastId)&&api.assignment(GYMNASTS.find(g=>g.id===gymnastId))==='senior'&&api.goalValue(state.goalMarks?.[gymnastId]?.[goalId])===before;
+    const apply=()=>{
+      if(!current())return;
+      enqueueOperation({type:'set_goal',gymnastId,goalId,value:after});
+      renderGoals();renderSaveStatus();restoreControlFocus(button);
+      toast(after===2?'Goal ready · perfect confirmed':after===1?'Goal achieved · perfect next':'Goal mark removed');
+    };
+    if(after===2){
+      const opened=window.SWLPerfectConfirm?.request({gymnastName:gymnast.name,skillName:api.extraNames[goalId],canConfirm:current,onConfirm:apply,onStale:()=>toast('Scoring or this goal changed. Check it and try again.'),restoreFocus:()=>restoreControlFocus(button)});
+      if(!opened)toast('Close the current prompt and try again.');
+    }else apply();
+  }
+
   function renderProfilePane() {
     if (profilePane === 'badges') {
       const host = $('profileBadgeProgress');
@@ -3575,24 +3603,24 @@ html:has(body.no-motion){scroll-behavior:auto}
       const model = window.SWLProfileBadges?.update(host,profileBadgeConfig());
       // Each new badge is acknowledged by its visibility observer, after it is seen.
     }
-    else if (profilePane === 'placement') renderPlacementProfile();
+    else if (profilePane === 'goals') renderGoals();
     else if (profilePane === 'insights') v2Api()?.renderPersonalInsights?.($('profileInsights'),selectedId);
     updateBadgeNotice();
   }
 
   function setProfilePane(value) {
-    if (!['skills','badges','placement','insights'].includes(value)) return;
+    if (!['skills','badges','goals','insights'].includes(value)) return;
     if (value !== profilePane) { window.SWLPerfectConfirm?.cancel(); profileBadgeVisit = {id:null,fresh:{}}; }
     const paneChanged = value !== profilePane;
     profilePane = value;
-    for (const [pane,id] of Object.entries({skills:'profileSkills',badges:'profileBadgeProgress',placement:'profilePlacement',insights:'profileInsights'})) {
+    for (const [pane,id] of Object.entries({skills:'profileSkills',badges:'profileBadgeProgress',goals:'profileGoals',insights:'profileInsights'})) {
       if ($(id)) $(id).hidden = value !== pane;
     }
     $('athletePanel').querySelectorAll('[data-profile-pane]').forEach(button => {
       button.setAttribute('aria-pressed',String(button.dataset.profilePane === value));
     });
     renderProfilePane();
-    if(paneChanged)window.SWLInteractionPolish?.scene({skills:'profileSkills',badges:'profileBadgeProgress',placement:'profilePlacement',insights:'profileInsights'}[value]);
+    if(paneChanged)window.SWLInteractionPolish?.scene({skills:'profileSkills',badges:'profileBadgeProgress',goals:'profileGoals',insights:'profileInsights'}[value]);
   }
 
   // Display order only. Skill IDs, marks and scoring remain unchanged.
@@ -3653,6 +3681,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function renderAthlete() {
+    const goalViewState = window.SWLProfileGoals?.capture?.($('profileGoals'));
     const badgeViewState = window.SWLProfileBadges?.capture?.($('profileBadgeProgress'));
     const insightViewState = v2Api()?.capturePersonalInsights?.($('profileInsights'));
     const focusedPane = document.activeElement?.dataset?.profilePane;
@@ -3725,13 +3754,13 @@ html:has(body.no-motion){scroll-behavior:auto}
         <div class="profile-pane-switch" role="group" aria-label="Profile view">
           <button type="button" data-profile-pane="skills" aria-pressed="${profilePane === 'skills'}" aria-controls="profileSkills">Skills</button>
           <button type="button" data-profile-pane="badges" aria-pressed="${profilePane === 'badges'}" aria-controls="profileBadgeProgress">Awards</button>
-          <button type="button" data-profile-pane="placement" aria-pressed="${profilePane === 'placement'}" aria-controls="profilePlacement">Placement</button>
+          <button type="button" data-profile-pane="goals" aria-pressed="${profilePane === 'goals'}" aria-controls="profileGoals">Goals</button>
           <button type="button" data-profile-pane="insights" aria-pressed="${profilePane === 'insights'}" aria-controls="profileInsights">Insights</button>
         </div>
       </section>
 
       <div id="profileBadgeProgress" aria-label="Awards and badge progress"${profilePane === 'badges' ? '' : ' hidden'}></div>
-      <div id="profilePlacement" aria-label="Personal placement"${profilePane === 'placement' ? '' : ' hidden'}></div>
+      <div id="profileGoals" aria-label="Personal goals"${profilePane === 'goals' ? '' : ' hidden'}></div>
       <div id="profileInsights" aria-label="Personal insights"${profilePane === 'insights' ? '' : ' hidden'}></div>
       <div id="profileSkills"${profilePane === 'skills' ? '' : ' hidden'}>
       ${profileSkillsHTML()}
@@ -3742,6 +3771,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     updateAthlete(false);
     if (profilePane !== 'badges' && badgeViewState?.open?.length) window.SWLProfileBadges?.update($('profileBadgeProgress'),profileBadgeConfig());
     if (profilePane !== 'insights' && insightViewState) v2Api()?.renderPersonalInsights?.($('profileInsights'),selectedId);
+    if(goalViewState?.id===selectedId && goalViewState.plan)renderGoals(goalViewState.plan);
+    window.SWLProfileGoals.restore($('profileGoals'),goalViewState);
     window.SWLProfileBadges?.restore?.($('profileBadgeProgress'),badgeViewState);
     v2Api()?.restorePersonalInsights?.($('profileInsights'),insightViewState);
     if (document.activeElement === document.body && focusedPane) $('athletePanel').querySelector(`[data-profile-pane="${focusedPane}"]`)?.focus({preventScroll:true});
@@ -4335,6 +4366,11 @@ html:has(body.no-motion){scroll-behavior:auto}
         selectProgramme(button.dataset.programme);
       } else if (button.hasAttribute('data-apparatus')) {
         setApparatus(button.dataset.apparatus);
+      } else if (button.hasAttribute('data-goal-plan')) {
+        window.SWLPerfectConfirm?.cancel();renderGoals(button.dataset.goalPlan);
+      } else if (button.hasAttribute('data-goal-id')) {
+        if(button.dataset.goalKind==='skill')changeSkill(button.dataset.goalId,button);
+        else changeGoal(button.dataset.goalId,button);
       } else if (button.hasAttribute('data-profile-pane')) {
         setProfilePane(button.dataset.profilePane);
       } else if (button.hasAttribute('data-back-gymnasts')) {
