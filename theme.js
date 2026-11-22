@@ -52,11 +52,12 @@
   ];
   patterns.splice(1,0,...moreContours);
   patterns.splice(patterns.findIndex(p=>p.id==='ribbon')+1,0,...moreRibbons);
-  const key='swl-app-pattern-v1',valid=id=>patterns.some(p=>p.id===id),hosts=new Set();
-  const read=()=>{try{const id=localStorage.getItem(key);return valid(id)?id:'contour';}catch{return 'contour';}};
+  // Version 2 gives every device Ribbon edges once; later coach choices stay saved.
+  const defaultPattern='ribbon-edges',key='swl-app-pattern-v2',valid=id=>patterns.some(p=>p.id===id),hosts=new Set();
+  const read=()=>{try{const id=localStorage.getItem(key);return valid(id)?id:defaultPattern;}catch{return defaultPattern;}};
   let saved=read(),draft=saved,backdrop=null,dialog=null,button=null,editable=()=>false;
   function paint(host,id){
-    const p=patterns.find(p=>p.id===id)||patterns[0];
+    const p=patterns.find(p=>p.id===id)||patterns.find(p=>p.id===defaultPattern);
     host.dataset.squadTheme='violet';host.dataset.squadPattern=p.id;
     Object.entries({'--squad-accent':'#c5acff','--squad-rgb':'150,108,240','--squad-secondary':'81,62,140','--squad-pattern-image':p.page,'--squad-pattern-size':p.size||'auto','--squad-banner-image':p.banner,'--squad-banner-size':p.bannerSize||'auto'}).forEach(([k,v])=>host.style.setProperty(k,v));
   }
