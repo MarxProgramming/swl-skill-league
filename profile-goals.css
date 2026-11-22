@@ -34,7 +34,7 @@
 @media(max-width:680px){.pg-plan-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.pg-plan-switch button{min-width:0}}
 /* Comfortable touch layouts for tablet goals and competition analytics. */
 .pg-requirements>.pg-cr:only-child{grid-column:1/-1}
-.pg-cr[data-goal-details="floor-mixed"]{grid-column:1/-1}
+.pg-cr[data-goal-details="floor-mixed"][open],.pg-cr[data-goal-details="floor-mixed"][open]+.pg-cr{grid-column:1/-1}
 .pg-cr details.pg-choice{display:block;padding:0;margin:0;border:1px solid #ffffff12;border-radius:10px;background:#15111f;overflow:hidden}
 .pg-cr details.pg-choice>summary{padding:13px 14px;min-height:52px;font-size:13px;line-height:1.45;font-weight:600;gap:14px}
 .pg-cr details.pg-choice>summary:after{content:"";width:7px;height:7px;border-right:1.5px solid #b8a6cc;border-bottom:1.5px solid #b8a6cc;transform:rotate(45deg);margin-left:auto;margin-right:3px;flex-shrink:0;align-self:center}
