@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   const extraNames = Object.freeze({
+"floor-v-sit":"V-sit","floor-one-hand-walkover":"One-handed forward walkover","floor-straddle-jump":"Straddle jump","floor-straight-jump":"Straight jump","floor-handstand":"Handstand","floor-flick":"Flick",
 "bars-straddle-undershoot":"Straddle undershoot","bars-pike-undershoot":"Pike undershoot","beam-straddle-dismount":"Straddle jump dismount","beam-front-handspring":"Front handspring dismount","beam-back-somersault":"Back somersault dismount","floor-forward-walkover":"Forward walkover","floor-tuck-half":"Tuck jump half","floor-roundoff":"Round-off","floor-cartwheel":"Cartwheel","floor-half-pirouette":"Handstand half pirouette","floor-full-pirouette":"Handstand full pirouette",
     'beam-walkover':'Walkover on high beam','beam-handstand-roll':'Handstand forwards roll on high beam',
     'beam-split-jump':'Split jump on high beam','beam-second-dance':'Earlier dance check (archived)',
@@ -32,10 +33,12 @@
       ...(level===8?[skill('vault-vaults-0','Handspring')]:[]),
       ...(level>=7?[skill('vault-vaults-1','Half on')]:[]),skill('vault-vaults-2','Half on half off')])],false,'Perfect the arm circle and one eligible vault')]);
   const level8Acro=()=>cr('acro','CR 1 · Acro line',[skill('acro-pro-roundoff-flick','Round-off flick'),{kind:'sequence',id:'acro-dive-roll',label:'Dive forwards roll → handstand forwards roll',items:[skill('rolls-upgrade-dive','Dive forwards roll'),skill('rolls-base-0','Handstand forwards roll')]},{kind:'sequence',id:'acro-handspring-dive',label:'Front handspring → dive forwards roll',items:[skill('acro-pro-handspring','Front handspring'),skill('rolls-upgrade-dive','Dive forwards roll')]}],true,'Perfect every skill in any one option');
-  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[level8Acro(),dance(),mixed(),spin()]),vault(8)]};
-  const level7fv={id:'level7fv',label:'Level 7 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(true),mixed(),spin()]),vault(7)]};
+  const standoutOptions = [["rolls-base-2", "Backward roll to front support", "B", 0], ["floor-v-sit", "V-sit", "A", 1], ["floor-forward-walkover", "Forward walkover", "B", 1], ["acro-base-0", "Backward walkover", "B", 0], ["floor-one-hand-walkover", "One-handed forward walkover", "C", 1], ["rolls-upgrade-2", "Backward roll to handstand", "C", 0], ["floor-straddle-jump", "Straddle jump", "B", 1], ["rolls-pro-1", "Split jump", "B", 0], ["leaps-base-2", "Split change", "C", 0], ["floor-straight-jump", "Straight jump", "A", 1], ["leaps-base-scissor", "Scissor kick", "A", 0], ["floor-handstand", "Handstand", "A", 1], ["floor-cartwheel", "Cartwheel", "A", 1], ["acro-pro-handspring", "Front handspring", "B", 0], ["floor-korbut", "Korbut flick", "C", 1], ["leaps-base-cat", "Cat leap", "A", 0], ["floor-roundoff", "Round-off", "B", 1], ["floor-flick", "Flick", "B", 1], ["acro-pro-roundoff-flick", "Round-off flick", "B", 0], ["rolls-upgrade-dive", "Dive forward roll", "B", 0], ["rolls-base-0", "Handstand forward roll", "A", 0], ["leaps-base-0", "Split leap", "B", 0], ["leaps-base-1", "Cat leap full turn", "C", 0]];
+  const standout=(cOnly=false)=>cr('standout','Standout skill',standoutOptions.filter(o=>!cOnly||o[2]==='C').map(([id,label,grade,isExtra])=>({... (isExtra?extra(id):skill(id,label)),label:label+' · '+grade})),true,cOnly?'Perfect one C-grade option. Choose a distinct standout when planning the routine.':'Perfect any one option. Choose a distinct standout when planning the routine.');
+  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[level8Acro(),dance(),mixed(),spin(),standout()]),vault(8)]};
+  const level7fv={id:'level7fv',label:'Level 7 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(true),mixed(),spin(),standout(true)]),vault(7)]};
   const level7={id:'level7',label:'Level 7 · All-around',sections:[
-    section('floor','Floor',[acro(),dance(true),mixed(),spin()]),vault(7),
+    section('floor','Floor',[acro(),dance(true),mixed(),spin(),standout(true)]),vault(7),
     section('beam','Beam',[
       cr('beam-acro','CR 1 · B acro',[extra('beam-walkover'),extra('beam-handstand-roll')],true,'Perfect either skill on high beam'),
       cr('beam-dance','CR 2 · Dance series',[extra('beam-split-jump'),choice('beam-jump-choice','Plus either jump',[extra('beam-straight-jump'),extra('beam-tuck-jump')])],false,'Split jump + straight jump or tuck jump'),
@@ -49,7 +52,7 @@
   ]};
   const level6={id:'level6',label:'Level 6 · Floor & Vault',sections:[section('floor','Floor',[
     cr('tumble','CR 1 · Backwards tumble',[skill('acro-pro-roundoff-flick','Round-off flick'),extra('floor-back-tuck')],false,'Round-off → flick → tuck'),dance(true),
-    cr('forward','CR 3 · Forwards acro',[skill('acro-pro-handspring','Handspring'),extra('floor-front-somersault'),skill('rolls-upgrade-dive','Dive forwards roll')],true,'Perfect any one of these skills'),spin(true)]),vault(6)]};
+    cr('forward','CR 3 · Forwards acro',[skill('acro-pro-handspring','Handspring'),extra('floor-front-somersault'),skill('rolls-upgrade-dive','Dive forwards roll')],true,'Perfect any one of these skills'),spin(true),standout(true)]),vault(6)]};
   const practice=section('practice','RF1 practice goals',[
     cr('tumble-prep','AirTrack tumble',[extra('airtrack-tumble')],false,'Build the full line towards floor'),
     cr('tramp','Trampoline progression',[extra('tramp-straight-back'),extra('tramp-half-twist'),extra('tramp-full-twist')]),
