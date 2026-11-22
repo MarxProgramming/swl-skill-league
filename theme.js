@@ -53,8 +53,8 @@
   ];
   patterns.splice(1,0,...moreContours);
   patterns.splice(patterns.findIndex(p=>p.id==='ribbon')+1,0,...moreRibbons);
-  // Version 2 gives every device Contour bands once; later coach choices stay saved.
-  const defaultPattern='contour-bands',key='swl-app-pattern-v3',valid=id=>patterns.some(p=>p.id===id),hosts=new Set();
+  // Version 2 gives every device Wide contour bands once; later coach choices stay saved.
+  const defaultPattern='wide-contour-bands',key='swl-app-pattern-v4',valid=id=>patterns.some(p=>p.id===id),hosts=new Set();
   const read=()=>{try{const id=localStorage.getItem(key);return valid(id)?id:defaultPattern;}catch{return defaultPattern;}};
   let saved=read(),draft=saved,backdrop=null,dialog=null,button=null,editable=()=>false;
   function paint(host,id){
