@@ -32,3 +32,27 @@
 
 .pg-a-rank{font-size:12px;color:#9f8fb4;min-width:20px;text-align:center}.pg-a-rank-tools{display:flex;gap:6px;padding:0 12px 7px}.pg-a-rank-tools button{font:inherit;font-size:11px;padding:10px 14px;min-height:44px;color:#b6a5cc;border:1px solid #ffffff18;border-radius:9px;background:transparent;cursor:pointer}.pg-a-rank-tools button[aria-pressed=true]{background:#b993ff20;color:#e5d4fc;border-color:#c6a1ff44}.pg-a-rank-note{font-size:10px;color:#a495b5;line-height:1.5;margin:0;padding:0 14px 12px}
 @media(max-width:680px){.pg-plan-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.pg-plan-switch button{min-width:0}}
+/* Comfortable touch layouts for tablet goals and competition analytics. */
+.pg-requirements>.pg-cr:only-child{grid-column:1/-1}
+.pg-cr[data-goal-details="floor-mixed"]{grid-column:1/-1}
+.pg-cr details.pg-choice{display:block;padding:0;margin:0;border:1px solid #ffffff12;border-radius:10px;background:#15111f;overflow:hidden}
+.pg-cr details.pg-choice>summary{padding:13px 14px;min-height:52px;font-size:13px;line-height:1.45;font-weight:600;gap:14px}
+.pg-cr details.pg-choice>summary:after{content:"";width:7px;height:7px;border-right:1.5px solid #b8a6cc;border-bottom:1.5px solid #b8a6cc;transform:rotate(45deg);margin-left:auto;margin-right:3px;flex-shrink:0;align-self:center}
+.pg-cr details.pg-choice[open]>summary:after{transform:rotate(225deg)}
+.pg-cr details.pg-choice>.pg-skill{width:calc(100% - 20px);margin:0 10px 8px}
+.pg-cr details.pg-choice>.pg-skill:last-child{margin-bottom:10px}
+.pg-cr details.pg-choice[open]>summary{color:#e5d6fa;background:#b993ff09;margin-bottom:10px}
+.pg-skill-list{align-items:start}
+.pg-plan-switch button{line-height:1.4;overflow-wrap:normal}
+@media(min-width:681px) and (max-width:1100px){
+ .pg-plan-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:5px}
+ .pg-plan-switch button{min-width:0;min-height:48px;padding:11px 14px}
+ .pg-overview{padding:22px;gap:17px 20px}
+ .pg-apparatus{padding:20px}
+ .pg-cr>summary{padding:14px 12px;gap:8px}
+ .pg-cr>summary strong{font-size:14px}
+ .pg-a-apparatus{gap:12px}
+ .pg-a-bar-row{grid-template-columns:minmax(65px,.8fr) minmax(45px,1fr) 35px}
+}
+@media(min-width:681px){.pg-cr[data-goal-details="floor-mixed"]>.pg-cr-body>.pg-skill-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+@media(max-width:600px){.pg-a-plan button{min-width:0}.pg-cr details.pg-choice>summary{font-size:12px;padding:13px 11px}}
