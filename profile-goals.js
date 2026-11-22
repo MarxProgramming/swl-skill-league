@@ -32,6 +32,7 @@
       ...(level===8?[skill('vault-vaults-0','Handspring')]:[]),
       ...(level>=7?[skill('vault-vaults-1','Half on')]:[]),skill('vault-vaults-2','Half on half off')])],false,'Perfect the arm circle and one eligible vault')]);
   const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(),mixed(),spin()]),vault(8)]};
+  const level7fv={id:'level7fv',label:'Level 7 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(true),mixed(),spin()]),vault(7)]};
   const level7={id:'level7',label:'Level 7 · All-around',sections:[
     section('floor','Floor',[acro(),dance(true),mixed(),spin()]),vault(7),
     section('beam','Beam',[
@@ -57,7 +58,7 @@
   function assignment(g){
     const squads=[g?.coach,...(g?.squads||[])].filter(Boolean);
     if(squads.some(s=>/^coaches$/i.test(s)))return null;
-    if(squads.includes('Marx'))return 'senior';
+    if(squads.some(s=>s==='Marx'||s==='Dan'))return 'senior';
     return squads.some(s=>/floor.*vault/i.test(s))?'floor-vault':null;
   }
   function cleanMarks(input,ids){
@@ -77,7 +78,7 @@
     return entry.value===2&&(!Number.isFinite(Date.parse(entry.updatedAt))||now-Date.parse(entry.updatedAt)>=30*DAY)?1:entry.value;
   }
   function build(config={}){
-    const group=assignment(config.gymnast),plans=group==='senior'?[level7,level6]:group?[level8]:[];
+    const group=assignment(config.gymnast),plans=group==='senior'?[level8,level7fv,level7,level6]:group?[level8]:[];
     const plan=plans.find(p=>p.id===config.plan)||plans[0];
     const evaluateItem=item=>{
       if(item.kind==='sequence'){const items=item.items.map(evaluateItem);return {...item,items,value:items.every(i=>i.value===2)?2:items.some(i=>i.value>0)?1:0};}
@@ -92,7 +93,7 @@
     const sections=plan?plan.sections.map(s=>({...s,requirements:s.requirements.map(evaluate)})):[];
     const requirements=sections.flatMap(s=>s.requirements);
     return {group,plans,plan,sections,done:requirements.filter(r=>r.ready).length,total:requirements.length,
-      practice:group==='senior'?{...practice,requirements:practice.requirements.map(evaluate)}:null};
+      practice:group==='senior'&&[config.gymnast.coach,...(config.gymnast.squads||[])].includes('Marx')?{...practice,requirements:practice.requirements.map(evaluate)}:null};
   }
   const chevron='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
   function itemHTML(item,config,optional){
@@ -114,13 +115,13 @@
     host._goalSignature=signature;host.dataset.gymnast=config.gymnast.id;host.dataset.goalPlan=model.plan?.id||'';
     const focused=host.contains(document.activeElement)?document.activeElement.id:null;
     if(!model.plan){host.innerHTML='<section class="pg-empty"><h2>No goals assigned yet</h2><p>Skills and awards are still available for this gymnast.</p></section>';return model;}
-    host.innerHTML=`<div class="pg-overview"><div><p class="pg-kicker">${model.group==='senior'?'Marx’s senior squad · RF1 plan':'Floor & Vault'}</p><h2>${esc(model.plan.label)}</h2><p>Perfect skills count as ready. Marks stay linked to Skills.</p></div><div class="pg-total"><strong>${model.done}<span> / ${model.total}</span></strong><small>requirements ready</small></div><div class="pg-progress" role="progressbar" aria-label="Goal requirements ready" aria-valuemin="0" aria-valuemax="${model.total}" aria-valuenow="${model.done}"><i style="width:${100*model.done/model.total}%"></i></div>${model.plans.length>1?`<div class="pg-plan-switch" role="group" aria-label="Goal pathway">${model.plans.map(p=>`<button type="button" data-goal-plan="${p.id}" aria-pressed="${model.plan.id===p.id}">${esc(p.label)}</button>`).join('')}</div>`:''}<span class="pg-lock-note">${config.canEdit?'Scoring unlocked':'Unlock scoring to update goals'}</span></div><div class="pg-sections">${model.sections.map(s=>sectionHTML(s,config)).join('')}</div>${model.practice?`<details class="pg-practice" data-goal-details="practice"><summary><strong>Training focus from your plan</strong>${chevron}</summary>${sectionHTML(model.practice,config)}</details>`:''}<details class="pg-method" data-goal-details="method"><summary>How these goals work ${chevron}</summary><p>These are your coach’s skill targets, grouped by composition requirement (CR). Series connections are assumed. Ready means the individual skills are perfect; it is not a complete competition-entry assessment.</p><p>Marks from complexes are shared automatically. Beam, bars and other goal-only checks are separate and add no league points. Perfect checks renew after 30 days, just like skills.</p>${model.group==='senior'?'<p>The RF1 sheet supplies your training focus. Additional Regional CR checks, such as cast to horizontal and B dismounts, stay separate so they are not mistaken for practice exercises.</p>':''}<a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-Regional-Pathway-Handbook-Information-04.02-2_compressed.pdf" target="_blank" rel="noopener">IGA Regional requirements ↗</a></details>`;
+    host.innerHTML=`<div class="pg-overview"><div><p class="pg-kicker">${model.group==='senior'?'Senior squad · Competition goals':'Floor & Vault'}</p><h2>${esc(model.plan.label)}</h2><p>Perfect skills count as ready. Marks stay linked to Skills.</p></div><div class="pg-total"><strong>${model.done}<span> / ${model.total}</span></strong><small>requirements ready</small></div><div class="pg-progress" role="progressbar" aria-label="Goal requirements ready" aria-valuemin="0" aria-valuemax="${model.total}" aria-valuenow="${model.done}"><i style="width:${100*model.done/model.total}%"></i></div>${model.plans.length>1?`<div class="pg-plan-switch" role="group" aria-label="Goal pathway">${model.plans.map(p=>`<button type="button" data-goal-plan="${p.id}" aria-pressed="${model.plan.id===p.id}">${esc(p.label)}</button>`).join('')}</div>`:''}<span class="pg-lock-note">${config.canEdit?'Scoring unlocked':'Unlock scoring to update goals'}</span></div><div class="pg-sections">${model.sections.map(s=>sectionHTML(s,config)).join('')}</div>${model.practice?`<details class="pg-practice" data-goal-details="practice"><summary><strong>Training focus from your plan</strong>${chevron}</summary>${sectionHTML(model.practice,config)}</details>`:''}<details class="pg-method" data-goal-details="method"><summary>How these goals work ${chevron}</summary><p>These are your coach’s skill targets, grouped by composition requirement (CR). Series connections are assumed. Ready means the individual skills are perfect; it is not a complete competition-entry assessment.</p><p>Marks from complexes are shared automatically. Beam, bars and other goal-only checks are separate and add no league points. Perfect checks renew after 30 days, just like skills.</p>${model.practice?'<p>The RF1 sheet supplies your training focus. Additional Regional CR checks, such as cast to horizontal and B dismounts, stay separate so they are not mistaken for practice exercises.</p>':''}<a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-Regional-Pathway-Handbook-Information-04.02-2_compressed.pdf" target="_blank" rel="noopener">IGA Regional requirements ↗</a></details>`;
     restore(host,prior);if(focused)host.querySelector('#'+CSS.escape(focused))?.focus({preventScroll:true});return model;
   }
   function overviewModel(config={}){
     const unique=people=>[...new Map((people||[]).map(g=>[g.id,g])).values()];
     const primary=unique(config.people),comparison=unique(config.comparisonPeople);
-    const available=[level8,level7,level6].filter(plan=>primary.some(g=>build({gymnast:g}).plans.some(p=>p.id===plan.id)));
+    const available=[level8,level7fv,level7,level6].filter(plan=>primary.some(g=>build({gymnast:g}).plans.some(p=>p.id===plan.id)));
     const plan=available.find(p=>p.id===config.plan)||available[0];
     if(!plan)return {available,plan:null,unassigned:primary.length};
     const cohort=people=>{
@@ -154,6 +155,6 @@
     }).join('')}</div></details><p class="pg-a-footnote">Requirements ready, not league points. These are coaching targets; connections are assumed. Comparisons use percentages of the same target.</p></section>`;
   }
 
-  const api={overviewModel,analyticsHTML,assignment,extraNames,extraIds,cleanMarks,goalValue,build,update,capture,restore,plans:{level8,level7,level6}};
+  const api={overviewModel,analyticsHTML,assignment,extraNames,extraIds,cleanMarks,goalValue,build,update,capture,restore,plans:{level8,level7fv,level7,level6}};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.SWLProfileGoals=Object.freeze(api);
 })(typeof window==='object'?window:globalThis);
