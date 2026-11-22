@@ -681,3 +681,41 @@ html:root:root[data-theme="dark"] body.squad-atmosphere-active #analyticsRoot .a
 html:root:root[data-theme="dark"] body.squad-atmosphere-active :is(.directory-section-head h2,.complex-head h3,.catalogue-complex-head h3){color:var(--squad-accent)}
 @media(max-width:700px){.squad-themed>.squad-banner{min-height:128px;padding:25px}}
 @media(max-width:480px){.squad-themed>.squad-banner{min-height:0;padding:24px 20px;border-radius:15px;margin-bottom:20px}.squad-banner-copy>h2{font-size:27px;line-height:1.15}}
+
+/* Device-wide pattern library: page and banner use distinct companion artwork. */
+#squadAtmosphere::after{background-size:var(--squad-pattern-size,auto)}
+.squad-banner::before{background-image:var(--squad-banner-image);background-size:var(--squad-banner-size,auto);background-position:60% 45%}
+#appPatternButton{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+#appPatternButton:disabled{opacity:.48;cursor:not-allowed}
+#appPatternButton:disabled::before{content:"";width:11px;height:12px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 18'%3E%3Cpath d='M4 7V5a4 4 0 0 1 8 0v2h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1zm2 0h4V5a2 2 0 0 0-4 0v2z'/%3E%3C/svg%3E") center/contain no-repeat}
+body.app-pattern-open{overflow:hidden}
+#appPatternDialog{width:min(790px,calc(100% - 32px));max-height:calc(100dvh - 36px);box-sizing:border-box;margin:auto;padding:26px;overflow:auto;overscroll-behavior:contain;color:#f4f0fa;background:linear-gradient(140deg,#22202f,#13131d 75%);border:1px solid #d0baff32;border-radius:20px;box-shadow:0 24px 90px #0009;color-scheme:dark}
+#appPatternDialog::backdrop{background:#07080dbf;backdrop-filter:blur(8px)}
+.pattern-dialog-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+.pattern-dialog-head p{margin:0 0 6px;color:#c5acff;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.pattern-dialog-head h2{margin:0;font-size:26px;line-height:1.2;letter-spacing:-.035em}
+#appPatternHelp{font-size:12px;line-height:1.5;color:#b9b2c9;margin:12px 0 20px}
+#appPatternDialog .pattern-close{flex:none;display:flex;align-items:center;justify-content:center;width:40px;height:40px;min-height:40px;padding:10px;color:#e0d6ef;background:#ffffff05;border:1px solid #ffffff1b;border-radius:10px;box-shadow:none}
+.pattern-close svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.pattern-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+#appPatternDialog .pattern-option{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:6px 6px 12px;font:inherit;color:#eae4f2;background:#0f0e1880;border:1px solid #ffffff14;border-radius:11px;box-shadow:none;text-align:left}
+#appPatternDialog .pattern-option[aria-pressed=true]{background:#ba96ff13;border-color:#c5acff;box-shadow:0 0 0 1px #c5acff20}
+@media(hover:hover){#appPatternDialog .pattern-option:hover{border-color:#bba0e272}}
+.pattern-option strong{font-size:11px;line-height:1.2;padding:0 2px}
+.pattern-sample{display:block;position:relative;overflow:hidden;height:80px;border-radius:6px;background:radial-gradient(ellipse at 100% 0,#966cf033,transparent 80%),#14131f}
+.pattern-sample::after{content:"";position:absolute;inset:0;background-image:var(--squad-pattern-image);background-size:var(--squad-pattern-size,auto);opacity:1.5;pointer-events:none}
+.pattern-sample i{position:absolute;z-index:1;inset:10px 9px auto;height:25px;border-radius:4px;background-image:var(--squad-banner-image),linear-gradient(130deg,#332744,#211a31);background-size:var(--squad-banner-size,auto),auto;border:1px solid #c5acff22}
+.pattern-sample i::after{content:"";position:absolute;left:6px;top:10px;width:30%;height:3px;border-radius:2px;background:#d0b9f4a0}
+.pattern-sample b{position:absolute;z-index:2;right:5px;bottom:5px;width:19px;height:19px;display:grid;place-items:center;font-size:11px;border-radius:50%;background:#c5acff;color:#1a102b;visibility:hidden}
+[aria-pressed=true]>.pattern-sample b{visibility:visible}
+.pattern-dialog-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;position:sticky;z-index:3;bottom:-26px;margin:20px -26px -26px;padding:17px 26px;border-top:1px solid #ffffff15;background:#15141ff7;backdrop-filter:blur(12px)}
+.pattern-dialog-footer p{margin:0 0 5px;font-size:12px;font-weight:650;color:#ede6f7}
+.pattern-dialog-footer small{display:block;color:#aaa2bb;font-size:10px;line-height:1.5}
+.pattern-actions{display:flex;gap:8px;flex:none}
+#appPatternDialog .pattern-actions button{min-height:44px;padding:10px 16px;border:1px solid #ffffff23;border-radius:10px;font:inherit;font-size:12px;font-weight:650;background:#ffffff05;color:#e1dce9;box-shadow:none}
+#appPatternDialog .pattern-actions button[data-pattern-save]{background:#c5acff;border-color:#c5acff;color:#191126}
+#appPatternDialog button:focus-visible{outline:2px solid #e0cfff;outline-offset:3px}
+@media(max-width:700px){.pattern-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:480px){#appPatternDialog{width:calc(100% - 24px);max-height:calc(100dvh - 24px);padding:18px;border-radius:16px}.pattern-dialog-head h2{font-size:23px}.pattern-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.pattern-sample{height:69px}.pattern-option strong{font-size:10px}#appPatternDialog .pattern-option{padding:5px 5px 10px;gap:8px}.pattern-sample i{inset:9px 6px auto;height:22px}.pattern-dialog-footer{bottom:-18px;margin-inline:-18px;margin-bottom:-18px;padding:14px 18px;flex-wrap:wrap;gap:10px}.pattern-actions{width:100%}.pattern-actions button{flex:1}}
+/* Show the full motif in each small preview, rather than a blank cropped corner. */
+.pattern-sample::after{width:300%;height:300%;transform:scale(.333333);transform-origin:top left;opacity:1}
