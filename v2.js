@@ -28,6 +28,7 @@
   function viewIsVisible(name,host){return Boolean(host)&& (typeof data?.view==='string'?data.view===name:!host.hidden);}
   function enterDirectory(){resetDirectoryOrder();if(data&&viewIsVisible('directory',directory))renderDirectory();}
   let circuitPinned=null;
+  let analyticsGoalPlan='',analyticsGoalOrder='most';
   let priorityPinned=null,priorityScope='',priorityRenderedIds=[],priorityShowMore=false;
   const pct=(a,b)=>b?Math.round(a/b*100):0;
   const number=n=>Number(n||0).toLocaleString('en-GB',{maximumFractionDigits:1});
@@ -93,7 +94,7 @@
     while(cursor){const next=cursor.nextSibling;current.removeChild(cursor);cursor=next;}
   }
   const focusControls='button,input,select,summary,a,[tabindex]';
-  const focusData=['swlAchievement','achievementGymnast','gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','analyticsApparatus','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange','directorySelect','directorySelectionAction','panelComparison','priorityMore'];
+  const focusData=['swlAchievement','achievementGymnast','gymnast','directoryGroup','analyticsAge','analyticsGroup','quickSkill','quickRenew','quickGymnast','mapGymnast','mapSkill','v2Focus','analyticsComparison','analyticsCategory','analyticsPerson','analyticsApparatus','priorityMark','prioritySkill','priorityGymnast','attendanceHide','attendanceRestore','progressRange','directorySelect','directorySelectionAction','panelComparison','priorityMore','analyticsGoalPlan','analyticsGoalOrder','openGoals'];
   function focusKey(root) {
     const e=document.activeElement;if(!e||!root.contains(e))return null;
     const dataset=Object.fromEntries(focusData.filter(key=>e.dataset?.[key]!==undefined).map(key=>[key,e.dataset[key]]));
@@ -189,6 +190,8 @@
       }else if(priorityPinned){priorityPinned=null;renderAnalytics();}
     },true);
     analytics.addEventListener('click',e=>{
+      const goalOrder=e.target.closest('[data-analytics-goal-order]');if(goalOrder){analyticsGoalOrder=goalOrder.dataset.analyticsGoalOrder;renderAnalytics();return;}
+      const goalPlan=e.target.closest('[data-analytics-goal-plan]');if(goalPlan){analyticsGoalPlan=goalPlan.dataset.analyticsGoalPlan;renderAnalytics();return;}
       if(e.target.closest('[data-clear-comparison]')){analyticsCompareGroup='';renderAnalytics();analytics.querySelector('#analyticsCompareGroup').focus({preventScroll:true});return;}
       if(e.target.closest('[data-priority-more]')){priorityShowMore=!priorityShowMore;if(!priorityShowMore&&![...analytics.querySelectorAll('details[data-priority-detail]')].slice(0,5).some(el=>el.open))priorityPinned=null;renderAnalytics();return;}
       const apparatusButton=e.target.closest('[data-analytics-apparatus]');if(apparatusButton){if(!apparatusButton.disabled)changeApparatus(apparatusButton.dataset.analyticsApparatus);return;}
@@ -544,7 +547,7 @@
     const progressChart=()=>progressPerson&&!analyticsCompareGroup?window.SWLGymnastProgress?.render({person:progressPerson,progress:data.state.weeklyProgress,currentPoints:data.confirmedPoints?.(progressPerson.id,progressCategory)??data.summary(progressPerson.id,progressCategory).points,days:progressRange,apparatus:apparatus()})||'':window.SWLGymnastProgress?.renderGroup?.({people,label:primaryLabel,comparisonPeople:analyticsCompareGroup?comparisonPeople():null,comparisonLabel:analyticsCompareGroup?groupName(analyticsCompareGroup)+(analyticsAge==='all'?'':' · '+ageScope):'',comparisonId:analyticsCompareGroup,hideComparisonControl:true,progress:data.state.weeklyProgress,days:progressRange,apparatus:apparatus()})||'';
     const compare=(panel,markup,primary=people)=>withComparison(panel,markup,primary,primaryLabel);
     const primaryGroups=comparisonGroups.filter(group=>people.some(g=>inGroup(g,group)));
-    commitHTML(host,`<div class="analytics-grid a31-grid">${compare('priorities',renderPriorities(people,fullScope))}${compare('squads',renderSquadComparison(primaryGroups,people))}${compare('standings',renderStandings(people,fullScope))}
+    commitHTML(host,`<div class="analytics-grid a31-grid">${compare('priorities',renderPriorities(people,fullScope))}${compare('squads',renderSquadComparison(primaryGroups,people))}${window.SWLProfileGoals?.analyticsHTML({people,label:primaryLabel,plan:analyticsGoalPlan,order:analyticsGoalOrder,mark:data.mark,goalMarks:data.state.goalMarks,compare:Boolean(analyticsCompareGroup),comparisonPeople:comparisonPeople(),comparisonLabel:groupName(analyticsCompareGroup)})||''}${compare('standings',renderStandings(people,fullScope))}
       ${analyticsDisclosure('overview','Exploring below','Totals and averages for your selected view',()=>compare('overview',overview()))}
       ${analyticsDisclosure('categories','Across the skills','Compare progress across the skill categories',()=>compare('categories',renderCategories(getAggregate())))}
       ${analyticsDisclosure('momentum','Building momentum · Floor','Explore Floor point changes over eight weeks',()=>compare('momentum',renderMomentum(people)))}
