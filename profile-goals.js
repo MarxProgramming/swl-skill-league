@@ -13,6 +13,7 @@
     'bars-back-hip-circle':'Back hip circle','bars-upstart':'Upstart on high bar',
     'bars-b-dismount':'B dismount · coach’s choice','bars-tap-swings':'Tap swings','bars-undershoot':'Undershoot from high bar',
     'floor-front-somersault':'Front somersault on floor',
+    'floor-straight-back':'Straight back on floor · round-off → flick → straight back',
     'floor-back-tuck':'Back tuck on floor · round-off → flick → tuck',
     'airtrack-tumble':'Round-off → flick → tuck on AirTrack',
     'tramp-straight-back':'Straight back on trampoline','tramp-half-twist':'Half twist in dish on trampoline',
@@ -34,8 +35,9 @@
       ...(level>=7?[skill('vault-vaults-1','Half on')]:[]),skill('vault-vaults-2','Half on half off')])],false,'Perfect the arm circle and one eligible vault')]);
   const level8Acro=()=>cr('acro','CR 1 · Acro line',[skill('acro-pro-roundoff-flick','Round-off flick'),{kind:'sequence',id:'acro-dive-roll',label:'Dive forwards roll → handstand forwards roll',items:[skill('rolls-upgrade-dive','Dive forwards roll'),skill('rolls-base-0','Handstand forwards roll')]},{kind:'sequence',id:'acro-handspring-dive',label:'Front handspring → dive forwards roll',items:[skill('acro-pro-handspring','Front handspring'),skill('rolls-upgrade-dive','Dive forwards roll')]}],true,'Perfect every skill in any one option');
   const standoutOptions = [["rolls-base-2", "Backward roll to front support", "B", 0], ["floor-v-sit", "V-sit", "A", 1], ["floor-forward-walkover", "Forward walkover", "B", 1], ["acro-base-0", "Backward walkover", "B", 0], ["floor-one-hand-walkover", "One-handed forward walkover", "C", 1], ["rolls-upgrade-2", "Backward roll to handstand", "C", 0], ["floor-straddle-jump", "Straddle jump", "B", 1], ["rolls-pro-1", "Split jump", "B", 0], ["leaps-base-2", "Split change", "C", 0], ["floor-straight-jump", "Straight jump", "A", 1], ["leaps-base-scissor", "Scissor kick", "A", 0], ["floor-handstand", "Handstand", "A", 1], ["floor-cartwheel", "Cartwheel", "A", 1], ["acro-pro-handspring", "Front handspring", "B", 0], ["floor-korbut", "Korbut flick", "C", 1], ["leaps-base-cat", "Cat leap", "A", 0], ["floor-roundoff", "Round-off", "B", 1], ["floor-flick", "Flick", "B", 1], ["acro-pro-roundoff-flick", "Round-off flick", "B", 0], ["rolls-upgrade-dive", "Dive forward roll", "B", 0], ["rolls-base-0", "Handstand forward roll", "A", 0], ["leaps-base-0", "Split leap", "B", 0], ["leaps-base-1", "Cat leap full turn", "C", 0]];
-  const standout=(cOnly=false)=>cr('standout','Standout skill',standoutOptions.filter(o=>!cOnly||o[2]==='C').map(([id,label,grade,isExtra])=>({... (isExtra?extra(id):skill(id,label)),label:label+' · '+grade})),true,cOnly?'Perfect one C-grade option. Choose a distinct standout when planning the routine.':'Perfect any one option. Choose a distinct standout when planning the routine.');
-  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[level8Acro(),dance(),mixed(),spin(),standout()]),vault(8)]};
+  const standout=(cOnly=false)=>cr('standout','Standout skill',standoutOptions.filter(o=>!['floor-straddle-jump','rolls-pro-1','leaps-base-2','floor-straight-jump','leaps-base-scissor','leaps-base-cat','leaps-base-0','leaps-base-1'].includes(o[0])).filter(o=>!cOnly||o[2]==='C').map(([id,label,grade,isExtra])=>({... (isExtra?extra(id):skill(id,label)),label:label+' · '+grade})),true,cOnly?'Perfect one C-grade option. Choose a distinct standout when planning the routine.':'Perfect any one option. Choose a distinct standout when planning the routine.');
+  const level8Spin=()=>cr('spin','CR 4 · Spin',[skill('acro-base-full-spin','Full spin'),skill('acro-upgrade-1','1½ spin'),skill('acro-pro-1','Double spin')],true,'Perfect a full spin or higher');
+  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[level8Acro(),dance(),mixed(),level8Spin(),standout()]),vault(8)]};
   const level7fv={id:'level7fv',label:'Level 7 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(true),mixed(),spin(),standout(true)]),vault(7)]};
   const level7={id:'level7',label:'Level 7 · All-around',sections:[
     section('floor','Floor',[acro(),dance(true),mixed(),spin(),standout(true)]),vault(7),
@@ -51,7 +53,7 @@
       cr('bars-dismount','CR 4 · B dismount',[extra('bars-straddle-undershoot'),extra('bars-pike-undershoot')],true)])
   ]};
   const level6={id:'level6',label:'Level 6 · Floor & Vault',sections:[section('floor','Floor',[
-    cr('tumble','CR 1 · Backwards tumble',[skill('acro-pro-roundoff-flick','Round-off flick'),extra('floor-back-tuck')],false,'Round-off → flick → tuck'),dance(true),
+    cr('tumble','CR 1 · Backwards tumble',[skill('acro-pro-roundoff-flick','Round-off flick'),extra('floor-straight-back')],false,'Round-off → flick → straight back'),dance(true),
     cr('forward','CR 3 · Forwards acro',[skill('acro-pro-handspring','Handspring'),extra('floor-front-somersault'),skill('rolls-upgrade-dive','Dive forwards roll')],true,'Perfect any one of these skills'),spin(true),standout(true)]),vault(6)]};
   const practice=section('practice','RF1 practice goals',[
     cr('tumble-prep','AirTrack tumble',[extra('airtrack-tumble')],false,'Build the full line towards floor'),
@@ -81,6 +83,28 @@
     if(!entry||![0,1,2].includes(entry.value))return 0;
     return entry.value===2&&(!Number.isFinite(Date.parse(entry.updatedAt))||now-Date.parse(entry.updatedAt)>=30*DAY)?1:entry.value;
   }
+  // Find the smallest distinct skill set still to perfect across valid alternatives.
+  function readiness(requirements){
+    const values=new Map();
+    const prune=sets=>{
+      const unique=[...new Map(sets.map(s=>[[...s].sort().join('|'),s])).values()].sort((a,b)=>a.size-b.size);
+      const keep=[];for(const s of unique)if(!keep.some(k=>[...k].every(id=>s.has(id))))keep.push(s);return keep;
+    };
+    const combine=(a,b)=>prune(a.flatMap(x=>b.map(y=>new Set([...x,...y]))));
+    const paths=item=>{
+      if(item.items){const children=item.items.map(paths);return item.kind==='choice'?prune(children.flat()):children.reduce(combine,[new Set()]);}
+      const id=item.kind+':'+item.id;values.set(id,item.value);return [new Set(item.value===2?[]:[id])];
+    };
+    const required=requirements.map(r=>{const children=r.items.map(paths);return r.any?prune(children.flat()):children.reduce(combine,[new Set()]);});
+    const achieved=required.map(options=>options.filter(s=>[...s].every(id=>values.get(id)>=1)));
+    if(!requirements.length||achieved.some(options=>!options.length))return {status:'developing',remaining:null,unachieved:true,label:'Working towards'};
+    let candidates=[new Set()];
+    for(const options of achieved){candidates=prune(candidates.flatMap(a=>options.map(b=>new Set([...a,...b]))).filter(s=>s.size<=2));if(!candidates.length)break;}
+    if(!candidates.length)return {status:'achieved',remaining:null,unachieved:false,label:'All skills achieved'};
+    const remaining=Math.min(...candidates.map(s=>s.size));
+    return {status:remaining?'ready':'super',remaining,unachieved:false,label:remaining?'Ready':'Super ready'};
+  }
+
   function build(config={}){
     const group=assignment(config.gymnast),plans=group==='senior'?[level8,level7fv,level7,level6]:group?[level8]:[];
     const plan=plans.find(p=>p.id===config.plan)||plans[0];
@@ -96,7 +120,7 @@
     };
     const sections=plan?plan.sections.map(s=>({...s,requirements:s.requirements.map(evaluate)})):[];
     const requirements=sections.flatMap(s=>s.requirements);
-    return {group,plans,plan,sections,done:requirements.filter(r=>r.ready).length,total:requirements.length,
+    return {group,plans,plan,sections,readiness:readiness(requirements),done:requirements.filter(r=>r.ready).length,total:requirements.length,
       practice:group==='senior'&&[config.gymnast.coach,...(config.gymnast.squads||[])].includes('Marx')?{...practice,requirements:practice.requirements.map(evaluate)}:null};
   }
   const chevron='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
@@ -137,8 +161,8 @@
         return {id:r.id,title:r.title,ready,total:rows.length,percent:rows.length?Math.round(100*ready/rows.length):0};
       })}));
       const steps=row=>row.model.sections.flatMap(s=>s.requirements).reduce((n,r)=>n+r.done/r.total,0);
-      rows.sort((a,b)=>(config.order==='least'?1:-1)*((a.model.done/a.model.total-b.model.done/b.model.total)||(steps(a)-steps(b)))||a.gymnast.name.localeCompare(b.gymnast.name,'en-GB'));
-      return {rows,sections,total,done,percent:total?Math.round(100*done/total):0,ready:rows.filter(r=>r.model.done===r.model.total).length,excluded:people.length-rows.length};
+      rows.sort((a,b)=>(config.order==='least'?1:-1)*(({super:3,ready:2,achieved:1,developing:0}[a.model.readiness.status]-{super:3,ready:2,achieved:1,developing:0}[b.model.readiness.status])||(a.model.done/a.model.total-b.model.done/b.model.total)||(steps(a)-steps(b)))||a.gymnast.name.localeCompare(b.gymnast.name,'en-GB'));
+      return {rows,sections,total,done,percent:total?Math.round(100*done/total):0,ready:rows.filter(r=>['super','ready'].includes(r.model.readiness.status)).length,excluded:people.length-rows.length};
     };
     return {available,plan,primary:cohort(primary),comparison:config.compare?cohort(comparison):null};
   }
@@ -154,9 +178,9 @@
     return `<section class="analytics-panel analytics-wide pg-analytics" id="competitionGoalsOverview">${head}${m.available.length>1?`<div class="pg-plan-switch pg-a-plan" role="group" aria-label="Competition goal target">${m.available.map(plan=>`<button type="button" data-analytics-goal-plan="${plan.id}" aria-pressed="${m.plan.id===plan.id}">${planLabel(plan)}</button>`).join('')}</div>`:`<h3 class="pg-a-target">${esc(m.plan.label)}</h3>`}<p class="pg-a-scope">${scope} · ${p.rows.length} assigned · ${m.plan.id==='level7'?'Floor, vault, beam & bars':'Floor & vault'}${p.excluded?`<span>${p.excluded} not assigned this target</span>`:''}</p><div class="pg-a-summary${c?' is-comparing':''}">${meter(p,scope,'primary')}${c?meter(c,compareName,'comparison'):''}</div><div class="pg-a-apparatus">${p.sections.map((s,index)=>{
       const ready=s.requirements.reduce((n,r)=>n+r.ready,0),total=p.rows.length*s.requirements.length;
       return `<details data-analytics-disclosure="goals-${m.plan.id}-${s.id}" class="pg-a-piece"><summary><strong>${esc(s.title)}</strong><span>${total?Math.round(100*ready/total):0}% ready</span>${chevron}</summary><div class="pg-a-requirements">${s.requirements.map((r,i)=>`<div class="pg-a-requirement"><strong>${esc(compact(r.title))}</strong><div class="pg-a-bar-row"><small>${c?scope:'Ready'}</small>${bar(r.percent)}<span>${r.ready}/${r.total}</span></div>${c?`<div class="pg-a-bar-row"><small>${compareName}</small>${bar(c.sections[index].requirements[i].percent,'comparison')}<span>${c.sections[index].requirements[i].ready}/${c.rows.length}</span></div>`:''}</div>`).join('')}</div></details>`;
-    }).join('')}</div><details class="pg-a-gymnasts" data-analytics-disclosure="goals-${m.plan.id}-gymnasts"><summary><strong>Readiness ranking</strong><span>${config.order==='least'?'Least ready first':'Most ready first'}</span>${chevron}</summary><div class="pg-a-rank-tools" role="group" aria-label="Readiness ranking order">${[['most','Most ready'],['least','Least ready']].map(([id,label])=>`<button type="button" data-analytics-goal-order="${id}" aria-pressed="${(config.order||'most')===id}">${label}</button>`).join('')}</div><p class="pg-a-rank-note">Ready requirements first; ties use progress within the remaining requirements.</p><div class="pg-a-people">${p.rows.map(({gymnast:g,model},rank)=>{
+    }).join('')}</div><details class="pg-a-gymnasts" data-analytics-disclosure="goals-${m.plan.id}-gymnasts"><summary><strong>Readiness ranking</strong><span>${config.order==='least'?'Least ready first':'Most ready first'}</span>${chevron}</summary><div class="pg-a-rank-tools" role="group" aria-label="Readiness ranking order">${[['most','Most ready'],['least','Least ready']].map(([id,label])=>`<button type="button" data-analytics-goal-order="${id}" aria-pressed="${(config.order||'most')===id}">${label}</button>`).join('')}</div><p class="pg-a-rank-note">Purple: all skills achieved · Green: up to 2 skills left to perfect · Gold: all Perfect.</p><div class="pg-a-people">${p.rows.map(({gymnast:g,model},rank)=>{
       const missing=model.sections.flatMap(s=>s.requirements.filter(r=>!r.ready).map(r=>s.title+' · '+compact(r.title)));
-      return `<button type="button" data-open-goals="${esc(g.id)}" data-goals-target="${m.plan.id}" class="pg-a-person" aria-label="Open ${esc(g.name)}’s goals"><span class="pg-a-rank">${rank+1}</span><span class="pg-a-person-name"><strong>${esc(g.name)}</strong><small>${missing.length?esc(missing.slice(0,2).join(' / '))+(missing.length>2?` +${missing.length-2} more`:''):'All requirements ready'}</small></span><b>${model.done}<small> / ${model.total}</small></b><span aria-hidden="true">↗</span></button>`;
+      return `<button type="button" data-open-goals="${esc(g.id)}" data-goals-target="${m.plan.id}" class="pg-a-person pg-readiness-${model.readiness.status}" aria-label="Open ${esc(g.name)}’s goals"><span class="pg-a-rank">${rank+1}</span><span class="pg-a-person-name"><strong>${esc(g.name)}</strong><small class="pg-readiness-label">${model.readiness.label}${model.readiness.status==='ready'?` · ${model.readiness.remaining} left to perfect`:''}</small><small>${missing.length?esc(missing.slice(0,2).join(' / '))+(missing.length>2?` +${missing.length-2} more`:''):'All requirements Perfect'}</small></span><b>${model.done}<small> / ${model.total}</small></b><span aria-hidden="true">↗</span></button>`;
     }).join('')}</div></details><p class="pg-a-footnote">Requirements ready, not league points. These are coaching targets; connections are assumed. Comparisons use percentages of the same target.</p></section>`;
   }
 
