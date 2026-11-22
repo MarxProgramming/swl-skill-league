@@ -31,3 +31,4 @@
 @media(max-width:600px){.pg-a-summary.is-comparing{grid-template-columns:1fr}.pg-a-apparatus{grid-template-columns:1fr}.pg-a-plan button{font-size:11px;min-width:130px}.pg-a-gymnasts summary{flex-wrap:wrap}.pg-a-gymnasts summary>span{font-size:10px}.pg-analytics-tag{font-size:10px;padding:5px 7px}}
 
 .pg-a-rank{font-size:12px;color:#9f8fb4;min-width:20px;text-align:center}.pg-a-rank-tools{display:flex;gap:6px;padding:0 12px 7px}.pg-a-rank-tools button{font:inherit;font-size:11px;padding:10px 14px;min-height:44px;color:#b6a5cc;border:1px solid #ffffff18;border-radius:9px;background:transparent;cursor:pointer}.pg-a-rank-tools button[aria-pressed=true]{background:#b993ff20;color:#e5d4fc;border-color:#c6a1ff44}.pg-a-rank-note{font-size:10px;color:#a495b5;line-height:1.5;margin:0;padding:0 14px 12px}
+@media(max-width:680px){.pg-plan-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.pg-plan-switch button{min-width:0}}
