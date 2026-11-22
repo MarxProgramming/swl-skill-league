@@ -25,7 +25,7 @@
 <meta name="twitter:image" content="https://swlsquad.app/share-preview.png?v=20261108">
 <link rel="preload" href="./jakarta-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./barlow-semi-700.woff2" as="font" type="font/woff2" crossorigin>
-<script src="./theme.js?v=violet-contours-20261122"></script>
+<script src="./theme.js?v=pattern-library-20261122"></script>
 <script src="./config.js?v=20261108-supabase"></script>
 <link rel="stylesheet" href="./lock.css">
 
@@ -1788,6 +1788,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     <span id="saveStatus" role="status">Connecting to the scores service…</span>
     <button class="quiet main-menu-button" type="button" data-view="home">Main menu</button>
     <button class="quiet" type="button" data-open-welcome>About this app</button>
+    <button class="quiet" id="appPatternButton" type="button" disabled aria-haspopup="dialog" aria-controls="appPatternDialog" title="Unlock scoring to customise the background">Customise</button>
     <button class="quiet" id="retrySavingButton" type="button">↻ Retry saving</button>
     <button class="quiet" id="refreshButton">↻ Refresh scores</button>
   </div>
@@ -1863,7 +1864,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=awards-polish-20261121">
-<link rel="stylesheet" href="./theme.css?v=violet-contours-20261122">
+<link rel="stylesheet" href="./theme.css?v=pattern-library-20261122">
 <script>
 (() => {
   'use strict';
@@ -3296,6 +3297,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         : locked ? 'Scoring locked · leaderboards and profiles are open to view.'
           : 'Scoring unlocked · locks automatically after 30 minutes.';
     document.body.classList.toggle('scoring-locked', !lockKnown || locked || lockChanging);
+    window.SWLSquadThemes?.refresh();
   }
 
   async function checkScoringLock() {
@@ -4471,6 +4473,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     toast(hasPending() ? 'Backup includes the unsaved changes shown here.' : 'Backup download requested.');
   });
 
+  window.SWLSquadThemes?.init({editable:canEdit,button:$('appPatternButton')});
   window.SWLInteractionPolish?.init({editable:canEdit,unlock:()=>{if(lockKnown&&!lockChanging&&scoringLock.locked)$('lockButton').click();}});
   window.SWLHoldClear?.init({editable:canEdit,target:b=>{const id=b.dataset.quickGymnast||b.dataset.priorityGymnast||selectedId,skillId=b.dataset.skill||b.dataset.quickSkill||b.dataset.prioritySkill;const g=GYMNASTS.find(g=>g.id===id),s=SKILLS.find(s=>s.id===skillId);return g&&s?{id,skillId,name:g.name,skill:s.name,value:mark(id,skillId),button:b}:null;},clear:t=>{if(mark(t.id,t.skillId)!==t.value){toast('This skill changed. Check it and try again.');return;}changeSkill(t.skillId,t.button,0,t.id);}});
   window.SWLRosterManagement?.init({people:()=>GYMNASTS,label:groupLabel,editable:canEdit,save:operation=>{
