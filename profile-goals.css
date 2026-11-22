@@ -34,7 +34,7 @@
 @media(max-width:680px){.pg-plan-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.pg-plan-switch button{min-width:0}}
 /* Comfortable touch layouts for tablet goals and competition analytics. */
 .pg-requirements>.pg-cr:only-child{grid-column:1/-1}
-.pg-cr[data-goal-details="floor-mixed"][open],.pg-cr[data-goal-details="floor-mixed"][open]+.pg-cr{grid-column:1/-1}
+.pg-cr:has(details.pg-choice)[open],.pg-cr:has(details.pg-choice)[open]+.pg-cr{grid-column:1/-1}
 .pg-cr details.pg-choice{display:block;padding:0;margin:0;border:1px solid #ffffff12;border-radius:10px;background:#15111f;overflow:hidden}
 .pg-cr details.pg-choice>summary{padding:13px 14px;min-height:52px;font-size:13px;line-height:1.45;font-weight:600;gap:14px}
 .pg-cr details.pg-choice>summary:after{content:"";width:7px;height:7px;border-right:1.5px solid #b8a6cc;border-bottom:1.5px solid #b8a6cc;transform:rotate(45deg);margin-left:auto;margin-right:3px;flex-shrink:0;align-self:center}
@@ -54,5 +54,8 @@
  .pg-a-apparatus{gap:12px}
  .pg-a-bar-row{grid-template-columns:minmax(65px,.8fr) minmax(45px,1fr) 35px}
 }
-@media(min-width:681px){.pg-cr[data-goal-details="floor-mixed"]>.pg-cr-body>.pg-skill-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+@media(min-width:681px){.pg-cr:has(details.pg-choice)>.pg-cr-body>.pg-skill-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
 @media(max-width:600px){.pg-a-plan button{min-width:0}.pg-cr details.pg-choice>summary{font-size:12px;padding:13px 11px}}
+
+.pg-option-label{flex:1;min-width:0;overflow-wrap:anywhere}.pg-option-progress{font-size:10px;font-weight:500;white-space:nowrap;color:#aaa0bc}.pg-option-progress.is-ready{color:var(--mint,#d5fa70)}
+.pg-cr details.pg-choice>summary:after{margin-left:0}
