@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   const extraNames = Object.freeze({
+"bars-straddle-undershoot":"Straddle undershoot","bars-pike-undershoot":"Pike undershoot","beam-straddle-dismount":"Straddle jump dismount","beam-front-handspring":"Front handspring dismount","beam-back-somersault":"Back somersault dismount","floor-forward-walkover":"Forward walkover","floor-tuck-half":"Tuck jump half","floor-roundoff":"Round-off","floor-cartwheel":"Cartwheel","floor-half-pirouette":"Handstand half pirouette","floor-full-pirouette":"Handstand full pirouette",
     'beam-walkover':'Walkover on high beam','beam-handstand-roll':'Handstand forwards roll on high beam',
     'beam-split-jump':'Split jump on high beam','beam-second-dance':'Earlier dance check (archived)',
     'beam-straight-jump':'Straight jump on high beam','beam-tuck-jump':'Tuck jump on high beam',
@@ -24,25 +25,25 @@
   const section=(id,title,requirements)=>({id,title,requirements});
   const acro=()=>cr('acro','CR 1 · Acro line',[skill('acro-pro-roundoff-flick','Round-off flick')]);
   const dance=(upgrade=false)=>cr('dance','CR 2 · Leap series',[skill(upgrade?'leaps-base-2':'leaps-base-0',upgrade?'Split change':'Split leap'),skill('leaps-base-1','Cat leap full turn')]);
-  const mixed=()=>cr('mixed','CR 3 · Mixed series',[skill('acro-base-0','Backwards walkover'),skill('rolls-base-full-turn','Full turn jump')]);
+  const mixed=()=>cr('mixed','CR 3 · Mixed series',[{kind:'sequence',id:'mixed-0',label:"Cat leap \u2192 one-handed cartwheel",items:[skill('leaps-base-cat','Cat leap'),skill('acro-base-one-hand','One-handed cartwheel')]},{kind:'sequence',id:'mixed-1',label:"Cat leap \u2192 forward walkover",items:[skill('leaps-base-cat','Cat leap'),extra('floor-forward-walkover')]},{kind:'sequence',id:'mixed-2',label:"Backward walkover \u2192 tuck jump half",items:[skill('acro-base-0','Backwards walkover'),extra('floor-tuck-half')]},{kind:'sequence',id:'mixed-3',label:"Cat leap full \u2192 forward walkover",items:[skill('leaps-base-1','Cat leap full turn'),extra('floor-forward-walkover')]},{kind:'sequence',id:'mixed-4',label:"Cat leap full \u2192 round-off",items:[skill('leaps-base-1','Cat leap full turn'),extra('floor-roundoff')]},{kind:'sequence',id:'mixed-5',label:"Flick step-out \u2192 tuck jump half",items:[skill('acro-upgrade-0','Flick step-out'),extra('floor-tuck-half')]},{kind:'sequence',id:'mixed-6',label:"Backward walkover \u2192 full-turn jump",items:[skill('acro-base-0','Backwards walkover'),skill('rolls-base-full-turn','Full-turn jump')]},{kind:'sequence',id:'mixed-7',label:"Cartwheel \u2192 flick step-out \u2192 full-turn jump",items:[extra('floor-cartwheel'),skill('acro-upgrade-0','Flick step-out'),skill('rolls-base-full-turn','Full-turn jump')]},{kind:'sequence',id:'mixed-8',label:"Handstand half pirouette \u2192 full-turn jump",items:[extra('floor-half-pirouette'),skill('rolls-base-full-turn','Full-turn jump')]},{kind:'sequence',id:'mixed-9',label:"Handstand half pirouette \u2192 tuck jump half",items:[extra('floor-half-pirouette'),extra('floor-tuck-half')]},{kind:'sequence',id:'mixed-10',label:"Handstand full pirouette \u2192 tuck jump half",items:[extra('floor-full-pirouette'),extra('floor-tuck-half')]}],true,'Perfect every skill in any one combination');
   const spin=()=>cr('spin','CR 4 · Spin',[skill('acro-upgrade-1','1½ spin')]);
   const vault=level=>section('vault','Vault',[cr('vault','Arm circle & vault',[
     skill('vault-run-2','Arm circle'),choice('vault-choice','Plus one of these vaults',[
       ...(level===8?[skill('vault-vaults-0','Handspring')]:[]),
       ...(level>=7?[skill('vault-vaults-1','Half on')]:[]),skill('vault-vaults-2','Half on half off')])],false,'Perfect the arm circle and one eligible vault')]);
-  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(),cr('mixed','CR 3 · Mixed series',[skill('leaps-base-cat','Cat leap'),skill('acro-base-one-hand','One-handed cartwheel')],false,'Cat leap → one-handed cartwheel'),spin()]),vault(8)]};
+  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(),mixed(),spin()]),vault(8)]};
   const level7={id:'level7',label:'Level 7 · All-around',sections:[
     section('floor','Floor',[acro(),dance(true),mixed(),spin()]),vault(7),
     section('beam','Beam',[
       cr('beam-acro','CR 1 · B acro',[extra('beam-walkover'),extra('beam-handstand-roll')],true,'Perfect either skill on high beam'),
       cr('beam-dance','CR 2 · Dance series',[extra('beam-split-jump'),choice('beam-jump-choice','Plus either jump',[extra('beam-straight-jump'),extra('beam-tuck-jump')])],false,'Split jump + straight jump or tuck jump'),
       cr('beam-spin','CR 3 · B spin',[extra('beam-full-spin')]),
-      cr('beam-dismount','CR 4 · B dismount',[extra('beam-b-dismount')])]),
+      cr('beam-dismount','CR 4 · B dismount',[extra('beam-straddle-dismount'),extra('beam-front-handspring'),extra('beam-back-somersault')],true)]),
     section('bars','Bars',[
       cr('bars-cast','CR 1 · Cast to horizontal',[extra('bars-cast-horizontal')]),
       cr('bars-circle','CR 2 · Circling element',[extra('bars-back-hip-circle')]),
       cr('bars-transition','CR 3 · High-bar sequence',[extra('bars-squat-stand'),extra('bars-catch'),choice('bars-high-choice','Then either skill',[extra('bars-baby-giant'),extra('bars-upstart')])],false,'Stand 3 seconds → jump to catch → baby giant or upstart'),
-      cr('bars-dismount','CR 4 · B dismount',[extra('bars-b-dismount')])])
+      cr('bars-dismount','CR 4 · B dismount',[extra('bars-straddle-undershoot'),extra('bars-pike-undershoot')],true)])
   ]};
   const level6={id:'level6',label:'Level 6 · Floor & Vault',sections:[section('floor','Floor',[
     cr('tumble','CR 1 · Backwards tumble',[skill('acro-pro-roundoff-flick','Round-off flick'),extra('floor-back-tuck')],false,'Round-off → flick → tuck'),dance(true),
@@ -79,6 +80,7 @@
     const group=assignment(config.gymnast),plans=group==='senior'?[level7,level6]:group?[level8]:[];
     const plan=plans.find(p=>p.id===config.plan)||plans[0];
     const evaluateItem=item=>{
+      if(item.kind==='sequence'){const items=item.items.map(evaluateItem);return {...item,items,value:items.every(i=>i.value===2)?2:items.some(i=>i.value>0)?1:0};}
       if(item.kind==='choice'){const items=item.items.map(evaluateItem);return {...item,items,value:items.some(i=>i.value===2)?2:items.some(i=>i.value===1)?1:0};}
       return {...item,value:item.kind==='skill'?Number(config.mark?.(config.gymnast.id,item.id)||0):goalValue(config.goalMarks?.[config.gymnast.id]?.[item.id],config.now)};
     };
@@ -94,9 +96,10 @@
   }
   const chevron='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
   function itemHTML(item,config,optional){
+    if(item.kind==='sequence')return `<details class="pg-choice"><summary>${esc(item.label)} ${item.value===2?'✓':''}</summary>${item.items.map(i=>itemHTML(i,{...config,idPrefix:item.id},false)).join('')}</details>`;
     if(item.kind==='choice')return `<div class="pg-choice" role="group" aria-label="${esc(item.label)}"><p>${esc(item.label)}</p>${item.items.map(i=>itemHTML(i,config,item.items.length>1)).join('')}</div>`;
     const status=item.value===2?'Ready':item.value===1?'Achieved · perfect next':'Not yet achieved';
-    return `<button type="button" id="goal-${esc(config.gymnast.id)}-${item.kind}-${esc(item.id)}" class="pg-skill is-${item.value}" data-goal-kind="${item.kind}" data-goal-id="${esc(item.id)}" aria-label="${esc(item.label)}: ${status}. ${item.value===2?'Remove mark':item.value===1?'Mark perfect':'Mark achieved'}" ${config.canEdit?'':'disabled'}><span class="pg-tick" aria-hidden="true">${item.value===2?'✓✓':item.value===1?'✓':'−'}</span><span class="pg-skill-copy"><strong>${esc(item.label)}</strong><small>${status}${optional?' · alternative':''}</small></span>${item.kind==='skill'?'<span class="pg-linked" title="Uses the same mark as Skills" aria-label="Linked to Skills">↗</span>':''}</button>`;
+    return `<button type="button" id="goal-${esc(config.idPrefix||'single')}-${esc(config.gymnast.id)}-${item.kind}-${esc(item.id)}" class="pg-skill is-${item.value}" data-goal-kind="${item.kind}" data-goal-id="${esc(item.id)}" aria-label="${esc(item.label)}: ${status}. ${item.value===2?'Remove mark':item.value===1?'Mark perfect':'Mark achieved'}" ${config.canEdit?'':'disabled'}><span class="pg-tick" aria-hidden="true">${item.value===2?'✓✓':item.value===1?'✓':'−'}</span><span class="pg-skill-copy"><strong>${esc(item.label)}</strong><small>${status}${optional?' · alternative':''}</small></span>${item.kind==='skill'?'<span class="pg-linked" title="Uses the same mark as Skills" aria-label="Linked to Skills">↗</span>':''}</button>`;
   }
   function sectionHTML(s,config){
     return `<section class="pg-apparatus" aria-label="${esc(s.title)} goals"><header><h3>${esc(s.title)}</h3><span>${s.requirements.filter(r=>r.ready).length} / ${s.requirements.length} ready</span></header><div class="pg-requirements">${s.requirements.map(r=>`<details class="pg-cr${r.ready?' is-ready':''}" data-goal-details="${esc(s.id+'-'+r.id)}"${r.ready?'':' open'}><summary><span class="pg-cr-check" aria-hidden="true">${r.ready?'✓':'·'}</span><strong>${esc(r.title)}</strong><span class="pg-cr-count">${r.ready?'Ready':`${r.done}/${r.total}`}</span>${chevron}</summary><div class="pg-cr-body">${r.note?`<p>${esc(r.note)}</p>`:''}<div class="pg-skill-list">${r.items.map(i=>itemHTML(i,config,r.any)).join('')}</div></div></details>`).join('')}</div></section>`;
