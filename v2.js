@@ -494,6 +494,7 @@
     if(!markup||!analyticsCompareGroup||panel==='priorities'||(panel==='squads'&&analyticsComparison==='readiness'))return markup;
     const content=window.SWLAnalyticsCompare?.render({...comparisonConfig(people,label),panel})||'';
     if(!content)return markup;
+    if(panel==='squads')return markup.replace('</section>',content+'</section>');
     if(panel==='overview')return content;
     const titleEnd=markup.indexOf('</h2></div>');
     const position=titleEnd<0?0:markup.indexOf('</div>',titleEnd+11)+6;
