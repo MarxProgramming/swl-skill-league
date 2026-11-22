@@ -1862,7 +1862,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./competition-results.js?v=20261117-awards"></script>
 <script src="./competition-awards.js?v=20261117-awards"></script>
 <script src="./profile-badges.js?v=profile-goals-20261122"></script>
-<script src="./profile-goals.js?v=20261122b"></script>
+<script src="./profile-goals.js?v=20261122c"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=awards-polish-20261121">
@@ -3576,9 +3576,9 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
   function changeGoal(goalId,button) {
     const gymnastId=selectedId,gymnast=GYMNASTS.find(g=>g.id===gymnastId),api=window.SWLProfileGoals;
-    if(!canEdit()||!gymnast||api.assignment(gymnast)!=='senior'||!api.extraIds.includes(goalId))return;
+    if(!canEdit()||!gymnast||!api.assignment(gymnast)||!api.extraIds.includes(goalId))return;
     const before=api.goalValue(state.goalMarks?.[gymnastId]?.[goalId]),after=(before+1)%3;
-    const current=()=>canEdit()&&GYMNAST_IDS.has(gymnastId)&&api.assignment(GYMNASTS.find(g=>g.id===gymnastId))==='senior'&&api.goalValue(state.goalMarks?.[gymnastId]?.[goalId])===before;
+    const current=()=>canEdit()&&GYMNAST_IDS.has(gymnastId)&&Boolean(api.assignment(GYMNASTS.find(g=>g.id===gymnastId)))&&api.goalValue(state.goalMarks?.[gymnastId]?.[goalId])===before;
     const apply=()=>{
       if(!current())return;
       enqueueOperation({type:'set_goal',gymnastId,goalId,value:after});
