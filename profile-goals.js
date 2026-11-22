@@ -30,7 +30,7 @@
     skill('vault-run-2','Arm circle'),choice('vault-choice','Plus one of these vaults',[
       ...(level===8?[skill('vault-vaults-0','Handspring')]:[]),
       ...(level>=7?[skill('vault-vaults-1','Half on')]:[]),skill('vault-vaults-2','Half on half off')])],false,'Perfect the arm circle and one eligible vault')]);
-  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(),mixed(),spin()]),vault(8)]};
+  const level8={id:'level8',label:'Level 8 · Floor & Vault',sections:[section('floor','Floor',[acro(),dance(),cr('mixed','CR 3 · Mixed series',[skill('leaps-base-cat','Cat leap'),skill('acro-base-one-hand','One-handed cartwheel')],false,'Cat leap → one-handed cartwheel'),spin()]),vault(8)]};
   const level7={id:'level7',label:'Level 7 · All-around',sections:[
     section('floor','Floor',[acro(),dance(true),mixed(),spin()]),vault(7),
     section('beam','Beam',[
