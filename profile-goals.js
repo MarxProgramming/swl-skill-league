@@ -96,7 +96,7 @@
   }
   const chevron='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
   function itemHTML(item,config,optional){
-    if(item.kind==='sequence')return `<details class="pg-choice"><summary>${esc(item.label)} ${item.value===2?'✓':''}</summary>${item.items.map(i=>itemHTML(i,{...config,idPrefix:item.id},false)).join('')}</details>`;
+    if(item.kind==='sequence')return `<details class="pg-choice" data-goal-details="${esc(item.id)}"><summary>${esc(item.label)} ${item.value===2?'✓':''}</summary>${item.items.map(i=>itemHTML(i,{...config,idPrefix:item.id},false)).join('')}</details>`;
     if(item.kind==='choice')return `<div class="pg-choice" role="group" aria-label="${esc(item.label)}"><p>${esc(item.label)}</p>${item.items.map(i=>itemHTML(i,config,item.items.length>1)).join('')}</div>`;
     const status=item.value===2?'Ready':item.value===1?'Achieved · perfect next':'Not yet achieved';
     return `<button type="button" id="goal-${esc(config.idPrefix||'single')}-${esc(config.gymnast.id)}-${item.kind}-${esc(item.id)}" class="pg-skill is-${item.value}" data-goal-kind="${item.kind}" data-goal-id="${esc(item.id)}" aria-label="${esc(item.label)}: ${status}. ${item.value===2?'Remove mark':item.value===1?'Mark perfect':'Mark achieved'}" ${config.canEdit?'':'disabled'}><span class="pg-tick" aria-hidden="true">${item.value===2?'✓✓':item.value===1?'✓':'−'}</span><span class="pg-skill-copy"><strong>${esc(item.label)}</strong><small>${status}${optional?' · alternative':''}</small></span>${item.kind==='skill'?'<span class="pg-linked" title="Uses the same mark as Skills" aria-label="Linked to Skills">↗</span>':''}</button>`;
