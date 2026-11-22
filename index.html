@@ -25,7 +25,7 @@
 <meta name="twitter:image" content="https://swlsquad.app/share-preview.png?v=20261108">
 <link rel="preload" href="./jakarta-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./barlow-semi-700.woff2" as="font" type="font/woff2" crossorigin>
-<script src="./theme.js?v=wide-contour-bands-20261122"></script>
+<script src="./theme.js?v=wide-bands-default-20261122"></script>
 <script src="./config.js?v=20261108-supabase"></script>
 <link rel="stylesheet" href="./lock.css">
 
@@ -3595,6 +3595,61 @@ html:has(body.no-motion){scroll-behavior:auto}
     if(paneChanged)window.SWLInteractionPolish?.scene({skills:'profileSkills',badges:'profileBadgeProgress',placement:'profilePlacement',insights:'profileInsights'}[value]);
   }
 
+  // Display order only. Skill IDs, marks and scoring remain unchanged.
+  const DISPLAY_COMPLEXES = CATEGORIES.flatMap(category =>
+    category.tiers.map(([tier, label]) => ({ category, tier, label }))
+  ).sort((a, b) => (({base:0,run:0,upgrade:1,vaults:1,pro:2})[a.tier] ?? 3) - (({base:0,run:0,upgrade:1,vaults:1,pro:2})[b.tier] ?? 3));
+
+
+  function profileSkillsHTML() {
+    return `      ${DISPLAY_COMPLEXES.map(({category,tier,label}) => `
+        <section
+          class="complex"
+          data-complex="${category.id}-${tier}"
+        >
+          <div class="complex-head">
+<div>
+              <h3>${escapeHTML(category.name)}</h3>
+
+            </div>
+
+            <span
+              class="category-score"
+              data-complex-score="${category.id}-${tier}"
+            ></span>
+          </div>
+
+            <div
+              class="tier ${tier}"
+              data-tier="${category.id}-${tier}"
+            >
+              <div class="tier-head">
+                <span class="tier-label">${label}</span>
+
+                <span>
+                  ${skillPoints(category.id, tier)} pts · perfect ${skillPoints(category.id, tier) * 2}
+                </span>
+
+                <span
+                  class="tier-status"
+                  data-tier-status="${category.id}-${tier}"
+                ></span>
+              </div>
+
+              <div class="skill-grid">
+                ${SKILLS
+                  .filter(skill =>
+                    skill.category === category.id &&
+                    skill.tier === tier
+                  )
+                  .map(skillHTML)
+                  .join('')}
+              </div>
+            </div>
+        </section>
+      `).join('')}`;
+  }
+
   function renderAthlete() {
     const badgeViewState = window.SWLProfileBadges?.capture?.($('profileBadgeProgress'));
     const insightViewState = v2Api()?.capturePersonalInsights?.($('profileInsights'));
@@ -3677,54 +3732,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <div id="profilePlacement" aria-label="Personal placement"${profilePane === 'placement' ? '' : ' hidden'}></div>
       <div id="profileInsights" aria-label="Personal insights"${profilePane === 'insights' ? '' : ' hidden'}></div>
       <div id="profileSkills"${profilePane === 'skills' ? '' : ' hidden'}>
-      ${CATEGORIES.map(category => `
-        <section
-          class="complex"
-          data-complex="${category.id}"
-        >
-          <div class="complex-head">
-<div>
-              <h3>${escapeHTML(category.name)}</h3>
-
-            </div>
-
-            <span
-              class="category-score"
-              data-category-score="${category.id}"
-            ></span>
-          </div>
-
-          ${category.tiers.map(([tier, label]) => `
-            <div
-              class="tier ${tier}"
-              data-tier="${category.id}-${tier}"
-            >
-              <div class="tier-head">
-                <span class="tier-label">${label}</span>
-
-                <span>
-                  ${skillPoints(category.id, tier)} pts · perfect ${skillPoints(category.id, tier) * 2}
-                </span>
-
-                <span
-                  class="tier-status"
-                  data-tier-status="${category.id}-${tier}"
-                ></span>
-              </div>
-
-              <div class="skill-grid">
-                ${SKILLS
-                  .filter(skill =>
-                    skill.category === category.id &&
-                    skill.tier === tier
-                  )
-                  .map(skillHTML)
-                  .join('')}
-              </div>
-            </div>
-          `).join('')}
-        </section>
-      `).join('')}
+      ${profileSkillsHTML()}
       </div>
       ${window.SWLRosterManagement?.footer(gymnast)||''}
     `;
@@ -3804,15 +3812,15 @@ html:has(body.no-motion){scroll-behavior:auto}
     }
 
     for (const category of CATEGORIES) {
-      $('athletePanel').querySelector(
-        `[data-category-score="${category.id}"]`
-      ).textContent = `${summary(selectedId, category.id).points} pts`;
-
       for (const [tier] of category.tiers) {
         const skills = SKILLS.filter(skill =>
           skill.category === category.id &&
           skill.tier === tier
         );
+
+        const points = skills.reduce((sum, skill) => sum + mark(selectedId, skill.id) * skill.points, 0)
+          + completionBonus(selectedId, category.id, tier);
+        $('athletePanel').querySelector(`[data-complex-score="${category.id}-${tier}"]`).textContent = `${points} pts`;
 
         const done = skills.filter(
           skill => mark(selectedId, skill.id) > 0
