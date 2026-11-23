@@ -2379,6 +2379,19 @@ html:has(body.no-motion){scroll-behavior:auto}
       if (token === viewScrollRestore && currentView === view) window.scrollTo({top,behavior:'instant'});
     });
   }
+  function scrollActiveViewToTop() {
+    const view = currentView, from = window.scrollY;
+    const token = ++viewScrollRestore;
+    if (reducedMotion() || from < 1) { window.scrollTo({top:0,behavior:'instant'}); return; }
+    const started = performance.now();
+    function frame(now) {
+      if (token !== viewScrollRestore || currentView !== view) return;
+      const progress = Math.min(1, (now - started) / 280);
+      window.scrollTo({top:from * Math.pow(1 - progress, 3),behavior:'instant'});
+      if (progress < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
   for (const type of ['wheel','touchstart','pointerdown','keydown']) window.addEventListener(type, () => { viewScrollRestore++; }, {passive:true});
   let activeChallenge = null;
   let directoryScroll = 0, directoryAnchor = null;
@@ -4406,6 +4419,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         if (window.SWLChallenge?.definitions.some(item => item.id === challenge)) { activeChallenge = challenge; setView('challenge'); }
       } else if (button.dataset.view) {
         const destination = button.dataset.view;
+        if (button.closest('#nav') && destination === currentView) { scrollActiveViewToTop(); return; }
         if (destination === 'challenge') activeChallenge = null;
         if (destination === 'directory' && button.closest('#nav')) {
           if (['tracker','placement'].includes(currentView)) {
