@@ -2037,9 +2037,9 @@ html:has(body.no-motion){scroll-behavior:auto}
     )
   );
 
-  const STARRED_SKILLS = new Set(["acro-base-full-spin", "leaps-base-0", "rolls-upgrade-dive", "acro-upgrade-1", "leaps-base-1", "rolls-pro-1", "acro-pro-roundoff-flick", "acro-pro-1", "vault-run-2", "vault-vaults-1", "vault-vaults-2"]);
-  const STARRED_TEN = new Set(["acro-pro-roundoff-flick", "acro-base-full-spin", "leaps-base-0", "leaps-base-1", "vault-run-2", "vault-vaults-1"]);
-  SKILLS.forEach(skill => { skill.achievementBonus = STARRED_SKILLS.has(skill.id) ? (STARRED_TEN.has(skill.id) ? 10 : 5) : 0; });
+  const STARRED_BONUSES = Object.freeze({"acro-base-full-spin": 10, "leaps-base-0": 10, "rolls-upgrade-dive": 5, "acro-upgrade-1": 5, "leaps-base-1": 5, "rolls-pro-1": 5, "acro-pro-roundoff-flick": 10, "acro-pro-1": 2.5, "vault-run-2": 10, "vault-vaults-0": 10, "vault-vaults-1": 5, "vault-vaults-2": 2.5, "leaps-base-2": 2.5});
+  const STARRED_SKILLS = new Set(Object.keys(STARRED_BONUSES));
+  SKILLS.forEach(skill => { skill.achievementBonus = STARRED_BONUSES[skill.id] || 0; });
   const skillScore = (skill, value) => value * skill.points + (value > 0 ? (skill.achievementBonus || 0) : 0);
   window.SWLStarredSkills = STARRED_SKILLS;
   const starTag = skill => skill.achievementBonus ? `<span class="skill-star" title="Competition skill · +${skill.achievementBonus} once Achieved, retained at Perfect" aria-label="Competition skill, ${skill.achievementBonus} achievement bonus points">★</span>` : '';
