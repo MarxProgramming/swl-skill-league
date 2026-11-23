@@ -1591,6 +1591,8 @@ html:has(body.no-motion){scroll-behavior:auto}
 .scoring-locked button[data-skill]:disabled,.scoring-locked button[data-link-complex]:disabled{opacity:1;cursor:default}
 @media(max-width:1100px){.header-inner{gap:12px}.nav button{width:120px}}
 @media(max-width:600px){.brand>div:last-child{display:none}.brand{flex:0;margin-right:auto}.scoring-lock-button{padding:10px 9px}.scoring-lock-button>span[aria-hidden]{display:none}.scoring-lock-status{font-size:10px}}
+
+.skill-star{display:inline-block;color:#f3cf85;font-size:.8em;vertical-align:middle;margin-left:.25em}
 </style>
 <link rel="stylesheet" href="./podium-motion.css">
 <link rel="stylesheet" href="./startup.css?v=20261101-profile">
@@ -1626,7 +1628,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-card-sizes">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 <link rel="stylesheet" href="./profile-badges.css?v=skill-targets-circuits-20261121">
-<link rel="stylesheet" href="./profile-goals.css?v=20261123-v62-stacked">
+<link rel="stylesheet" href="./profile-goals.css?v=20261123-analytics-clean">
 <link rel="stylesheet" href="./competition-awards.css?v=20261117-awards">
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
@@ -1806,7 +1808,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     <li><strong>Perfect earns double.</strong> It replaces the Achieved score. Achieved means the skill would count without a downgrade, with no more than 0.5 deductions; Perfect allows no more than 0.2.</li>
     <li><strong>All three green earns one bonus point.</strong> Get all three skills in a complex to Perfect for <strong>+1 point</strong>. Achieved marks and mixed groups earn no bonus. This includes leaps and handstand holds. The bonus follows the current marks.</li>
     <li><strong>Compare age groups.</strong> The Age filter works alongside squad filters. IGA groups use the age a gymnast turns in the current calendar year: Mini Marvels 5–6, Little Leapers 7–8, Skill Seekers 9–10, Trailblazers 11–12, Pioneers 13–14, Legends 15–16 and Masters 17+. Missing or outdated age information stays in “No current age category”. <a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-National-Pathway-Handbook-Information_compressed.pdf#page=6" target="_blank" rel="noopener noreferrer">IGA January 2026 handbook</a>.</li>
-    <li><strong>Floor and Vault.</strong> Combined is selected when the app opens. Vault has its own leaderboard: 10 points for each Achieved skill, 20 for Perfect, and +1 when all three in a group are Perfect. Combined adds floor and vault together. Weekly streaks use floor progress only.</li>
+    <li><strong>★ Competition skills.</strong> Starred skills receive a fixed +10 bonus while Achieved or Perfect. Perfect doubles the normal skill points, not this bonus. Unticking removes the bonus; re-ticking restores it without stacking. Goal-only checks do not earn league points.</li>
+    <li><strong>Floor and Vault.</strong> Combined is selected when the app opens. Vault has its own leaderboard: 10 base points for each Achieved skill, 20 for Perfect, plus any starred bonus, and +1 when all three in a group are Perfect. Combined adds floor and vault together. Weekly streaks use floor progress only.</li>
     <li><strong>Keep skills fresh.</strong> Achieved stays until a coach unticks it. Perfect lasts 30 days, then becomes Achieved. Renew Perfect after practising to restart its 30 days. With 7 days left, only its Renew button turns orange; on the last day it turns red. Renewals do not add points. At 50 qualifying points in the last seven days, your points glow gently and show “On a streak”. Basic Rolls earns no heat. Other basic skills earn heat only for the step to Perfect, plus the all-Perfect complex bonus. Upgrades and pro upgrades still count. These rules only affect heat, not leaderboard scores. Renewals add no heat; resets and undo reduce it. Automatic expiry does not take away earned heat. The points highlight follows the qualifying points earned in the current seven-day window.</li>
     <li><strong>Find your place.</strong> On a gymnast’s profile, choose Placement to see two people above and below on each board, with blurred previews of the third. Equal scores are ordered alphabetically, with a separate place for each gymnast.</li>
   </ul>
@@ -1855,14 +1858,14 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261109-20261107-roster"></script>
 <script src="./coaching.js?v=1"></script>
-<script src="./v2.js?v=squad-readiness-percent-20261122c"></script>
+<script src="./v2.js?v=20261123-analytics-stars"></script>
 <script src="./achievement-50.js?v=coach-flow-1"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261118-polish"></script>
 <script src="./competition-results.js?v=20261117-awards"></script>
 <script src="./competition-awards.js?v=20261117-awards"></script>
 <script src="./profile-badges.js?v=profile-goals-20261122"></script>
-<script src="./profile-goals.js?v=20261123-compact-goals"></script>
+<script src="./profile-goals.js?v=20261123-junior-stars"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=awards-polish-20261121">
@@ -2033,6 +2036,12 @@ html:has(body.no-motion){scroll-behavior:auto}
       }))
     )
   );
+
+  const STARRED_SKILLS = new Set(["rolls-base-0", "rolls-base-full-turn", "rolls-base-2", "rolls-upgrade-dive", "rolls-upgrade-2", "acro-base-0", "acro-base-full-spin", "acro-base-one-hand", "acro-upgrade-0", "acro-upgrade-1", "acro-pro-roundoff-flick", "acro-pro-1", "acro-pro-handspring", "leaps-base-0", "leaps-base-cat", "leaps-base-scissor", "leaps-base-1", "leaps-base-2", "vault-run-2", "vault-vaults-0", "vault-vaults-1", "vault-vaults-2"]);
+  SKILLS.forEach(skill => { skill.achievementBonus = STARRED_SKILLS.has(skill.id) ? 10 : 0; });
+  const skillScore = (skill, value) => value * skill.points + (value > 0 ? (skill.achievementBonus || 0) : 0);
+  window.SWLStarredSkills = STARRED_SKILLS;
+  const starTag = skill => skill.achievementBonus ? `<span class="skill-star" title="Competition skill · +10 once Achieved, retained at Perfect" aria-label="Competition skill, 10 achievement bonus points">★</span>` : '';
 
   let GYMNAST_IDS = new Set(GYMNASTS.map(g => g.id));
   const SKILL_IDS = new Set(SKILLS.map(s => s.id));
@@ -2438,10 +2447,10 @@ html:has(body.no-motion){scroll-behavior:auto}
       .reduce((total, skill) => {
         const value = source.marks[id]?.[skill.id] ?? 0;
 
-        total.points += value * skill.points;
+        total.points += skillScore(skill, value);
         total.achieved += Number(value > 0);
         total.perfect += Number(value === 2);
-        total.max += skill.points * 2;
+        total.max += skillScore(skill, 2);
 
         return total;
       }, {
@@ -2533,7 +2542,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function renderV2() {
     const challengeConfig = {gymnasts:GYMNASTS,skills:SKILLS,mark,summary,apparatus,activeChallenge,achievementBadge,completionAchievements:confirmedState.completionAchievements,isCoachParticipant,groupLabel,gymnastSquadLabel,coachBadge,fireBadge,streakLabel,heatClass,challenge:confirmedState.challenge,hasLoaded,pending:hasPending(),connected};
     if (currentView === 'challenge') window.SWLChallenge?.render($('challengeRoot'), challengeConfig);
-    v2Api()?.render({view:currentView,state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,birthdayClass,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
+    v2Api()?.render({view:currentView,state,apparatus,achievementBadge,achievementIcons,confirmedPoints:(id,category)=>summary(id,category,confirmedState).points,gymnasts:GYMNASTS,skills:SKILLS,categories:CATEGORIES,summary,skillScore,starTag,mark,skillFreshness,fireCount,isOnFire,heatLevel,dailyPoints,weeklyPoints,weeklyHeatPoints,ageCategories:AGE_CATEGORIES,ageCategory,ageCategoryLabel,londonYear,groupLabel,shortGroupLabel,coachingGroupKey,squadMemberships,gymnastSquadLabel,isCoachParticipant,coachBadge,inGroup:inLeaderboardGroup,birthdayClass,fireBadge,streakLabel,hasLoaded,canEdit:canEdit()});
   }
   function inLeaderboardGroup(gymnast, group) {
     return group === 'overall' || (group === 'all' ? !isCoachParticipant(gymnast) : group === 'floor' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isFloorGroup) : group === 'afternoon' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(isAfternoonFloorGroup) : group === 'junior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g=>/Junior (Squad|Advanced)/i.test(g)) : group === 'senior' ? !isCoachParticipant(gymnast) && squadMemberships(gymnast).some(g => ['Marx','Dan'].includes(g)) : squadMemberships(gymnast).includes(coachingGroupKey(group)));
@@ -3053,7 +3062,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       const response = await fetch(scoresEndpoint(), {
         method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow',
         headers: { 'Content-Type': 'application/json', 'apikey': window.SWL_CONFIG.publicKey, 'Authorization': 'Bearer ' + window.SWL_CONFIG.publicKey, ...(currentCoachSession() ? {'x-swl-coach': currentCoachSession().token} : {}) },
-        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2, rollHoldVersion: 1, trainingVersion: 1 }),
+        body: JSON.stringify({ ...body, publicProtocol: 'swl-pages-v1', catalogVersion: 5, achievementVersion: 2, rollHoldVersion: 1, trainingVersion: 1, scoringVersion: 1 }),
         signal: controller.signal
       });
       let payload;
@@ -3538,7 +3547,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         </span>
 
         <span class="skill-name" id="name-${skill.id}">
-          ${escapeHTML(skill.name)}
+          ${escapeHTML(skill.name)} ${starTag(skill)}
         </span>
 
         <span class="skill-bottom" aria-hidden="true">
@@ -3837,7 +3846,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       card.querySelector('.skill-status').textContent = SYMBOL[value];
 
       card.querySelector('.skill-points').innerHTML =
-        `${value * skill.points} <small>pts</small>`;
+        `${skillScore(skill, value)} <small>pts</small>`;
 
       card.disabled = !canEdit();
       const nextAction = ['mark achieved', 'mark perfect', 'reset'][value];
@@ -3851,7 +3860,7 @@ html:has(body.no-motion){scroll-behavior:auto}
           skill.tier === tier
         );
 
-        const points = skills.reduce((sum, skill) => sum + mark(selectedId, skill.id) * skill.points, 0)
+        const points = skills.reduce((sum, skill) => sum + skillScore(skill, mark(selectedId, skill.id)), 0)
           + completionBonus(selectedId, category.id, tier);
         $('athletePanel').querySelector(`[data-complex-score="${category.id}-${tier}"]`).textContent = `${points} pts`;
 
@@ -4230,7 +4239,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     renderSaveStatus();
     restoreControlFocus(button);
 
-    const delta = (after - before) * skill.points + bonusAfter - bonusBefore;
+    const delta = skillScore(skill, after) - skillScore(skill, before) + bonusAfter - bonusBefore;
 
     if (button.isConnected) effects(
       button.closest('.skill') || button,
