@@ -84,3 +84,5 @@
 .pg-cr.is-achieved>summary>.pg-cr-check{background:#c6a1ff;border-color:transparent;color:#27163e}
 .pg-cr.is-achieved>summary>.pg-cr-count{color:#d5b5ff;background:#b991ed12}
 .pg-cr-body>.pg-perfect-next{color:#d5b5ff;font-weight:600}
+
+.pg-cr-title .pg-cr-fulfilled{font-size:11px;line-height:1.5;letter-spacing:0;text-transform:none;font-weight:400;color:#b8a8ca;overflow-wrap:anywhere}.pg-cr.is-achieved .pg-cr-fulfilled{color:#cbb1ed}.pg-cr.is-ready .pg-cr-fulfilled{color:#bcc89f}
