@@ -2370,6 +2370,16 @@ html:has(body.no-motion){scroll-behavior:auto}
   let profileBadgeVisit = {id:null,fresh:{}};
   let gamesLoading=null, gamesMounted=false, gamesLoadError='';
   let currentView = 'home';
+  const viewScrollPositions = new Map();
+  let viewScrollRestore = 0;
+  function restoreViewScroll(view, top) {
+    const token = ++viewScrollRestore;
+    window.scrollTo({top,behavior:'instant'});
+    requestAnimationFrame(() => {
+      if (token === viewScrollRestore && currentView === view) window.scrollTo({top,behavior:'instant'});
+    });
+  }
+  for (const type of ['wheel','touchstart','pointerdown','keydown']) window.addEventListener(type, () => { viewScrollRestore++; }, {passive:true});
   let activeChallenge = null;
   let directoryScroll = 0, directoryAnchor = null;
   let gymnastTabView = 'directory', gymnastTabScroll = 0, analyticsScroll = 0;
@@ -3940,6 +3950,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     categoryFilter = 'all';
     $('leaderboardFilters').open = false;
     v2Api()?.setDirectoryGroup(programme);
+    viewScrollPositions.set('dashboard',0);
     setView('dashboard');
     renderAll();
     window.dispatchEvent(new Event('swl:programme-selected'));
@@ -3952,6 +3963,8 @@ html:has(body.no-motion){scroll-behavior:auto}
     const viewChanged = view !== currentView;
     if (viewChanged) window.SWLCoaching?.clearUndo();
     if (viewChanged) {
+      viewScrollPositions.set(currentView,window.scrollY);
+      viewScrollRestore++;
       if(view==='directory')v2Api()?.enterDirectory?.();
       profileBadgeVisit = {id:null,fresh:{}};
       window.SWLPerfectConfirm?.cancel();
@@ -4003,14 +4016,11 @@ html:has(body.no-motion){scroll-behavior:auto}
     if(viewChanged && view !== 'tracker')window.SWLInteractionPolish?.scene({home:'programmeMenu',dashboard:'dashboard',directory:'directory',analytics:'analytics',games:'games',catalogue:'allSkills',challenge:'challenge'}[view]);
     if (view === 'tracker') syncBadgeNotices();
 
-    if (scroll) {
-      window.scrollTo({
-        top: 0,
-        behavior: view === 'home' || reducedMotion() ? 'instant' : 'smooth'
-      });
-
+    if (scroll && viewChanged) {
+      restoreViewScroll(view, viewScrollPositions.get(view) || 0);
       $('main').focus({ preventScroll: true });
     }
+
   }
 
   function renderPlacementProfile(animate = false) {
@@ -4402,13 +4412,13 @@ html:has(body.no-motion){scroll-behavior:auto}
             backToGymnasts();
           } else if (currentView !== 'directory') {
             setView(gymnastTabView, false);
-            window.scrollTo({top:gymnastTabScroll,behavior:'instant'});
+            restoreViewScroll(gymnastTabView,gymnastTabScroll);
           }
         } else if (destination === 'analytics') {
           if (currentView !== 'analytics') {
-            if (v2Api()?.syncAnalyticsDirectory(['directory','tracker','placement'].includes(currentView))) analyticsScroll = 0;
+            if (v2Api()?.syncAnalyticsDirectory(false)) analyticsScroll = 0;
             setView('analytics', false);
-            window.scrollTo({top:analyticsScroll,behavior:'instant'});
+            restoreViewScroll('analytics',analyticsScroll);
           }
         } else setView(destination);
 
@@ -4428,7 +4438,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       } else if (button.hasAttribute('data-placement-scope')) {
         placementGroup=button.dataset.placementScope;renderPlacementProfile();
       } else if (button.hasAttribute('data-analytics-gymnast')) {
-        v2Api()?.selectGymnast(button.dataset.analyticsGymnast);analyticsScroll=0;setView('analytics');
+        v2Api()?.selectGymnast(button.dataset.analyticsGymnast);analyticsScroll=0;viewScrollPositions.set('analytics',0);setView('analytics');
       } else if (button.id === 'scoringGuideButton') {
         $('scoringGuide').showModal();
 
