@@ -2037,7 +2037,7 @@ html:has(body.no-motion){scroll-behavior:auto}
     )
   );
 
-  const STARRED_SKILLS = new Set(["rolls-base-0", "rolls-base-full-turn", "rolls-base-2", "rolls-upgrade-dive", "rolls-upgrade-2", "acro-base-0", "acro-base-full-spin", "acro-base-one-hand", "acro-upgrade-0", "acro-upgrade-1", "acro-pro-roundoff-flick", "acro-pro-1", "acro-pro-handspring", "leaps-base-0", "leaps-base-cat", "leaps-base-scissor", "leaps-base-1", "leaps-base-2", "vault-run-2", "vault-vaults-0", "vault-vaults-1", "vault-vaults-2"]);
+  const STARRED_SKILLS = new Set(["acro-base-full-spin", "leaps-base-0", "rolls-upgrade-dive", "acro-upgrade-1", "leaps-base-1", "rolls-pro-1", "acro-pro-roundoff-flick", "acro-pro-1", "vault-run-2", "vault-vaults-1", "vault-vaults-2"]);
   SKILLS.forEach(skill => { skill.achievementBonus = STARRED_SKILLS.has(skill.id) ? 10 : 0; });
   const skillScore = (skill, value) => value * skill.points + (value > 0 ? (skill.achievementBonus || 0) : 0);
   window.SWLStarredSkills = STARRED_SKILLS;
