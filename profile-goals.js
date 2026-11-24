@@ -117,7 +117,7 @@
   }
 
   function build(config={}){
-    const group=assignment(config.gymnast),plans=group==='senior'?[level8,level7fv,level7,level6]:group==='junior'?[junior]:group?[level8]:[];
+    const group=assignment(config.gymnast),plans=group==='senior'?[level8,level7fv,level7,level6]:group==='junior'?[junior]:group?[level8,level7fv]:[];
     const plan=plans.find(p=>p.id===config.plan)||plans[0];
     const evaluateItem=item=>{
       if(item.kind==='sequence'){const items=item.items.map(evaluateItem);return {...item,items,value:items.every(i=>i.value===2)?2:items.some(i=>i.value>0)?1:0};}
