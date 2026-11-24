@@ -250,29 +250,60 @@
       return `<li id="circuit-person-${esc(skill.id)}-${esc(g.id)}"><strong>${esc(g.name)}</strong><div class="v4-mark-controls" role="group" aria-label="${esc(skill.name)} for ${esc(g.name)}">${status.map((label,value)=>`<button type="button" id="circuit-mark-${esc(g.id)}-${esc(skill.id)}-${value}" class="v4-mark-button mark-${value}" data-priority-mark="${value}" data-priority-skill="${esc(skill.id)}" data-priority-gymnast="${esc(g.id)}" aria-label="${esc(g.name)} · ${esc(skill.name)}: ${label}" aria-pressed="${level===value}"${data.canEdit===false?' disabled':''}>${symbols[value]}</button>`).join('')}</div></li>`;
     }).join('')}</ul></div>`;
   }
+  function circuitPriorities(rows, people, plan) {
+    const needs = new Map();
+    const goals = window.SWLProfileGoals;
+    if (goals?.nextGoalSkills) {
+      for (const gymnast of people) {
+        const model = goals.build({gymnast, plan:analyticsGoalPlan, mark:data.mark, goalMarks:data.state.goalMarks});
+        const floor = model.sections.find(section => section.id === 'floor');
+        const neededSkills = new Map();
+        for (const requirement of floor?.requirements || []) {
+          if (requirement.ready) continue;
+          for (const item of goals.nextGoalSkills(requirement)) {
+            if (item.kind === 'skill') neededSkills.set(item.id,item.value);
+          }
+        }
+        for (const [id,value] of neededSkills) {
+          if (!needs.has(id)) needs.set(id,[0,0]);
+          needs.get(id)[value]++;
+        }
+      }
+    }
+
+    return rows.filter(row => plan === '1' ? row.skill.tier === 'base' : plan === '2' ? row.toPerfect > 0 : true)
+      .map(row => {
+        const [missing, polishing] = needs.get(row.skill.id) || [0,0];
+        const bonus = row.skill.achievementBonus || 0;
+        const goalCount = plan === '2' ? polishing : missing || polishing;
+        let priority = 0;
+        if (plan !== '2' && missing) priority = 4;
+        else if (goalCount) priority = 3;
+        else if (bonus && (plan === '2' || row.toAchieve)) priority = 2;
+        else if (bonus) priority = 1;
+        return {...row, priority, goalCount, bonus};
+      }).sort((a,b) => b.priority-a.priority || b.goalCount-a.goalCount || b.bonus-a.bonus ||
+        (plan === '2' ? b.toPerfect-a.toPerfect : 0) || b.availablePoints-a.availablePoints);
+  }
+
   function renderSquadCircuit() {
     const panel=directory.querySelector('#squadCircuit');
     if(panel.hidden||!data)return;
     const people=data.gymnasts.filter(g=>inGroup(g,directoryGroup)&&!window.SWLDirectoryAttendance?.isHidden(g.id));
     const plan=panel.dataset.plan||'0';
-    const scope=directoryGroup+'|'+plan+'|'+people.map(g=>g.id).sort().join(',');
+    const scope=directoryGroup+'|'+plan+'|'+analyticsGoalPlan+'|'+people.map(g=>g.id).sort().join(',');
     if(circuitPinned?.scope!==scope)circuitPinned=null;
-    let rows=data.hasLoaded?skillPriorities(people,{scope:'floor',limit:Infinity,includeComplete:Boolean(circuitPinned)}):[];
+    const rows=data.hasLoaded?skillPriorities(people,{scope:'floor',limit:Infinity,includeComplete:Boolean(circuitPinned)}):[];
     let stations=[];
     if(circuitPinned)stations=circuitPinned.ids.map(id=>rows.find(r=>r.skill.id===id)).filter(Boolean);
     else {
-      if(plan==='1')rows=rows.filter(r=>r.skill.tier==='base');
-      if(plan==='2')rows=rows.filter(r=>r.toPerfect).sort((a,b)=>b.toPerfect-a.toPerfect||b.availablePoints-a.availablePoints);
-      const seen=new Set();
-      for(const row of rows)if(!seen.has(row.skill.category)){stations.push(row);seen.add(row.skill.category);}
-      for(const row of rows){if(stations.length>=3)break;if(!stations.includes(row))stations.push(row);}
-      stations=stations.slice(0,3);
+      stations=circuitPriorities(rows,people,plan).slice(0,3);
       if(data.hasLoaded)circuitPinned={scope,ids:stations.map(r=>r.skill.id)};
     }
     const html=stations.length?`<p class="circuit-context">${esc(groupName(directoryGroup))} · ${people.length} gymnasts</p><div class="circuit-skill-list">${stations.map((r,i)=>{
       const need=plan==='2'?r.toPerfect:r.toAchieve||r.toPerfect;
       const goal=plan==='2'||!r.toAchieve?'to perfect':'to achieve';
-      return `<details data-analytics-disclosure="circuit-${esc(scope)}-${esc(r.skill.id)}"><summary><span class="circuit-number">${i+1}</span><div><strong>${esc(r.skill.name)}</strong><small>${r.perfect===r.total?'All perfect':`${need}/${r.total} ${goal}`}</small></div><span class="circuit-view">Gymnasts</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg></summary>${circuitMembers(people,r.skill)}</details>`;
+      return `<details data-analytics-disclosure="circuit-${esc(scope)}-${esc(r.skill.id)}"><summary><span class="circuit-number">${i+1}</span><div><strong>${esc(r.skill.name)} ${data.starTag?.(r.skill)||''}</strong><small>${r.perfect===r.total?'All perfect':`${need}/${r.total} ${goal}`}</small></div><span class="circuit-view">Gymnasts</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg></summary>${circuitMembers(people,r.skill)}</details>`;
     }).join('')}</div>`:!data.hasLoaded?'<p class="circuit-empty">Loading squad skills…</p>':!people.length?'<p class="circuit-empty">No gymnasts present in this squad.</p>':plan==='2'?'<p class="circuit-empty">No achieved skills waiting for Perfect. Try Foundations.</p>':'<p class="circuit-empty">Everything in this plan is Perfect. Choose another plan.</p>';
     commitHTML(directory.querySelector('#circuitStations'),html);
   }
