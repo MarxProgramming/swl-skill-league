@@ -4,7 +4,8 @@
   const routineNames = Object.freeze({
     'routine-level8':'Level 8 routine complete',
     'routine-level7fv':'Level 7 Floor & Vault routine complete',
-    'routine-level7':'Level 7 All-around routine complete',
+    'routine-level7':'Level 7 All-around floor routine complete',
+    'routine-level7-beam':'Level 7 beam routine complete',
     'routine-level6':'Level 6 routine complete',
     'routine-junior':'Junior routine complete'
   });
@@ -145,8 +146,22 @@
     };
     const sections=plan?plan.sections.map(s=>({...s,requirements:s.requirements.map(evaluate)})):[];
     const requirements=sections.flatMap(s=>s.requirements);
-    const routineComplete=Boolean(plan&&config.goalMarks?.[config.gymnast.id]?.['routine-'+plan.id]?.value===1);
-    return {group,plans,plan,sections,routineComplete,readiness:readiness(requirements),done:requirements.filter(r=>r.ready).length,total:requirements.length,
+    const routineChecks=[];
+    const checked=id=>config.goalMarks?.[config.gymnast.id]?.[id]?.value===1;
+    if(plan){
+      const id='routine-'+plan.id;
+      routineChecks.push({id,label:group==='senior'?'Floor routine':'Routine',complete:checked(id),required:true});
+      if(group==='senior')routineChecks.push({id:'routine-level7-beam',label:'Beam routine',complete:checked('routine-level7-beam'),required:plan.id==='level7'});
+    }
+    const requiredRoutines=routineChecks.filter(r=>r.required);
+    const missingRoutines=requiredRoutines.filter(r=>!r.complete);
+    const skillReadiness=readiness(requirements);
+    const status=missingRoutines.length
+      ? {status:'developing',remaining:null,unachieved:true,label:'Routine needed'}
+      : skillReadiness;
+    return {group,plans,plan,sections,routineChecks,missingRoutines,readiness:status,
+      done:requirements.filter(r=>r.ready).length+requiredRoutines.length-missingRoutines.length,
+      total:requirements.length+requiredRoutines.length,
       practice:group==='senior'&&[config.gymnast.coach,...(config.gymnast.squads||[])].includes('Marx')?{...practice,requirements:practice.requirements.map(evaluate)}:null};
   }
   const chevron='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>';
@@ -176,8 +191,8 @@
     host._goalSignature=signature;host.dataset.gymnast=config.gymnast.id;host.dataset.goalPlan=model.plan?.id||'';
     const focused=host.contains(document.activeElement)?document.activeElement.id:null;
     if(!model.plan){host.innerHTML='<section class="pg-empty"><h2>No goals assigned yet</h2><p>Skills and awards are still available for this gymnast.</p></section>';return model;}
-    const routine=`<label class="pg-routine"><input type="checkbox" id="routine-${esc(config.gymnast.id)}-${esc(model.plan.id)}" data-routine-plan="${esc(model.plan.id)}"${model.routineComplete?' checked':''}${config.canEdit?'':' disabled'}> <span>Routine complete</span></label>`;
-    host.innerHTML=`<div class="pg-overview"><div><p class="pg-kicker">${model.group==='senior'?'Senior squad · Competition goals':model.group==='junior'?'Junior squad · Routine goals':'Floor & Vault'}</p><h2>${esc(model.plan.label)}</h2><p>Perfect skills count as ready. Marks stay linked to Skills.</p></div><div class="pg-total"><strong>${model.done}<span> / ${model.total}</span></strong><small>requirements ready</small></div><div class="pg-progress" role="progressbar" aria-label="Goal requirements ready" aria-valuemin="0" aria-valuemax="${model.total}" aria-valuenow="${model.done}"><i style="width:${100*model.done/model.total}%"></i></div>${model.plans.length>1?`<div class="pg-plan-switch" role="group" aria-label="Goal pathway">${model.plans.map(p=>`<button type="button" data-goal-plan="${p.id}" aria-pressed="${model.plan.id===p.id}">${planLabel(p)}</button>`).join('')}</div>`:''}${routine}<span class="pg-lock-note">${config.canEdit?'Scoring unlocked':'Unlock scoring to update goals'}</span></div><div class="pg-sections">${model.sections.map(s=>sectionHTML(s,config)).join('')}</div><details class="pg-method" data-goal-details="method"><summary>How these goals work ${chevron}</summary><p>These are your coach’s skill targets, grouped by composition requirement (CR). Series connections are assumed. Ready means the individual skills are perfect; it is not a complete competition-entry assessment.</p><p>Marks from complexes are shared automatically. Beam, bars and other goal-only checks are separate and add no league points. Perfect checks renew after 30 days, just like skills.</p><a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-Regional-Pathway-Handbook-Information-04.02-2_compressed.pdf" target="_blank" rel="noopener">IGA Regional requirements ↗</a></details>`;
+    const routine=`<div class="pg-routines" role="group" aria-label="Routine checks">${model.routineChecks.map(check=>`<label class="pg-routine"><input type="checkbox" id="${esc(config.gymnast.id)}-${esc(check.id)}" data-routine-id="${esc(check.id)}"${check.complete?' checked':''}${config.canEdit?'':' disabled'}><span>${esc(check.label)} complete${check.required?'':' <small>Level 7 All-around</small>'}</span></label>`).join('')}</div>`;
+    host.innerHTML=`<div class="pg-overview"><div><p class="pg-kicker">${model.group==='senior'?'Senior squad · Competition goals':model.group==='junior'?'Junior squad · Routine goals':'Floor & Vault'}</p><h2>${esc(model.plan.label)}</h2><p>Required routines must be complete. Skill marks stay linked to Skills.</p></div><div class="pg-total"><strong>${model.done}<span> / ${model.total}</span></strong><small>requirements ready</small></div><div class="pg-progress" role="progressbar" aria-label="Goal requirements ready" aria-valuemin="0" aria-valuemax="${model.total}" aria-valuenow="${model.done}"><i style="width:${100*model.done/model.total}%"></i></div>${model.plans.length>1?`<div class="pg-plan-switch" role="group" aria-label="Goal pathway">${model.plans.map(p=>`<button type="button" data-goal-plan="${p.id}" aria-pressed="${model.plan.id===p.id}">${planLabel(p)}</button>`).join('')}</div>`:''}${routine}<span class="pg-lock-note">${config.canEdit?'Scoring unlocked':'Unlock scoring to update goals'}</span></div><div class="pg-sections">${model.sections.map(s=>sectionHTML(s,config)).join('')}</div><details class="pg-method" data-goal-details="method"><summary>How these goals work ${chevron}</summary><p>These are your coach’s skill targets, grouped by composition requirement (CR). Series connections are assumed. Competition readiness uses both your skill marks and the required routine checks.</p><p>Marks from complexes are shared automatically. Beam, bars and other goal-only checks are separate and add no league points. Perfect checks renew after 30 days, just like skills.</p><a href="https://www.independentgymnastics.com/wp-content/uploads/2022/10/UPDATED-WAG-Regional-Pathway-Handbook-Information-04.02-2_compressed.pdf" target="_blank" rel="noopener">IGA Regional requirements ↗</a></details>`;
     restore(host,prior);if(focused)host.querySelector('#'+CSS.escape(focused))?.focus({preventScroll:true});return model;
   }
   function overviewModel(config={}){
@@ -218,13 +233,19 @@
     const statusLabel={super:'Super ready',ready:'Ready',achieved:'All achieved',developing:'Building skills'};
     const person=({gymnast:g,model},rank)=>{
       const needs=[...new Map(model.sections.flatMap(s=>s.requirements.filter(r=>!r.ready).flatMap(nextGoalSkills)).map(i=>[i.id,i])).values()].sort((a,b)=>a.value-b.value);
-      const text=needs.length?needs.slice(0,2).map(i=>(i.value===0?'Achieve ':'Perfect ')+i.label).join(' · ')+(needs.length>2?` +${needs.length-2} more`:''):'Every requirement Perfect';
+      const next=[...model.missingRoutines.map(r=>'Complete '+r.label.toLowerCase()),...needs.map(i=>(i.value===0?'Achieve ':'Perfect ')+i.label)];
+      const text=next.length?next.slice(0,2).join(' · ')+(next.length>2?` +${next.length-2} more`:''):'All requirements complete';
       const status=model.readiness.status;
-      const routine=model.routineComplete?'<small class="pg-ranked-routine">Routine complete</small>':'';
-      return `<li><button type="button" data-open-goals="${esc(g.id)}" data-goals-target="${m.plan.id}" class="pg-coach-person pg-ranked-person pg-readiness-${status}" aria-label="${rank+1}. ${esc(g.name)}: ${statusLabel[status]}.${routine?' Routine complete.':''} Open goals"><span class="pg-ranked-number">${rank+1}</span><span class="pg-ranked-name"><strong>${esc(g.name)}</strong><small>${esc(text)}</small></span><span class="pg-ranked-result"><span class="pg-ranked-status"><svg class="pg-readiness-symbol" viewBox="0 0 20 20" aria-hidden="true">${readinessSymbols[status]}</svg><strong>${statusLabel[status]}</strong></span><small>${model.done}/${model.total} requirements Perfect</small>${routine}</span><span class="pg-ranked-arrow" aria-hidden="true">↗</span></button></li>`;
+      const label=model.missingRoutines.length?'Routine needed':statusLabel[status];
+      return `<li><button type="button" data-open-goals="${esc(g.id)}" data-goals-target="${m.plan.id}" class="pg-coach-person pg-ranked-person pg-readiness-${status}" aria-label="${rank+1}. ${esc(g.name)}: ${label}. Open goals"><span class="pg-ranked-number">${rank+1}</span><span class="pg-ranked-name"><strong>${esc(g.name)}</strong><small>${esc(text)}</small></span><span class="pg-ranked-result"><span class="pg-ranked-status"><svg class="pg-readiness-symbol" viewBox="0 0 20 20" aria-hidden="true">${readinessSymbols[status]}</svg><strong>${label}</strong></span><small>${model.done}/${model.total} requirements ready</small></span><span class="pg-ranked-arrow" aria-hidden="true">↗</span></button></li>`;
     };
     const breakdown=cohort=>{
       if(!cohort.rows.length)return '<p class="pg-analytics-empty">No gymnasts have this target assigned.</p>';
+      const routines=cohort.rows[0].model.routineChecks.filter(check=>check.required);
+      const routineCounts=routines.map(check=>{
+        const completed=cohort.rows.filter(row=>row.model.routineChecks.some(r=>r.id===check.id&&r.complete)).length;
+        return `<li><span>${esc(check.label)}</span><strong>${completed}/${cohort.rows.length} complete</strong></li>`;
+      }).join('');
       return cohort.sections.map(section=>{
         const rows=section.requirements.map(r=>{
           const results=cohort.rows.map(row=>row.model.sections.find(s=>s.id===section.id).requirements.find(x=>x.id===r.id));
@@ -233,9 +254,9 @@
           return `<tr><th scope="row">${esc(compact(r.title))}<div class="pg-breakdown-track" aria-hidden="true"><i style="width:${ap}%"></i><b style="width:${pp}%"></b></div></th><td class="pg-breakdown-achieved" aria-label="${ap}% achieved, ${achieved} of ${total}"><strong>${ap}%</strong><small>${achieved}/${total}</small></td><td class="pg-breakdown-perfect" aria-label="${pp}% Perfect, ${perfect} of ${total}"><strong>${pp}%</strong><small>${perfect}/${total}</small></td></tr>`;
         }).join('');
         return `<section class="pg-breakdown-apparatus"><table class="pg-breakdown-table"><thead><tr><th scope="col">${esc(section.title)}</th><th scope="col">Achieved</th><th scope="col">Perfect</th></tr></thead><tbody>${rows}</tbody></table></section>`;
-      }).join('');
+      }).join('')+`<ul class="pg-routine-breakdown" aria-label="Routine requirements">${routineCounts}</ul>`;
     };
-    return `<section class="analytics-panel analytics-wide pg-analytics pg-coach" id="competitionGoalsOverview">${head}<details class="pg-coach-target" data-analytics-disclosure="competition-target"><summary><span><small>Working towards</small><strong>${esc(m.plan.label)}</strong></span>${m.available.length>1?'<span>Change '+chevron+'</span>':chevron}</summary><div class="pg-plan-switch pg-a-plan" role="group" aria-label="Competition goal target">${m.available.map(plan=>`<button type="button" data-analytics-goal-plan="${plan.id}" aria-pressed="${m.plan.id===plan.id}">${planLabel(plan)}</button>`).join('')}</div></details><p class="pg-coach-scope">${scope} · Most ready first${p.excluded?` · ${p.excluded} without this target`:''}</p><ol class="pg-ranked-list" aria-label="Gymnasts ordered by competition readiness">${p.rows.map(person).join('')||'<li class="pg-analytics-empty">No gymnasts have this target assigned.</li>'}</ol><details class="pg-coach-more pg-requirement-breakdown" data-analytics-disclosure="readiness-${m.plan.id}-breakdown"><summary>Requirement breakdown ${chevron}</summary><div class="pg-breakdown-content"><p>Achieved includes Perfect.</p>${breakdown(p)}${c?`<details class="pg-coach-more"><summary>Compare: ${esc(config.comparisonLabel||'Comparison squad')} ${chevron}</summary>${breakdown(c)}</details>`:''}<details class="pg-coach-help" data-analytics-disclosure="readiness-guide"><summary>How readiness works ${chevron}</summary><p>Gold: every requirement Perfect. Green: all skills achieved, with only 1–2 left to perfect. Purple: all skills achieved, with more than two left to perfect. Otherwise, some skills are still to achieve.</p><p>These are your coaching targets; connections are assumed. Tap a gymnast to see and update their goals.</p></details></div></details></section>`;
+    return `<section class="analytics-panel analytics-wide pg-analytics pg-coach" id="competitionGoalsOverview">${head}<details class="pg-coach-target" data-analytics-disclosure="competition-target"><summary><span><small>Working towards</small><strong>${esc(m.plan.label)}</strong></span>${m.available.length>1?'<span>Change '+chevron+'</span>':chevron}</summary><div class="pg-plan-switch pg-a-plan" role="group" aria-label="Competition goal target">${m.available.map(plan=>`<button type="button" data-analytics-goal-plan="${plan.id}" aria-pressed="${m.plan.id===plan.id}">${planLabel(plan)}</button>`).join('')}</div></details><p class="pg-coach-scope">${scope} · Most ready first${p.excluded?` · ${p.excluded} without this target`:''}</p><ol class="pg-ranked-list" aria-label="Gymnasts ordered by competition readiness">${p.rows.slice(0,10).map(person).join('')||'<li class="pg-analytics-empty">No gymnasts have this target assigned.</li>'}</ol>${p.rows.length>10?`<details class="analytics-more-rows" data-analytics-disclosure="readiness-more-${m.plan.id}"><summary><span>Show all ${p.rows.length} gymnasts</span><span>Show fewer</span></summary><ol class="pg-ranked-list" start="11" aria-label="More gymnasts by competition readiness">${p.rows.slice(10).map((row,i)=>person(row,i+10)).join('')}</ol></details>`:''}<details class="pg-coach-more pg-requirement-breakdown" data-analytics-disclosure="readiness-${m.plan.id}-breakdown"><summary>Requirement breakdown ${chevron}</summary><div class="pg-breakdown-content"><p>Achieved includes Perfect.</p>${breakdown(p)}${c?`<details class="pg-coach-more"><summary>Compare: ${esc(config.comparisonLabel||'Comparison squad')} ${chevron}</summary>${breakdown(c)}</details>`:''}<details class="pg-coach-help" data-analytics-disclosure="readiness-guide"><summary>How readiness works ${chevron}</summary><p>Ready and Super ready require completed routines. Gold means every skill requirement is Perfect. Green means only one or two skills are left to perfect. Purple means all skills are achieved, with more than two left to perfect.</p><p>These are your coaching targets; connections are assumed. Tap a gymnast to see and update their goals.</p></details></div></details></section>`;
   }
 
   const api={routineIds:Object.freeze(Object.keys(routineNames)),overviewModel,analyticsHTML,nextGoalSkills,assignment,extraNames,extraIds,cleanMarks,goalValue,build,update,capture,restore,plans:{level8,level7fv,level7,level6,junior}};

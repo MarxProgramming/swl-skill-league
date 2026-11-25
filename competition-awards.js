@@ -24,8 +24,10 @@
   function html(gymnast) {
     if (!gymnast?.id) return '';
     const rows = recordsFor(gymnast.id);
-    const medals = rows.flatMap(row => row.scores).filter(s => metal(s.place) && s.score > 0).length;
-    return `<section class="competition-collection" aria-label="Competition awards"><div class="competition-heading"><div><h2>Competitions</h2><p>On the competition floor</p></div>${rows.length ? `<span>${rows.length} ${rows.length === 1 ? 'competition' : 'competitions'}${medals ? ` · ${medals} ${medals === 1 ? 'medal' : 'medals'}` : ''}</span>` : ''}</div>${rows.length ? `<div class="competition-history">${rows.map(eventCard).join('')}</div><p class="competition-note">Official IGA scores and published placings. These results are separate from league points.</p>` : '<div class="competition-empty"><p>No verified competition results added yet.</p><small>Published results will appear here once they have been matched.</small></div>'}</section>`;
+    const finishes = rows.flatMap(row => row.scores).filter(s => metal(s.place) && s.score > 0).map(s => s.place);
+    const counts = [1,2,3].map(place => ({place,count:finishes.filter(rank => rank === place).length}));
+    const stacks = counts.filter(m => m.count).map(({place,count})=>`<span class="award-medal-stack is-${metal(place)}" aria-label="${count} ${metal(place)} medals">${Array.from({length:Math.min(count,4)},()=>`<i aria-hidden="true">${place}</i>`).join('')}<small>${count}</small></span>`).join('');
+    return `<details class="competition-collection award-disclosure" data-profile-badge-details="${esc(gymnast.id)}:competitions"><summary data-profile-badge-toggle="${esc(gymnast.id)}:competitions"><strong>Competition results</strong><span class="award-preview">${stacks || '<small>No medals recorded</small>'}</span><span class="award-arrow" aria-hidden="true"></span></summary>${rows.length ? `<div class="competition-history">${rows.map(eventCard).join('')}</div><p class="competition-note">Official IGA scores and published placings.</p>` : '<div class="competition-empty"><p>No verified competition results added yet.</p></div>'}</details>`;
   }
   window.SWLCompetitionAwards = Object.freeze({html,recordsFor});
 })();

@@ -1693,6 +1693,7 @@ html:has(body.no-motion){scroll-behavior:auto}
       <button type="button" class="programme-card" data-programme="junior"><span class="programme-card-title">Junior squads</span><span class="programme-card-copy">Monday, Tuesday, Friday and Saturday.<br>Build on every achievement.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button type="button" class="programme-card" data-programme="floor"><span class="programme-card-title">Floor &amp; vault</span><span class="programme-card-copy">Morning and afternoon squads.<br>One place to see your progress.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button type="button" class="programme-card" data-programme="senior"><span class="programme-card-title">Senior squad</span><span class="programme-card-copy">Marx’s and Dan’s groups.<br>Build on every achievement.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="programme-card" data-programme="all"><span class="programme-card-title">All squads</span><span class="programme-card-copy">Junior, Floor &amp; Vault and Senior.</span><svg class="programme-card-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </section>
 
@@ -1710,6 +1711,7 @@ html:has(body.no-motion){scroll-behavior:auto}
         <div class="entry-filter-footer"><p id="apparatusNote">Floor scoring · compare foundations and progress.</p><button class="quiet" type="button" data-view="home">Change programme</button></div>
       </div>
     </details>
+    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge"><span class="challenge-entry-copy"><strong>All gymnasts</strong><small>Every point · progress towards full marks</small></span><span aria-hidden="true">↗</span></button></div>
     <p class="sr" id="leaderboardScope">All squads · overall leaderboards</p>
 
     <p class="note empty-note" id="emptyNote">
@@ -1722,7 +1724,6 @@ html:has(body.no-motion){scroll-behavior:auto}
     <p class="note">
       The top five gymnasts are shown. Equal scores are ordered alphabetically.
     </p>
-    <div class="challenge-entry"><button type="button" class="challenge-entry-button" data-view="challenge"><span class="challenge-entry-copy"><strong>All gymnasts</strong><small>Every point · progress towards full marks</small></span><span aria-hidden="true">↗</span></button></div>
     <div class="leaderboard-footer"><button class="scoring-guide-button" id="scoringGuideButton" type="button" aria-haspopup="dialog" aria-controls="scoringGuide"><span aria-hidden="true">ⓘ</span> Scoring guide</button></div>
   </section>
 
@@ -1852,24 +1853,24 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./directory-selection.js?v=20261105-fair-comparison"></script>
 <script src="./analytics-compare.js?v=20261106-shared-comparison"></script>
 <link rel="stylesheet" href="./birthday.css?v=20261108">
-<link rel="stylesheet" href="./podium-stage.css?v=20261125-routine-readiness">
+<link rel="stylesheet" href="./podium-stage.css?v=20261125-routine-layout">
 <link rel="stylesheet" href="./surface-tidy.css?v=20261108">
 <link rel="stylesheet" href="./training-focus.css?v=20261118-polish">
 <script src="./birthday.js?v=20261108"></script>
 <script src="./roster-management.js?v=20261109-20261107-roster"></script>
-<script src="./coaching.js?v=1"></script>
-<script src="./v2.js?v=20261124-competition-circuits"></script>
+<script src="./coaching.js?v=20261125-routine-layout"></script>
+<script src="./v2.js?v=20261125-routine-layout"></script>
 <script src="./achievement-50.js?v=coach-flow-1"></script>
 <script src="./challenge.js?v=20261103-52"></script>
 <script src="./badge-notices.js?v=20261118-polish"></script>
 <script src="./competition-results.js?v=20261117-awards"></script>
-<script src="./competition-awards.js?v=20261117-awards"></script>
-<script src="./profile-badges.js?v=profile-goals-20261122"></script>
-<script src="./profile-goals.js?v=20261125-routine-readiness"></script>
-<script src="./welcome.js?v=20261030-entry"></script>
+<script src="./competition-awards.js?v=20261125-routine-layout"></script>
+<script src="./profile-badges.js?v=20261125-routine-layout"></script>
+<script src="./profile-goals.js?v=20261125-routine-layout"></script>
+<script src="./welcome.js?v=20261125-routine-layout"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=awards-polish-20261121">
-<link rel="stylesheet" href="./theme.css?v=20261125-routine-readiness">
+<link rel="stylesheet" href="./theme.css?v=20261125-routine-layout">
 <script>
 (() => {
   'use strict';
@@ -2460,7 +2461,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   function apparatusBoards(value = apparatus) {
     const overall = {id:'overall', name:value === 'combined' ? 'Floor + Vault league' : apparatusLabel(value) + ' league', scoreCategory:apparatusScore(value), icon:'', color:'#f3ce86'};
     return value === 'vault' ? [overall,{id:'vault-run',name:'Run & hurdle'},{id:'vault-vaults',name:'Vaults'}]
-      : value === 'combined' ? [overall,{id:'floor',name:'Floor points'},{id:'vault',name:'Vault points'}]
+      : value === 'combined' ? [overall,{id:'floor',name:'Floor points'},{id:'vault',name:'Vault points'},...CATEGORIES.filter(category => category.id !== 'vault')]
       : [overall,...CATEGORIES.filter(category => category.id !== 'vault')];
   }
   function summary(id, category = 'overall', source = state) {
@@ -3956,7 +3957,7 @@ html:has(body.no-motion){scroll-behavior:auto}
   }
 
   function selectProgramme(programme) {
-    if (!['floor','senior','junior'].includes(programme)) return;
+    if (!['all','floor','senior','junior'].includes(programme)) return;
     leaderboardGroup = programme;
     leaderboardAge = 'all';
     apparatus = 'combined';
@@ -4371,15 +4372,14 @@ html:has(body.no-motion){scroll-behavior:auto}
 
   $('tracker').addEventListener('change', event => {
     const input = event.target;
-    if (!input.matches('input[type="checkbox"][data-routine-plan]')) return;
+    if (!input.matches('input[type="checkbox"][data-routine-id]')) return;
     const host = $('profileGoals');
-    const plan = input.dataset.routinePlan;
-    const goalId = 'routine-' + plan;
+    const goalId = input.dataset.routineId;
     const gymnastId = selectedId;
     const before = state.goalMarks?.[gymnastId]?.[goalId]?.value === 1;
     if (!canEdit() || currentView !== 'tracker' || profilePane !== 'goals' ||
-        !host?.contains(input) || host.dataset.gymnast !== gymnastId || host.dataset.goalPlan !== plan ||
-        !window.SWLProfileGoals.extraIds.includes(goalId)) {
+        !host?.contains(input) || host.dataset.gymnast !== gymnastId ||
+        !window.SWLProfileGoals.routineIds.includes(goalId)) {
       input.checked = before;
       return;
     }

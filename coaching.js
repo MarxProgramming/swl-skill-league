@@ -51,11 +51,36 @@
       grid.querySelector('[aria-pressed="true"]')?.focus();
     }
     jump.addEventListener('click',open);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     function measure() {
       frame = 0;
-      const top = document.querySelector('.header')?.getBoundingClientRect().bottom || 0;
-      mini.hidden = !root.getClientRects().length || picker.getBoundingClientRect().bottom>top || root.getBoundingClientRect().bottom<top+60;
+      const headerBottom = document.querySelector('.header')?.getBoundingClientRect().bottom || 0;
+      const bounds = picker.getBoundingClientRect();
+      const rootBounds = root.getBoundingClientRect();
+      const active = rootBounds.height > 0 && rootBounds.bottom >= headerBottom + 60;
+      const reduced = reducedMotion.matches || document.body.classList.contains('no-motion');
+      // Follow the original picker for its last few pixels, then settle under the header.
+      const progress = active ? (reduced ? Number(bounds.bottom <= headerBottom) :
+        Math.min(1,Math.max(0,(headerBottom + 42 - bounds.bottom) / 50))) : 0;
+      const originalFocused = picker.contains(document.activeElement);
+      const stickyFocused = mini.contains(document.activeElement);
+      mini.hidden = progress === 0;
+      mini.inert = progress < 0.65;
+      if (!progress) {
+        picker.style.removeProperty('opacity');
+        if(stickyFocused && active)jump.focus({preventScroll:true});
+        return;
+      }
+      const eased = progress * progress * (3 - 2 * progress);
+      const compact = Math.min(540,window.innerWidth - 28);
+      const center = bounds.left + bounds.width / 2;
+      mini.style.left = center + (window.innerWidth / 2 - center) * eased + 'px';
+      mini.style.width = bounds.width + (compact - bounds.width) * eased + 'px';
+      mini.style.top = headerBottom - 10 * (1 - eased) + 'px';
+      mini.style.opacity = eased;
+      picker.style.opacity = 1 - eased;
+      if(eased >= 0.99 && originalFocused)title.focus({preventScroll:true});
     }
     function schedule() { if(!frame)frame=requestAnimationFrame(measure); }
     window.addEventListener('scroll',schedule,{passive:true});

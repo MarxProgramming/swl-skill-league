@@ -12,7 +12,7 @@
     if (dismissedThisPage) return true;
     try { return window.localStorage?.getItem(SEEN_KEY) === 'true'; } catch (_) { return false; }
   }
-  let automaticPending = !hasSeen();
+  let automaticPending = false;
 
   function make(tag, className, text) {
     const element = document.createElement(tag);

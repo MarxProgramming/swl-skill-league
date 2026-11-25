@@ -13,22 +13,9 @@
   pointer-events:none;
 }
 .overall.v3-board .v3-podium-label {display:none}
-.overall.v3-board .v3-podium-column {
-  --stage-height:332px;
-  --stage-cycle:18s;
-  --stage-phase:0s;
-  --stage-sheen:.065;
-  --stage-rim-rest:.42;
-  --stage-rim-peak:.72;
-}
-.overall.v3-board .v3-podium-place-1 {
-  --stage-height:374px;
-  --stage-sheen:.105;
-  --stage-rim-rest:.65;
-  --stage-rim-peak:1;
-}
-.overall.v3-board .v3-podium-place-2 {--stage-phase:-12s}
-.overall.v3-board .v3-podium-place-3 {--stage-height:314px;--stage-phase:-6s}
+.overall.v3-board .v3-podium-column {--stage-height:332px}
+.overall.v3-board .v3-podium-place-1 {--stage-height:374px}
+.overall.v3-board .v3-podium-place-3 {--stage-height:314px}
 .overall.v3-board .v3-podium .rank-row.medal {
   min-height:var(--stage-height);padding:27px 18px 23px;gap:12px;
   border-radius:18px 18px 8px 8px;
@@ -44,17 +31,16 @@
 }
 .overall.v3-board .v3-podium-place-1 .v3-podium-stack::before {
   inset:-20px -12px -8px;background:radial-gradient(ellipse,#e8b74720,transparent 72%);
-  filter:blur(16px);animation:none;
+  filter:blur(16px);animation:swl-winner-aura 9s ease-in-out infinite alternate;
 }
 .overall.v3-board .v3-podium .rank-row.medal .podium-edge {
-  padding:1px;
-  opacity:var(--stage-rim-rest);
-  animation:swl-stage-rim var(--stage-cycle) ease-in-out var(--stage-phase) infinite;
+  padding:1px;opacity:.65;animation-duration:19s;
 }
+.overall.v3-board .v3-podium-place-1 .rank-row.medal .podium-edge {opacity:1;animation-duration:13s}
 .overall.v3-board .v3-podium .rank-row.medal .podium-light {
-  background:linear-gradient(115deg,transparent 20%,rgb(var(--podium-bright) / var(--stage-sheen)) 48%,transparent 72%);
-  opacity:0;
-  animation:swl-stage-sweep var(--stage-cycle) ease-in-out var(--stage-phase) infinite;
+  background:linear-gradient(115deg,transparent 20%,rgb(var(--podium-bright) / .055) 48%,transparent 68%);
+  background-size:260% 100%;opacity:1;animation:swl-stage-sweep 16s ease-in-out infinite;
+  animation-delay:var(--podium-sheen-phase);
 }
 .overall.v3-board .v3-podium .rank-row.medal .place {
   left:16px;right:auto;top:15px;opacity:.8!important;font-size:18px!important;
@@ -78,7 +64,7 @@
 .overall.v3-board .v3-podium-place-1 .rank-row.medal .avatar {width:76px;height:76px;font-size:24px;margin-top:10px}
 .overall.v3-board .v3-podium .rank-row.medal .avatar::before {
   inset:-7px;border-color:rgb(var(--podium-rgb) / .2);border-style:dashed;opacity:.6;
-  animation:none;
+  animation:swl-podium-orbit 80s linear infinite;
 }
 .overall.v3-board .v3-podium .rank-row.medal .person {padding:0;min-height:0;display:block}
 .overall.v3-board .v3-podium .rank-row.medal .person strong {
@@ -100,16 +86,9 @@
 .overall.v3-board .v3-podium-place-1 .rank-row.medal .score b {font-size:64px;color:#ffe5a2;text-shadow:0 0 24px #e9ba4d18}
 .overall.v3-board .v3-podium .rank-row.medal .score small {margin-top:4px;font-size:8px;letter-spacing:.22em}
 .overall.v3-board .v3-podium .rank-row:has(.swl-profile-open:focus-visible) {outline:2px solid #c6a6ff;outline-offset:4px}
-/* One short lighting pass per place on the same clock. The coin only moves on tap. */
-@keyframes swl-stage-rim {
-  0%,100% {opacity:var(--stage-rim-rest);--swl-gold-angle:0deg}
-  12% {opacity:var(--stage-rim-peak)}
-  24%,99% {opacity:var(--stage-rim-rest);--swl-gold-angle:180deg}
-}
 @keyframes swl-stage-sweep {
-  0%,100% {transform:translateX(-95%);opacity:0}
-  8%,16% {opacity:1}
-  24%,99% {transform:translateX(95%);opacity:0}
+  0%,12% {background-position:100% 0}
+  48%,100% {background-position:-60% 0}
 }
 @media (max-width:850px) and (min-width:651px) {
   .overall.v3-board .v3-podium {gap:12px;padding-inline:0}
@@ -136,7 +115,6 @@
 @media(prefers-reduced-motion:reduce) {
   .overall.v3-board .v3-podium *,.overall.v3-board .v3-podium *::before {animation:none!important;transition:none!important}
 }
-body.no-motion .overall.v3-board .v3-podium :is(.podium-edge,.podium-light) {animation:none!important}
 
 /* Thin illuminated podium bases, with light confined to each medal surface. */
 .overall.v3-board .v3-podium .rank-row.medal {border-bottom:3px solid rgb(var(--podium-rgb) / .5)!important}
