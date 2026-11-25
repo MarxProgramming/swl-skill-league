@@ -1628,7 +1628,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <link rel="stylesheet" href="./achievement-50.css?v=20261103-card-sizes">
 <link rel="stylesheet" href="./v50.css?v=20261031-v5">
 <link rel="stylesheet" href="./profile-badges.css?v=skill-targets-circuits-20261121">
-<link rel="stylesheet" href="./profile-goals.css?v=20261123-readiness-list">
+<link rel="stylesheet" href="./profile-goals.css?v=20261125-routine-readiness">
 <link rel="stylesheet" href="./competition-awards.css?v=20261117-awards">
 <link rel="stylesheet" href="./perfect-confirm.css?v=20261101-profile">
 <link rel="stylesheet" href="./typography.css?v=20261101-type">
@@ -1852,7 +1852,7 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./directory-selection.js?v=20261105-fair-comparison"></script>
 <script src="./analytics-compare.js?v=20261106-shared-comparison"></script>
 <link rel="stylesheet" href="./birthday.css?v=20261108">
-<link rel="stylesheet" href="./podium-stage.css?v=20261109-fix-20261108">
+<link rel="stylesheet" href="./podium-stage.css?v=20261125-routine-readiness">
 <link rel="stylesheet" href="./surface-tidy.css?v=20261108">
 <link rel="stylesheet" href="./training-focus.css?v=20261118-polish">
 <script src="./birthday.js?v=20261108"></script>
@@ -1865,11 +1865,11 @@ html:has(body.no-motion){scroll-behavior:auto}
 <script src="./competition-results.js?v=20261117-awards"></script>
 <script src="./competition-awards.js?v=20261117-awards"></script>
 <script src="./profile-badges.js?v=profile-goals-20261122"></script>
-<script src="./profile-goals.js?v=20261124-floor-vault-level7"></script>
+<script src="./profile-goals.js?v=20261125-routine-readiness"></script>
 <script src="./welcome.js?v=20261030-entry"></script>
 <script src="./perfect-confirm.js?v=20261101-profile"></script>
 <link rel="stylesheet" href="./ui-polish.css?v=awards-polish-20261121">
-<link rel="stylesheet" href="./theme.css?v=pattern-library-20261122">
+<link rel="stylesheet" href="./theme.css?v=20261125-routine-readiness">
 <script>
 (() => {
   'use strict';
@@ -4368,6 +4368,26 @@ html:has(body.no-motion){scroll-behavior:auto}
     if (currentView === 'tracker') renderAthlete();
     renderSaveStatus();
   }
+
+  $('tracker').addEventListener('change', event => {
+    const input = event.target;
+    if (!input.matches('input[type="checkbox"][data-routine-plan]')) return;
+    const host = $('profileGoals');
+    const plan = input.dataset.routinePlan;
+    const goalId = 'routine-' + plan;
+    const gymnastId = selectedId;
+    const before = state.goalMarks?.[gymnastId]?.[goalId]?.value === 1;
+    if (!canEdit() || currentView !== 'tracker' || profilePane !== 'goals' ||
+        !host?.contains(input) || host.dataset.gymnast !== gymnastId || host.dataset.goalPlan !== plan ||
+        !window.SWLProfileGoals.extraIds.includes(goalId)) {
+      input.checked = before;
+      return;
+    }
+    if (input.checked === before) return;
+    enqueueOperation({type:'set_goal',gymnastId,goalId,value:input.checked ? 1 : 0});
+    renderGoals();
+    renderSaveStatus();
+  });
 
   $('leaderboardGroup')?.addEventListener('change', event => {
     leaderboardGroup=event.target.value;if(leaderboardGroup==='coaches')leaderboardAge='all';renderBoards();
