@@ -23,7 +23,7 @@
     'bars-back-hip-circle':'Back hip circle','bars-upstart':'Upstart on high bar',
     'bars-b-dismount':'B dismount · coach’s choice','bars-tap-swings':'Tap swings','bars-undershoot':'Undershoot from high bar',
     'floor-front-somersault':'Front somersault on floor',
-    'floor-straight-back':'Straight back on floor · round-off → flick → straight back',
+    'floor-straight-back':'Round-off → flick → straight back',
     'floor-back-tuck':'Back tuck on floor · round-off → flick → tuck',
     'airtrack-tumble':'Round-off → flick → tuck on AirTrack',
     'tramp-straight-back':'Straight back on trampoline','tramp-half-twist':'Half twist in dish on trampoline',
@@ -64,7 +64,7 @@
       cr('bars-dismount','CR 4 · B dismount',[extra('bars-straddle-undershoot'),extra('bars-pike-undershoot')],true)])
   ]};
   const level6={id:'level6',label:'Level 6 · Floor & Vault',sections:[section('floor','Floor',[
-    cr('tumble','CR 1 · Backwards tumble',[skill('acro-pro-roundoff-flick','Round-off flick'),extra('floor-straight-back')],false,'Round-off → flick → straight back'),dance(true),
+    cr('tumble','CR 1 · Backwards tumble',[extra('floor-straight-back')]),dance(true),
     cr('forward','CR 3 · Forwards acro',[skill('acro-pro-handspring','Handspring'),extra('floor-front-somersault'),skill('rolls-upgrade-dive','Dive forwards roll')],true,'Perfect any one of these skills'),spin(true),standout(true)]),vault(6)]};
   const junior={id:'junior',label:'Junior · Floor & Vault',sections:[section('floor','Floor',[
     cr('arabesque','1 · Arabesque',[extra('junior-arabesque')]),
